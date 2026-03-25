@@ -629,7 +629,17 @@ Return ONLY the JSON object. No markdown, no explanation.`;
     const r=await fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
     const d=await r.json();
     let txt=d.plan||'';
-    txt=txt.replace(/```json|```/g,'').trim();
+    
+    // Strip any markdown or extra text around the JSON
+    txt=txt.replace(/```json/g,'').replace(/```/g,'').trim();
+    
+    // Find the JSON object if there's text around it
+    const jsonStart=txt.indexOf('{');
+    const jsonEnd=txt.lastIndexOf('}');
+    if(jsonStart>-1&&jsonEnd>-1){
+      txt=txt.substring(jsonStart,jsonEnd+1);
+    }
+    
     planData=JSON.parse(txt);
 
     setTimeout(()=>{
@@ -663,13 +673,14 @@ Return ONLY the JSON object. No markdown, no explanation.`;
     },17000);
 
   }catch(e){
+    console.error('Plan error:',e);
     setTimeout(()=>{
       document.getElementById('gen').style.display='none';
       document.getElementById('quiz-wrap').style.display='none';
       document.querySelector('.prog-wrap').style.display='none';
       document.getElementById('plan').style.display='block';
       document.getElementById('ptitle').textContent='Something went wrong';
-      document.getElementById('pintro').textContent='We had trouble generating your plan. Please go back and try again.';
+      document.getElementById('pintro').textContent='Error: '+e.message+'. Please go back and try again.';
       document.getElementById('pstats').innerHTML='';
       document.getElementById('cal').innerHTML='';
     },17000);
