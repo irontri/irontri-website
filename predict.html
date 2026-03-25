@@ -201,13 +201,13 @@
   <div class="inputs-grid">
     <div class="input-card">
       <span class="input-card-icon">🏊</span>
-      <div class="input-card-label">1000m swim time</div>
+      <div class="input-card-label">100m swim time</div>
       <div class="input-row">
-        <input type="number" class="time-input" id="swim-min" placeholder="20" min="10" max="60" oninput="clearResults()" />
+        <input type="number" class="time-input" id="swim-min" placeholder="2" min="1" max="10" oninput="clearResults()" />
         <span class="time-sep">:</span>
         <input type="number" class="time-input" id="swim-sec" placeholder="00" min="0" max="59" oninput="clearResults()" />
       </div>
-      <div class="input-hint">mins : secs for 1000m</div>
+      <div class="input-hint">mins : secs per 100m</div>
     </div>
     <div class="input-card">
       <span class="input-card-icon">🚴</span>
@@ -377,9 +377,8 @@
     // Calculate swim time
     let swimPer100m;
     if (swimMin !== null) {
-      // User gave 1000m time — calculate per 100m
-      const total1000m = swimMin * 60 + swimSec;
-      swimPer100m = total1000m / 10;
+      // User gave 100m time directly — this IS the per 100m pace
+      swimPer100m = swimMin * 60 + swimSec;
     } else {
       swimPer100m = base100mSwimTime;
     }
