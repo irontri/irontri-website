@@ -456,9 +456,27 @@ function renderWeek(){
   const w=planData.weeks[curWeek];
   if(!w)return;
 
+  // Calculate start date for this week
+  const startDate = A.date ? new Date() : new Date();
+  const planStartDate = new Date();
+  // Start from next Monday
+  const dayOfWeek = planStartDate.getDay();
+  const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+  planStartDate.setDate(planStartDate.getDate() + (dayOfWeek === 1 ? 0 : daysUntilMonday));
+  // Add weeks offset
+  planStartDate.setDate(planStartDate.getDate() + (curWeek * 7));
+
   // week nav
+  const planStartDate2 = new Date();
+  const dow = planStartDate2.getDay();
+  planStartDate2.setDate(planStartDate2.getDate() + (dow === 1 ? 0 : dow === 0 ? 1 : 8 - dow));
+  planStartDate2.setDate(planStartDate2.getDate() + (curWeek * 7));
+  const endDate = new Date(planStartDate2);
+  endDate.setDate(planStartDate2.getDate() + 6);
+  const months2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dateRange = planStartDate2.getDate()+' '+months2[planStartDate2.getMonth()]+' – '+endDate.getDate()+' '+months2[endDate.getMonth()];
   document.getElementById('wlabel').textContent='Week '+(curWeek+1);
-  document.getElementById('wsub').textContent=w.phase||'';
+  document.getElementById('wsub').textContent=(w.phase||'')+' · '+dateRange;
   document.getElementById('wprev').disabled=curWeek===0;
   document.getElementById('wnext').disabled=curWeek===planData.weeks.length-1;
 
@@ -472,16 +490,21 @@ function renderWeek(){
     <div class="ws-card"><div class="wsv">${hrs}h${mins>0?mins+'m':''}</div><div class="wsl">Total time</div></div>
     <div class="ws-card"><div class="wsv">${w.focus||'Base'}</div><div class="wsl">Focus</div></div>`;
 
-  // calendar
+  // calendar with real dates
   const allDays=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('cal').innerHTML=w.days.map((d,i)=>{
     const t=typeInfo[d.type]||typeInfo['Rest'];
     const isActive=curDay===i;
+    const dayDate = new Date(planStartDate);
+    dayDate.setDate(planStartDate.getDate() + i);
+    const dateStr = dayDate.getDate()+' '+months[dayDate.getMonth()];
     return `<div class="cal-day${d.type==='Rest'?' rest':''}${isActive?' active':''}" onclick="selectDay(${i})">
       <div class="cal-day-name">${allDays[i]}</div>
+      <div style="font-size:10px;color:var(--faint);margin-bottom:4px;">${dateStr}</div>
       <div class="cal-day-icon">${t.icon}</div>
       <div class="cal-day-type ${t.cls}">${d.type}</div>
-      <div class="cal-day-dur">${d.duration?d.duration+'min':''}</div>
+      <div class="cal-day-dur">${d.duration?d.duration+'m':''}</div>
     </div>`;
   }).join('');
 
@@ -505,7 +528,13 @@ function selectDay(i){
     el.classList.toggle('active',idx===i);
   });
 
-  const sd=document.getElementById('sd');
+  const dayDate2 = new Date();
+  const dow2 = dayDate2.getDay();
+  dayDate2.setDate(dayDate2.getDate() + (dow2 === 1 ? 0 : dow2 === 0 ? 1 : 8 - dow2));
+  dayDate2.setDate(dayDate2.getDate() + (curWeek * 7) + i);
+  const months3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const fullDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const fullDateStr = fullDays[i]+' '+dayDate2.getDate()+' '+months3[dayDate2.getMonth()];
   if(d.type==='Rest'){
     sd.style.display='block';
     sd.innerHTML=`
@@ -532,7 +561,7 @@ function selectDay(i){
       <div class="sd-icon">${t.icon}</div>
       <div class="sd-info">
         <div class="sd-title">${d.name||d.type+' Session'}</div>
-        <div class="sd-meta">${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][i]} · ${d.duration||60} minutes</div>
+        <div class="sd-meta">${fullDateStr} · ${d.duration||60} minutes</div>
         <div class="sd-badges">
           <span class="sd-badge ${t.cls}" style="border-color:${t.color}20;">${d.type}</span>
           ${d.effort?`<span class="sd-badge" style="border-color:rgba(255,255,255,0.1);color:var(--muted);">RPE ${d.effort}/10</span>`:''}
