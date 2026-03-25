@@ -875,18 +875,14 @@ Create a ${planWeeks}-week training plan. Structure your response as follows:
 Keep the tone motivational, expert, and personal. Address the athlete by their first name (${answers.name}).`;
 
       try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const response = await fetch('/api/generate-plan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 1000,
-            messages: [{ role: 'user', content: prompt }]
-          })
+          body: JSON.stringify({ prompt })
         });
 
         const data = await response.json();
-        const planText = data.content.map(c => c.text || '').join('\n');
+        const planText = data.plan;
 
         setTimeout(() => {
           document.getElementById('generating').style.display = 'none';
