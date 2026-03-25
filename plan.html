@@ -843,36 +843,107 @@
       const weeksOut = raceDate ? Math.round((raceDate - today) / (7 * 24 * 60 * 60 * 1000)) : 16;
       const planWeeks = Math.min(Math.max(weeksOut, 8), 24);
 
-      const prompt = `You are an expert triathlon coach. Create a detailed, personalised triathlon training plan for the following athlete:
+      const prompt = `You are a world-class triathlon coach with 20+ years experience coaching athletes from complete beginners to Ironman finishers. You write training plans that are specific, structured, and highly practical — like the best coaching apps in the world.
 
-Name: ${answers.name}
-Race: ${answers.race}
-Experience: ${answers.experience}
-Race date: ${answers.raceDate || 'Not specified'}
-Weeks until race: ${planWeeks} weeks
-Training hours per week: ${answers.hours} hours
-Available training days: ${answers.days.join(', ')}
-Weakest discipline: ${answers.weakness}
-Pool access: ${answers.pool}
+Create a detailed personalised triathlon training plan for this athlete:
 
-Create a ${planWeeks}-week training plan. Structure your response as follows:
+ATHLETE PROFILE:
+- Name: ${answers.name}
+- Target race: ${answers.race}
+- Experience level: ${answers.experience}
+- Race date: ${answers.raceDate || 'Not specified'}
+- Weeks to race: ${planWeeks} weeks
+- Weekly training hours available: ${answers.hours} hours
+- Available training days: ${answers.days.join(', ')}
+- Weakest discipline: ${answers.weakness}
+- Pool access: ${answers.pool}
 
-1. Start with a brief 2-3 sentence personalised introduction addressing ${answers.name} directly.
+Write the plan in this EXACT format:
 
-2. PLAN OVERVIEW — list key stats: total weeks, weekly hours, focus areas
+---
+👋 HEY ${answers.name.toUpperCase()}!
 
-3. PHASE BREAKDOWN — split the plan into phases (Base, Build, Peak, Taper) with a brief description of each phase's focus
+Write 3 sentences directly addressing ${answers.name}. Be specific about their ${answers.race} goal, their ${planWeeks} weeks of preparation, and acknowledge their ${answers.weakness} as something we'll specifically address. Be warm, encouraging and expert.
 
-4. SAMPLE WEEK (Week 1) — show a detailed sample week with specific sessions for each training day, including:
-   - Session type (Swim/Bike/Run/Brick/Strength)
-   - Duration
-   - Specific workout description (e.g. "800m warm up, 4x200m at threshold pace, 400m cool down")
+---
+📊 YOUR PLAN AT A GLANCE
 
-5. KEY COACHING NOTES — 4-5 personalised tips based on their weakness (${answers.weakness}) and experience level
+• Race: ${answers.race}
+• Plan length: ${planWeeks} weeks
+• Weekly training: ${answers.hours} hours across ${answers.days.length} sessions
+• Training days: ${answers.days.join(', ')}
+• Key focus: [identify the 2-3 most important things for this athlete]
 
-6. RACE DAY PREPARATION — brief race day advice specific to their distance (${answers.race})
+---
+🗓️ TRAINING PHASES
 
-Keep the tone motivational, expert, and personal. Address the athlete by their first name (${answers.name}).`;
+PHASE 1 — BASE (Weeks 1-${Math.round(planWeeks*0.35)}): [Write 2 sentences about what this phase focuses on for THIS athlete specifically. What intensities, what volume, what skills]
+
+PHASE 2 — BUILD (Weeks ${Math.round(planWeeks*0.35)+1}-${Math.round(planWeeks*0.7)}): [Write 2 sentences about increasing intensity and sport-specific work. Mention brick sessions and race-pace efforts]
+
+PHASE 3 — PEAK (Weeks ${Math.round(planWeeks*0.7)+1}-${planWeeks-1}): [Write 2 sentences about highest volume and intensity week, race simulation]
+
+PHASE 4 — TAPER (Week ${planWeeks}): [Write 2 sentences about reducing volume, staying sharp, race prep]
+
+---
+📅 YOUR SAMPLE WEEK (Week 1 — Base Phase)
+
+For each of the athlete's available training days (${answers.days.join(', ')}), write a SPECIFIC session like this:
+
+[DAY] — [DISCIPLINE] ([DURATION])
+[Specific workout with exact distances, intervals, paces or efforts]
+Focus: [Why this session matters]
+
+Example format:
+Monday — Swim (45 min)
+Warm up: 400m easy freestyle focusing on long strokes
+Main set: 6x100m at moderate effort (RPE 6/10) with 20 sec rest
+Cool down: 200m easy backstroke or freestyle
+Focus: Building aerobic base and technique in the water
+
+Write a session for EVERY one of their available training days. Make each session completely specific with exact distances, times, or intervals. Never be vague.
+
+---
+🏊 SWIM SESSIONS (Weekly structure)
+List 2 different swim session types they'll rotate through, with full workout details
+
+🚴 BIKE SESSIONS (Weekly structure)  
+List 2 different bike session types with full workout details including effort levels
+
+🏃 RUN SESSIONS (Weekly structure)
+List 2 different run session types with specific paces or effort levels
+
+🧱 BRICK SESSIONS
+Describe their weekly brick session format (bike immediately followed by run) with specific durations
+
+---
+💡 YOUR PERSONAL COACHING NOTES
+
+Write 5 specific coaching tips for ${answers.name} based on:
+1. Their weakest discipline (${answers.weakness}) — be very specific about how to improve it
+2. Their experience level (${answers.experience}) — what mistakes to avoid
+3. Nutrition timing around sessions
+4. Recovery and sleep importance
+5. Mental preparation for race day
+
+---
+🏁 RACE DAY STRATEGY — ${answers.race.toUpperCase()}
+
+Write specific race day advice for ${answers.race} including:
+- Morning routine and warm up
+- Swim start strategy
+- Transition 1 (T1) tips
+- Bike pacing strategy with specific effort levels
+- Nutrition on the bike
+- Transition 2 (T2) tips  
+- Run strategy and how to pace off the bike
+- Final push to the finish line
+
+End with a powerful 2-sentence motivational closing addressed to ${answers.name} personally.
+---
+
+Be extremely specific throughout. Use exact distances, times, effort levels (RPE scale 1-10), and heart rate zones where relevant. This should feel like advice from a personal coach who knows ${answers.name} well.`;
+
 
       try {
         const response = await fetch('/api/generate-plan', {
