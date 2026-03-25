@@ -3,1321 +3,467 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>irontri — Triathlon Training Plans</title>
+  <title>irontri — Get Your Training Plan</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
-    :root {
-      --blue: #1E90FF;
-      --blue-dark: #1478d4;
-      --bg: #0a0a0a;
-      --surface: rgba(255,255,255,0.04);
-      --border: rgba(255,255,255,0.08);
-      --text: #ffffff;
-      --text-muted: rgba(255,255,255,0.5);
-      --text-faint: rgba(255,255,255,0.3);
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      overflow-x: hidden;
-    }
-
-    /* ── NAV ── */
-    nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 56px;
-      height: 68px;
-      background: #1E90FF;
-      border-bottom: 1px solid rgba(255,255,255,0.15);
-    }
-
-    .nav-logo {
-      height: 120px;
-      width: auto;
-      display: block;
-      mix-blend-mode: screen;
-      filter: brightness(10);
-    }
-
-    .nav-logo-placeholder {
-      font-family: 'Syne', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      color: #fff;
-      letter-spacing: -0.5px;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 36px;
-      list-style: none;
-    }
-
-    .nav-links a {
-      color: rgba(255,255,255,0.85);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 400;
-      transition: color 0.2s;
-    }
-
-    .nav-links a:hover { color: #fff; }
-
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .btn-ghost {
-      background: transparent;
-      color: rgba(255,255,255,0.9);
-      border: 1px solid rgba(255,255,255,0.35);
-      padding: 9px 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 400;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      transition: all 0.2s;
-      text-decoration: none;
-    }
-
-    .btn-ghost:hover {
-      background: rgba(255,255,255,0.1);
-      border-color: rgba(255,255,255,0.6);
-    }
-
-    .btn-white {
-      background: #fff;
-      color: var(--blue);
-      border: none;
-      padding: 9px 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      transition: opacity 0.2s;
-      text-decoration: none;
-    }
-
-    .btn-white:hover { opacity: 0.9; }
-
-    /* ── HERO ── */
-    .hero {
-      padding: 110px 56px 90px;
-      max-width: 1200px;
-      margin: 0 auto;
-      animation: fadeUp 0.7s ease both;
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(30,144,255,0.12);
-      border: 1px solid rgba(30,144,255,0.35);
-      color: var(--blue);
-      padding: 6px 16px;
-      border-radius: 100px;
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 36px;
-    }
-
-    .badge-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--blue);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.25; }
-    }
-
-    .hero h1 {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(48px, 7vw, 82px);
-      font-weight: 800;
-      line-height: 1.02;
-      letter-spacing: -3px;
-      margin-bottom: 28px;
-      max-width: 820px;
-    }
-
-    .hero h1 .accent { color: var(--blue); }
-
-    .hero-sub {
-      font-size: 19px;
-      color: var(--text-muted);
-      max-width: 520px;
-      line-height: 1.7;
-      font-weight: 300;
-      margin-bottom: 48px;
-    }
-
-    .hero-cta {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .btn-primary {
-      background: var(--blue);
-      color: #fff;
-      border: none;
-      padding: 16px 36px;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: 500;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      transition: background 0.2s, transform 0.15s;
-      text-decoration: none;
-      display: inline-block;
-    }
-
-    .btn-primary:hover {
-      background: var(--blue-dark);
-      transform: translateY(-1px);
-    }
-
-    .btn-outline {
-      background: transparent;
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-      padding: 16px 36px;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: 400;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      transition: border-color 0.2s, color 0.2s;
-      text-decoration: none;
-      display: inline-block;
-    }
-
-    .btn-outline:hover {
-      border-color: rgba(255,255,255,0.3);
-      color: #fff;
-    }
-
-    .hero-social-proof {
-      margin-top: 56px;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    .avatar-stack {
-      display: flex;
-    }
-
-    .avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 2px solid var(--bg);
-      margin-left: -10px;
-      font-size: 13px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .avatar:first-child { margin-left: 0; }
-    .av1 { background: #2563eb; }
-    .av2 { background: #7c3aed; }
-    .av3 { background: #059669; }
-    .av4 { background: #dc2626; }
-    .av5 { background: #d97706; }
-
-    .social-text {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-
-    .social-text strong {
-      color: var(--text);
-      font-weight: 500;
-    }
-
-    /* ── STATS ── */
-    .stats-strip {
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      padding: 40px 56px;
-      display: flex;
-      justify-content: space-around;
-      flex-wrap: wrap;
-      gap: 24px;
-    }
-
-    .stat {
-      text-align: center;
-    }
-
-    .stat-num {
-      font-family: 'Syne', sans-serif;
-      font-size: 38px;
-      font-weight: 800;
-      letter-spacing: -1.5px;
-      color: #fff;
-    }
-
-    .stat-label {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    /* ── DISCIPLINES ── */
-    .disciplines {
-      padding: 80px 56px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .section-label {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      color: var(--blue);
-      margin-bottom: 16px;
-    }
-
-    .section-title {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(28px, 4vw, 46px);
-      font-weight: 800;
-      letter-spacing: -1.5px;
-      line-height: 1.08;
-      margin-bottom: 14px;
-      max-width: 640px;
-    }
-
-    .section-sub {
-      font-size: 16px;
-      color: var(--text-muted);
-      max-width: 500px;
-      line-height: 1.7;
-      margin-bottom: 56px;
-      font-weight: 300;
-    }
-
-    .disc-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-    }
-
-    .disc-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 32px;
-      transition: background 0.25s, border-color 0.25s, transform 0.2s;
-      cursor: default;
-    }
-
-    .disc-card:hover {
-      background: rgba(30,144,255,0.07);
-      border-color: rgba(30,144,255,0.3);
-      transform: translateY(-3px);
-    }
-
-    .disc-emoji {
-      font-size: 32px;
-      margin-bottom: 18px;
-      display: block;
-    }
-
-    .disc-name {
-      font-family: 'Syne', sans-serif;
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .disc-desc {
-      font-size: 14px;
-      color: var(--text-muted);
-      line-height: 1.65;
-    }
-
-    .disc-tag {
-      display: inline-block;
-      margin-top: 16px;
-      font-size: 11px;
-      color: var(--blue);
-      background: rgba(30,144,255,0.1);
-      border: 1px solid rgba(30,144,255,0.2);
-      padding: 3px 10px;
-      border-radius: 100px;
-    }
-
-    /* ── HOW IT WORKS ── */
-    .how {
-      padding: 80px 56px;
-      background: rgba(255,255,255,0.02);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .how-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-      margin-top: 16px;
-    }
-
-    .step-card {
-      padding: 32px;
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      position: relative;
-      transition: border-color 0.2s;
-    }
-
-    .step-card:hover { border-color: rgba(30,144,255,0.25); }
-
-    .step-num {
-      font-family: 'Syne', sans-serif;
-      font-size: 52px;
-      font-weight: 800;
-      color: rgba(30,144,255,0.15);
-      line-height: 1;
-      margin-bottom: 18px;
-    }
-
-    .step-title {
-      font-family: 'Syne', sans-serif;
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .step-desc {
-      font-size: 14px;
-      color: var(--text-muted);
-      line-height: 1.65;
-    }
-
-    /* ── FEATURES ── */
-    .features {
-      padding: 80px 56px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    @media (max-width: 768px) {
-      .features-grid { grid-template-columns: 1fr; }
-    }
-
-    .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 36px;
-      transition: background 0.2s;
-    }
-
-    .feature-card:hover { background: rgba(255,255,255,0.06); }
-
-    .feature-card.wide {
-      grid-column: span 2;
-      display: flex;
-      gap: 40px;
-      align-items: center;
-    }
-
-    @media (max-width: 768px) {
-      .feature-card.wide { grid-column: span 1; flex-direction: column; }
-    }
-
-    .feature-icon {
-      font-size: 36px;
-      margin-bottom: 18px;
-      display: block;
-    }
-
-    .feature-title {
-      font-family: 'Syne', sans-serif;
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .feature-desc {
-      font-size: 14px;
-      color: var(--text-muted);
-      line-height: 1.7;
-    }
-
-    .feature-wide-text { flex: 1; }
-
-    .feature-wide-visual {
-      flex: 1;
-      background: rgba(30,144,255,0.07);
-      border: 1px solid rgba(30,144,255,0.15);
-      border-radius: 12px;
-      padding: 28px;
-      min-height: 180px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .mock-session {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 8px;
-      padding: 10px 14px;
-    }
-
-    .mock-session-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .dot-swim { background: #38bdf8; }
-    .dot-bike { background: #fb923c; }
-    .dot-run  { background: #4ade80; }
-    .dot-rest { background: rgba(255,255,255,0.2); }
-
-    .mock-session-label {
-      font-size: 13px;
-      font-weight: 500;
-      flex: 1;
-    }
-
-    .mock-session-time {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    /* ── TESTIMONIALS ── */
-    .testimonials {
-      padding: 80px 56px;
-      background: rgba(255,255,255,0.02);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .testi-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .testi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .testi-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 30px;
-    }
-
-    .testi-stars {
-      color: #f59e0b;
-      font-size: 14px;
-      margin-bottom: 14px;
-    }
-
-    .testi-quote {
-      font-size: 15px;
-      line-height: 1.7;
-      color: rgba(255,255,255,0.8);
-      margin-bottom: 20px;
-      font-style: italic;
-    }
-
-    .testi-author {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .testi-avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 600;
-      color: #fff;
-    }
-
-    .testi-name {
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .testi-detail {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    /* ── PRICING ── */
-    .pricing {
-      padding: 80px 56px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .plans {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-    }
-
-    .plan {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 36px;
-      position: relative;
-      transition: transform 0.2s;
-    }
-
-    .plan:hover { transform: translateY(-3px); }
-
-    .plan.popular {
-      background: rgba(30,144,255,0.09);
-      border-color: rgba(30,144,255,0.45);
-    }
-
-    .plan-badge {
-      position: absolute;
-      top: -13px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--blue);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 500;
-      padding: 4px 16px;
-      border-radius: 100px;
-      white-space: nowrap;
-    }
-
-    .plan-tier {
-      font-size: 12px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 14px;
-    }
-
-    .plan-price {
-      font-family: 'Syne', sans-serif;
-      font-size: 48px;
-      font-weight: 800;
-      letter-spacing: -2px;
-      margin-bottom: 4px;
-      line-height: 1;
-    }
-
-    .plan-price sup {
-      font-size: 22px;
-      font-weight: 600;
-      vertical-align: super;
-    }
-
-    .plan-period {
-      font-size: 15px;
-      font-weight: 300;
-      color: var(--text-muted);
-      letter-spacing: 0;
-    }
-
-    .plan-desc {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin: 14px 0 24px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--border);
-      line-height: 1.6;
-    }
-
-    .plan-features {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 13px;
-      margin-bottom: 32px;
-    }
-
-    .plan-features li {
-      font-size: 14px;
-      color: rgba(255,255,255,0.7);
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      line-height: 1.4;
-    }
-
-    .check {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: rgba(30,144,255,0.18);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-
-    .check::after {
-      content: '';
-      width: 7px;
-      height: 4px;
-      border-left: 1.5px solid var(--blue);
-      border-bottom: 1.5px solid var(--blue);
-      transform: rotate(-45deg) translateY(-1px);
-      display: block;
-    }
-
-    .plan-cta {
-      width: 100%;
-      padding: 14px;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      transition: all 0.2s;
-      border: 1px solid rgba(255,255,255,0.15);
-      background: transparent;
-      color: rgba(255,255,255,0.85);
-    }
-
-    .plan.popular .plan-cta {
-      background: var(--blue);
-      border-color: transparent;
-      color: #fff;
-    }
-
-    .plan-cta:hover { opacity: 0.85; }
-
-    .pricing-note {
-      text-align: center;
-      margin-top: 24px;
-      font-size: 13px;
-      color: var(--text-faint);
-    }
-
-    /* ── DEVICES ── */
-    .devices {
-      padding: 80px 56px;
-      background: rgba(255,255,255,0.02);
-      border-top: 1px solid var(--border);
-    }
-
-    .devices-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 64px;
-      flex-wrap: wrap;
-    }
-
-    .devices-text { flex: 1; min-width: 280px; }
-
-    .devices-logos {
-      flex: 1;
-      min-width: 280px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-
-    .device-pill {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
-      transition: border-color 0.2s, color 0.2s;
-    }
-
-    .device-pill:hover {
-      border-color: rgba(30,144,255,0.3);
-      color: #fff;
-    }
-
-    .device-icon { font-size: 22px; margin-bottom: 6px; display: block; }
-
-    /* ── CTA BANNER ── */
-    .cta-banner {
-      margin: 0 56px 80px;
-      background: var(--blue);
-      border-radius: 24px;
-      padding: 72px 64px;
-      text-align: center;
-    }
-
-    .cta-banner h2 {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(28px, 4vw, 48px);
-      font-weight: 800;
-      letter-spacing: -1.5px;
-      margin-bottom: 16px;
-    }
-
-    .cta-banner p {
-      font-size: 16px;
-      color: rgba(255,255,255,0.75);
-      margin-bottom: 36px;
-      font-weight: 300;
-    }
-
-    .cta-banner .btn-white {
-      font-size: 16px;
-      padding: 16px 40px;
-      border-radius: 10px;
-    }
-
-    /* ── FOOTER ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 48px 56px 32px;
-    }
-
-    .footer-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 40px;
-      flex-wrap: wrap;
-      margin-bottom: 48px;
-    }
-
-    .footer-brand { max-width: 260px; }
-
-    .footer-logo-placeholder {
-      font-family: 'Syne', sans-serif;
-      font-size: 20px;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 12px;
-      /* Replace with <img> tag once logo hosted */
-    }
-
-    .footer-tagline {
-      font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.6;
-    }
-
-    .footer-col h4 {
-      font-size: 12px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--text-faint);
-      margin-bottom: 16px;
-    }
-
-    .footer-col ul {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .footer-col ul a {
-      font-size: 14px;
-      color: var(--text-muted);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
-    .footer-col ul a:hover { color: #fff; }
-
-    .footer-bottom {
-      border-top: 1px solid var(--border);
-      padding-top: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .footer-copy {
-      font-size: 13px;
-      color: var(--text-faint);
-    }
-
-    .footer-legal {
-      display: flex;
-      gap: 24px;
-      list-style: none;
-    }
-
-    .footer-legal a {
-      font-size: 13px;
-      color: var(--text-faint);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
-    .footer-legal a:hover { color: var(--text-muted); }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 768px) {
-      nav { padding: 0 24px; }
-      .nav-links { display: none; }
-      .hero { padding: 72px 24px 60px; }
-      .stats-strip { padding: 32px 24px; }
-      .disciplines, .features, .pricing, .how { padding: 60px 24px; }
-      .how .how-inner, .testi-inner { padding: 0; }
-      .testimonials, .devices { padding: 60px 24px; }
-      .cta-banner { margin: 0 24px 60px; padding: 48px 28px; }
-      footer { padding: 40px 24px 24px; }
-      .devices-inner { gap: 40px; }
-    }
+    :root { --blue:#1E90FF; --blue-dark:#1478d4; --bg:#0d0d0d; --surface:rgba(255,255,255,0.05); --border:rgba(255,255,255,0.1); --text:#fff; --muted:rgba(255,255,255,0.5); --faint:rgba(255,255,255,0.25); }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+    nav { display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:68px; background:#1E90FF; }
+    .nav-logo { display:flex; align-items:center; text-decoration:none; }
+    .nav-logo img { height:120px; width:auto; mix-blend-mode:screen; filter:brightness(10); }
+    .nav-back { color:rgba(255,255,255,0.85); text-decoration:none; font-size:14px; }
+    .progress-wrap { padding:24px 32px 0; max-width:560px; margin:0 auto; }
+    .progress-top { display:flex; justify-content:space-between; margin-bottom:8px; }
+    .prog-label { font-size:12px; color:var(--faint); }
+    .prog-track { height:3px; background:rgba(255,255,255,0.08); border-radius:100px; }
+    .prog-fill { height:100%; background:var(--blue); border-radius:100px; transition:width 0.4s; }
+    .quiz { max-width:560px; margin:0 auto; padding:40px 32px 80px; }
+    .question { display:none; animation:fu 0.35s ease both; }
+    .question.active { display:block; }
+    @keyframes fu { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    .q-step { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--blue); margin-bottom:10px; font-weight:500; }
+    .q-title { font-family:'Syne',sans-serif; font-size:clamp(22px,4vw,30px); font-weight:800; letter-spacing:-0.5px; line-height:1.15; margin-bottom:8px; }
+    .q-sub { font-size:15px; color:var(--muted); line-height:1.6; margin-bottom:28px; font-weight:300; }
+    .options { display:flex; flex-direction:column; gap:10px; margin-bottom:28px; }
+    .opt { display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; cursor:pointer; transition:all 0.15s; }
+    .opt:hover { background:rgba(30,144,255,0.07); border-color:rgba(30,144,255,0.3); }
+    .opt.sel { background:rgba(30,144,255,0.12); border-color:var(--blue); }
+    .opt-icon { font-size:22px; flex-shrink:0; width:32px; text-align:center; }
+    .opt-body { flex:1; }
+    .opt-title { font-size:15px; font-weight:500; }
+    .opt-desc { font-size:12px; color:var(--muted); margin-top:2px; line-height:1.4; }
+    .opt-radio { width:18px; height:18px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.2); flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+    .opt.sel .opt-radio { background:var(--blue); border-color:var(--blue); }
+    .opt.sel .opt-radio::after { content:''; width:6px; height:4px; border-left:1.5px solid #fff; border-bottom:1.5px solid #fff; transform:rotate(-45deg) translateY(-1px); display:block; }
+    .opts-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:28px; }
+    .opt-g { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 16px; cursor:pointer; transition:all 0.15s; text-align:center; }
+    .opt-g:hover { background:rgba(30,144,255,0.07); border-color:rgba(30,144,255,0.3); }
+    .opt-g.sel { background:rgba(30,144,255,0.12); border-color:var(--blue); }
+    .opt-g-icon { font-size:28px; margin-bottom:10px; display:block; }
+    .opt-g-title { font-size:15px; font-weight:500; margin-bottom:3px; }
+    .opt-g-sub { font-size:11px; color:var(--muted); line-height:1.4; }
+    .days-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:28px; }
+    .day-btn { width:54px; height:54px; border-radius:50%; border:1px solid var(--border); background:var(--surface); color:var(--muted); font-size:13px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s; display:flex; align-items:center; justify-content:center; }
+    .day-btn.sel { background:var(--blue); border-color:var(--blue); color:#fff; }
+    .slider-section { margin-bottom:28px; }
+    .slider-num { font-family:'Syne',sans-serif; font-size:52px; font-weight:800; letter-spacing:-2px; color:var(--blue); line-height:1; margin-bottom:4px; }
+    .slider-num span { font-size:18px; color:var(--muted); font-weight:300; letter-spacing:0; }
+    .slider-hint { font-size:13px; color:var(--faint); margin-bottom:16px; }
+    input[type=range] { width:100%; height:5px; -webkit-appearance:none; background:rgba(255,255,255,0.1); border-radius:100px; outline:none; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:var(--blue); cursor:pointer; }
+    .inp-stack { display:flex; flex-direction:column; gap:10px; margin-bottom:28px; }
+    .inp-stack input { width:100%; padding:15px 18px; background:var(--surface); border:1px solid var(--border); border-radius:12px; color:#fff; font-size:15px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.2s; }
+    .inp-stack input:focus { border-color:var(--blue); }
+    .inp-stack input::placeholder { color:var(--faint); }
+    .q-nav { display:flex; gap:10px; align-items:center; }
+    .btn-next { background:var(--blue); color:#fff; border:none; padding:15px 32px; border-radius:10px; font-size:15px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background 0.2s; }
+    .btn-next:hover { background:var(--blue-dark); }
+    .btn-next:disabled { opacity:0.35; cursor:not-allowed; }
+    .btn-back { background:transparent; color:var(--muted); border:1px solid var(--border); padding:15px 20px; border-radius:10px; font-size:14px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; }
+    .btn-back:hover { color:#fff; border-color:rgba(255,255,255,0.3); }
+    #summary { display:none; animation:fu 0.4s ease both; }
+    .sum-head { text-align:center; margin-bottom:32px; }
+    .sum-head h2 { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; letter-spacing:-1px; margin-bottom:8px; }
+    .sum-head p { font-size:15px; color:var(--muted); }
+    .sum-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:28px; }
+    .sum-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; }
+    .sum-label { font-size:11px; text-transform:uppercase; letter-spacing:1.5px; color:var(--faint); margin-bottom:6px; }
+    .sum-val { font-size:15px; font-weight:500; line-height:1.4; }
+    .sum-cta { width:100%; padding:16px; background:var(--blue); border:none; border-radius:12px; color:#fff; font-size:16px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; margin-bottom:10px; }
+    .sum-note { text-align:center; font-size:13px; color:var(--faint); }
+    #generating { display:none; text-align:center; padding:80px 24px; }
+    .spinner { width:48px; height:48px; border:3px solid rgba(30,144,255,0.15); border-top-color:var(--blue); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 24px; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .gen-title { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; letter-spacing:-0.5px; margin-bottom:8px; }
+    .gen-sub { font-size:14px; color:var(--muted); margin-bottom:32px; }
+    .gen-steps { display:flex; flex-direction:column; gap:10px; max-width:300px; margin:0 auto; text-align:left; }
+    .gen-step { display:flex; align-items:center; gap:12px; font-size:13px; color:var(--faint); transition:color 0.3s; }
+    .gen-step.done { color:rgba(255,255,255,0.8); }
+    .gen-dot { width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.12); flex-shrink:0; transition:background 0.3s; }
+    .gen-step.done .gen-dot { background:var(--blue); }
+    #plan-output { display:none; animation:fu 0.5s ease both; }
+    .plan-hero { background:rgba(30,144,255,0.1); border:1px solid rgba(30,144,255,0.2); border-radius:16px; padding:28px; text-align:center; margin-bottom:20px; }
+    .plan-hero h2 { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; letter-spacing:-0.5px; margin-bottom:6px; }
+    .plan-hero p { font-size:14px; color:var(--muted); }
+    .plan-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+    .plan-stat { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; }
+    .plan-stat-val { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; color:var(--blue); }
+    .plan-stat-label { font-size:11px; color:var(--muted); margin-top:3px; }
+    .plan-body { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px; margin-bottom:20px; font-size:14px; line-height:1.9; color:rgba(255,255,255,0.82); white-space:pre-wrap; }
+    .plan-actions { display:flex; flex-direction:column; gap:10px; }
+    .btn-save { background:var(--blue); color:#fff; border:none; width:100%; padding:16px; border-radius:12px; font-size:15px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    .btn-new { background:transparent; color:var(--muted); border:1px solid var(--border); width:100%; padding:14px; border-radius:12px; font-size:14px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    .plan-disc { text-align:center; font-size:12px; color:var(--faint); margin-top:12px; }
+    @media(max-width:480px) { .opts-grid{grid-template-columns:1fr} .plan-stats{grid-template-columns:repeat(2,1fr)} .sum-grid{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
+<nav>
+  <a href="index.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri" /></a>
+  <a href="index.html" class="nav-back">← Back</a>
+</nav>
+<div class="progress-wrap">
+  <div class="progress-top"><span class="prog-label" id="pt">Question 1 of 10</span><span class="prog-label" id="pp">10%</span></div>
+  <div class="prog-track"><div class="prog-fill" id="pf" style="width:9%"></div></div>
+</div>
+<div class="quiz">
 
-  <!-- NAV -->
-  <nav>
-    <img src="irontri_logo.png" alt="irontri" class="nav-logo" />
-    <ul class="nav-links">
-      <li><a href="#how">How it works</a></li>
-      <li><a href="races.html">Races</a></li>
-      <li><a href="#plans">Training plans</a></li>
-      <li><a href="#pricing">Pricing</a></li>
-      <li><a href="#devices">Devices</a></li>
-    </ul>
-    <div class="nav-right">
-      <a href="#" class="btn-ghost">Log in</a>
-      <a href="plan.html" class="btn-white">Start free trial</a>
-    </div>
-  </nav>
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-badge">
-      <span class="badge-dot"></span>
-      Personalised triathlon coaching
-    </div>
-    <h1>Train smarter.<br>Race <span class="accent">faster.</span><br>Finish stronger.</h1>
-    <p class="hero-sub">From training for a faster sprint distance to completing your first Ironman — personalised swim, bike & run plans built around your life.</p>
-    <div class="hero-cta">
-      <a href="plan.html" class="btn-primary">Get my free training plan →</a>
-      <a href="#how" class="btn-outline">See how it works</a>
-    </div>
-
-  </section>
-
-  <!-- PRICING CARD TOP -->
-  <div style="margin: 0 56px 32px; background: rgba(30,144,255,0.08); border: 1px solid rgba(30,144,255,0.3); border-radius: 24px; padding: 48px; text-align: center;">
-    <div style="display:inline-block; background:#1E90FF; color:#fff; font-size:12px; font-weight:500; padding:5px 16px; border-radius:100px; margin-bottom:20px; letter-spacing:1px; text-transform:uppercase;">Founding member offer</div>
-    <div style="font-family:'Syne',sans-serif; font-size:clamp(48px,7vw,80px); font-weight:800; letter-spacing:-3px; line-height:1; margin-bottom:8px;">$0</div>
-    <div style="font-size:16px; color:rgba(255,255,255,0.5); margin-bottom:24px; font-weight:300;">Free forever · First 500 members only</div>
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:12px; max-width:640px; margin:0 auto 32px; text-align:left;">
-      <div style="display:flex; align-items:center; gap:10px; font-size:14px; color:rgba(255,255,255,0.75);"><span style="width:18px;height:18px;border-radius:50%;background:rgba(30,144,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="width:7px;height:4px;border-left:1.5px solid #1E90FF;border-bottom:1.5px solid #1E90FF;transform:rotate(-45deg) translateY(-1px);display:block;"></span></span>Full personalised training plan</div>
-      <div style="display:flex; align-items:center; gap:10px; font-size:14px; color:rgba(255,255,255,0.75);"><span style="width:18px;height:18px;border-radius:50%;background:rgba(30,144,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="width:7px;height:4px;border-left:1.5px solid #1E90FF;border-bottom:1.5px solid #1E90FF;transform:rotate(-45deg) translateY(-1px);display:block;"></span></span>Swim, bike & run workouts</div>
-      <div style="display:flex; align-items:center; gap:10px; font-size:14px; color:rgba(255,255,255,0.75);"><span style="width:18px;height:18px;border-radius:50%;background:rgba(30,144,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="width:7px;height:4px;border-left:1.5px solid #1E90FF;border-bottom:1.5px solid #1E90FF;transform:rotate(-45deg) translateY(-1px);display:block;"></span></span>Garmin & Apple Watch sync</div>
-      <div style="display:flex; align-items:center; gap:10px; font-size:14px; color:rgba(255,255,255,0.75);"><span style="width:18px;height:18px;border-radius:50%;background:rgba(30,144,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="width:7px;height:4px;border-left:1.5px solid #1E90FF;border-bottom:1.5px solid #1E90FF;transform:rotate(-45deg) translateY(-1px);display:block;"></span></span>Adaptive plan updates</div>
-      <div style="display:flex; align-items:center; gap:10px; font-size:14px; color:rgba(255,255,255,0.75);"><span style="width:18px;height:18px;border-radius:50%;background:rgba(30,144,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="width:7px;height:4px;border-left:1.5px solid #1E90FF;border-bottom:1.5px solid #1E90FF;transform:rotate(-45deg) translateY(-1px);display:block;"></span></span>Nutrition timing guidance</div>
-      <div style="display:flex; align-items:center; gap:10px; font-size:14px; color:rgba(255,255,255,0.75);"><span style="width:18px;height:18px;border-radius:50%;background:rgba(30,144,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="width:7px;height:4px;border-left:1.5px solid #1E90FF;border-bottom:1.5px solid #1E90FF;transform:rotate(-45deg) translateY(-1px);display:block;"></span></span>Strength & mobility sessions</div>
-    </div>
-    <div style="margin-bottom:28px;">
-      <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin-bottom:10px;">
-        <div style="flex:1; max-width:300px; height:8px; background:rgba(255,255,255,0.08); border-radius:100px; overflow:hidden;">
-          <div style="width:12%; height:100%; background:#1E90FF; border-radius:100px;"></div>
-        </div>
-        <span style="font-size:13px; color:rgba(255,255,255,0.5); white-space:nowrap;">62 of 500 spots taken</span>
-      </div>
-      <p style="font-size:12px; color:rgba(255,255,255,0.3);">Spots are filling fast — price goes up once we hit 500 members.</p>
-    </div>
-    <a href="plan.html" style="display:inline-block; background:#1E90FF; color:#fff; border:none; max-width:320px; width:100%; font-size:16px; padding:16px; border-radius:10px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; text-decoration:none; text-align:center;">Claim my free spot →</a>
+<!-- Q1 -->
+<div class="question active" id="q1">
+  <div class="q-step">Your goal</div>
+  <div class="q-title">What do you want to achieve?</div>
+  <p class="q-sub">This shapes everything — your plan intensity, structure and weekly sessions.</p>
+  <div class="options">
+    <div class="opt" onclick="pick(this,'goal','Train for a specific triathlon race')"><span class="opt-icon">🏁</span><div class="opt-body"><div class="opt-title">Train for a specific race</div><div class="opt-desc">I have a race booked and need a structured plan to get there</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'goal','Complete my first triathlon')"><span class="opt-icon">🌱</span><div class="opt-body"><div class="opt-title">Complete my first triathlon</div><div class="opt-desc">I'm new to triathlon and want to cross that finish line</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'goal','Improve my triathlon performance and go faster')"><span class="opt-icon">📈</span><div class="opt-body"><div class="opt-title">Improve my performance</div><div class="opt-desc">I've done triathlons before and want to get faster</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'goal','Build triathlon fitness and consistency')"><span class="opt-icon">💪</span><div class="opt-body"><div class="opt-title">Build fitness and consistency</div><div class="opt-desc">No race yet — I want to get fitter across swim, bike and run</div></div><div class="opt-radio"></div></div>
   </div>
+  <div class="q-nav"><button class="btn-next" id="n1" onclick="go(2)" disabled>Continue →</button></div>
+</div>
 
-  <!-- WAITLIST BANNER -->
-  <div style="margin: 0 56px 48px; background: #0f0f0f; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 48px 64px; text-align: center;">
-    <div style="display:inline-block; background:rgba(30,144,255,0.12); border:1px solid rgba(30,144,255,0.3); color:#1E90FF; padding:6px 16px; border-radius:100px; font-size:13px; font-weight:500; margin-bottom:20px;">Coming soon</div>
-    <h2 style="font-family:'Syne',sans-serif; font-size:clamp(22px,3vw,36px); font-weight:800; letter-spacing:-1px; margin-bottom:12px;">The irontri app is coming.</h2>
-    <p style="font-size:15px; color:rgba(255,255,255,0.5); max-width:400px; margin:0 auto 28px; line-height:1.7; font-weight:300;">Be the first to know when we launch on iOS and Android — join the waitlist now.</p>
-
-    <!-- MailerLite Form -->
-    <div style="max-width:460px; margin:0 auto;">
-      <style type="text/css">
-        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper { background-color: transparent !important; border: none !important; }
-        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedContent h4 { display:none; }
-        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedContent p { display:none; }
-        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-fieldRow input { background-color: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.15) !important; color: #fff !important; border-radius: 10px !important; padding: 13px 18px !important; font-size: 15px !important; }
-        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-fieldRow input::placeholder { color: rgba(255,255,255,0.4) !important; }
-        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedSubmit button { background-color: #1E90FF !important; border-radius: 10px !important; font-size: 15px !important; padding: 13px !important; font-family: 'DM Sans', sans-serif !important; }
-        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedSubmit button:hover { background-color: #1478d4 !important; }
-        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-successBody .ml-form-successContent h4 { color: #1E90FF !important; font-family: 'DM Sans', sans-serif !important; }
-        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-successBody .ml-form-successContent p { color: rgba(255,255,255,0.6) !important; font-family: 'DM Sans', sans-serif !important; }
-      </style>
-      <div id="mlb2-38970482" class="ml-form-embedContainer ml-subscribe-form ml-subscribe-form-38970482">
-        <div class="ml-form-align-center">
-          <div class="ml-form-embedWrapper embedForm">
-            <div class="ml-form-embedBody ml-form-embedBodyDefault row-form">
-              <div class="ml-form-embedContent" style="">
-                <h4>Join the irontri waitlist</h4>
-                <p>Be first to know when we launch — free for our first 500 members</p>
-              </div>
-              <form class="ml-block-form" action="https://assets.mailerlite.com/jsonp/2220906/forms/182918184673740575/subscribe" data-code="" method="post" target="_blank">
-                <div class="ml-form-formContent">
-                  <div class="ml-form-fieldRow ml-last-item">
-                    <div class="ml-field-group ml-field-email ml-validate-email ml-validate-required">
-                      <input aria-label="email" aria-required="true" type="email" class="form-control" data-inputmask="" name="fields[email]" placeholder="Your email address" autocomplete="email">
-                    </div>
-                  </div>
-                </div>
-                <input type="hidden" name="ml-submit" value="1">
-                <div class="ml-form-embedSubmit">
-                  <button type="submit" class="primary">Join the waitlist</button>
-                  <button disabled="disabled" style="display:none;" type="button" class="loading">
-                    <div class="ml-form-embedSubmitLoad"></div>
-                    <span class="sr-only">Loading...</span>
-                  </button>
-                </div>
-                <input type="hidden" name="anticsrf" value="true">
-              </form>
-            </div>
-            <div class="ml-form-successBody row-success" style="display:none">
-              <div class="ml-form-successContent">
-                <h4>🎉 You're on the list!</h4>
-                <p>We'll be in touch when we launch.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <script>
-        function ml_webform_success_38970482() {
-          var $ = ml_jQuery || jQuery;
-          $('.ml-subscribe-form-38970482 .row-success').show();
-          $('.ml-subscribe-form-38970482 .row-form').hide();
-        }
-      </script>
-      <script src="https://groot.mailerlite.com/js/w/webforms.min.js?v95037e5bac78f29ed026832ca21a7c7b" type="text/javascript"></script>
-      <script>fetch("https://assets.mailerlite.com/jsonp/2220906/forms/182918184673740575/takel")</script>
-    </div>
+<!-- Q2 -->
+<div class="question" id="q2">
+  <div class="q-step">Your race</div>
+  <div class="q-title">What distance are you training for?</div>
+  <p class="q-sub">Each distance needs a completely different training approach.</p>
+  <div class="opts-grid">
+    <div class="opt-g" onclick="pg(this,'race','Sprint Triathlon')"><span class="opt-g-icon">⚡</span><div class="opt-g-title">Sprint</div><div class="opt-g-sub">750m · 20km · 5km</div></div>
+    <div class="opt-g" onclick="pg(this,'race','Olympic Triathlon')"><span class="opt-g-icon">🏅</span><div class="opt-g-title">Olympic</div><div class="opt-g-sub">1.5km · 40km · 10km</div></div>
+    <div class="opt-g" onclick="pg(this,'race','Half Ironman 70.3')"><span class="opt-g-icon">🔥</span><div class="opt-g-title">Half Ironman</div><div class="opt-g-sub">1.9km · 90km · 21km</div></div>
+    <div class="opt-g" onclick="pg(this,'race','Full Ironman')"><span class="opt-g-icon">🦾</span><div class="opt-g-title">Full Ironman</div><div class="opt-g-sub">3.8km · 180km · 42km</div></div>
   </div>
-      document.getElementById('waitlist-confirm-top').style.display = 'block';
-    }
-  </script>
+  <div class="q-nav"><button class="btn-back" onclick="go(1)">← Back</button><button class="btn-next" id="n2" onclick="go(3)" disabled>Continue →</button></div>
+</div>
 
-  <!-- STATS -->
-  <div class="stats-strip">
-    <div class="stat">
-      <div class="stat-num">Sprint → Ironman</div>
-      <div class="stat-label">All race distances covered</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">3 sports</div>
-      <div class="stat-label">One unified plan</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">4.9 ★</div>
-      <div class="stat-label">Athlete rated</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">Free forever</div>
-      <div class="stat-label">First 500 members</div>
-    </div>
+<!-- Q3 -->
+<div class="question" id="q3">
+  <div class="q-step">Your experience</div>
+  <div class="q-title">How experienced are you in triathlon?</div>
+  <p class="q-sub">Be honest — this sets the right load and avoids injury from day one.</p>
+  <div class="options">
+    <div class="opt" onclick="pick(this,'exp','Complete beginner — never done a triathlon')"><span class="opt-icon">🌱</span><div class="opt-body"><div class="opt-title">Complete beginner</div><div class="opt-desc">Never done a triathlon — new to at least one discipline</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'exp','Some experience — completed 1 to 3 triathlons')"><span class="opt-icon">🏊</span><div class="opt-body"><div class="opt-title">Some experience</div><div class="opt-desc">Done 1–3 triathlons, comfortable with all three disciplines</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'exp','Intermediate — race regularly and want to improve')"><span class="opt-icon">🚴</span><div class="opt-body"><div class="opt-title">Intermediate</div><div class="opt-desc">Race regularly and want structured training to improve</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'exp','Advanced — competitive triathlete chasing a personal best')"><span class="opt-icon">🏆</span><div class="opt-body"><div class="opt-title">Advanced / Competitive</div><div class="opt-desc">Serious racer optimising for a PB</div></div><div class="opt-radio"></div></div>
   </div>
+  <div class="q-nav"><button class="btn-back" onclick="go(2)">← Back</button><button class="btn-next" id="n3" onclick="go(4)" disabled>Continue →</button></div>
+</div>
 
-  <!-- DISCIPLINES -->
-  <section class="disciplines" id="plans">
-    <div class="section-label">Three disciplines. One plan.</div>
-    <div class="section-title">Every session has a purpose.</div>
-    <p class="section-sub">Irontri balances your swim, bike, and run training so nothing gets neglected — and nothing burns you out.</p>
-    <div class="disc-grid">
-      <div class="disc-card">
-        <span class="disc-emoji">🏊</span>
-        <div class="disc-name">Swim</div>
-        <p class="disc-desc">Technique drills, open water sets, endurance blocks, and race-pace intervals structured to make you efficient and confident in the water.</p>
-        <span class="disc-tag">Pool & open water</span>
-      </div>
-      <div class="disc-card">
-        <span class="disc-emoji">🚴</span>
-        <div class="disc-name">Bike</div>
-        <p class="disc-desc">Power-based intervals, long endurance rides, and brick sessions timed so you peak exactly on race day — not a week before.</p>
-        <span class="disc-tag">Indoor & outdoor</span>
-      </div>
-      <div class="disc-card">
-        <span class="disc-emoji">🏃</span>
-        <div class="disc-name">Run</div>
-        <p class="disc-desc">Pace-structured workouts and off-bike runs that build race-ready legs without grinding you into the ground mid-block.</p>
-        <span class="disc-tag">Includes brick runs</span>
-      </div>
-      <div class="disc-card">
-        <span class="disc-emoji">💪</span>
-        <div class="disc-name">Strength</div>
-        <p class="disc-desc">Targeted strength and mobility sessions that reduce injury risk, improve economy across all three disciplines, and keep you racing longer.</p>
-        <span class="disc-tag">Bodyweight & gym</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- HOW IT WORKS -->
-  <section class="how" id="how">
-    <div class="how-inner">
-      <div class="section-label">Personalised triathlon coaching</div>
-      <div class="section-title">From sign-up to start line in minutes.</div>
-      <p class="section-sub">Tell us about you, get your plan, start training. It really is that simple.</p>
-      <div class="steps">
-        <div class="step-card">
-          <div class="step-num">01</div>
-          <div class="step-title">Tell us about you</div>
-          <p class="step-desc">Your experience, your race, your goals, how many hours you can train. Takes under 5 minutes.</p>
-        </div>
-        <div class="step-card">
-          <div class="step-num">02</div>
-          <div class="step-title">Get your plan instantly</div>
-          <p class="step-desc">We build a fully periodised, week-by-week swim, bike, and run plan tailored to exactly who you are and what race you're targeting.</p>
-        </div>
-        <div class="step-card">
-          <div class="step-num">03</div>
-          <div class="step-title">Train with guidance</div>
-          <p class="step-desc">Every session is fully explained — pace targets, intervals, technique cues — so you always know what to do and why.</p>
-        </div>
-        <div class="step-card">
-          <div class="step-num">04</div>
-          <div class="step-title">Your plan adapts</div>
-          <p class="step-desc">Miss a session? Had a tough week? Irontri adjusts your upcoming training automatically so you're always on track.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FEATURES -->
-  <section class="features">
-    <div class="section-label">Built for triathletes</div>
-    <div class="section-title">Everything you need. Nothing you don't.</div>
-    <p class="section-sub">Irontri is laser-focused on triathlon. Every feature is built around the unique demands of three-sport training.</p>
-    <div class="features-grid">
-      <div class="feature-card wide">
-        <div class="feature-wide-text">
-          <span class="feature-icon">📅</span>
-          <div class="feature-title">Plans that actually adapt</div>
-          <p class="feature-desc">Unlike static PDF plans, irontri watches how you're responding to training week by week and adjusts load, intensity, and session type accordingly. It's like having a coach who always knows how you're feeling.</p>
-        </div>
-        <div class="feature-wide-visual">
-          <div class="mock-session">
-            <div class="mock-session-dot dot-swim"></div>
-            <span class="mock-session-label">Swim — Threshold sets</span>
-            <span class="mock-session-time">45 min</span>
-          </div>
-          <div class="mock-session">
-            <div class="mock-session-dot dot-bike"></div>
-            <span class="mock-session-label">Bike — Long endurance ride</span>
-            <span class="mock-session-time">2h 30 min</span>
-          </div>
-          <div class="mock-session">
-            <div class="mock-session-dot dot-run"></div>
-            <span class="mock-session-label">Brick run — easy pace</span>
-            <span class="mock-session-time">20 min</span>
-          </div>
-          <div class="mock-session">
-            <div class="mock-session-dot dot-rest"></div>
-            <span class="mock-session-label">Recovery & mobility</span>
-            <span class="mock-session-time">Rest day</span>
-          </div>
-        </div>
-      </div>
-      <div class="feature-card">
-        <span class="feature-icon">⌚</span>
-        <div class="feature-title">Syncs with your devices</div>
-        <p class="feature-desc">Connect Garmin, Apple Watch, or Wahoo. Your completed sessions feed straight back into irontri so your plan always reflects reality.</p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-icon">🏁</span>
-        <div class="feature-title">Race-distance specific</div>
-        <p class="feature-desc">Sprint, Olympic, 70.3, or full Ironman — each plan is built around the unique physical demands of your race distance, not a generic template.</p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-icon">🧱</span>
-        <div class="feature-title">Brick training built in</div>
-        <p class="feature-desc">Brick sessions are a non-negotiable part of triathlon prep. Irontri schedules them at the right frequency and builds them up progressively.</p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-icon">🥗</span>
-        <div class="feature-title">Nutrition timing guidance</div>
-        <p class="feature-desc">Know what to eat and when around your sessions, and get race-day fuelling strategies built specifically for your distance.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- TESTIMONIALS -->
-  <section class="testimonials">
-    <div class="testi-inner">
-      <div class="section-label">Athlete stories</div>
-      <div class="section-title">Real athletes. Real results.</div>
-      <div class="testi-grid">
-        <div class="testi-card">
-          <div class="testi-stars">★★★★★</div>
-          <p class="testi-quote">"I went from never having done a triathlon to finishing my first 70.3 in under 6 hours. The plan always felt manageable but pushed me in the right places."</p>
-          <div class="testi-author">
-            <div class="testi-avatar" style="background:#2563eb;">JT</div>
-            <div>
-              <div class="testi-name">James T.</div>
-              <div class="testi-detail">First 70.3 finisher · Perth, WA</div>
-            </div>
-          </div>
-        </div>
-        <div class="testi-card">
-          <div class="testi-stars">★★★★★</div>
-          <p class="testi-quote">"I love that it balances all three disciplines. I used to overtrain on the bike and then my run would fall apart. Not anymore."</p>
-          <div class="testi-author">
-            <div class="testi-avatar" style="background:#7c3aed;">SK</div>
-            <div>
-              <div class="testi-name">Sarah K.</div>
-              <div class="testi-detail">Olympic distance · Melbourne</div>
-            </div>
-          </div>
-        </div>
-        <div class="testi-card">
-          <div class="testi-stars">★★★★★</div>
-          <p class="testi-quote">"The adaptive plan feature is a game changer. Life gets in the way and irontri just adjusts. I've never felt more prepared for a race."</p>
-          <div class="testi-author">
-            <div class="testi-avatar" style="background:#059669;">ML</div>
-            <div>
-              <div class="testi-name">Marcus L.</div>
-              <div class="testi-detail">Ironman finisher · Auckland, NZ</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- DEVICES -->
-  <section class="devices" id="devices">
-    <div class="devices-inner">
-      <div class="devices-text">
-        <div class="section-label">Device sync</div>
-        <div class="section-title">Train with the gear you already own.</div>
-        <p class="section-sub">Irontri connects with your existing devices and apps — no new hardware required.</p>
-        <a href="plan.html" class="btn-primary" style="margin-top:8px;">Get started free →</a>
-      </div>
-      <div class="devices-logos">
-        <div class="device-pill"><span class="device-icon">⌚</span>Garmin</div>
-        <div class="device-pill"><span class="device-icon">🍎</span>Apple Watch</div>
-        <div class="device-pill"><span class="device-icon">🔶</span>Wahoo</div>
-        <div class="device-pill"><span class="device-icon">🏃</span>Strava</div>
-        <div class="device-pill"><span class="device-icon">💜</span>COROS</div>
-        <div class="device-pill"><span class="device-icon">📊</span>TrainingPeaks</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA BANNER -->
-  <div class="cta-banner">
-    <h2>Your first race is closer than you think.</h2>
-    <p>Your race is closer than you think. Start free — no credit card needed.</p>
-    <a href="plan.html" class="btn-white">Get my free training plan</a>
+<!-- Q4 -->
+<div class="question" id="q4">
+  <div class="q-step">Your fitness</div>
+  <div class="q-title">How would you describe your general fitness right now?</div>
+  <p class="q-sub">Not triathlon-specific — your overall activity level today.</p>
+  <div class="options">
+    <div class="opt" onclick="pick(this,'fitness','Low — mostly inactive, just starting to exercise')"><span class="opt-icon">🛋️</span><div class="opt-body"><div class="opt-title">Just getting started</div><div class="opt-desc">Mostly inactive — building from the ground up</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'fitness','Moderate — active a few times a week')"><span class="opt-icon">🚶</span><div class="opt-body"><div class="opt-title">Moderately active</div><div class="opt-desc">Exercise a few times a week but not very structured</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'fitness','Good — training consistently 4 or more times a week')"><span class="opt-icon">🏃</span><div class="opt-body"><div class="opt-title">Good fitness</div><div class="opt-desc">Training consistently 4+ times a week already</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'fitness','Very fit — high training volume and strong aerobic base')"><span class="opt-icon">⚡</span><div class="opt-body"><div class="opt-title">Very fit</div><div class="opt-desc">High volume, strong aerobic base across multiple sports</div></div><div class="opt-radio"></div></div>
   </div>
+  <div class="q-nav"><button class="btn-back" onclick="go(3)">← Back</button><button class="btn-next" id="n4" onclick="go(5)" disabled>Continue →</button></div>
+</div>
 
+<!-- Q5 -->
+<div class="question" id="q5">
+  <div class="q-step">Your strengths</div>
+  <div class="q-title">Which discipline needs the most work?</div>
+  <p class="q-sub">We'll give it extra focus while keeping the other two moving forward.</p>
+  <div class="options">
+    <div class="opt" onclick="pick(this,'weak','Swim — water confidence and technique need work')"><span class="opt-icon">🏊</span><div class="opt-body"><div class="opt-title">Swim</div><div class="opt-desc">Technique, breathing or open water confidence needs work</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'weak','Bike — need to build power and endurance on the bike')"><span class="opt-icon">🚴</span><div class="opt-body"><div class="opt-title">Bike</div><div class="opt-desc">Losing time on the bike — need more power and endurance</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'weak','Run — especially running off the bike in brick sessions')"><span class="opt-icon">🏃</span><div class="opt-body"><div class="opt-title">Run</div><div class="opt-desc">Legs fall apart on the run, especially coming off the bike</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'weak','All three equally — need balanced improvement')"><span class="opt-icon">⚖️</span><div class="opt-body"><div class="opt-title">All three equally</div><div class="opt-desc">No single weakness — balanced improvement needed</div></div><div class="opt-radio"></div></div>
+  </div>
+  <div class="q-nav"><button class="btn-back" onclick="go(4)">← Back</button><button class="btn-next" id="n5" onclick="go(6)" disabled>Continue →</button></div>
+</div>
 
-  <footer>
-    <div class="footer-top">
-      <div class="footer-brand">
-    <img src="irontri_logo.png" alt="irontri" style="height:32px; width:auto; margin-bottom:12px;" />
-        <p class="footer-tagline">Personalised triathlon training plans for every distance and every athlete.</p>
-      </div>
-      <div class="footer-col">
-        <h4>Product</h4>
-        <ul>
-          <li><a href="#">How it works</a></li>
-          <li><a href="#">Training plans</a></li>
-          <li><a href="#">Pricing</a></li>
-          <li><a href="#">Device sync</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4>Training</h4>
-        <ul>
-          <li><a href="#">Sprint triathlon</a></li>
-          <li><a href="#">Olympic triathlon</a></li>
-          <li><a href="#">Half Ironman (70.3)</a></li>
-          <li><a href="#">Full Ironman</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4>Company</h4>
-        <ul>
-          <li><a href="#">About</a></li>
-          <li><a href="#">Blog</a></li>
-          <li><a href="#">Coaches</a></li>
-          <li><a href="#">Contact</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p class="footer-copy">© 2026 irontri. All rights reserved.</p>
-      <ul class="footer-legal">
-        <li><a href="#">Privacy policy</a></li>
-        <li><a href="#">Terms of service</a></li>
-        <li><a href="#">Cookie policy</a></li>
-      </ul>
-    </div>
-  </footer>
+<!-- Q6 -->
+<div class="question" id="q6">
+  <div class="q-step">Your schedule</div>
+  <div class="q-title">How many hours can you train each week?</div>
+  <p class="q-sub">Be realistic. A plan you stick to always beats an ambitious one you abandon.</p>
+  <div class="slider-section">
+    <div class="slider-num" id="hv">8 <span>hours/week</span></div>
+    <div class="slider-hint" id="hh">Good balance for most athletes</div>
+    <input type="range" min="3" max="20" value="8" step="1" oninput="setH(this.value)" />
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:6px;"><span>3 hrs</span><span>20 hrs</span></div>
+  </div>
+  <div class="q-nav"><button class="btn-back" onclick="go(5)">← Back</button><button class="btn-next" onclick="go(7)">Continue →</button></div>
+</div>
 
+<!-- Q7 -->
+<div class="question" id="q7">
+  <div class="q-step">Your schedule</div>
+  <div class="q-title">Which days can you train?</div>
+  <p class="q-sub">Pick every available day. We'll space sessions to maximise recovery.</p>
+  <div class="days-row">
+    <button class="day-btn" onclick="td(this,'Monday')">Mon</button>
+    <button class="day-btn" onclick="td(this,'Tuesday')">Tue</button>
+    <button class="day-btn" onclick="td(this,'Wednesday')">Wed</button>
+    <button class="day-btn" onclick="td(this,'Thursday')">Thu</button>
+    <button class="day-btn" onclick="td(this,'Friday')">Fri</button>
+    <button class="day-btn" onclick="td(this,'Saturday')">Sat</button>
+    <button class="day-btn" onclick="td(this,'Sunday')">Sun</button>
+  </div>
+  <div class="q-nav"><button class="btn-back" onclick="go(6)">← Back</button><button class="btn-next" id="n7" onclick="go(8)" disabled>Continue →</button></div>
+</div>
+
+<!-- Q8 -->
+<div class="question" id="q8">
+  <div class="q-step">Your equipment</div>
+  <div class="q-title">Do you have access to a swimming pool?</div>
+  <p class="q-sub">This affects how we structure your swim sessions each week.</p>
+  <div class="options">
+    <div class="opt" onclick="pick(this,'pool','Yes — regular pool access at a gym or public pool')"><span class="opt-icon">🏊</span><div class="opt-body"><div class="opt-title">Yes — regular pool access</div><div class="opt-desc">I can get to a pool most weeks for structured swim sets</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'pool','Limited — occasional pool access only')"><span class="opt-icon">📅</span><div class="opt-body"><div class="opt-title">Limited — occasional access</div><div class="opt-desc">I can get to a pool sometimes but not every week</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'pool','No — open water only (lake, river or sea)')"><span class="opt-icon">🌊</span><div class="opt-body"><div class="opt-title">No — open water only</div><div class="opt-desc">All swim training done in open water</div></div><div class="opt-radio"></div></div>
+  </div>
+  <div class="q-nav"><button class="btn-back" onclick="go(7)">← Back</button><button class="btn-next" id="n8" onclick="go(9)" disabled>Continue →</button></div>
+</div>
+
+<!-- Q9 -->
+<div class="question" id="q9">
+  <div class="q-step">Your health</div>
+  <div class="q-title">Any injuries we should know about?</div>
+  <p class="q-sub">Your safety comes first. We'll adjust the plan to keep you training consistently.</p>
+  <div class="options">
+    <div class="opt" onclick="pick(this,'injury','No injuries — fully fit and ready to train hard')"><span class="opt-icon">✅</span><div class="opt-body"><div class="opt-title">Fully fit — no issues</div><div class="opt-desc">No injuries or physical limitations right now</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'injury','Recovering from a recent injury — easing back in')"><span class="opt-icon">🩹</span><div class="opt-body"><div class="opt-title">Recovering from injury</div><div class="opt-desc">Had a recent injury, need a careful gradual return</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'injury','Managing a niggle — training but being cautious')"><span class="opt-icon">⚠️</span><div class="opt-body"><div class="opt-title">Managing a niggle</div><div class="opt-desc">Minor ache or tightness — training through it carefully</div></div><div class="opt-radio"></div></div>
+    <div class="opt" onclick="pick(this,'injury','Long-term condition requiring a modified approach')"><span class="opt-icon">💊</span><div class="opt-body"><div class="opt-title">Long-term condition</div><div class="opt-desc">A permanent condition that affects how I train</div></div><div class="opt-radio"></div></div>
+  </div>
+  <div class="q-nav"><button class="btn-back" onclick="go(8)">← Back</button><button class="btn-next" id="n9" onclick="go(10)" disabled>Continue →</button></div>
+</div>
+
+<!-- Q10 - AGE CATEGORY -->
+<div class="question" id="q10">
+  <div class="q-step">Your age group</div>
+  <div class="q-title">What's your age category?</div>
+  <p class="q-sub">Age affects recovery time, training load and which category you race in. We'll tailor the plan accordingly.</p>
+  <div class="opts-grid">
+    <div class="opt-g" onclick="pg(this,'age','18-24 — Under 25 age group')"><span class="opt-g-icon">🔥</span><div class="opt-g-title">18–24</div><div class="opt-g-sub">Under 25 age group</div></div>
+    <div class="opt-g" onclick="pg(this,'age','25-29 — Age group 25-29')"><span class="opt-g-icon">⚡</span><div class="opt-g-title">25–29</div><div class="opt-g-sub">Age group 25-29</div></div>
+    <div class="opt-g" onclick="pg(this,'age','30-34 — Age group 30-34')"><span class="opt-g-icon">💪</span><div class="opt-g-title">30–34</div><div class="opt-g-sub">Age group 30-34</div></div>
+    <div class="opt-g" onclick="pg(this,'age','35-39 — Age group 35-39')"><span class="opt-g-icon">🏅</span><div class="opt-g-title">35–39</div><div class="opt-g-sub">Age group 35-39</div></div>
+    <div class="opt-g" onclick="pg(this,'age','40-44 — Age group 40-44')"><span class="opt-g-icon">🎯</span><div class="opt-g-title">40–44</div><div class="opt-g-sub">Age group 40-44</div></div>
+    <div class="opt-g" onclick="pg(this,'age','45-49 — Age group 45-49')"><span class="opt-g-icon">🏆</span><div class="opt-g-title">45–49</div><div class="opt-g-sub">Age group 45-49</div></div>
+    <div class="opt-g" onclick="pg(this,'age','50-54 — Age group 50-54')"><span class="opt-g-icon">⭐</span><div class="opt-g-title">50–54</div><div class="opt-g-sub">Age group 50-54</div></div>
+    <div class="opt-g" onclick="pg(this,'age','55+ — Age group 55 and over')"><span class="opt-g-icon">🌟</span><div class="opt-g-title">55+</div><div class="opt-g-sub">Age group 55 and over</div></div>
+  </div>
+  <div class="q-nav"><button class="btn-back" onclick="go(9)">← Back</button><button class="btn-next" id="n10" onclick="go(11)" disabled>Continue →</button></div>
+</div>
+
+<!-- Q11 -->
+<div class="question" id="q11">
+  <div class="q-step">Almost there!</div>
+  <div class="q-title">Last step — tell us who we're coaching</div>
+  <p class="q-sub">We'll use your race date to build the perfect plan length and work backwards from there.</p>
+  <div class="inp-stack">
+    <input type="text" id="iname" placeholder="Your first name" oninput="cf()" />
+    <input type="email" id="iemail" placeholder="Your email address" oninput="cf()" />
+    <input type="date" id="idate" oninput="cf()" />
+  </div>
+  <div class="q-nav"><button class="btn-back" onclick="go(10)">← Back</button><button class="btn-next" id="n11" onclick="showSum()" disabled>See my plan summary →</button></div>
+</div>
+
+<!-- SUMMARY -->
+<div id="summary">
+  <div class="sum-head"><h2 id="sh2">Your plan is ready to build</h2><p id="sp">Here's what we're working with</p></div>
+  <div class="sum-grid" id="sg"></div>
+  <button class="sum-cta" onclick="build()">Build my personalised plan →</button>
+  <p class="sum-note">Free for founding members · No credit card needed</p>
+</div>
+
+<!-- GENERATING -->
+<div id="generating">
+  <div class="spinner"></div>
+  <div class="gen-title">Building your plan...</div>
+  <p class="gen-sub">Around 20 seconds</p>
+  <div class="gen-steps">
+    <div class="gen-step" id="gs1"><div class="gen-dot"></div>Analysing your race & goal</div>
+    <div class="gen-step" id="gs2"><div class="gen-dot"></div>Calculating weekly training load</div>
+    <div class="gen-step" id="gs3"><div class="gen-dot"></div>Structuring swim, bike & run sessions</div>
+    <div class="gen-step" id="gs4"><div class="gen-dot"></div>Building your phase-by-phase schedule</div>
+    <div class="gen-step" id="gs5"><div class="gen-dot"></div>Writing your coaching notes</div>
+    <div class="gen-step" id="gs6"><div class="gen-dot"></div>Finalising your race day strategy</div>
+  </div>
+</div>
+
+<!-- PLAN -->
+<div id="plan-output">
+  <div class="plan-hero"><h2 id="pot"></h2><p id="pos"></p></div>
+  <div class="plan-stats" id="pst"></div>
+  <div class="plan-body" id="pb">Loading...</div>
+  <div class="plan-actions">
+    <button class="btn-save" onclick="window.print()">📄 Save / Print my plan</button>
+    <button class="btn-new" onclick="location.reload()">Start a new plan</button>
+  </div>
+  <p class="plan-disc">Always consult a doctor before starting a new training programme.</p>
+</div>
+
+</div>
+<script>
+const A={goal:'',race:'',exp:'',fitness:'',weak:'',hours:8,days:[],pool:'',injury:'',age:'',name:'',email:'',date:''};
+const T=11;
+function prog(n){const p=Math.round(n/T*100);document.getElementById('pf').style.width=p+'%';document.getElementById('pt').textContent='Question '+n+' of '+T;document.getElementById('pp').textContent=p+'%';}
+function go(n){document.querySelectorAll('.question').forEach(q=>q.classList.remove('active'));const t=document.getElementById('q'+n);if(t){t.classList.add('active');prog(n);}window.scrollTo({top:0,behavior:'smooth'});}
+function pick(el,key,val){el.closest('.options').querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={goal:'n1',exp:'n3',fitness:'n4',weak:'n5',pool:'n8',injury:'n9'};if(m[key])document.getElementById(m[key]).disabled=false;}
+function pg(el,key,val){el.closest('.opts-grid').querySelectorAll('.opt-g').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n10'};if(m[key])document.getElementById(m[key]).disabled=false;}
+function setH(v){A.hours=parseInt(v);document.getElementById('hv').innerHTML=v+' <span>hours/week</span>';const h={3:'Light training — great for beginners',5:'Good starting point',7:'Solid training volume',8:'Good balance for most athletes',10:'Strong commitment',12:'Serious training load',15:'High performance territory',18:'Elite-level volume',20:'Maximum training load'};const k=Object.keys(h).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);document.getElementById('hh').textContent=h[k]||'';}
+function td(btn,day){btn.classList.toggle('sel');if(btn.classList.contains('sel'))A.days.push(day);else A.days=A.days.filter(d=>d!==day);document.getElementById('n7').disabled=A.days.length===0;}
+function cf(){A.name=document.getElementById('iname').value.trim();A.email=document.getElementById('iemail').value.trim();A.date=document.getElementById('idate').value;document.getElementById('n11').disabled=!(A.name.length>1&&A.email.includes('@'));}
+function wks(d){if(!d)return 16;const w=Math.round((new Date(d)-new Date())/(7*24*60*60*1000));return Math.min(Math.max(w,8),24);}
+function showSum(){const w=wks(A.date);document.querySelectorAll('.question').forEach(q=>q.classList.remove('active'));document.getElementById('summary').style.display='block';document.getElementById('pf').style.width='100%';document.getElementById('pt').textContent='Plan ready';document.getElementById('pp').textContent='100%';document.getElementById('sh2').textContent=A.name+"'s "+A.race+" Plan";document.getElementById('sp').textContent=w+' weeks of personalised triathlon coaching';const items=[{l:'Race',v:A.race},{l:'Goal',v:A.goal.split(' — ')[0]||A.goal},{l:'Experience',v:A.exp.split(' — ')[0]||A.exp},{l:'Age group',v:A.age.split(' — ')[0]||A.age},{l:'Weekly training',v:A.hours+' hours'},{l:'Training days',v:A.days.join(', ')},{l:'Focus discipline',v:A.weak.split(' — ')[0]||A.weak},{l:'Pool access',v:A.pool.split(' — ')[0]||A.pool}];document.getElementById('sg').innerHTML=items.map(i=>`<div class="sum-card"><div class="sum-label">${i.l}</div><div class="sum-val">${i.v}</div></div>`).join('');window.scrollTo({top:0,behavior:'smooth'});}
+async function build(){
+  const w=wks(A.date);
+  document.getElementById('summary').style.display='none';
+  document.getElementById('generating').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+  ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
+
+  const prompt=`You are a world-class triathlon coach. Your plans are like Runna but for triathlon — incredibly specific, science-backed, and personally tailored. Every session has a clear purpose. You use the 80/20 principle. You never give vague advice.
+
+ATHLETE:
+Name: ${A.name}
+Goal: ${A.goal}
+Race: ${A.race}
+Experience: ${A.exp}
+Current fitness: ${A.fitness}
+Weakest discipline: ${A.weak}
+Weekly hours: ${A.hours}
+Training days: ${A.days.join(', ')}
+Pool access: ${A.pool}
+Injury status: ${A.injury}
+Age category: ${A.age}
+Weeks to race: ${w}
+
+Write a detailed personalised plan in exactly this format:
+
+---
+Hey ${A.name}! 👋
+
+[2-3 warm direct sentences. Reference their ${A.race}, ${w} weeks, and focus on ${A.weak.split(' — ')[0] || A.weak}. Sound like a coach who read their profile.]
+
+---
+📋 YOUR PLAN AT A GLANCE
+Race: ${A.race}
+Plan length: ${w} weeks
+Weekly hours: ${A.hours} hrs across ${A.days.length} sessions
+Training days: ${A.days.join(', ')}
+Key priorities: [Top 3 priorities based on their profile]
+
+---
+🗓️ TRAINING PHASES
+
+BASE (Weeks 1–${Math.round(w*0.4)}): 80% easy (RPE 4-6/10). Aerobic base, technique, consistency. [2 specific sentences for this athlete]
+
+BUILD (Weeks ${Math.round(w*0.4)+1}–${Math.round(w*0.75)}): Introduce tempo, intervals, bricks. RPE 7-8/10 on hard days. [2 specific sentences]
+
+PEAK (Weeks ${Math.round(w*0.75)+1}–${w-1}): Race-pace efforts. Simulate race conditions. [2 sentences]
+
+TAPER (Week ${w}): Cut volume 40-50%. Keep intensity. Arrive fresh. [1 sentence]
+
+---
+📅 WEEK 1 — FULL TRAINING SCHEDULE
+
+For EVERY day in: ${A.days.join(', ')}
+Use this exact format:
+
+[DAY] — [DISCIPLINE] | [X min]
+🎯 Purpose: [Why this session matters]
+🔥 Warm up: [Specific warm up]
+💪 Main set: [EXACT workout — distances in metres, intervals, reps, rest, RPE X/10]
+❄️ Cool down: [Specific cool down]
+📊 Effort: RPE [X]/10
+
+[For rest days: "REST DAY — 20 min easy walk or gentle stretching only"]
+
+---
+🏊 SWIM SESSIONS (Rotating each week)
+Session A — [Name]: [Full pool/open water set with exact distances]
+Session B — [Name]: [Full set with exact distances and efforts]
+Key drill: [1 specific technique drill with instructions]
+
+---
+🚴 BIKE SESSIONS
+Session A — [Name, e.g. Aerobic Endurance]: [Full workout with duration, cadence, effort targets]
+Session B — [Name, e.g. Threshold Intervals]: [Full workout]
+
+---
+🏃 RUN SESSIONS
+Session A — [Name, e.g. Easy Aerobic Run]: [Full workout — RPE, duration, any specific focus]
+Session B — [Name, e.g. Tempo Intervals]: [Full workout with specific intervals]
+
+---
+🧱 BRICK SESSION (weekly)
+[Specific bike duration + effort, then immediate run duration + effort. Tell them what to expect with heavy legs.]
+
+---
+💪 STRENGTH SESSION (2x per week)
+[8 exercises with sets, reps — triathlon-focused: core, glutes, hip stability, swim-specific]
+
+---
+🎯 ${A.weak.split(' — ')[0].toUpperCase()} IMPROVEMENT TIPS
+[3 specific coaching points to improve their weakest discipline. Include drills and common mistakes.]
+
+---
+🍎 NUTRITION TIMING
+Before (1-2 hrs): [Specific foods]
+During long sessions (90+ min): [Fuelling with amounts and timing]
+After (30 min): [Recovery nutrition]
+Race week: [Guidance specific to ${A.race}]
+
+---
+🏁 RACE DAY — ${A.race.toUpperCase()}
+Morning: [Wake time, breakfast, timing]
+Swim: [Pacing, positioning, sighting for ${A.race} distance]
+T1: [Step-by-step tips]
+Bike: [Pacing, nutrition timing at specific markers]
+T2: [Step-by-step tips]
+Run: [How to pace off the bike, when to push]
+Finish: [Final push strategy]
+
+---
+✅ YOUR 5 GOLDEN RULES
+1. [Specific to their experience level]
+2. The 80/20 rule: [How to apply it to their ${A.hours} hrs/week]
+3. Recovery: [Specific recovery advice]
+4. Consistency: [Rule about missed sessions]
+5. [Rule about their ${A.weak.split(' — ')[0]} weakness]
+
+---
+You've got this, ${A.name}. ${w} weeks of consistent work and that ${A.race} finish line is yours. Let's go! 💪
+
+CRITICAL: Every session MUST have exact distances (metres/km), exact durations (minutes), exact efforts (RPE 1-10). Never say "run easy" — say "RPE 5/10, conversational pace." This is a premium coaching plan.`;
+
+  try {
+    const r=await fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+    const d=await r.json();
+    const txt=d.plan||'Unable to generate. Please try again.';
+    setTimeout(()=>{
+      document.getElementById('generating').style.display='none';
+      document.getElementById('plan-output').style.display='block';
+      document.getElementById('pot').textContent=A.name+"'s "+A.race+" Plan";
+      document.getElementById('pos').textContent=A.exp.split(' — ')[0]+' · '+w+' weeks · '+A.hours+' hrs/week';
+      document.getElementById('pst').innerHTML=[{v:w,l:'Weeks'},{v:A.hours,l:'Hrs/week'},{v:A.days.length,l:'Sessions'},{v:A.weak.split(' ')[0],l:'Focus'}].map(s=>`<div class="plan-stat"><div class="plan-stat-val">${s.v}</div><div class="plan-stat-label">${s.l}</div></div>`).join('');
+      document.getElementById('pb').textContent=txt;
+      window.scrollTo({top:0,behavior:'smooth'});
+    },17000);
+  } catch(e) {
+    setTimeout(()=>{
+      document.getElementById('generating').style.display='none';
+      document.getElementById('plan-output').style.display='block';
+      document.getElementById('pot').textContent="Something went wrong";
+      document.getElementById('pb').textContent='We had trouble generating your plan. Please go back and try again.';
+      window.scrollTo({top:0,behavior:'smooth'});
+    },17000);
+  }
+}
+prog(1);
+</script>
 </body>
 </html>
