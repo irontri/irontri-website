@@ -154,6 +154,9 @@
     .eb.filled{background:var(--blue);}
     .eb.empty{background:rgba(255,255,255,0.08);}
 
+    /* VOLUME BREAKDOWN */
+    .vol-breakdown{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;}
+
     /* WEEK SUMMARY */
     .week-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
     .ws-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
@@ -394,6 +397,9 @@
   <!-- WEEK SUMMARY STATS -->
   <div class="week-summary" id="wsummary"></div>
 
+  <!-- VOLUME BREAKDOWN -->
+  <div class="vol-breakdown" id="vol-breakdown"></div>
+
   <!-- CALENDAR STRIP -->
   <div class="cal-strip" id="cal"></div>
 
@@ -489,6 +495,46 @@ function renderWeek(){
     <div class="ws-card"><div class="wsv">${sessions}</div><div class="wsl">Sessions</div></div>
     <div class="ws-card"><div class="wsv">${hrs}h${mins>0?mins+'m':''}</div><div class="wsl">Total time</div></div>
     <div class="ws-card"><div class="wsv">${w.focus||'Base'}</div><div class="wsl">Focus</div></div>`;
+
+  // Easy / Moderate / Hard breakdown
+  let easyMin=0, modMin=0, hardMin=0;
+  w.days.forEach(d=>{
+    if(d.type==='Rest'||!d.duration)return;
+    const e=d.effort||5;
+    if(e<=4) easyMin+=d.duration;
+    else if(e<=6) easyMin+=d.duration;
+    else if(e<=7) modMin+=d.duration;
+    else hardMin+=d.duration;
+  });
+  const totalIntMin=easyMin+modMin+hardMin||1;
+  const easyPct=Math.round(easyMin/totalIntMin*100);
+  const modPct=Math.round(modMin/totalIntMin*100);
+  const hardPct=Math.round(hardMin/totalIntMin*100);
+  document.getElementById('vol-breakdown').innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <span style="font-size:13px;font-weight:500;">Weekly intensity split</span>
+      <span style="font-size:11px;color:var(--faint);">80/20 principle</span>
+    </div>
+    <div style="display:flex;height:8px;border-radius:100px;overflow:hidden;gap:2px;margin-bottom:12px;">
+      <div style="width:${easyPct}%;background:#4ade80;border-radius:100px;transition:width 0.5s;"></div>
+      <div style="width:${modPct}%;background:#fbbf24;border-radius:100px;transition:width 0.5s;"></div>
+      <div style="width:${hardPct}%;background:#f87171;border-radius:100px;transition:width 0.5s;"></div>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;"></div>
+        <span style="font-size:12px;color:var(--muted);">Easy <strong style="color:#fff;">${easyPct}%</strong></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#fbbf24;flex-shrink:0;"></div>
+        <span style="font-size:12px;color:var(--muted);">Moderate <strong style="color:#fff;">${modPct}%</strong></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#f87171;flex-shrink:0;"></div>
+        <span style="font-size:12px;color:var(--muted);">Hard <strong style="color:#fff;">${hardPct}%</strong></span>
+      </div>
+      <div style="margin-left:auto;font-size:11px;color:var(--faint);">${Math.round(easyMin/60*10)/10}h easy · ${Math.round(modMin/60*10)/10}h mod · ${Math.round(hardMin/60*10)/10}h hard</div>
+    </div>`;
 
   // calendar with real dates
   const allDays=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -680,49 +726,3 @@ Return ONLY the JSON object. No markdown, no explanation.`;
       planEl.style.display='block';
 
       // Header
-      document.getElementById('ptitle').textContent=A.name+"'s "+A.race+" Plan";
-      document.getElementById('psub').textContent=A.exp.split(' — ')[0]+' · '+w+' weeks · '+A.hours+' hrs/week · Age '+A.age;
-      document.getElementById('pintro').textContent=planData.intro||'';
-
-      // Stats
-      document.getElementById('pstats').innerHTML=[
-        {v:w,l:'Total weeks'},{v:A.hours+'h',l:'Per week'},
-        {v:A.days.length,l:'Sessions/week'},{v:A.race.split(' ')[0],l:'Race type'}
-      ].map(s=>`<div class="ps"><div class="psv">${s.v}</div><div class="psl">${s.l}</div></div>`).join('');
-
-      // Phase pills
-      const phases=[...new Set(planData.weeks.map(w=>w.phase))];
-      document.getElementById('phases').innerHTML=phases.map((p,i)=>
-        `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="jumpToPhase('${p}')">${p} Phase</button>`
-      ).join('');
-
-      curWeek=0;curDay=null;
-      renderWeek();
-      window.scrollTo({top:0,behavior:'smooth'});
-    },17000);
-
-  }catch(e){
-    console.error('Plan error:',e);
-    setTimeout(()=>{
-      document.getElementById('gen').style.display='none';
-      document.getElementById('quiz-wrap').style.display='none';
-      document.querySelector('.prog-wrap').style.display='none';
-      document.getElementById('plan').style.display='block';
-      document.getElementById('ptitle').textContent='Something went wrong';
-      document.getElementById('pintro').textContent='Error: '+e.message+'. Please go back and try again.';
-      document.getElementById('pstats').innerHTML='';
-      document.getElementById('cal').innerHTML='';
-    },17000);
-  }
-}
-
-function jumpToPhase(phase){
-  const idx=planData.weeks.findIndex(w=>w.phase===phase);
-  if(idx>=0){curWeek=idx;curDay=null;renderWeek();}
-  document.querySelectorAll('.phase-pill').forEach(p=>p.classList.toggle('active',p.dataset.phase===phase));
-}
-
-prog(1);
-</script>
-</body>
-</html>
