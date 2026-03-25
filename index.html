@@ -989,25 +989,100 @@
       </div>
       <p style="font-size:12px; color:rgba(255,255,255,0.3);">Spots are filling fast — price goes up once we hit 500 members.</p>
     </div>
-    <a href="plan.html" style="display:inline-block; background:#1E90FF; color:#fff; border:none; max-width:320px; width:100%; font-size:16px; padding:16px; border-radius:10px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; text-decoration:none; text-align:center;">Claim my free spot →</a>
+
+    <!-- MailerLite claim spot form -->
+    <div style="max-width:420px; margin:0 auto;" id="claim-form">
+      <form class="ml-block-form" action="https://assets.mailerlite.com/jsonp/2220906/forms/182918184673740575/subscribe" data-code="" method="post" target="_blank" onsubmit="claimSuccess()">
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <input aria-label="email" aria-required="true" type="email" name="fields[email]" placeholder="Your email address" required
+            style="flex:1; min-width:200px; padding:14px 18px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.05); color:#fff; font-size:15px; font-family:'DM Sans',sans-serif; outline:none;" />
+          <button type="submit"
+            style="background:#1E90FF; color:#fff; border:none; padding:14px 24px; border-radius:10px; font-size:15px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap;">
+            Claim my free spot →
+          </button>
+        </div>
+        <input type="hidden" name="ml-submit" value="1">
+        <input type="hidden" name="anticsrf" value="true">
+      </form>
+      <p id="claim-confirm" style="display:none; margin-top:16px; font-size:14px; color:#1E90FF; font-weight:500;">🎉 Spot claimed! We'll be in touch when we launch.</p>
+    </div>
   </div>
+
+  <script>
+    function claimSuccess() {
+      setTimeout(() => {
+        document.querySelector('#claim-form form').style.display = 'none';
+        document.getElementById('claim-confirm').style.display = 'block';
+      }, 500);
+    }
+  </script>
 
   <!-- WAITLIST BANNER -->
   <div style="margin: 0 56px 48px; background: #0f0f0f; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 48px 64px; text-align: center;">
     <div style="display:inline-block; background:rgba(30,144,255,0.12); border:1px solid rgba(30,144,255,0.3); color:#1E90FF; padding:6px 16px; border-radius:100px; font-size:13px; font-weight:500; margin-bottom:20px;">Coming soon</div>
     <h2 style="font-family:'Syne',sans-serif; font-size:clamp(22px,3vw,36px); font-weight:800; letter-spacing:-1px; margin-bottom:12px;">The irontri app is coming.</h2>
     <p style="font-size:15px; color:rgba(255,255,255,0.5); max-width:400px; margin:0 auto 28px; line-height:1.7; font-weight:300;">Be the first to know when we launch on iOS and Android — join the waitlist now.</p>
-    <form onsubmit="handleWaitlist2(event)" style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; max-width:460px; margin:0 auto;">
-      <input type="email" id="waitlist-email-top" placeholder="Your email address" required style="flex:1; min-width:200px; padding:13px 18px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.05); color:#fff; font-size:15px; font-family:'DM Sans',sans-serif; outline:none;" />
-      <button type="submit" style="background:#1E90FF; color:#fff; border:none; padding:13px 26px; border-radius:10px; font-size:15px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap;">Join the waitlist</button>
-    </form>
-    <p id="waitlist-confirm-top" style="display:none; margin-top:20px; font-size:14px; color:#1E90FF; font-weight:500;">🎉 You're on the list! We'll be in touch when we launch.</p>
+
+    <!-- MailerLite Form -->
+    <div style="max-width:460px; margin:0 auto;">
+      <style type="text/css">
+        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper { background-color: transparent !important; border: none !important; }
+        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedContent h4 { display:none; }
+        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedContent p { display:none; }
+        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-fieldRow input { background-color: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.15) !important; color: #fff !important; border-radius: 10px !important; padding: 13px 18px !important; font-size: 15px !important; }
+        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-fieldRow input::placeholder { color: rgba(255,255,255,0.4) !important; }
+        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedSubmit button { background-color: #1E90FF !important; border-radius: 10px !important; font-size: 15px !important; padding: 13px !important; font-family: 'DM Sans', sans-serif !important; }
+        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-embedBody .ml-form-embedSubmit button:hover { background-color: #1478d4 !important; }
+        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-successBody .ml-form-successContent h4 { color: #1E90FF !important; font-family: 'DM Sans', sans-serif !important; }
+        #mlb2-38970482.ml-form-embedContainer .ml-form-embedWrapper .ml-form-successBody .ml-form-successContent p { color: rgba(255,255,255,0.6) !important; font-family: 'DM Sans', sans-serif !important; }
+      </style>
+      <div id="mlb2-38970482" class="ml-form-embedContainer ml-subscribe-form ml-subscribe-form-38970482">
+        <div class="ml-form-align-center">
+          <div class="ml-form-embedWrapper embedForm">
+            <div class="ml-form-embedBody ml-form-embedBodyDefault row-form">
+              <div class="ml-form-embedContent" style="">
+                <h4>Join the irontri waitlist</h4>
+                <p>Be first to know when we launch — free for our first 500 members</p>
+              </div>
+              <form class="ml-block-form" action="https://assets.mailerlite.com/jsonp/2220906/forms/182918184673740575/subscribe" data-code="" method="post" target="_blank">
+                <div class="ml-form-formContent">
+                  <div class="ml-form-fieldRow ml-last-item">
+                    <div class="ml-field-group ml-field-email ml-validate-email ml-validate-required">
+                      <input aria-label="email" aria-required="true" type="email" class="form-control" data-inputmask="" name="fields[email]" placeholder="Your email address" autocomplete="email">
+                    </div>
+                  </div>
+                </div>
+                <input type="hidden" name="ml-submit" value="1">
+                <div class="ml-form-embedSubmit">
+                  <button type="submit" class="primary">Join the waitlist</button>
+                  <button disabled="disabled" style="display:none;" type="button" class="loading">
+                    <div class="ml-form-embedSubmitLoad"></div>
+                    <span class="sr-only">Loading...</span>
+                  </button>
+                </div>
+                <input type="hidden" name="anticsrf" value="true">
+              </form>
+            </div>
+            <div class="ml-form-successBody row-success" style="display:none">
+              <div class="ml-form-successContent">
+                <h4>🎉 You're on the list!</h4>
+                <p>We'll be in touch when we launch.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <script>
+        function ml_webform_success_38970482() {
+          var $ = ml_jQuery || jQuery;
+          $('.ml-subscribe-form-38970482 .row-success').show();
+          $('.ml-subscribe-form-38970482 .row-form').hide();
+        }
+      </script>
+      <script src="https://groot.mailerlite.com/js/w/webforms.min.js?v95037e5bac78f29ed026832ca21a7c7b" type="text/javascript"></script>
+      <script>fetch("https://assets.mailerlite.com/jsonp/2220906/forms/182918184673740575/takel")</script>
+    </div>
   </div>
-  <script>
-    function handleWaitlist2(e) {
-      e.preventDefault();
-      document.getElementById('waitlist-email-top').style.display = 'none';
-      e.target.querySelector('button').style.display = 'none';
       document.getElementById('waitlist-confirm-top').style.display = 'block';
     }
   </script>
