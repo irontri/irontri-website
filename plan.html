@@ -352,16 +352,18 @@
 <!-- Q11 -->
 <div class="q" id="q11">
   <div class="qlbl">Almost there!</div><div class="qtitle">Last step — tell us who we're coaching</div>
-  <p class="qsub">We'll use your race date and start date to build the perfect plan.</p>
+  <p class="qsub">We'll build your plan around your start date and count down to race day.</p>
   <div class="is">
     <input type="text" id="iname" placeholder="Your first name" oninput="cf()" />
     <input type="email" id="iemail" placeholder="Your email address" oninput="cf()" />
-    <input type="date" id="istart" oninput="cf()" style="border-color:rgba(30,144,255,0.4);" />
-    <input type="date" id="idate" oninput="cf()" />
-  </div>
-  <div style="display:flex;gap:16px;font-size:12px;color:var(--faint);margin-top:-16px;margin-bottom:8px;padding:0 2px;">
-    <span>↑ Plan start date</span>
-    <span style="margin-left:auto;">↑ Race date</span>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <label style="font-size:12px;font-weight:500;color:var(--blue);letter-spacing:1px;text-transform:uppercase;">📅 When do you want to start training?</label>
+      <input type="date" id="istart" oninput="cf()" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <label style="font-size:12px;font-weight:500;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">🏁 What is your race date? (optional)</label>
+      <input type="date" id="idate" oninput="cf()" />
+    </div>
   </div>
   <div class="qnav"><button class="bb" onclick="go(10)">← Back</button><button class="bn" id="n11" onclick="showSum()" disabled>See my plan summary →</button></div>
 </div>
