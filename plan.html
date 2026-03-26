@@ -1077,9 +1077,64 @@ async function toggleComplete(dayIndex) {
 }
 
 // Attach load-more button listener
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const btn = document.getElementById('load-more-btn');
   if (btn) btn.addEventListener('click', () => { if(typeof loadNextWeeks==='function') loadNextWeeks(); });
+
+  // Check if loading a saved plan from dashboard
+  const urlParams = new URLSearchParams(window.location.search);
+  const loadId = urlParams.get('load');
+  if (loadId && sb2) {
+    try {
+      document.getElementById('quiz-wrap').style.display = 'none';
+      document.querySelector('.prog-wrap').style.display = 'none';
+      document.getElementById('gen').style.display = 'block';
+
+      const { data: plan, error } = await sb2.from('plans').select('*').eq('id', loadId).single();
+      if (!error && plan) {
+        let txt = plan.plan_data || '';
+        txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
+        planData = JSON.parse(txt);
+        A.race = plan.race || 'Triathlon';
+        A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
+
+        document.getElementById('gen').style.display = 'none';
+        document.getElementById('plan').style.display = 'block';
+        document.querySelector('.prog-wrap').style.display = 'none';
+
+        // Render plan stats
+        const w = planData.weeks?.length || 0;
+        document.getElementById('ptitle').textContent = A.name + "'s " + A.race + " Plan";
+        document.getElementById('pintro').textContent = w + ' weeks of personalised triathlon coaching';
+        document.getElementById('pstats').innerHTML = [
+          {v:w,l:'Total weeks'},{v:'—',l:'Per week'},
+          {v:'—',l:'Sessions/week'},{v:A.race.split(' ')[0],l:'Race type'}
+        ].map(s=>`<div class="ps"><div class="psv">${s.v}</div><div class="psl">${s.l}</div></div>`).join('');
+
+        const phases=[...new Set(planData.weeks.map(w=>w.phase))];
+        document.getElementById('phases').innerHTML=phases.map((p,i)=>
+          `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="jumpToPhase('${p}')">${p} Phase</button>`
+        ).join('');
+
+        curWeek=0; curDay=null;
+        renderWeek();
+        renderGraph();
+        await loadCompletions();
+        renderWeek();
+      } else {
+        // Plan not found — show quiz
+        document.getElementById('gen').style.display = 'none';
+        document.getElementById('quiz-wrap').style.display = 'block';
+        document.querySelector('.prog-wrap').style.display = 'block';
+      }
+    } catch(e) {
+      console.error('Load plan error:', e);
+      document.getElementById('gen').style.display = 'none';
+      document.getElementById('quiz-wrap').style.display = 'block';
+      document.querySelector('.prog-wrap').style.display = 'block';
+    }
+    return;
+  }
 
   // Check if returning from signup with saved quiz answers
   const pending = localStorage.getItem('irontri_pending_answers');
@@ -1089,10 +1144,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const saved = JSON.parse(pending);
       Object.assign(A, saved);
       localStorage.removeItem('irontri_pending_answers');
-      // Auto-start plan generation
       document.getElementById('quiz-wrap').style.display = 'none';
       document.querySelector('.prog-wrap').style.display = 'none';
-      buildPlan();
+      document.getElementById('gen').style.display = 'block';
+      setTimeout(() => buildPlan(), 500);
     } catch(e) {}
   }
 });
