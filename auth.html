@@ -160,8 +160,10 @@
       return;
     }
 
-    showMsg('msg-signup', '🎉 Account created! Redirecting...', 'success');
+    showMsg('msg-signup', '🎉 Account created! Saving your plan...', 'success');
     localStorage.setItem('irontri_user_name', name);
+    // Save any pending plan
+    await savePendingPlan(data.user?.id);
     setTimeout(() => window.location.href = 'dashboard.html', 2000);
   }
 
@@ -184,10 +186,26 @@
       return;
     }
 
-    showMsg('msg-login', '✅ Logged in! Redirecting...', 'success');
+    showMsg('msg-login', '✅ Logged in! Saving your plan...', 'success');
     const loginName = data.user?.user_metadata?.full_name || email.split('@')[0];
     localStorage.setItem('irontri_user_name', loginName);
+    await savePendingPlan(data.user?.id);
     setTimeout(() => window.location.href = 'dashboard.html', 1500);
+  }
+
+  async function savePendingPlan(userId) {
+    if (!userId) return;
+    const pending = localStorage.getItem('irontri_pending_plan');
+    if (!pending) return;
+    try {
+      const { plan, race } = JSON.parse(pending);
+      await sb.from('plans').insert({
+        user_id: userId,
+        plan_data: plan,
+        race: race || 'Triathlon'
+      });
+      localStorage.removeItem('irontri_pending_plan');
+    } catch(e) {}
   }
 
   // Allow enter key to submit
