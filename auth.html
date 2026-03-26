@@ -161,7 +161,8 @@
     }
 
     showMsg('msg-signup', '🎉 Account created! Redirecting...', 'success');
-    setTimeout(() => window.location.href = 'dashboard.html', 1500);
+    localStorage.setItem('irontri_user_name', name);
+    setTimeout(() => window.location.href = 'dashboard.html', 2000);
   }
 
   async function logIn() {
@@ -184,6 +185,8 @@
     }
 
     showMsg('msg-login', '✅ Logged in! Redirecting...', 'success');
+    const loginName = data.user?.user_metadata?.full_name || email.split('@')[0];
+    localStorage.setItem('irontri_user_name', loginName);
     setTimeout(() => window.location.href = 'dashboard.html', 1500);
   }
 
