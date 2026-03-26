@@ -204,6 +204,13 @@
     .wsv{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--blue);}
     .wsl{font-size:11px;color:var(--muted);margin-top:3px;}
 
+    /* TARGETS BLOCK */
+    .targets-block{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:20px;}
+    .target-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;}
+    .target-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--faint);margin-bottom:6px;font-weight:500;}
+    .target-value{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:4px;}
+    .target-desc{font-size:12px;color:var(--muted);}
+
     /* ACTIONS */
     .plan-actions{display:flex;gap:10px;flex-wrap:wrap;}
     .pa-btn{flex:1;min-width:140px;padding:14px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:center;border:none;}
@@ -601,6 +608,15 @@ function showSum(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+// ── HR ZONE DESCRIPTIONS ──
+const HR_ZONES = {
+  1: { label:'Zone 1', desc:'Very easy — active recovery', color:'#4ade80', pct:'50-60% max HR' },
+  2: { label:'Zone 2', desc:'Easy aerobic — fat burning base', color:'#38bdf8', pct:'60-70% max HR' },
+  3: { label:'Zone 3', desc:'Tempo — aerobic development', color:'#fbbf24', pct:'70-80% max HR' },
+  4: { label:'Zone 4', desc:'Threshold — lactate clearance', color:'#fb923c', pct:'80-90% max HR' },
+  5: { label:'Zone 5', desc:'VO2 max — maximum effort', color:'#f87171', pct:'90-100% max HR' },
+};
+
 // ── TYPE INFO — single source of truth for colours, icons, labels ──
 const typeInfo={
   'Swim':    {icon:'🏊', cls:'type-swim',     color:'#38bdf8', label:'Swim'},
@@ -762,6 +778,20 @@ function selectDay(i){
     </div>
     <div class="sd-body">
       ${d.purpose?`<div class="sd-purpose">🎯 <strong>Purpose:</strong> ${d.purpose}</div>`:''}
+      ${(d.paceTarget && d.paceTarget !== 'N/A') || d.heartRateZone ? (() => {
+        const z = HR_ZONES[d.heartRateZone] || HR_ZONES[2];
+        return `<div class="targets-block">
+          ${d.paceTarget && d.paceTarget !== 'N/A' ? `<div class="target-item">
+            <div class="target-label">🎯 Pace target</div>
+            <div class="target-value">${d.paceTarget}</div>
+          </div>` : ''}
+          ${d.heartRateZone ? `<div class="target-item">
+            <div class="target-label">❤️ Heart rate zone</div>
+            <div class="target-value" style="color:${z.color}">${z.label} · ${z.pct}</div>
+            <div class="target-desc">${z.desc}</div>
+          </div>` : ''}
+        </div>`;
+      })() : ''}
       ${d.warmup?`<div class="sd-section"><div class="sd-sec-title">🔥 Warm up</div><div class="sd-sec-content">${d.warmup}</div></div>`:''}
       ${d.mainset?`<div class="sd-section"><div class="sd-sec-title">💪 Main set</div><div class="sd-sec-content">${d.mainset}</div></div>`:''}
       ${d.cooldown?`<div class="sd-section"><div class="sd-sec-title">❄️ Cool down</div><div class="sd-sec-content">${d.cooldown}</div></div>`:''}
@@ -845,7 +875,9 @@ Return this exact JSON structure:
           "warmup": "400m easy freestyle, focus on long smooth strokes",
           "mainset": "6x100m at RPE 5/10 with 20 sec rest between each. Focus on catch and pull.",
           "cooldown": "200m easy backstroke",
-          "coachNote": "If this feels too easy, that is perfect. Base work should feel comfortable."
+          "coachNote": "If this feels too easy, that is perfect. Base work should feel comfortable.",
+          "paceTarget": "1:45-2:00 /100m",
+          "heartRateZone": 2
         }
       ]
     }
@@ -870,6 +902,8 @@ Rules:
 - Make it triathlon specific with proper periodisation for ${A.race}
 - focus field should be 1-3 words like "Aerobic base", "Technique", "Threshold", "Race pace"
 - Vary session names to be descriptive
+- paceTarget: a specific pace string tailored to the athlete's goal time and session type. Examples: "1:45-2:00 /100m" for swim, "28-32 km/h" for bike, "5:30-6:00 /km" for run, "N/A" for strength/rest
+- heartRateZone: integer 1-5 matching the effort. Zone 1-2 = easy/recovery, Zone 3 = tempo, Zone 4 = threshold, Zone 5 = max
 
 Return ONLY the JSON object. No markdown, no explanation.`;
 
