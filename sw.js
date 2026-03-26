@@ -1,4 +1,4 @@
-const CACHE_NAME = 'irontri-v3';
+const CACHE_NAME = 'irontri-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
