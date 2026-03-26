@@ -98,8 +98,17 @@ const _sb = window.supabase.createClient(_url, _key);
 
 // Redirect if already logged in
 _sb.auth.getSession().then(({data:{session}}) => {
-  if (session) window.location.href = '/dashboard.html';
+  if (session) {
+    const redirect = new URLSearchParams(window.location.search).get('redirect');
+    window.location.href = redirect === 'plan' ? '/plan.html' : '/dashboard.html';
+  }
 });
+
+// Show message if coming from plan page
+const params = new URLSearchParams(window.location.search);
+if (params.get('redirect') === 'plan') {
+  document.getElementById('auth-sub').textContent = 'Create a free account to generate your training plan';
+}
 
 function switchTab(tab) {
   document.getElementById('tab-signup').classList.toggle('active', tab==='signup');
@@ -145,7 +154,8 @@ async function doSignUp() {
   // Wait for session then save pending plan
   await new Promise(r => setTimeout(r, 1500));
   await savePendingPlan(data.user?.id);
-  setTimeout(() => window.location.href = '/dashboard.html', 500);
+  const redirectTo = new URLSearchParams(window.location.search).get('redirect');
+  setTimeout(() => window.location.href = redirectTo === 'plan' ? '/plan.html' : '/dashboard.html', 500);
 }
 
 async function doLogIn() {
@@ -171,7 +181,8 @@ async function doLogIn() {
   localStorage.setItem('irontri_user_name', loginName);
   showMsg('msg-login', '✅ Logged in! Redirecting...', 'success');
   await savePendingPlan(data.user?.id);
-  setTimeout(() => window.location.href = '/dashboard.html', 1000);
+  const loginRedirect = new URLSearchParams(window.location.search).get('redirect');
+  setTimeout(() => window.location.href = loginRedirect === 'plan' ? '/plan.html' : '/dashboard.html', 1000);
 }
 
 async function savePendingPlan(userId) {
@@ -187,14 +198,3 @@ async function savePendingPlan(userId) {
     const { plan, race } = JSON.parse(pending);
     const { error } = await _sb.from('plans').insert({
       user_id: uid,
-      plan_data: plan,
-      race: race || 'Triathlon'
-    });
-    if (!error) localStorage.removeItem('irontri_pending_plan');
-  } catch(e) {
-    console.error('savePendingPlan:', e);
-  }
-}
-</script>
-</body>
-</html>
