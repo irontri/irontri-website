@@ -411,13 +411,13 @@
   <div class="spinner"></div>
   <div class="gt">Building your plan...</div>
   <p class="gs">Around 20 seconds</p>
-  <div class="gsteps">
-    <div class="gst" id="gs1"><div class="gd"></div>Analysing your race & goal</div>
-    <div class="gst" id="gs2"><div class="gd"></div>Calculating weekly training load</div>
-    <div class="gst" id="gs3"><div class="gd"></div>Building your week-by-week schedule</div>
-    <div class="gst" id="gs4"><div class="gd"></div>Writing each daily session</div>
-    <div class="gst" id="gs5"><div class="gd"></div>Adding coaching notes & tips</div>
-    <div class="gst" id="gs6"><div class="gd"></div>Finalising your race day strategy</div>
+  <div class="gsteps" id="gsteps">
+    <div class="gst" id="gs1"><div class="gd"></div><span id="gs1-text">Analysing your race & goal</span></div>
+    <div class="gst" id="gs2"><div class="gd"></div><span id="gs2-text">Calculating weekly training load</span></div>
+    <div class="gst" id="gs3"><div class="gd"></div><span id="gs3-text">Building your swim sessions</span></div>
+    <div class="gst" id="gs4"><div class="gd"></div><span id="gs4-text">Planning your bike intervals</span></div>
+    <div class="gst" id="gs5"><div class="gd"></div><span id="gs5-text">Writing your run workouts</span></div>
+    <div class="gst" id="gs6"><div class="gd"></div><span id="gs6-text">Adding coaching notes & race strategy</span></div>
   </div>
 </div>
 
@@ -779,6 +779,21 @@ async function buildPlan(){
   document.getElementById('summary').style.display='none';
   document.getElementById('gen').style.display='block';
   window.scrollTo({top:0,behavior:'smooth'});
+  // Personalised loading messages
+  const goalTimeMsg = A.goaltimeText && !A.goaltimeText.includes('finish') && !A.goaltimeText.includes('best') 
+    ? `Setting pace targets for ${A.goaltimeText}` 
+    : 'Calculating your training zones';
+  const steps = [
+    `Analysing your ${A.race} goal`,
+    goalTimeMsg,
+    `Building your swim sessions`,
+    `Planning your bike intervals`,
+    `Writing your ${A.race.includes('Full') ? 'marathon' : A.race.includes('Half') ? 'half marathon' : 'run'} workouts`,
+    'Adding coaching notes & race strategy'
+  ];
+  steps.forEach((text, i) => {
+    document.getElementById('gs'+(i+1)+'-text').textContent = text;
+  });
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
   const allDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
