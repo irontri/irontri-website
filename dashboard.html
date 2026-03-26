@@ -110,12 +110,22 @@
   let currentUser = null;
 
   async function init() {
+    // Wait for Supabase to restore session
     const { data: { session } } = await sb.auth.getSession();
+    
     if (!session) {
-      window.location.href = 'auth.html';
-      return;
+      // Try once more after a short delay
+      await new Promise(r => setTimeout(r, 1000));
+      const { data: { session: session2 } } = await sb.auth.getSession();
+      if (!session2) {
+        window.location.href = 'auth.html';
+        return;
+      }
+      currentUser = session2.user;
+    } else {
+      currentUser = session.user;
     }
-    currentUser = session.user;
+    
     const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
     document.getElementById('nav-user').textContent = name;
     document.getElementById('welcome-title').textContent = 'Welcome back, ' + name + '! 👋';
@@ -124,7 +134,7 @@
   }
 
   async function loadPlans() {
-    const { data: plans, error } = await supabase
+    const { data: plans, error } = await sb
       .from('plans')
       .select('*')
       .eq('user_id', currentUser.id)
