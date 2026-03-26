@@ -470,7 +470,7 @@
 
   <!-- LOAD MORE WEEKS -->
   <div id="load-more-wrap" style="display:none;text-align:center;margin:16px 0;">
-    <button id="load-more-btn" onclick="loadNextWeeks()" style="background:rgba(30,144,255,0.12);border:1px solid rgba(30,144,255,0.3);color:#1E90FF;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;">
+    <button id="load-more-btn" style="background:rgba(30,144,255,0.12);border:1px solid rgba(30,144,255,0.3);color:#1E90FF;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;">
       Load weeks 5–8 →
     </button>
   </div>
@@ -946,6 +946,68 @@ function jumpToPhase(phase){
 }
 
 prog(1);
+
+let sb2 = null;
+try {
+  sb2 = window.supabase.createClient(
+    'https://aezfxagplaxlmovqbmfd.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU'
+  );
+} catch(e) { console.log('Supabase init error:', e); }
+
+async function loadNextWeeks() {
+  const btn = document.getElementById('load-more-btn');
+  btn.textContent = 'Generating next 4 weeks...';
+  btn.disabled = true;
+  const currentWeekCount = planData.weeks.length;
+  const nextWeekStart = currentWeekCount + 1;
+  const prompt = `You are an expert triathlon coach. Generate the NEXT 4 weeks of a training plan continuing from week ${currentWeekCount}.\n\nAthlete:\nName: ${A.name}, Race: ${A.race}, Goal time: ${A.goaltimeText||'No specific time target'}, Experience: ${A.exp}, Fitness: ${A.fitness}\nHours/week: ${A.hours}, Training days: ${A.days.join(', ')}, Weakest: ${A.weak}\n\nContinue with progressive overload. Week ${nextWeekStart} = build, Week ${nextWeekStart+1} = peak, Week ${nextWeekStart+2} = peak race specific, Week ${nextWeekStart+3} = taper.\n\nReturn ONLY JSON: {"weeks":[{"week":${nextWeekStart},"phase":"Build","focus":"string","totalTime":0,"sessions":0,"days":[{"day":"Monday","type":"Rest","name":"Rest","duration":0,"effort":0,"zone":0,"focus":"Rest","warmup":"","mainset":"","cooldown":"","coachNote":""}]}]}\n\nRules: Each week has exactly 7 days Monday-Sunday. Training days (${A.days.join(', ')}) get sessions, others are Rest. Return ONLY the JSON.`;
+  try {
+    const r = await fetch('/api/generate-plan', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+    const d = await r.json();
+    let txt = d.plan || '';
+    txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
+    const newData = JSON.parse(txt);
+    planData.weeks = [...planData.weeks, ...newData.weeks];
+    curWeek = currentWeekCount;
+    renderWeek();
+    renderGraph();
+  } catch(e) {
+    btn.textContent = 'Error — try again';
+    btn.disabled = false;
+  }
+}
+
+async function checkAndSavePlan(planText) {
+  try {
+    if (!sb2) { localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race})); document.getElementById('save-banner').style.display='block'; return; }
+    let session = null;
+    const { data: d1 } = await sb2.auth.getSession();
+    session = d1?.session;
+    if (!session) {
+      await new Promise(r => setTimeout(r, 1500));
+      const { data: d2 } = await sb2.auth.getSession();
+      session = d2?.session;
+    }
+    if (session) {
+      const { error } = await sb2.from('plans').insert({user_id: session.user.id, plan_data: planText, race: A.race || 'Triathlon'});
+      if (!error) { document.getElementById('saved-banner').style.display='block'; }
+      else { localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race})); document.getElementById('save-banner').style.display='block'; }
+    } else {
+      localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race}));
+      document.getElementById('save-banner').style.display='block';
+    }
+  } catch(e) {
+    localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race}));
+    document.getElementById('save-banner').style.display='block';
+  }
+}
+
+// Attach load-more button listener
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('load-more-btn');
+  if (btn) btn.addEventListener('click', () => { if(typeof loadNextWeeks==='function') loadNextWeeks(); });
+});
 </script>
 <!-- EXPLAINER MODAL -->
 <div class="modal-overlay" id="modal" onclick="closeModal(event)">
@@ -1241,29 +1303,5 @@ document.addEventListener('keydown', e => {
 
 <!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-let sb2 = null;
-try {
-  sb2 = window.supabase.createClient(
-    'https://aezfxagplaxlmovqbmfd.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU'
-  );
-} catch(e) { console.log('Supabase init error:', e); }
-
-async function loadNextWeeks() {
-  const btn = document.getElementById('load-more-btn');
-  btn.textContent = 'Generating next 4 weeks...';
-  btn.disabled = true;
-
-  const currentWeekCount = planData.weeks.length;
-  const nextWeekStart = currentWeekCount + 1;
-
-  const prompt = `You are an expert triathlon coach. Generate the NEXT 4 weeks of a training plan continuing from week ${currentWeekCount}.
-
-Athlete:
-Name: ${A.name}, Race: ${A.race}, Goal time: ${A.goaltimeText||'No specific time target'}, Experience: ${A.exp}, Fitness: ${A.fitness}
-Hours/week: ${A.hours}, Training days: ${A.days.join(', ')}, Weakest: ${A.weak}
-
-Continue with progressive overload from weeks ${currentWeekCount-3}-${currentWeekCount}:
-- Week ${nextWeekStart} = continued build phase
-- Week ${nextWeekStart+1} = peak phase (highest volume)
+</body>
+</html>
