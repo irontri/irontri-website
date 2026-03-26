@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>irontri — My Profile</title>
+  <title>irontri — Sign up / Log in</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -11,156 +11,192 @@
   <style>
     :root{--blue:#1E90FF;--blue-dark:#1478d4;--bg:#0a0a0a;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--text:#fff;--muted:rgba(255,255,255,0.5);--faint:rgba(255,255,255,0.25);}
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
     nav{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:68px;background:#1E90FF;}
     .nav-logo{display:flex;align-items:center;text-decoration:none;}
     .nav-logo img{height:120px;width:auto;mix-blend-mode:screen;filter:brightness(10);}
-    .nav-right{display:flex;align-items:center;gap:12px;}
-    .nav-link{color:rgba(255,255,255,0.85);text-decoration:none;font-size:14px;}
-    .nav-link:hover{color:#fff;}
-    .btn-logout{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 
-    .wrap{max-width:640px;margin:0 auto;padding:40px 32px 80px;}
+    .auth-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;}
+    .auth-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:40px;width:100%;max-width:420px;}
 
-    /* AVATAR */
-    .profile-hero{text-align:center;margin-bottom:40px;}
-    .avatar{width:80px;height:80px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:#fff;margin:0 auto 16px;}
-    .profile-name{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;}
-    .profile-email{font-size:14px;color:var(--muted);}
-    .member-badge{display:inline-block;background:rgba(30,144,255,0.12);border:1px solid rgba(30,144,255,0.3);color:var(--blue);font-size:12px;padding:4px 12px;border-radius:100px;margin-top:10px;}
+    .auth-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;text-align:center;}
+    .auth-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:32px;}
 
-    /* STATS */
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:32px;}
-    .stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;}
-    .stat-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--blue);}
-    .stat-lbl{font-size:12px;color:var(--muted);margin-top:4px;}
+    .tabs{display:flex;background:rgba(255,255,255,0.05);border-radius:10px;padding:4px;margin-bottom:28px;}
+    .tab{flex:1;padding:10px;text-align:center;font-size:14px;font-weight:500;border-radius:8px;cursor:pointer;transition:all 0.2s;color:var(--muted);}
+    .tab.active{background:var(--blue);color:#fff;}
 
-    /* SECTIONS */
-    .section{margin-bottom:28px;}
-    .section-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px;}
-    .menu-item{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;cursor:pointer;transition:all 0.15s;text-decoration:none;color:var(--text);margin-bottom:8px;}
-    .menu-item:hover{background:rgba(30,144,255,0.07);border-color:rgba(30,144,255,0.3);}
-    .menu-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0;}
-    .menu-label{flex:1;font-size:15px;font-weight:500;}
-    .menu-arrow{color:var(--faint);font-size:14px;}
+    .form-group{margin-bottom:16px;}
+    .form-label{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--faint);margin-bottom:6px;display:block;}
+    .form-input{width:100%;padding:14px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;}
+    .form-input:focus{border-color:var(--blue);}
+    .form-input::placeholder{color:var(--faint);}
 
-    /* DANGER ZONE */
-    .danger{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all 0.15s;}
-    .danger:hover{background:rgba(239,68,68,0.1);}
-    .danger-label{flex:1;font-size:15px;font-weight:500;color:#f87171;}
+    .btn-auth{width:100%;padding:15px;background:var(--blue);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s;margin-top:8px;}
+    .btn-auth:hover{background:var(--blue-dark);}
+    .btn-auth:disabled{opacity:0.5;cursor:not-allowed;}
 
-    .spinner{width:36px;height:36px;border:3px solid rgba(30,144,255,0.15);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite;margin:60px auto;}
-    @keyframes spin{to{transform:rotate(360deg)}}
+    .auth-msg{text-align:center;font-size:13px;margin-top:16px;padding:12px;border-radius:8px;display:none;}
+    .auth-msg.error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#f87171;}
+    .auth-msg.success{background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);color:#4ade80;}
+
+    .divider{display:flex;align-items:center;gap:12px;margin:20px 0;}
+    .divider-line{flex:1;height:1px;background:rgba(255,255,255,0.08);}
+    .divider-text{font-size:12px;color:var(--faint);}
+
+    .benefits{margin-bottom:28px;}
+    .benefit{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-bottom:8px;}
+    .benefit-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
   </style>
 </head>
 <body>
 <nav>
-  <a href="/index.html" class="nav-logo"><img src="/irontri_logo.png" alt="irontri" /></a>
-  <div class="nav-right">
-    <a href="/dashboard.html" class="nav-link">Dashboard</a>
-    <button class="btn-logout" onclick="logOut()">Log out</button>
-  </div>
+  <a href="index.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri" /></a>
 </nav>
 
-<div class="wrap">
-  <div id="loading"><div class="spinner"></div></div>
-  <div id="content" style="display:none;">
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-title">Welcome to irontri</div>
+    <div class="auth-sub">Save your plan and track your progress</div>
 
-    <div class="profile-hero">
-      <div class="avatar" id="avatar-initials">D</div>
-      <div class="profile-name" id="profile-name">Loading...</div>
-      <div class="profile-email" id="profile-email"></div>
-      <div class="member-badge">🏅 Founding Member</div>
+    <div class="tabs">
+      <div class="tab active" id="tab-signup" onclick="switchTab('signup')">Create account</div>
+      <div class="tab" id="tab-login" onclick="switchTab('login')">Log in</div>
     </div>
 
-    <div class="stats">
-      <div class="stat"><div class="stat-val" id="s-plans">0</div><div class="stat-lbl">Plans built</div></div>
-      <div class="stat"><div class="stat-val" id="s-days">0</div><div class="stat-lbl">Days member</div></div>
-      <div class="stat"><div class="stat-val">🆓</div><div class="stat-lbl">Free forever</div></div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Training</div>
-      <a href="/plan.html" class="menu-item">
-        <span class="menu-icon">🏊</span>
-        <span class="menu-label">Build a new plan</span>
-        <span class="menu-arrow">→</span>
-      </a>
-      <a href="/dashboard.html" class="menu-item">
-        <span class="menu-icon">📅</span>
-        <span class="menu-label">My training plans</span>
-        <span class="menu-arrow">→</span>
-      </a>
-      <a href="/predict.html" class="menu-item">
-        <span class="menu-icon">🏁</span>
-        <span class="menu-label">Race time predictor</span>
-        <span class="menu-arrow">→</span>
-      </a>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Account</div>
-      <div class="menu-item" onclick="changePassword()">
-        <span class="menu-icon">🔒</span>
-        <span class="menu-label">Change password</span>
-        <span class="menu-arrow">→</span>
+    <!-- SIGNUP FORM -->
+    <div id="form-signup">
+      <div class="benefits">
+        <div class="benefit"><div class="benefit-dot"></div>Save your personalised training plan</div>
+        <div class="benefit"><div class="benefit-dot"></div>Access your calendar anytime</div>
+        <div class="benefit"><div class="benefit-dot"></div>Track your progress week by week</div>
+        <div class="benefit"><div class="benefit-dot"></div>Free forever for founding members</div>
       </div>
+      <div class="form-group">
+        <label class="form-label">First name</label>
+        <input type="text" class="form-input" id="signup-name" placeholder="Dean" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input type="email" class="form-input" id="signup-email" placeholder="you@email.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="signup-password" placeholder="At least 6 characters" />
+      </div>
+      <button class="btn-auth" onclick="signUp()" id="btn-signup">Create my free account →</button>
+      <div class="auth-msg" id="msg-signup"></div>
     </div>
 
-    <div class="section">
-      <div class="danger" onclick="logOut()">
-        <span class="menu-icon">👋</span>
-        <span class="danger-label">Log out</span>
+    <!-- LOGIN FORM -->
+    <div id="form-login" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input type="email" class="form-input" id="login-email" placeholder="you@email.com" />
       </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="login-password" placeholder="Your password" />
+      </div>
+      <button class="btn-auth" onclick="logIn()" id="btn-login">Log in →</button>
+      <div class="auth-msg" id="msg-login"></div>
     </div>
 
   </div>
 </div>
 
 <script>
-  const sb = window.supabase.createClient(
-    'https://aezfxagplaxlmovqbmfd.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU'
-  );
+  const SUPABASE_URL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  async function init() {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { window.location.href = '/auth.html'; return; }
+  // Check if already logged in
+  sb.auth.getSession().then(({data:{session}}) => {
+    if (session) window.location.href = 'dashboard.html';
+  });
 
-    const user = session.user;
-    const name = user.user_metadata?.full_name || user.email.split('@')[0];
-    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
-    const memberDays = Math.floor((new Date() - new Date(user.created_at)) / (1000*60*60*24));
-
-    document.getElementById('avatar-initials').textContent = initials;
-    document.getElementById('profile-name').textContent = name;
-    document.getElementById('profile-email').textContent = user.email;
-    document.getElementById('s-days').textContent = memberDays;
-
-    // Get plan count
-    const { data: plans } = await sb.from('plans').select('id').eq('user_id', user.id);
-    document.getElementById('s-plans').textContent = plans?.length || 0;
-
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('content').style.display = 'block';
+  // Check for redirect from plan page
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('redirect') === 'save') {
+    document.querySelector('.auth-sub').textContent = 'Create a free account to save your training plan';
   }
 
-  async function changePassword() {
-    const email = prompt('Enter your email to receive a password reset link:');
-    if (!email) return;
-    const { error } = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://www.irontriapp.com/auth.html'
+  function switchTab(tab) {
+    document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+    document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+    document.getElementById('form-signup').style.display = tab === 'signup' ? 'block' : 'none';
+    document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
+  }
+
+  function showMsg(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'auth-msg ' + type;
+    el.style.display = 'block';
+  }
+
+  async function signUp() {
+    const name = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const btn = document.getElementById('btn-signup');
+
+    if (!name || !email || !password) return showMsg('msg-signup', 'Please fill in all fields', 'error');
+    if (password.length < 6) return showMsg('msg-signup', 'Password must be at least 6 characters', 'error');
+
+    btn.disabled = true;
+    btn.textContent = 'Creating account...';
+
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name } }
     });
-    if (!error) alert('✅ Password reset email sent! Check your inbox.');
-    else alert('Error: ' + error.message);
+
+    if (error) {
+      showMsg('msg-signup', error.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Create my free account →';
+      return;
+    }
+
+    showMsg('msg-signup', '🎉 Account created! Redirecting...', 'success');
+    localStorage.setItem('irontri_user_name', name);
+    setTimeout(() => window.location.href = 'dashboard.html', 2000);
   }
 
-  async function logOut() {
-    await sb.auth.signOut();
-    window.location.href = '/index.html';
+  async function logIn() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const btn = document.getElementById('btn-login');
+
+    if (!email || !password) return showMsg('msg-login', 'Please enter your email and password', 'error');
+
+    btn.disabled = true;
+    btn.textContent = 'Logging in...';
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      showMsg('msg-login', error.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Log in →';
+      return;
+    }
+
+    showMsg('msg-login', '✅ Logged in! Redirecting...', 'success');
+    const loginName = data.user?.user_metadata?.full_name || email.split('@')[0];
+    localStorage.setItem('irontri_user_name', loginName);
+    setTimeout(() => window.location.href = 'dashboard.html', 1500);
   }
 
-  init();
+  // Allow enter key to submit
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const activeForm = document.getElementById('form-login').style.display === 'none' ? 'signup' : 'login';
+      activeForm === 'signup' ? signUp() : logIn();
+    }
+  });
 </script>
 </body>
 </html>
