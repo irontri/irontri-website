@@ -1023,6 +1023,21 @@ async function checkAndSavePlan(planText) {
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('load-more-btn');
   if (btn) btn.addEventListener('click', () => { if(typeof loadNextWeeks==='function') loadNextWeeks(); });
+
+  // Check if returning from signup with saved quiz answers
+  const pending = localStorage.getItem('irontri_pending_answers');
+  const userName = localStorage.getItem('irontri_user_name');
+  if (pending && userName) {
+    try {
+      const saved = JSON.parse(pending);
+      Object.assign(A, saved);
+      localStorage.removeItem('irontri_pending_answers');
+      // Auto-start plan generation
+      document.getElementById('quiz-wrap').style.display = 'none';
+      document.querySelector('.prog-wrap').style.display = 'none';
+      buildPlan();
+    } catch(e) {}
+  }
 });
 </script>
 <!-- EXPLAINER MODAL -->
@@ -1304,3 +1319,18 @@ function showExplainer(type) {
   document.getElementById('modal-body').innerHTML = `<span class="modal-tag" style="background:${e.tag.color}20;color:${e.tag.color};border:1px solid ${e.tag.color}40;">${e.tag.text}</span>` + e.body;
   document.getElementById('modal').classList.add('open');
 }
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal')) {
+    document.getElementById('modal').classList.remove('open');
+  }
+}
+
+// Close on escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('modal').classList.remove('open');
+});
+</script>
+
+</body>
+</html>
