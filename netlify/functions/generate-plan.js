@@ -1,10 +1,11 @@
-exports.handler = async function(event, context) {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { prompt } = JSON.parse(event.body);
+  const { prompt, userId, race } = req.body;
 
+  // Generate plan from Claude
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -14,7 +15,7 @@ exports.handler = async function(event, context) {
     },
     body: JSON.stringify({
       model: 'claude-opus-4-6',
-      max_tokens: 2000,
+      max_tokens: 8000,
       messages: [{ role: 'user', content: prompt }]
     })
   });
@@ -22,9 +23,27 @@ exports.handler = async function(event, context) {
   const data = await response.json();
   const planText = data.content.map(c => c.text || '').join('\n');
 
-  return {
-    statusCode: 200,
-    headers: { 'Access-Control-Allow-Origin': '*' },
-    body: JSON.stringify({ plan: planText })
-  };
-};
+  // If user is logged in, save plan to Supabase
+  if (userId) {
+    try {
+      await fetch(`${process.env.SUPABASE_URL}/rest/v1/plans`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': process.env.SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          plan_data: planText,
+          race: race || 'Triathlon'
+        })
+      });
+    } catch(e) {
+      console.log('Could not save plan:', e);
+    }
+  }
+
+  return res.status(200).json({ plan: planText });
+}
