@@ -452,6 +452,18 @@
   <div class="session-detail" id="sd" style="display:none"></div>
 
   <!-- ACTIONS -->
+  <!-- SAVE PLAN BANNER -->
+  <div id="save-banner" style="display:none;background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.25);border-radius:16px;padding:24px;margin-bottom:16px;text-align:center;">
+    <div style="font-size:22px;margin-bottom:8px;">💾</div>
+    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;">Save your training plan</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:16px;">Create a free account to access your plan anytime and track your progress.</div>
+    <a href="auth.html" style="display:inline-block;background:var(--blue);color:#fff;padding:12px 28px;border-radius:10px;font-size:15px;font-weight:500;text-decoration:none;">Create free account →</a>
+  </div>
+
+  <div id="saved-banner" style="display:none;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);border-radius:16px;padding:20px;margin-bottom:16px;text-align:center;">
+    <div style="font-size:14px;font-weight:500;color:#4ade80;">✅ Plan saved to your account! <a href="dashboard.html" style="color:#4ade80;text-decoration:underline;">View dashboard →</a></div>
+  </div>
+
   <div class="plan-actions" style="margin-top:8px;">
     <button class="pa-btn pa-secondary" onclick="location.reload()">← Start new plan</button>
     <button class="pa-btn pa-primary" onclick="window.print()">📄 Print / Save my plan</button>
@@ -790,6 +802,10 @@ Return ONLY the JSON object. No markdown, no explanation.`;
       curWeek=0;curDay=null;
       renderWeek();
       renderGraph();
+
+      // Check if user is logged in and save plan
+      checkAndSavePlan(txt);
+
       window.scrollTo({top:0,behavior:'smooth'});
     },17000);
 
@@ -1108,5 +1124,37 @@ document.addEventListener('keydown', e => {
 });
 </script>
 
+<!-- SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const sb2 = window.supabase.createClient(
+  'https://aezfxagplaxlmovqbmfd.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU'
+);
+
+async function checkAndSavePlan(planText) {
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (session) {
+      // User is logged in — save plan automatically
+      const { error } = await sb2.from('plans').insert({
+        user_id: session.user.id,
+        plan_data: planText,
+        race: A.race || 'Triathlon'
+      });
+      if (!error) {
+        document.getElementById('saved-banner').style.display = 'block';
+      } else {
+        document.getElementById('save-banner').style.display = 'block';
+      }
+    } else {
+      // Not logged in — show save prompt
+      document.getElementById('save-banner').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('save-banner').style.display = 'block';
+  }
+}
+</script>
 </body>
 </html>
