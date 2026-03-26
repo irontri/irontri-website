@@ -382,11 +382,9 @@
 
 <!-- Q11 -->
 <div class="q" id="q12">
-  <div class="qlbl">Almost there!</div><div class="qtitle">Last step — tell us who we're coaching</div>
+  <div class="qlbl">Almost there!</div><div class="qtitle">When do you want to start?</div>
   <p class="qsub">We'll build your plan around your start date and count down to race day.</p>
   <div class="is">
-    <input type="text" id="iname" placeholder="Your first name" oninput="cf()" />
-    <input type="email" id="iemail" placeholder="Your email address" oninput="cf()" />
     <div style="display:flex;flex-direction:column;gap:6px;">
       <label style="font-size:12px;font-weight:500;color:var(--blue);letter-spacing:1px;text-transform:uppercase;">📅 When do you want to start training?</label>
       <input type="date" id="istart" oninput="cf()" />
@@ -572,7 +570,13 @@ function updateGoalTime(){
 function pg(el,key,val){el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
 function setH(v){A.hours=parseInt(v);document.getElementById('hv').innerHTML=v+' <span>hours/week</span>';const h={3:'Light — great for beginners',5:'Good starting point',7:'Solid volume',8:'Good balance for most',10:'Strong commitment',12:'Serious training load',15:'High performance',18:'Elite volume',20:'Maximum load'};const k=Object.keys(h).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);document.getElementById('hh').textContent=h[k]||'';}
 function td(btn,day){btn.classList.toggle('sel');if(btn.classList.contains('sel'))A.days.push(day);else A.days=A.days.filter(d=>d!==day);document.getElementById('n8').disabled=A.days.length===0;}
-function cf(){A.name=document.getElementById('iname').value.trim();A.email=document.getElementById('iemail').value.trim();A.startDate=document.getElementById('istart').value;A.date=document.getElementById('idate').value;document.getElementById('n12').disabled=!(A.name.length>1&&A.email.includes('@')&&A.startDate);}
+function cf(){
+  A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
+  A.email = '';
+  A.startDate=document.getElementById('istart').value;
+  A.date=document.getElementById('idate').value;
+  document.getElementById('n12').disabled=!A.startDate;
+}
 function wks(d){if(!d)return 16;const w=Math.round((new Date(d)-new Date())/(7*24*60*60*1000));return Math.min(Math.max(w,8),24);}
 
 function showSum(){
@@ -1301,7 +1305,3 @@ function closeModal(e) {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.getElementById('modal').classList.remove('open');
 });
-</script>
-
-</body>
-</html>
