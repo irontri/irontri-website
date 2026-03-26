@@ -402,6 +402,23 @@
 
   <div class="plan-stats" id="pstats"></div>
 
+  <!-- PROGRESSIVE OVERLOAD GRAPH -->
+  <div id="progress-graph" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;">Training load — week by week</div>
+      <button class="info-btn" onclick="showExplainer('overload')" style="font-size:12px;">What is this? ℹ️</button>
+    </div>
+    <div style="font-size:12px;color:var(--faint);margin-bottom:16px;">Volume builds progressively then drops in taper week before race day</div>
+    <div id="graph-bars" style="display:flex;align-items:flex-end;gap:6px;height:80px;"></div>
+    <div id="graph-labels" style="display:flex;gap:6px;margin-top:8px;"></div>
+    <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#4ade80;"></div><span style="font-size:11px;color:var(--faint);">Base</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#fb923c;"></div><span style="font-size:11px;color:var(--faint);">Build</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#f87171;"></div><span style="font-size:11px;color:var(--faint);">Peak</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#38bdf8;"></div><span style="font-size:11px;color:var(--faint);">Taper</span></div>
+    </div>
+  </div>
+
   <!-- PHASE SELECTOR -->
   <div class="phases" id="phases"></div>
 
@@ -650,6 +667,7 @@ function changeWeek(dir){
   curWeek+=dir;
   curDay=null;
   renderWeek();
+  renderGraph();
   window.scrollTo({top:document.getElementById('plan').offsetTop-20,behavior:'smooth'});
   // update phase pills
   document.querySelectorAll('.phase-pill').forEach(p=>{
@@ -764,6 +782,7 @@ Return ONLY the JSON object. No markdown, no explanation.`;
 
       curWeek=0;curDay=null;
       renderWeek();
+      renderGraph();
       window.scrollTo({top:0,behavior:'smooth'});
     },17000);
 
@@ -803,7 +822,52 @@ prog(1);
 </div>
 
 <script>
+// Render progressive overload graph
+function renderGraph() {
+  const phaseColors = { 'Base':'#4ade80', 'Build':'#fb923c', 'Peak':'#f87171', 'Taper':'#38bdf8' };
+  const weeks = planData.weeks;
+  const totals = weeks.map(w => w.days.reduce((a,d) => a+(d.duration||0), 0));
+  const maxTotal = Math.max(...totals) || 1;
+
+  document.getElementById('graph-bars').innerHTML = weeks.map((w,i) => {
+    const pct = Math.round(totals[i] / maxTotal * 100);
+    const color = phaseColors[w.phase] || '#4ade80';
+    const hrs = Math.floor(totals[i]/60);
+    const mins = totals[i]%60;
+    const isActive = i === curWeek;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;" onclick="jumpToWeek(${i})">
+      <div style="font-size:10px;color:${isActive?'#fff':'var(--faint)'};">${hrs}h${mins>0?mins+'m':''}</div>
+      <div style="width:100%;background:${color};border-radius:4px 4px 0 0;height:${pct}%;opacity:${isActive?1:0.5};transition:all 0.3s;border:${isActive?'2px solid #fff':'2px solid transparent'};" title="Week ${i+1}: ${hrs}h${mins}m"></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('graph-labels').innerHTML = weeks.map((w,i) => {
+    const isActive = i === curWeek;
+    return `<div style="flex:1;text-align:center;font-size:10px;color:${isActive?'#fff':'var(--faint)'};font-weight:${isActive?'500':'400'};">W${i+1}</div>`;
+  }).join('');
+}
+
+function jumpToWeek(i) {
+  curWeek = i;
+  curDay = null;
+  renderWeek();
+  renderGraph();
+  document.querySelectorAll('.phase-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.phase === planData.weeks[curWeek].phase);
+  });
+  document.getElementById('plan').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
 const explainers = {
+  'overload': {
+    icon: '📈',
+    title: 'Progressive Overload',
+    tag: {text:'Training principle',color:'#1E90FF'},
+    body: `<p>Progressive overload is the foundation of all athletic training. It means gradually increasing the stress on your body over time so it adapts and gets stronger, faster and fitter.</p>
+    <p><strong>How it works in your plan:</strong> Each week your total training volume increases slightly. After 3-4 weeks of building, you get a slightly easier week to let your body absorb the training. Then volume builds again to a new high.</p>
+    <p><strong>Taper week:</strong> In the final week before your race, volume drops by 40-50%. This is when your body consolidates all the fitness you've built and you arrive at the start line fresh and ready to race your best.</p>
+    <p><strong>Click any bar</strong> to jump straight to that week in your calendar.</p>`
+  },
   'Swim': {
     icon: '🏊',
     title: 'Swim Session',
