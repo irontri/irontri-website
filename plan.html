@@ -125,17 +125,37 @@
     .cal-day.rest{opacity:0.5;}
     .cal-day-name{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
     .cal-day-icon{font-size:20px;margin-bottom:4px;}
-    .cal-day-type{font-size:9px;font-weight:500;padding:2px 6px;border-radius:100px;display:inline-block;}
-    .type-swim{background:rgba(56,189,248,0.15);color:#38bdf8;}
-    .type-bike{background:rgba(251,146,60,0.15);color:#fb923c;}
-    .type-run{background:rgba(74,222,128,0.15);color:#4ade80;}
-    .type-brick{background:rgba(167,139,250,0.15);color:#a78bfa;}
-    .type-strength{background:rgba(251,191,36,0.15);color:#fbbf24;}
-    .type-rest{background:rgba(255,255,255,0.08);color:var(--faint);}
+    .cal-day-type{font-size:9px;font-weight:600;padding:2px 6px;border-radius:100px;display:inline-block;letter-spacing:0.3px;}
     .cal-day-dur{font-size:10px;color:var(--faint);margin-top:4px;}
 
+    /* ── SESSION TYPE COLOURS (calendar + pills + borders) ── */
+    .type-swim    {background:rgba(56,189,248,0.18);color:#38bdf8;}
+    .type-bike    {background:rgba(251,146,60,0.18);color:#fb923c;}
+    .type-run     {background:rgba(74,222,128,0.18);color:#4ade80;}
+    .type-brick   {background:rgba(167,139,250,0.18);color:#a78bfa;}
+    .type-strength{background:rgba(251,191,36,0.18);color:#fbbf24;}
+    .type-rest    {background:rgba(255,255,255,0.08);color:var(--faint);}
+    .type-race    {background:rgba(248,113,113,0.18);color:#f87171;}
+
+    /* Session card coloured left border */
+    .session-detail[data-type="Swim"]     {border-left:4px solid #38bdf8;}
+    .session-detail[data-type="Bike"]     {border-left:4px solid #fb923c;}
+    .session-detail[data-type="Run"]      {border-left:4px solid #4ade80;}
+    .session-detail[data-type="Brick"]    {border-left:4px solid #a78bfa;}
+    .session-detail[data-type="Strength"] {border-left:4px solid #fbbf24;}
+    .session-detail[data-type="Rest"]     {border-left:4px solid rgba(255,255,255,0.15);}
+    .session-detail[data-type="Race"]     {border-left:4px solid #f87171;}
+
+    /* Calendar day coloured top accent when active */
+    .cal-day.active[data-type="Swim"]     {border-color:#38bdf8;background:rgba(56,189,248,0.08);}
+    .cal-day.active[data-type="Bike"]     {border-color:#fb923c;background:rgba(251,146,60,0.08);}
+    .cal-day.active[data-type="Run"]      {border-color:#4ade80;background:rgba(74,222,128,0.08);}
+    .cal-day.active[data-type="Brick"]    {border-color:#a78bfa;background:rgba(167,139,250,0.08);}
+    .cal-day.active[data-type="Strength"] {border-color:#fbbf24;background:rgba(251,191,36,0.08);}
+    .cal-day.active[data-type="Race"]     {border-color:#f87171;background:rgba(248,113,113,0.08);}
+
     /* SESSION DETAIL */
-    .session-detail{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:24px;}
+    .session-detail{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:24px;transition:border-left-color 0.3s;}
     .sd-header{padding:20px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border);}
     .sd-icon{font-size:32px;}
     .sd-info{flex:1;}
@@ -250,7 +270,6 @@
     <div class="opt" onclick="pick(this,'goaltime','Personal best — I want to beat my previous time')"><span class="oi">🏆</span><div class="ob"><div class="ot">Personal best</div><div class="od">I've done this distance before and want to go faster</div></div><div class="or"></div></div>
   </div>
 
-  <!-- Goal time input — shown when they pick "I have a goal time" -->
   <div id="goaltime-input" style="display:none;margin-bottom:28px;">
     <div style="font-size:13px;color:var(--faint);margin-bottom:12px;">Enter your goal finish time:</div>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
@@ -405,7 +424,6 @@
   <p class="snote">Free for founding members · No credit card needed</p>
 </div>
 
-
 </div><!-- /quiz -->
 
 <!-- GENERATING -->
@@ -488,7 +506,6 @@
   <!-- SESSION DETAIL -->
   <div class="session-detail" id="sd" style="display:none"></div>
 
-  <!-- ACTIONS -->
   <!-- SAVE PLAN BANNER -->
   <div id="save-banner" style="display:none;background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.25);border-radius:16px;padding:24px;margin-bottom:16px;text-align:center;">
     <div style="font-size:22px;margin-bottom:8px;">💾</div>
@@ -517,12 +534,11 @@ const T=12;
 let planData=null;
 let curWeek=0;
 let curDay=null;
-let completions = new Set(); // tracks "week-dayIndex" completed sessions
+let completions = new Set();
 
 function prog(n){const p=Math.round(n/T*100);document.getElementById('pf').style.width=p+'%';document.getElementById('pt').textContent='Question '+n+' of '+T;document.getElementById('pp').textContent=p+'%';}
 function go(n){document.querySelectorAll('.q').forEach(q=>q.classList.remove('active'));const t=document.getElementById('q'+n);if(t){t.classList.add('active');prog(n);}window.scrollTo({top:0,behavior:'smooth'});}
 function pick(el,key,val){el.closest('.opts').querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={goal:'n1',exp:'n4',fitness:'n5',weak:'n6',pool:'n9',injury:'n10'};if(m[key])document.getElementById(m[key]).disabled=false;
-  // Show goal time input if they picked "I have a goal time"
   if(key==='goaltime'){
     const box=document.getElementById('goaltime-input');
     if(val.includes('goal time in mind')){box.style.display='block';}
@@ -535,38 +551,21 @@ function updateGoalTime(){
   if(h===0&&m===0)return;
   const totalMins=h*60+m;
   A.goaltimeText=`${h}:${String(m).padStart(2,'0')} (${totalMins} minutes)`;
-
-  // Calculate splits based on race distance
-  const splits={
-    'Sprint Triathlon':{swim:750,bike:20,run:5,t1:2.5,t2:1.5},
-    'Olympic Triathlon':{swim:1500,bike:40,run:10,t1:3,t2:2},
-    'Half Ironman 70.3':{swim:1900,bike:90,run:21.1,t1:5,t2:4},
-    'Full Ironman':{swim:3800,bike:180,run:42.2,t1:8,t2:6}
-  };
+  const splits={'Sprint Triathlon':{swim:750,bike:20,run:5,t1:2.5,t2:1.5},'Olympic Triathlon':{swim:1500,bike:40,run:10,t1:3,t2:2},'Half Ironman 70.3':{swim:1900,bike:90,run:21.1,t1:5,t2:4},'Full Ironman':{swim:3800,bike:180,run:42.2,t1:8,t2:6}};
   const d=splits[A.race];
   if(!d){document.getElementById('n3').disabled=false;return;}
-
-  // Standard split percentages
   const swimMins=Math.round(totalMins*0.12);
   const bikeMins=Math.round(totalMins*0.53);
   const runMins=Math.round(totalMins*0.30);
   const transMins=Math.round(totalMins*0.05);
-
   const swimPace=Math.round(swimMins/d.swim*100);
   const bikeSpeed=(d.bike/(bikeMins/60)).toFixed(1);
   const runPace=runMins/d.run;
   const runPaceMin=Math.floor(runPace);
   const runPaceSec=Math.round((runPace-runPaceMin)*60);
-
   const breakdown=document.getElementById('gt-breakdown');
   breakdown.style.display='block';
-  breakdown.innerHTML=`
-    <div style="font-weight:500;margin-bottom:8px;color:#fff;">Target split breakdown:</div>
-    🏊 Swim: ${swimMins} min (${swimPace}s/100m) &nbsp;·&nbsp;
-    🚴 Bike: ${bikeMins} min (${bikeSpeed}km/h) &nbsp;·&nbsp;
-    🏃 Run: ${runMins} min (${runPaceMin}:${String(runPaceSec).padStart(2,'0')}/km)<br>
-    <span style="color:var(--faint);font-size:12px;">Transitions: ~${transMins} min · Total: ${h}h ${m}m</span>`;
-
+  breakdown.innerHTML=`<div style="font-weight:500;margin-bottom:8px;color:#fff;">Target split breakdown:</div>🏊 Swim: ${swimMins} min (${swimPace}s/100m) &nbsp;·&nbsp; 🚴 Bike: ${bikeMins} min (${bikeSpeed}km/h) &nbsp;·&nbsp; 🏃 Run: ${runMins} min (${runPaceMin}:${String(runPaceSec).padStart(2,'0')}/km)<br><span style="color:var(--faint);font-size:12px;">Transitions: ~${transMins} min · Total: ${h}h ${m}m</span>`;
   document.getElementById('n3').disabled=false;
 }
 function pg(el,key,val){el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
@@ -602,24 +601,24 @@ function showSum(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+// ── TYPE INFO — single source of truth for colours, icons, labels ──
 const typeInfo={
-  'Swim':{icon:'🏊',cls:'type-swim',color:'#38bdf8'},
-  'Bike':{icon:'🚴',cls:'type-bike',color:'#fb923c'},
-  'Run':{icon:'🏃',cls:'type-run',color:'#4ade80'},
-  'Brick':{icon:'🧱',cls:'type-brick',color:'#a78bfa'},
-  'Strength':{icon:'💪',cls:'type-strength',color:'#fbbf24'},
-  'Rest':{icon:'😴',cls:'type-rest',color:'rgba(255,255,255,0.3)'}
+  'Swim':    {icon:'🏊', cls:'type-swim',     color:'#38bdf8', label:'Swim'},
+  'Bike':    {icon:'🚴', cls:'type-bike',     color:'#fb923c', label:'Bike'},
+  'Run':     {icon:'🏃', cls:'type-run',      color:'#4ade80', label:'Run'},
+  'Brick':   {icon:'🔥', cls:'type-brick',    color:'#a78bfa', label:'Brick'},
+  'Strength':{icon:'💪', cls:'type-strength', color:'#fbbf24', label:'Strength'},
+  'Rest':    {icon:'😴', cls:'type-rest',     color:'rgba(255,255,255,0.3)', label:'Rest'},
+  'Race':    {icon:'🏁', cls:'type-race',     color:'#f87171', label:'Race'}
 };
 
 function renderWeek(){
   const w=planData.weeks[curWeek];
   if(!w)return;
 
-  // Calculate start date from athlete's chosen start date - use exact date they picked
   const planStartDate = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
   planStartDate.setDate(planStartDate.getDate() + (curWeek * 7));
 
-  // week nav date range
   const planStartDate2 = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
   planStartDate2.setDate(planStartDate2.getDate() + (curWeek * 7));
   const endDate = new Date(planStartDate2);
@@ -631,7 +630,6 @@ function renderWeek(){
   document.getElementById('wprev').disabled=curWeek===0;
   document.getElementById('wnext').disabled=curWeek===planData.weeks.length-1;
 
-  // Show "Load next 4 weeks" button on last week
   const isLastWeek = curWeek === planData.weeks.length - 1;
   const loadWrap = document.getElementById('load-more-wrap');
   if (isLastWeek) {
@@ -643,7 +641,6 @@ function renderWeek(){
     loadWrap.style.display = 'none';
   }
 
-  // week summary
   const sessions=w.days.filter(d=>d.type!=='Rest').length;
   const totalMin=w.days.reduce((a,d)=>a+(d.duration||0),0);
   const hrs=Math.floor(totalMin/60);
@@ -653,13 +650,11 @@ function renderWeek(){
     <div class="ws-card"><div class="wsv">${hrs}h${mins>0?mins+'m':''}</div><div class="wsl">Total time</div></div>
     <div class="ws-card"><div class="wsv">${w.focus||'Base'}</div><div class="wsl">Focus</div></div>`;
 
-  // Easy / Moderate / Hard breakdown
   let easyMin=0, modMin=0, hardMin=0;
   w.days.forEach(d=>{
     if(d.type==='Rest'||!d.duration)return;
     const e=d.effort||5;
-    if(e<=4) easyMin+=d.duration;
-    else if(e<=6) easyMin+=d.duration;
+    if(e<=6) easyMin+=d.duration;
     else if(e<=7) modMin+=d.duration;
     else hardMin+=d.duration;
   });
@@ -678,22 +673,12 @@ function renderWeek(){
       <div style="width:${hardPct}%;background:#f87171;border-radius:100px;transition:width 0.5s;"></div>
     </div>
     <div style="display:flex;gap:16px;flex-wrap:wrap;">
-      <div style="display:flex;align-items:center;gap:6px;">
-        <div style="width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;"></div>
-        <span style="font-size:12px;color:var(--muted);">Easy <strong style="color:#fff;">${easyPct}%</strong></span>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <div style="width:8px;height:8px;border-radius:50%;background:#fbbf24;flex-shrink:0;"></div>
-        <span style="font-size:12px;color:var(--muted);">Moderate <strong style="color:#fff;">${modPct}%</strong></span>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <div style="width:8px;height:8px;border-radius:50%;background:#f87171;flex-shrink:0;"></div>
-        <span style="font-size:12px;color:var(--muted);">Hard <strong style="color:#fff;">${hardPct}%</strong></span>
-      </div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;"></div><span style="font-size:12px;color:var(--muted);">Easy <strong style="color:#fff;">${easyPct}%</strong></span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#fbbf24;flex-shrink:0;"></div><span style="font-size:12px;color:var(--muted);">Moderate <strong style="color:#fff;">${modPct}%</strong></span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#f87171;flex-shrink:0;"></div><span style="font-size:12px;color:var(--muted);">Hard <strong style="color:#fff;">${hardPct}%</strong></span></div>
       <div style="margin-left:auto;font-size:11px;color:var(--faint);">${Math.round(easyMin/60*10)/10}h easy · ${Math.round(modMin/60*10)/10}h mod · ${Math.round(hardMin/60*10)/10}h hard</div>
     </div>`;
 
-  // calendar with real dates
   const allDays=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('cal').innerHTML=w.days.map((d,i)=>{
@@ -703,16 +688,15 @@ function renderWeek(){
     const dayDate = new Date(planStartDate);
     dayDate.setDate(planStartDate.getDate() + i);
     const dateStr = dayDate.getDate()+' '+months[dayDate.getMonth()];
-    return `<div class="cal-day${d.type==='Rest'?' rest':''}${isActive?' active':''}${isComplete?' completed':''}" onclick="selectDay(${i})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
+    return `<div class="cal-day${d.type==='Rest'?' rest':''}${isActive?' active':''}" data-type="${d.swapped?'Run':d.type}" onclick="selectDay(${i})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
       <div class="cal-day-name">${allDays[i]}</div>
       <div style="font-size:10px;color:var(--faint);margin-bottom:4px;">${dateStr}</div>
       <div class="cal-day-icon">${isComplete ? '✅' : d.swapped ? '😓' : t.icon}</div>
-      <div class="cal-day-type ${t.cls}">${d.swapped ? 'Easy' : d.type}</div>
+      <div class="cal-day-type ${t.cls}">${d.swapped ? 'Easy' : t.label}</div>
       <div class="cal-day-dur">${d.duration?d.duration+'m':''}</div>
     </div>`;
   }).join('');
 
-  // show first active day
   if(curDay===null){
     const firstActive=w.days.findIndex(d=>d.type!=='Rest');
     selectDay(firstActive>=0?firstActive:0);
@@ -726,17 +710,21 @@ function selectDay(i){
   const w=planData.weeks[curWeek];
   const d=w.days[i];
   const t=typeInfo[d.type]||typeInfo['Rest'];
+  const sd=document.getElementById('sd');
 
-  // update calendar highlight
   document.querySelectorAll('.cal-day').forEach((el,idx)=>{
     el.classList.toggle('active',idx===i);
   });
+
+  // Set the coloured left border on the session card
+  sd.setAttribute('data-type', d.type||'Rest');
 
   const dayDate2 = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
   dayDate2.setDate(dayDate2.getDate() + (curWeek * 7) + i);
   const months3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const fullDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   const fullDateStr = fullDays[i]+' '+dayDate2.getDate()+' '+months3[dayDate2.getMonth()];
+
   if(d.type==='Rest'){
     sd.style.display='block';
     sd.innerHTML=`
@@ -744,7 +732,7 @@ function selectDay(i){
         <div class="sd-icon">😴</div>
         <div class="sd-info">
           <div class="sd-title">Rest Day</div>
-          <div class="sd-meta">${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][i]}</div>
+          <div class="sd-meta">${fullDays[i]}</div>
         </div>
       </div>
       <div class="sd-body">
@@ -755,20 +743,18 @@ function selectDay(i){
   }
 
   const effortLevel=d.effort||6;
-  const effortBars=Array.from({length:10},(_,i)=>`<div class="eb ${i<effortLevel?'filled':'empty'}"></div>`).join('');
-
-  // Build strength exercises HTML if this is a strength session
+  const effortBars=Array.from({length:10},(_,j)=>`<div class="eb ${j<effortLevel?'filled':'empty'}"></div>`).join('');
   const strengthHTML = d.type === 'Strength' ? buildStrengthSession(curWeek) : '';
 
   sd.style.display='block';
   sd.innerHTML=`
-    <div class="sd-header" style="border-left:3px solid ${t.color};">
+    <div class="sd-header">
       <div class="sd-icon">${t.icon}</div>
       <div class="sd-info">
         <div class="sd-title">${d.name||d.type+' Session'} <button class="info-btn" onclick="showExplainer('${d.type}')">What is this? ℹ️</button></div>
         <div class="sd-meta">${fullDateStr} · ${d.duration||60} minutes</div>
         <div class="sd-badges">
-          <span class="sd-badge ${t.cls}" style="border-color:${t.color}20;">${d.type}</span>
+          <span class="sd-badge ${t.cls}" style="border-color:${t.color}40;font-size:12px;font-weight:600;">${t.icon} ${t.label}</span>
           ${d.effort?`<span class="sd-badge" style="border-color:rgba(255,255,255,0.1);color:var(--muted);">RPE ${d.effort}/10</span>`:''}
           ${d.zone?`<span class="sd-badge" style="border-color:rgba(255,255,255,0.1);color:var(--muted);">Zone ${d.zone}</span>`:''}
         </div>
@@ -799,19 +785,15 @@ function changeWeek(dir){
   renderWeek();
   renderGraph();
   window.scrollTo({top:document.getElementById('plan').offsetTop-20,behavior:'smooth'});
-  // update phase pills
   document.querySelectorAll('.phase-pill').forEach(p=>{
     p.classList.toggle('active',p.dataset.phase===planData.weeks[curWeek].phase);
   });
 }
 
 async function buildPlan(){
-  // Check if logged in first
   const userName = localStorage.getItem('irontri_user_name');
   if (!userName) {
-    // Save quiz answers to localStorage so they don't lose their progress
     localStorage.setItem('irontri_pending_answers', JSON.stringify(A));
-    // Redirect to signup
     window.location.href = '/auth.html?redirect=plan';
     return;
   }
@@ -820,7 +802,6 @@ async function buildPlan(){
   document.getElementById('summary').style.display='none';
   document.getElementById('gen').style.display='block';
   window.scrollTo({top:0,behavior:'smooth'});
-  // Personalised loading messages
   const goalTimeMsg = A.goaltimeText && !A.goaltimeText.includes('finish') && !A.goaltimeText.includes('best') 
     ? `Setting pace targets for ${A.goaltimeText}` 
     : 'Calculating your training zones';
@@ -836,8 +817,6 @@ async function buildPlan(){
     document.getElementById('gs'+(i+1)+'-text').textContent = text;
   });
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
-
-  const allDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
   const prompt=`You are a world-class triathlon coach building a personalised training plan. Return ONLY valid JSON, no other text.
 
@@ -874,12 +853,12 @@ Return this exact JSON structure:
 }
 
 Rules:
-- Create 4 weeks of the plan (first 4 weeks to give athletes a solid block to work with)
+- Create 4 weeks of the plan
 - Each week has exactly 7 days (Monday to Sunday)
 - Training days (${A.days.join(', ')}) get sessions, all other days are type "Rest"
 - Distribute sessions intelligently: spread swim/bike/run across available days, never two hard sessions back to back
 - Week 1 = Base phase (easy, technique focus, RPE 4-6)
-- Week 2 = Base phase (slightly more volume)  
+- Week 2 = Base phase (slightly more volume)
 - Week 3 = Build phase (introduce intervals, RPE 6-7)
 - Week 4 = Build phase (brick sessions, race pace work, RPE 7-8)
 - Session types: "Swim", "Bike", "Run", "Brick", "Strength", "Rest"
@@ -887,10 +866,10 @@ Rules:
 - duration is in minutes (integer)
 - effort is RPE 1-10 (integer)
 - zone is HR zone 1-5 (integer)
-- Every session MUST have specific distances/times in mainset (e.g. "800m", "30 min", "4x400m")
+- Every session MUST have specific distances/times in mainset
 - Make it triathlon specific with proper periodisation for ${A.race}
 - focus field should be 1-3 words like "Aerobic base", "Technique", "Threshold", "Race pace"
-- Vary session names to be descriptive e.g. "Threshold Intervals", "Long Endurance Ride", "Brick — Race Sim"
+- Vary session names to be descriptive
 
 Return ONLY the JSON object. No markdown, no explanation.`;
 
@@ -898,17 +877,10 @@ Return ONLY the JSON object. No markdown, no explanation.`;
     const r=await fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
     const d=await r.json();
     let txt=d.plan||'';
-    
-    // Strip any markdown or extra text around the JSON
     txt=txt.replace(/```json/g,'').replace(/```/g,'').trim();
-    
-    // Find the JSON object if there's text around it
     const jsonStart=txt.indexOf('{');
     const jsonEnd=txt.lastIndexOf('}');
-    if(jsonStart>-1&&jsonEnd>-1){
-      txt=txt.substring(jsonStart,jsonEnd+1);
-    }
-    
+    if(jsonStart>-1&&jsonEnd>-1){txt=txt.substring(jsonStart,jsonEnd+1);}
     planData=JSON.parse(txt);
 
     setTimeout(()=>{
@@ -919,18 +891,15 @@ Return ONLY the JSON object. No markdown, no explanation.`;
       planEl.style.display='block';
       planEl.style.pointerEvents='all';
 
-      // Header
       document.getElementById('ptitle').textContent=A.name+"'s "+A.race+" Plan";
       document.getElementById('psub').textContent=A.exp.split(' — ')[0]+' · '+w+' weeks · '+A.hours+' hrs/week · Age '+A.age;
       document.getElementById('pintro').textContent=planData.intro||'';
 
-      // Stats
       document.getElementById('pstats').innerHTML=[
         {v:w,l:'Total weeks'},{v:A.hours+'h',l:'Per week'},
         {v:A.days.length,l:'Sessions/week'},{v:A.race.split(' ')[0],l:'Race type'}
       ].map(s=>`<div class="ps"><div class="psv">${s.v}</div><div class="psl">${s.l}</div></div>`).join('');
 
-      // Phase pills
       const phases=[...new Set(planData.weeks.map(w=>w.phase))];
       document.getElementById('phases').innerHTML=phases.map((p,i)=>
         `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="jumpToPhase('${p}')">${p} Phase</button>`
@@ -940,10 +909,7 @@ Return ONLY the JSON object. No markdown, no explanation.`;
       renderWeek();
       renderGraph();
       loadCompletions().then(() => renderWeek());
-
-      // Check if user is logged in and save plan
       checkAndSavePlan(txt);
-
       window.scrollTo({top:0,behavior:'smooth'});
     },17000);
 
@@ -1015,42 +981,23 @@ async function toggleComplete(dayIndex) {
   const key = `${curWeek}-${dayIndex}`;
   const btn = document.getElementById(`complete-btn-${dayIndex}`);
   if (!sb2) return;
-
   try {
     const { data: { session } } = await sb2.auth.getSession();
-    if (!session) {
-      window.location.href = '/auth.html';
-      return;
-    }
-
+    if (!session) { window.location.href = '/auth.html'; return; }
     if (completions.has(key)) {
-      // Uncomplete
-      await sb2.from('completions').delete()
-        .eq('user_id', session.user.id)
-        .eq('week_num', curWeek)
-        .eq('day', String(dayIndex));
+      await sb2.from('completions').delete().eq('user_id', session.user.id).eq('week_num', curWeek).eq('day', String(dayIndex));
       completions.delete(key);
       btn.textContent = '✓ Mark as complete';
       btn.style.background = 'rgba(74,222,128,0.08)';
     } else {
-      // Complete
-      await sb2.from('completions').insert({
-        user_id: session.user.id,
-        plan_id: 'current',
-        week_num: curWeek,
-        day: String(dayIndex)
-      });
+      await sb2.from('completions').insert({user_id: session.user.id, plan_id: 'current', week_num: curWeek, day: String(dayIndex)});
       completions.add(key);
       btn.textContent = '✅ Session completed!';
       btn.style.background = 'rgba(74,222,128,0.2)';
     }
-    // Re-render calendar to show tick
     renderWeek();
-    // Re-show session detail
-    showDay(dayIndex);
-  } catch(e) {
-    console.error('Complete error:', e);
-  }
+    selectDay(dayIndex);
+  } catch(e) { console.error('Complete error:', e); }
 }
 
 async function checkAndSavePlan(planText) {
@@ -1078,19 +1025,16 @@ async function checkAndSavePlan(planText) {
   }
 }
 
-// Attach load-more button listener
 document.addEventListener('DOMContentLoaded', async () => {
   const btn = document.getElementById('load-more-btn');
   if (btn) btn.addEventListener('click', () => { if(typeof loadNextWeeks==='function') loadNextWeeks(); });
 
-  // Wait for sb2 to be initialized
   let attempts = 0;
   while (!sb2 && attempts < 20) {
     await new Promise(r => setTimeout(r, 100));
     attempts++;
   }
 
-  // Check if loading a saved plan from dashboard
   const urlParams = new URLSearchParams(window.location.search);
   const loadId = urlParams.get('load');
   if (loadId) {
@@ -1099,7 +1043,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.querySelector('.prog-wrap').style.display = 'none';
       document.getElementById('gen').style.display = 'block';
 
-      // Wait for sb2 to initialize
       let attempts = 0;
       while (!sb2 && attempts < 30) {
         await new Promise(r => setTimeout(r, 100));
@@ -1119,7 +1062,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('plan').style.display = 'block';
         document.querySelector('.prog-wrap').style.display = 'none';
 
-        // Render plan stats
         const w = planData.weeks?.length || 0;
         document.getElementById('ptitle').textContent = A.name + "'s " + A.race + " Plan";
         document.getElementById('pintro').textContent = w + ' weeks of personalised triathlon coaching';
@@ -1139,7 +1081,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadCompletions();
         renderWeek();
       } else {
-        // Plan not found — show quiz
         document.getElementById('gen').style.display = 'none';
         document.getElementById('quiz-wrap').style.display = 'block';
         document.querySelector('.prog-wrap').style.display = 'block';
@@ -1153,7 +1094,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // Check if returning from signup with saved quiz answers
   const pending = localStorage.getItem('irontri_pending_answers');
   const userName = localStorage.getItem('irontri_user_name');
   if (pending && userName) {
@@ -1169,6 +1109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 </script>
+
 <!-- EXPLAINER MODAL -->
 <div class="modal-overlay" id="modal" onclick="closeModal(event)">
   <div class="modal">
@@ -1182,7 +1123,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 </div>
 
 <script>
-// Render progressive overload graph
 function renderGraph() {
   const phaseColors = { 'Base':'#4ade80', 'Build':'#fb923c', 'Peak':'#f87171', 'Taper':'#38bdf8' };
   const weeks = planData.weeks;
@@ -1218,58 +1158,12 @@ function jumpToWeek(i) {
   document.getElementById('plan').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-// NOT FEELING 100% — SESSION SWAP
 const easySwaps = {
-  'Swim': {
-    name: 'Easy Recovery Swim',
-    duration: 20,
-    effort: 3,
-    purpose: 'Gentle movement to keep the body active without adding stress. Focus purely on feeling good in the water.',
-    warmup: '200m very easy freestyle — no pressure, just move.',
-    mainset: '4x50m easy backstroke or freestyle at RPE 3/10. Rest as long as you need between each. If you feel good, great. If not, stop early.',
-    cooldown: '100m easy, focus on long slow strokes.',
-    coachNote: 'This is about moving your body gently, not training. If you feel worse after the warm up, get out and rest. No guilt.'
-  },
-  'Bike': {
-    name: 'Easy Recovery Spin',
-    duration: 25,
-    effort: 3,
-    purpose: 'Light movement to flush the legs and keep blood flowing without taxing your system.',
-    warmup: '5 min very easy spinning, cadence 90+rpm, no resistance.',
-    mainset: '15 min easy riding at RPE 3/10. Keep cadence high and resistance very low. You should be able to sing.',
-    cooldown: '5 min easy spin, gradually slow down.',
-    coachNote: 'This replaces your planned session. Do not push. If you feel worse after 10 minutes, stop and rest. Your body needs recovery more than training right now.'
-  },
-  'Run': {
-    name: 'Easy Recovery Walk/Jog',
-    duration: 20,
-    effort: 3,
-    purpose: 'Gentle movement to keep the legs active. Walk if needed — there is no shame in walking today.',
-    warmup: '5 min easy walk.',
-    mainset: '10 min easy jog or walk at RPE 3/10. Go by feel — walk whenever you want. No pace targets today.',
-    cooldown: '5 min easy walk. Stretch calves and hip flexors.',
-    coachNote: 'Walking counts. Moving your body gently is always better than lying on the couch feeling guilty. Come back strong tomorrow.'
-  },
-  'Brick': {
-    name: 'Easy Swim Only',
-    duration: 25,
-    effort: 3,
-    purpose: 'On days you are not feeling great, drop the brick and do an easy swim only. Swimming is the most recovery-friendly discipline.',
-    warmup: '200m easy freestyle.',
-    mainset: '300m easy continuous swimming at RPE 3-4/10. Backstroke, freestyle, whatever feels good.',
-    cooldown: '100m easy, focus on breathing.',
-    coachNote: 'Brick sessions are high demand. When you are not 100%, replacing with easy swimming keeps you moving without digging a deeper hole.'
-  },
-  'Strength': {
-    name: 'Mobility & Stretching Only',
-    duration: 20,
-    effort: 2,
-    purpose: 'Skip the strength work today and focus purely on mobility. This still contributes to your recovery and injury prevention.',
-    warmup: 'None needed.',
-    mainset: 'Hip 90/90 stretch (90 sec each side) → Pigeon pose (90 sec each side) → Thoracic rotation (10 each side) → Downward dog to cobra (8 slow reps) → Foam roll quads and IT band (90 sec each leg).',
-    cooldown: '5 min lying down with legs elevated against a wall.',
-    coachNote: 'This is not a wasted session. Mobility work on tired days is one of the most underrated recovery tools in triathlon training.'
-  }
+  'Swim': {name:'Easy Recovery Swim',duration:20,effort:3,purpose:'Gentle movement to keep the body active without adding stress.',warmup:'200m very easy freestyle — no pressure, just move.',mainset:'4x50m easy backstroke or freestyle at RPE 3/10. Rest as long as you need between each.',cooldown:'100m easy, focus on long slow strokes.',coachNote:'This is about moving your body gently, not training. If you feel worse after the warm up, get out and rest.'},
+  'Bike': {name:'Easy Recovery Spin',duration:25,effort:3,purpose:'Light movement to flush the legs and keep blood flowing.',warmup:'5 min very easy spinning, cadence 90+rpm, no resistance.',mainset:'15 min easy riding at RPE 3/10. Keep cadence high and resistance very low.',cooldown:'5 min easy spin, gradually slow down.',coachNote:'Do not push. If you feel worse after 10 minutes, stop and rest.'},
+  'Run':  {name:'Easy Recovery Walk/Jog',duration:20,effort:3,purpose:'Gentle movement to keep the legs active. Walk if needed.',warmup:'5 min easy walk.',mainset:'10 min easy jog or walk at RPE 3/10. Go by feel — walk whenever you want.',cooldown:'5 min easy walk. Stretch calves and hip flexors.',coachNote:'Walking counts. Moving gently is always better than lying on the couch feeling guilty.'},
+  'Brick':{name:'Easy Swim Only',duration:25,effort:3,purpose:'On days you are not feeling great, drop the brick and do an easy swim only.',warmup:'200m easy freestyle.',mainset:'300m easy continuous swimming at RPE 3-4/10.',cooldown:'100m easy, focus on breathing.',coachNote:'Brick sessions are high demand. When not 100%, easy swimming keeps you moving without digging a deeper hole.'},
+  'Strength':{name:'Mobility & Stretching Only',duration:20,effort:2,purpose:'Skip the strength work and focus purely on mobility.',warmup:'None needed.',mainset:'Hip 90/90 stretch (90 sec each side) → Pigeon pose (90 sec each side) → Thoracic rotation (10 each side) → Downward dog to cobra (8 reps) → Foam roll quads (90 sec each leg).',cooldown:'5 min legs elevated against a wall.',coachNote:'Mobility work on tired days is one of the most underrated recovery tools in triathlon.'}
 };
 
 function swapSession(dayIndex) {
@@ -1277,57 +1171,40 @@ function swapSession(dayIndex) {
   const d = w.days[dayIndex];
   const swap = easySwaps[d.type];
   if (!swap) return;
-
-  const confirmed = confirm(`Swap "${d.name || d.type}" for an easier session?\n\n"${swap.name}" (${swap.duration} min, RPE ${swap.effort}/10)\n\nYour original session will be replaced for today.`);
+  const confirmed = confirm(`Swap "${d.name || d.type}" for an easier session?\n\n"${swap.name}" (${swap.duration} min, RPE ${swap.effort}/10)`);
   if (!confirmed) return;
-
-  // Replace the session data temporarily
-  w.days[dayIndex] = {
-    ...d,
-    name: swap.name,
-    duration: swap.duration,
-    effort: swap.effort,
-    purpose: swap.purpose,
-    warmup: swap.warmup,
-    mainset: swap.mainset,
-    cooldown: swap.cooldown,
-    coachNote: swap.coachNote,
-    swapped: true
-  };
-
-  // Re-render the calendar and select the swapped day
+  w.days[dayIndex] = {...d, name:swap.name, duration:swap.duration, effort:swap.effort, purpose:swap.purpose, warmup:swap.warmup, mainset:swap.mainset, cooldown:swap.cooldown, coachNote:swap.coachNote, swapped:true};
   renderWeek();
   selectDay(dayIndex);
 }
 
-
 const strengthExercises = {
   base: [
-    {name:'Glute Bridge',sets:'3',reps:'15',target:'Glutes & core',icon:'🍑',tip:'Drive through heels, hold 2 sec at top. Essential for cycling power and run stability.'},
-    {name:'Single-Leg Squat',sets:'3',reps:'8 each leg',target:'Quads, glutes, balance',icon:'🦵',tip:'Use a chair for support if needed. Single-leg strength prevents knee injuries and improves run economy.'},
-    {name:'Dead Bug',sets:'3',reps:'10 each side',target:'Deep core',icon:'🐛',tip:'Press lower back into floor throughout. Trains the core stability needed for all three disciplines.'},
-    {name:'Plank',sets:'3',reps:'45 seconds',target:'Full core',icon:'💪',tip:'Squeeze glutes and quads. Breathe normally. Strong planks improve swim position and run posture.'},
-    {name:'Calf Raises',sets:'3',reps:'20 each leg',target:'Calves & Achilles',icon:'🦶',tip:'Do on a step for full range. Strong calves protect the Achilles — the most common triathlon injury.'},
-    {name:'Hip Flexor Stretch',sets:'2',reps:'45 sec each side',target:'Hip flexors',icon:'🧘',tip:'Tight hip flexors from cycling cause lower back pain on the run. Critical stretch.'},
-    {name:'Shoulder Press',sets:'3',reps:'12',target:'Shoulders & triceps',icon:'🏋️',tip:'Keep core braced. Strong shoulders maintain swim stroke when fatigue sets in.'},
-    {name:'Bent Over Row',sets:'3',reps:'12',target:'Back & biceps',icon:'↕️',tip:'Squeeze shoulder blades at top. A strong back keeps your swim stroke powerful and efficient.'},
+    {name:'Glute Bridge',sets:'3',reps:'15',target:'Glutes & core',icon:'🍑',tip:'Drive through heels, hold 2 sec at top.'},
+    {name:'Single-Leg Squat',sets:'3',reps:'8 each leg',target:'Quads, glutes, balance',icon:'🦵',tip:'Use a chair for support if needed.'},
+    {name:'Dead Bug',sets:'3',reps:'10 each side',target:'Deep core',icon:'🐛',tip:'Press lower back into floor throughout.'},
+    {name:'Plank',sets:'3',reps:'45 seconds',target:'Full core',icon:'💪',tip:'Squeeze glutes and quads. Breathe normally.'},
+    {name:'Calf Raises',sets:'3',reps:'20 each leg',target:'Calves & Achilles',icon:'🦶',tip:'Do on a step for full range.'},
+    {name:'Hip Flexor Stretch',sets:'2',reps:'45 sec each side',target:'Hip flexors',icon:'🧘',tip:'Tight hip flexors from cycling cause lower back pain on the run.'},
+    {name:'Shoulder Press',sets:'3',reps:'12',target:'Shoulders & triceps',icon:'🏋️',tip:'Keep core braced.'},
+    {name:'Bent Over Row',sets:'3',reps:'12',target:'Back & biceps',icon:'↕️',tip:'Squeeze shoulder blades at top.'},
   ],
   build: [
-    {name:'Romanian Deadlift',sets:'4',reps:'10',target:'Hamstrings, glutes',icon:'🏋️',tip:'Hinge at hip not back. Builds the posterior chain power needed for strong cycling.'},
-    {name:'Bulgarian Split Squat',sets:'3',reps:'10 each leg',target:'Quads, glutes, balance',icon:'🦵',tip:'Rear foot elevated. Front knee tracks over toes. Best single-leg exercise for triathletes.'},
-    {name:'Lat Pulldown / Pull-Up',sets:'3',reps:'10',target:'Lats & back',icon:'💪',tip:'Pull elbows down to hips. Strong lats are the engine of your swim stroke.'},
-    {name:'Copenhagen Plank',sets:'3',reps:'20 sec each side',target:'Adductors & core',icon:'🧱',tip:'Side plank with top leg elevated. Stabilises hips on the run and prevents groin injuries.'},
-    {name:'Box Jump',sets:'3',reps:'8',target:'Power & explosiveness',icon:'⚡',tip:'Land softly with bent knees. Improves running economy and bike sprint power.'},
-    {name:'TRX Row',sets:'3',reps:'12',target:'Upper back & biceps',icon:'🔄',tip:'Body parallel to floor for full challenge. Trains pulling muscles used in open water swimming.'},
-    {name:'Nordic Hamstring Curl',sets:'3',reps:'6',target:'Hamstrings',icon:'🦵',tip:'Lower yourself as slowly as possible. Best exercise for preventing hamstring injuries.'},
-    {name:'Pallof Press',sets:'3',reps:'12 each side',target:'Rotational core',icon:'↔️',tip:'Resist rotation throughout. Trains anti-rotation strength needed to hold form when fatigued.'},
+    {name:'Romanian Deadlift',sets:'4',reps:'10',target:'Hamstrings, glutes',icon:'🏋️',tip:'Hinge at hip not back.'},
+    {name:'Bulgarian Split Squat',sets:'3',reps:'10 each leg',target:'Quads, glutes, balance',icon:'🦵',tip:'Rear foot elevated. Front knee tracks over toes.'},
+    {name:'Lat Pulldown / Pull-Up',sets:'3',reps:'10',target:'Lats & back',icon:'💪',tip:'Pull elbows down to hips.'},
+    {name:'Copenhagen Plank',sets:'3',reps:'20 sec each side',target:'Adductors & core',icon:'🧱',tip:'Side plank with top leg elevated.'},
+    {name:'Box Jump',sets:'3',reps:'8',target:'Power & explosiveness',icon:'⚡',tip:'Land softly with bent knees.'},
+    {name:'TRX Row',sets:'3',reps:'12',target:'Upper back & biceps',icon:'🔄',tip:'Body parallel to floor for full challenge.'},
+    {name:'Nordic Hamstring Curl',sets:'3',reps:'6',target:'Hamstrings',icon:'🦵',tip:'Lower yourself as slowly as possible.'},
+    {name:'Pallof Press',sets:'3',reps:'12 each side',target:'Rotational core',icon:'↔️',tip:'Resist rotation throughout.'},
   ]
 };
 const mobilityExercises = [
-  {name:'Hip 90/90 Stretch',sets:'2',reps:'60 sec each side',target:'Hip rotation',icon:'🧘',tip:'Sit with both knees at 90 degrees. Lean gently forward. Improves cycling hip mobility.'},
-  {name:'Thoracic Rotation',sets:'2',reps:'10 each side',target:'Upper back',icon:'🔄',tip:'Lie on side, knees bent, rotate top arm open. Essential for swim stroke rotation.'},
-  {name:'Pigeon Pose',sets:'2',reps:'90 sec each side',target:'Glutes & hip flexors',icon:'🕊️',tip:'Most important stretch for cyclists. Releases piriformis and glute tension from long rides.'},
-  {name:'Foam Roll — Quads & IT Band',sets:'1',reps:'90 sec each leg',target:'Quads, IT band',icon:'🎯',tip:'Roll slowly, pause on tight spots. Prevents IT band syndrome — common in cycling and running.'},
+  {name:'Hip 90/90 Stretch',sets:'2',reps:'60 sec each side',target:'Hip rotation',icon:'🧘',tip:'Sit with both knees at 90 degrees.'},
+  {name:'Thoracic Rotation',sets:'2',reps:'10 each side',target:'Upper back',icon:'🔄',tip:'Lie on side, knees bent, rotate top arm open.'},
+  {name:'Pigeon Pose',sets:'2',reps:'90 sec each side',target:'Glutes & hip flexors',icon:'🕊️',tip:'Most important stretch for cyclists.'},
+  {name:'Foam Roll — Quads & IT Band',sets:'1',reps:'90 sec each leg',target:'Quads, IT band',icon:'🎯',tip:'Roll slowly, pause on tight spots.'},
 ];
 
 function buildStrengthSession(weekNum) {
@@ -1365,79 +1242,14 @@ function buildStrengthSession(weekNum) {
 }
 
 const explainers = {
-  'overload': {
-    icon: '📈',
-    title: 'Progressive Overload',
-    tag: {text:'Training principle',color:'#1E90FF'},
-    body: `<p>Progressive overload is the foundation of all athletic training. It means gradually increasing the stress on your body over time so it adapts and gets stronger, faster and fitter.</p>
-    <p><strong>How it works in your plan:</strong> Each week your total training volume increases slightly. After 3-4 weeks of building, you get a slightly easier week to let your body absorb the training. Then volume builds again to a new high.</p>
-    <p><strong>Taper week:</strong> In the final week before your race, volume drops by 40-50%. This is when your body consolidates all the fitness you've built and you arrive at the start line fresh and ready to race your best.</p>
-    <p><strong>Click any bar</strong> to jump straight to that week in your calendar.</p>`
-  },
-  'Swim': {
-    icon: '🏊',
-    title: 'Swim Session',
-    tag: {text:'Discipline',color:'#38bdf8'},
-    body: `<p>Swim sessions are the first leg of every triathlon. Unlike pool swimming for fitness, triathlon swim training focuses on efficiency — getting from A to B using as little energy as possible so you have plenty left for the bike and run.</p>
-    <p><strong>Key focus areas:</strong> stroke technique, breathing rhythm, open water confidence and pacing. Even small improvements in your 100m pace add up significantly over race distance.</p>
-    <p><strong>80/20 rule:</strong> Most of your swim sessions should feel comfortable and controlled (RPE 4-6). Save the hard efforts for interval sets — short bursts with recovery.</p>`
-  },
-  'Bike': {
-    icon: '🚴',
-    title: 'Bike Session',
-    tag: {text:'Discipline',color:'#fb923c'},
-    body: `<p>The bike leg is where most of your race time is spent — up to 50% of your total finish time. It's also where smart pacing wins races. Going too hard on the bike destroys your run.</p>
-    <p><strong>Two types of bike sessions:</strong> Long endurance rides build your aerobic base and teach your body to burn fat as fuel. Interval sessions (threshold, VO2) build power and speed.</p>
-    <p><strong>Key tip:</strong> Always ride at a cadence of 85-95rpm rather than grinding a big gear. High cadence is more efficient and saves your legs for the run.</p>`
-  },
-  'Run': {
-    icon: '🏃',
-    title: 'Run Session',
-    tag: {text:'Discipline',color:'#4ade80'},
-    body: `<p>The run is the final leg — and the hardest. You're already fatigued from the swim and bike, which is why triathlon running feels nothing like a standalone 5km or 10km.</p>
-    <p><strong>Types of run sessions:</strong> Easy aerobic runs build your base. Tempo runs improve your lactate threshold. Interval sessions develop speed and running economy. Long runs build endurance.</p>
-    <p><strong>Key tip:</strong> Most of your running should feel easy — conversational pace (RPE 4-6). This trains your aerobic system and keeps injury risk low. Save the effort for specific hard sessions.</p>`
-  },
-  'Brick': {
-    icon: '🧱',
-    title: 'Brick Session',
-    tag: {text:'Key session',color:'#a78bfa'},
-    body: `<p>A Brick session combines two disciplines back to back — usually bike followed immediately by a run. The name comes from how your legs feel when you get off the bike: like bricks.</p>
-    <p><strong>Why they matter:</strong> Running after cycling uses your muscles differently than a standalone run. Your body needs to adapt to this transition — and Brick sessions are the only way to do it.</p>
-    <p><strong>What to expect:</strong> The first 5-10 minutes of your run will feel terrible. Your legs will feel heavy and unresponsive. This is completely normal — it gets better with practice and your body adapts over weeks of training.</p>
-    <p><strong>Key tip:</strong> Keep your run pace easy in Brick sessions, especially early in your plan. The goal is adaptation, not speed.</p>`
-  },
-  'Strength': {
-    icon: '💪',
-    title: 'Strength Session',
-    tag: {text:'Conditioning',color:'#fbbf24'},
-    body: `<p>Strength training is one of the most overlooked parts of triathlon training — but it's one of the highest returns on your time. Stronger muscles mean more power, better form under fatigue, and far fewer injuries.</p>
-    <p><strong>Triathlon-specific focus:</strong> Core stability (for swimming and running posture), glutes and hip flexors (for cycling power and run efficiency), and single-leg exercises (for balance and injury prevention).</p>
-    <p><strong>Key tip:</strong> Strength sessions should not be brutal. 30-45 minutes of focused, controlled exercises is all you need. Save your energy for swim, bike and run sessions.</p>`
-  },
-  'Rest': {
-    icon: '😴',
-    title: 'Rest Day',
-    tag: {text:'Recovery',color:'rgba(255,255,255,0.3)'},
-    body: `<p>Rest days are not wasted days — they are where your fitness is actually built. During training you create stress on your body. During rest, your body adapts, repairs and comes back stronger.</p>
-    <p><strong>Active recovery is fine:</strong> A 20-30 minute easy walk, light stretching or foam rolling is perfectly fine on rest days. Avoid anything that elevates your heart rate significantly.</p>
-    <p><strong>The biggest mistake:</strong> Most amateur triathletes overtrain and under-recover. Protecting your rest days is just as important as completing your hard sessions. Never skip a rest day to add extra training.</p>`
-  },
-  'RPE': {
-    icon: '📊',
-    title: 'RPE — Rate of Perceived Exertion',
-    tag: {text:'Training concept',color:'#1E90FF'},
-    body: `<p>RPE is a simple scale from 1 to 10 that describes how hard a session feels. It's the most practical way to measure effort across all three disciplines without needing a heart rate monitor or power meter.</p>
-    <div class="rpe-grid">
-      <div class="rpe-num">1-2</div><div class="rpe-desc">Almost no effort. Gentle walk.</div>
-      <div class="rpe-num">3-4</div><div class="rpe-desc">Easy. Fully conversational. Could go for hours.</div>
-      <div class="rpe-num">5-6</div><div class="rpe-desc">Comfortable. Can speak in sentences. Aerobic zone.</div>
-      <div class="rpe-num">7</div><div class="rpe-desc">Moderate. Short sentences only. Starting to work.</div>
-      <div class="rpe-num">8</div><div class="rpe-desc">Hard. A few words only. Threshold effort.</div>
-      <div class="rpe-num">9</div><div class="rpe-desc">Very hard. Barely talking. Near maximum.</div>
-      <div class="rpe-num">10</div><div class="rpe-desc">Maximum effort. Unsustainable. All out sprint.</div>
-    </div>`
-  }
+  'overload': {icon:'📈',title:'Progressive Overload',tag:{text:'Training principle',color:'#1E90FF'},body:`<p>Progressive overload is the foundation of all athletic training. It means gradually increasing the stress on your body over time so it adapts and gets stronger, faster and fitter.</p><p><strong>How it works in your plan:</strong> Each week your total training volume increases slightly. After 3-4 weeks of building, you get a slightly easier week to let your body absorb the training.</p><p><strong>Taper week:</strong> In the final week before your race, volume drops by 40-50%. This is when your body consolidates all the fitness you've built and you arrive fresh and ready to race your best.</p><p><strong>Click any bar</strong> to jump straight to that week in your calendar.</p>`},
+  'Swim': {icon:'🏊',title:'Swim Session',tag:{text:'Discipline',color:'#38bdf8'},body:`<p>Swim sessions are the first leg of every triathlon. Unlike pool swimming for fitness, triathlon swim training focuses on efficiency — getting from A to B using as little energy as possible so you have plenty left for the bike and run.</p><p><strong>Key focus areas:</strong> stroke technique, breathing rhythm, open water confidence and pacing.</p><p><strong>80/20 rule:</strong> Most of your swim sessions should feel comfortable and controlled (RPE 4-6). Save the hard efforts for interval sets.</p>`},
+  'Bike': {icon:'🚴',title:'Bike Session',tag:{text:'Discipline',color:'#fb923c'},body:`<p>The bike leg is where most of your race time is spent — up to 50% of your total finish time. It's also where smart pacing wins races. Going too hard on the bike destroys your run.</p><p><strong>Two types:</strong> Long endurance rides build your aerobic base. Interval sessions build power and speed.</p><p><strong>Key tip:</strong> Always ride at a cadence of 85-95rpm rather than grinding a big gear. High cadence saves your legs for the run.</p>`},
+  'Run': {icon:'🏃',title:'Run Session',tag:{text:'Discipline',color:'#4ade80'},body:`<p>The run is the final leg — and the hardest. You're already fatigued from the swim and bike, which is why triathlon running feels nothing like a standalone run.</p><p><strong>Types:</strong> Easy aerobic runs build your base. Tempo runs improve lactate threshold. Intervals develop speed. Long runs build endurance.</p><p><strong>Key tip:</strong> Most of your running should feel easy — conversational pace (RPE 4-6). Save the effort for specific hard sessions.</p>`},
+  'Brick': {icon:'🔥',title:'Brick Session',tag:{text:'Key session',color:'#a78bfa'},body:`<p>A Brick session combines two disciplines back to back — usually bike followed immediately by a run. The name comes from how your legs feel when you get off the bike: like bricks.</p><p><strong>Why they matter:</strong> Running after cycling uses your muscles differently. Your body needs to adapt to this transition.</p><p><strong>What to expect:</strong> The first 5-10 minutes of your run will feel terrible. This is completely normal — it gets better with practice over weeks of training.</p>`},
+  'Strength': {icon:'💪',title:'Strength Session',tag:{text:'Conditioning',color:'#fbbf24'},body:`<p>Strength training is one of the most overlooked parts of triathlon — but one of the highest returns on your time. Stronger muscles mean more power, better form under fatigue, and far fewer injuries.</p><p><strong>Triathlon focus:</strong> Core stability, glutes and hip flexors for cycling power, and single-leg exercises for balance and injury prevention.</p><p><strong>Key tip:</strong> 30-45 minutes of focused exercises is all you need. Save your energy for swim, bike and run.</p>`},
+  'Rest': {icon:'😴',title:'Rest Day',tag:{text:'Recovery',color:'rgba(255,255,255,0.3)'},body:`<p>Rest days are not wasted days — they are where your fitness is actually built. During training you create stress. During rest, your body adapts, repairs and comes back stronger.</p><p><strong>Active recovery is fine:</strong> A 20-30 minute easy walk, light stretching or foam rolling is perfectly fine.</p><p><strong>The biggest mistake:</strong> Most amateur triathletes overtrain and under-recover. Protecting your rest days is just as important as completing your hard sessions.</p>`},
+  'RPE': {icon:'📊',title:'RPE — Rate of Perceived Exertion',tag:{text:'Training concept',color:'#1E90FF'},body:`<p>RPE is a simple scale from 1 to 10 that describes how hard a session feels. It's the most practical way to measure effort across all three disciplines without needing a heart rate monitor or power meter.</p><div class="rpe-grid"><div class="rpe-num">1-2</div><div class="rpe-desc">Almost no effort. Gentle walk.</div><div class="rpe-num">3-4</div><div class="rpe-desc">Easy. Fully conversational. Could go for hours.</div><div class="rpe-num">5-6</div><div class="rpe-desc">Comfortable. Can speak in sentences. Aerobic zone.</div><div class="rpe-num">7</div><div class="rpe-desc">Moderate. Short sentences only. Starting to work.</div><div class="rpe-num">8</div><div class="rpe-desc">Hard. A few words only. Threshold effort.</div><div class="rpe-num">9</div><div class="rpe-desc">Very hard. Barely talking. Near maximum.</div><div class="rpe-num">10</div><div class="rpe-desc">Maximum effort. Unsustainable. All out sprint.</div></div>`}
 };
 
 function showExplainer(type) {
@@ -1450,12 +1262,9 @@ function showExplainer(type) {
 }
 
 function closeModal(e) {
-  if (e.target === document.getElementById('modal')) {
-    document.getElementById('modal').classList.remove('open');
-  }
+  if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('open');
 }
 
-// Close on escape key
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.getElementById('modal').classList.remove('open');
 });
