@@ -517,6 +517,7 @@ const T=12;
 let planData=null;
 let curWeek=0;
 let curDay=null;
+let completions = new Set(); // tracks "week-dayIndex" completed sessions
 
 function prog(n){const p=Math.round(n/T*100);document.getElementById('pf').style.width=p+'%';document.getElementById('pt').textContent='Question '+n+' of '+T;document.getElementById('pp').textContent=p+'%';}
 function go(n){document.querySelectorAll('.q').forEach(q=>q.classList.remove('active'));const t=document.getElementById('q'+n);if(t){t.classList.add('active');prog(n);}window.scrollTo({top:0,behavior:'smooth'});}
@@ -698,13 +699,14 @@ function renderWeek(){
   document.getElementById('cal').innerHTML=w.days.map((d,i)=>{
     const t=typeInfo[d.type]||typeInfo['Rest'];
     const isActive=curDay===i;
+    const isComplete=completions.has(`${curWeek}-${i}`);
     const dayDate = new Date(planStartDate);
     dayDate.setDate(planStartDate.getDate() + i);
     const dateStr = dayDate.getDate()+' '+months[dayDate.getMonth()];
-    return `<div class="cal-day${d.type==='Rest'?' rest':''}${isActive?' active':''}" onclick="selectDay(${i})">
+    return `<div class="cal-day${d.type==='Rest'?' rest':''}${isActive?' active':''}${isComplete?' completed':''}" onclick="selectDay(${i})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
       <div class="cal-day-name">${allDays[i]}</div>
       <div style="font-size:10px;color:var(--faint);margin-bottom:4px;">${dateStr}</div>
-      <div class="cal-day-icon">${d.swapped ? '😓' : t.icon}</div>
+      <div class="cal-day-icon">${isComplete ? '✅' : d.swapped ? '😓' : t.icon}</div>
       <div class="cal-day-type ${t.cls}">${d.swapped ? 'Easy' : d.type}</div>
       <div class="cal-day-dur">${d.duration?d.duration+'m':''}</div>
     </div>`;
@@ -780,8 +782,11 @@ function selectDay(i){
       ${d.effort?`<div class="sd-section"><div class="sd-sec-title">📊 Effort level — RPE ${d.effort}/10 <button class="info-btn" onclick="showExplainer('RPE')">What is RPE? ℹ️</button></div><div class="effort-bar">${effortBars}</div></div>`:''}
       ${d.coachNote?`<div class="sd-section"><div class="sd-sec-title">💬 Coach note</div><div class="sd-sec-content" style="font-style:italic;color:var(--muted);">"${d.coachNote}"</div></div>`:''}
       ${strengthHTML}
-      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
-        <button onclick="swapSession(${i})" style="width:100%;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='rgba(251,191,36,0.15)'" onmouseout="this.style.background='rgba(251,191,36,0.08)'">
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;">
+        <button id="complete-btn-${i}" onclick="toggleComplete(${i})" style="width:100%;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);color:#4ade80;padding:14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;">
+          ${completions.has(`${curWeek}-${i}`) ? '✅ Session completed!' : '✓ Mark as complete'}
+        </button>
+        <button onclick="swapSession(${i})" style="width:100%;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">
           😓 Not feeling 100%? Swap for an easier session
         </button>
       </div>
@@ -934,6 +939,7 @@ Return ONLY the JSON object. No markdown, no explanation.`;
       curWeek=0;curDay=null;
       renderWeek();
       renderGraph();
+      loadCompletions().then(() => renderWeek());
 
       // Check if user is logged in and save plan
       checkAndSavePlan(txt);
@@ -995,7 +1001,57 @@ async function loadNextWeeks() {
   }
 }
 
-async function checkAndSavePlan(planText) {
+async function loadCompletions() {
+  if (!sb2) return;
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (!session) return;
+    const { data } = await sb2.from('completions').select('week_num,day').eq('user_id', session.user.id);
+    if (data) data.forEach(c => completions.add(`${c.week_num}-${c.day}`));
+  } catch(e) {}
+}
+
+async function toggleComplete(dayIndex) {
+  const key = `${curWeek}-${dayIndex}`;
+  const btn = document.getElementById(`complete-btn-${dayIndex}`);
+  if (!sb2) return;
+
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (!session) {
+      window.location.href = '/auth.html';
+      return;
+    }
+
+    if (completions.has(key)) {
+      // Uncomplete
+      await sb2.from('completions').delete()
+        .eq('user_id', session.user.id)
+        .eq('week_num', curWeek)
+        .eq('day', String(dayIndex));
+      completions.delete(key);
+      btn.textContent = '✓ Mark as complete';
+      btn.style.background = 'rgba(74,222,128,0.08)';
+    } else {
+      // Complete
+      await sb2.from('completions').insert({
+        user_id: session.user.id,
+        plan_id: 'current',
+        week_num: curWeek,
+        day: String(dayIndex)
+      });
+      completions.add(key);
+      btn.textContent = '✅ Session completed!';
+      btn.style.background = 'rgba(74,222,128,0.2)';
+    }
+    // Re-render calendar to show tick
+    renderWeek();
+    // Re-show session detail
+    showDay(dayIndex);
+  } catch(e) {
+    console.error('Complete error:', e);
+  }
+}
   try {
     if (!sb2) { localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race})); document.getElementById('save-banner').style.display='block'; return; }
     let session = null;
