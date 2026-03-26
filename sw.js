@@ -1,4 +1,4 @@
-const CACHE_NAME = 'irontri-v9';
+const CACHE_NAME = 'irontri-v11';
 
 // Only cache static non-HTML assets
 const STATIC_ASSETS = [
