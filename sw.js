@@ -1,16 +1,15 @@
-const CACHE_NAME = 'irontri-v8';
+const CACHE_NAME = 'irontri-v9';
+
+// Only cache static non-HTML assets
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/plan.html',
-  '/predict.html',
-  '/auth.html',
-  '/dashboard.html',
   '/irontri_logo.png',
-  'https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap'
+  '/irontri_logo.jpg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/manifest.json'
 ];
 
-// Install — cache all static assets
+// Install
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
@@ -28,31 +27,24 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Fetch — serve from cache, fall back to network
+// Fetch — never cache HTML, always fetch fresh
 self.addEventListener('fetch', e => {
-  // Skip API calls and Supabase — always go to network
-  if (e.request.url.includes('/api/') || 
-      e.request.url.includes('supabase') ||
-      e.request.url.includes('anthropic') ||
-      e.request.url.includes('mailerlite')) {
+  const url = new URL(e.request.url);
+  
+  // Always go to network for HTML pages and API calls
+  if (e.request.mode === 'navigate' || 
+      url.pathname.endsWith('.html') ||
+      url.pathname.includes('/api/') ||
+      url.hostname.includes('supabase') ||
+      url.hostname.includes('anthropic') ||
+      url.hostname.includes('mailerlite')) {
     return;
   }
 
+  // For static assets, use cache first
   e.respondWith(
     caches.match(e.request).then(cached => {
-      return cached || fetch(e.request).then(response => {
-        // Cache new pages as we visit them
-        if (response.ok && e.request.method === 'GET') {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-        }
-        return response;
-      }).catch(() => {
-        // Offline fallback
-        if (e.request.mode === 'navigate') {
-          return caches.match('/index.html');
-        }
-      });
+      return cached || fetch(e.request);
     })
   );
 });
