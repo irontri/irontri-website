@@ -639,6 +639,9 @@ function selectDay(i){
   const effortLevel=d.effort||6;
   const effortBars=Array.from({length:10},(_,i)=>`<div class="eb ${i<effortLevel?'filled':'empty'}"></div>`).join('');
 
+  // Build strength exercises HTML if this is a strength session
+  const strengthHTML = d.type === 'Strength' ? buildStrengthSession(curWeek) : '';
+
   sd.style.display='block';
   sd.innerHTML=`
     <div class="sd-header" style="border-left:3px solid ${t.color};">
@@ -660,6 +663,7 @@ function selectDay(i){
       ${d.cooldown?`<div class="sd-section"><div class="sd-sec-title">❄️ Cool down</div><div class="sd-sec-content">${d.cooldown}</div></div>`:''}
       ${d.effort?`<div class="sd-section"><div class="sd-sec-title">📊 Effort level — RPE ${d.effort}/10 <button class="info-btn" onclick="showExplainer('RPE')">What is RPE? ℹ️</button></div><div class="effort-bar">${effortBars}</div></div>`:''}
       ${d.coachNote?`<div class="sd-section"><div class="sd-sec-title">💬 Coach note</div><div class="sd-sec-content" style="font-style:italic;color:var(--muted);">"${d.coachNote}"</div></div>`:''}
+      ${strengthHTML}
     </div>`;
 }
 
@@ -856,6 +860,70 @@ function jumpToWeek(i) {
     p.classList.toggle('active', p.dataset.phase === planData.weeks[curWeek].phase);
   });
   document.getElementById('plan').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// STRENGTH SESSION BUILDER
+const strengthExercises = {
+  base: [
+    {name:'Glute Bridge',sets:'3',reps:'15',target:'Glutes & core',icon:'🍑',tip:'Drive through heels, hold 2 sec at top. Essential for cycling power and run stability.'},
+    {name:'Single-Leg Squat',sets:'3',reps:'8 each leg',target:'Quads, glutes, balance',icon:'🦵',tip:'Use a chair for support if needed. Single-leg strength prevents knee injuries and improves run economy.'},
+    {name:'Dead Bug',sets:'3',reps:'10 each side',target:'Deep core',icon:'🐛',tip:'Press lower back into floor throughout. Trains the core stability needed for all three disciplines.'},
+    {name:'Plank',sets:'3',reps:'45 seconds',target:'Full core',icon:'💪',tip:'Squeeze glutes and quads. Breathe normally. Strong planks improve swim position and run posture.'},
+    {name:'Calf Raises',sets:'3',reps:'20 each leg',target:'Calves & Achilles',icon:'🦶',tip:'Do on a step for full range. Strong calves protect the Achilles — the most common triathlon injury.'},
+    {name:'Hip Flexor Stretch',sets:'2',reps:'45 sec each side',target:'Hip flexors',icon:'🧘',tip:'Tight hip flexors from cycling cause lower back pain on the run. Critical stretch.'},
+    {name:'Shoulder Press',sets:'3',reps:'12',target:'Shoulders & triceps',icon:'🏋️',tip:'Keep core braced. Strong shoulders maintain swim stroke when fatigue sets in.'},
+    {name:'Bent Over Row',sets:'3',reps:'12',target:'Back & biceps',icon:'↕️',tip:'Squeeze shoulder blades at top. A strong back keeps your swim stroke powerful and efficient.'},
+  ],
+  build: [
+    {name:'Romanian Deadlift',sets:'4',reps:'10',target:'Hamstrings, glutes',icon:'🏋️',tip:'Hinge at hip not back. Builds the posterior chain power needed for strong cycling.'},
+    {name:'Bulgarian Split Squat',sets:'3',reps:'10 each leg',target:'Quads, glutes, balance',icon:'🦵',tip:'Rear foot elevated. Front knee tracks over toes. Best single-leg exercise for triathletes.'},
+    {name:'Lat Pulldown / Pull-Up',sets:'3',reps:'10',target:'Lats & back',icon:'💪',tip:'Pull elbows down to hips. Strong lats are the engine of your swim stroke.'},
+    {name:'Copenhagen Plank',sets:'3',reps:'20 sec each side',target:'Adductors & core',icon:'🧱',tip:'Side plank with top leg elevated. Stabilises hips on the run and prevents groin injuries.'},
+    {name:'Box Jump',sets:'3',reps:'8',target:'Power & explosiveness',icon:'⚡',tip:'Land softly with bent knees. Improves running economy and bike sprint power.'},
+    {name:'TRX Row',sets:'3',reps:'12',target:'Upper back & biceps',icon:'🔄',tip:'Body parallel to floor for full challenge. Trains pulling muscles used in open water swimming.'},
+    {name:'Nordic Hamstring Curl',sets:'3',reps:'6',target:'Hamstrings',icon:'🦵',tip:'Lower yourself as slowly as possible. Best exercise for preventing hamstring injuries.'},
+    {name:'Pallof Press',sets:'3',reps:'12 each side',target:'Rotational core',icon:'↔️',tip:'Resist rotation throughout. Trains anti-rotation strength needed to hold form when fatigued.'},
+  ]
+};
+const mobilityExercises = [
+  {name:'Hip 90/90 Stretch',sets:'2',reps:'60 sec each side',target:'Hip rotation',icon:'🧘',tip:'Sit with both knees at 90 degrees. Lean gently forward. Improves cycling hip mobility.'},
+  {name:'Thoracic Rotation',sets:'2',reps:'10 each side',target:'Upper back',icon:'🔄',tip:'Lie on side, knees bent, rotate top arm open. Essential for swim stroke rotation.'},
+  {name:'Pigeon Pose',sets:'2',reps:'90 sec each side',target:'Glutes & hip flexors',icon:'🕊️',tip:'Most important stretch for cyclists. Releases piriformis and glute tension from long rides.'},
+  {name:'Foam Roll — Quads & IT Band',sets:'1',reps:'90 sec each leg',target:'Quads, IT band',icon:'🎯',tip:'Roll slowly, pause on tight spots. Prevents IT band syndrome — common in cycling and running.'},
+];
+
+function buildStrengthSession(weekNum) {
+  const exercises = weekNum <= 1 ? strengthExercises.base : strengthExercises.build;
+  const sessionType = weekNum <= 1 ? 'Foundation Strength' : 'Performance Strength';
+  const exHTML = exercises.map((ex,i)=>`
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <span style="font-size:18px;">${ex.icon}</span>
+        <div style="flex:1;"><div style="font-size:14px;font-weight:500;">${i+1}. ${ex.name}</div><div style="font-size:11px;color:var(--faint);">${ex.target}</div></div>
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--blue);">${ex.sets} × ${ex.reps}</div>
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.5;padding-left:28px;">💡 ${ex.tip}</div>
+    </div>`).join('');
+  const mobHTML = mobilityExercises.map((ex,i)=>`
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <span style="font-size:18px;">${ex.icon}</span>
+        <div style="flex:1;"><div style="font-size:14px;font-weight:500;">${ex.name}</div><div style="font-size:11px;color:var(--faint);">${ex.target}</div></div>
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#a78bfa;">${ex.sets} × ${ex.reps}</div>
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.5;padding-left:28px;">💡 ${ex.tip}</div>
+    </div>`).join('');
+  return `
+    <div class="sd-section">
+      <div class="sd-sec-title">💪 ${sessionType} — Full Exercise List</div>
+      <div style="font-size:12px;color:var(--faint);margin-bottom:12px;">Rest 60-90 seconds between sets. Form over weight always.</div>
+      ${exHTML}
+    </div>
+    <div class="sd-section">
+      <div class="sd-sec-title">🧘 Mobility & Recovery (finish every session with this)</div>
+      <div style="font-size:12px;color:var(--faint);margin-bottom:12px;">10-15 minutes. Never skip — this is where injury prevention happens.</div>
+      ${mobHTML}
+    </div>`;
 }
 
 const explainers = {
