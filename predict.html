@@ -11,13 +11,19 @@
     :root{--blue:#1E90FF;--blue-dark:#1478d4;--bg:#0a0a0a;--surface:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--text:#fff;--muted:rgba(255,255,255,0.5);--faint:rgba(255,255,255,0.25);}
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-    nav{display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:68px;background:#1E90FF;position:sticky;top:0;z-index:100;}
+
+    /* ── NAV — matches the rest of the site ── */
+    nav{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:68px;background:#1E90FF;position:sticky;top:0;z-index:100;}
     .nav-logo{display:flex;align-items:center;text-decoration:none;}
     .nav-logo img{height:120px;width:auto;mix-blend-mode:screen;filter:brightness(10);}
-    .nav-links{display:flex;gap:32px;list-style:none;}
-    .nav-links a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:14px;}
+    .nav-right{display:flex;align-items:center;gap:20px;}
+    .nav-links{display:flex;gap:28px;list-style:none;}
+    .nav-links a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:14px;transition:color 0.15s;}
     .nav-links a:hover{color:#fff;}
-    .nav-cta{background:#fff;color:#1E90FF;border:none;padding:10px 22px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;}
+    .nav-links a.active{color:#fff;font-weight:500;}
+    .nav-user{color:rgba(255,255,255,0.9);font-size:14px;text-decoration:none;}
+    .nav-cta{background:#fff;color:#1E90FF;border:none;padding:10px 22px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;white-space:nowrap;}
+    .nav-cta:hover{background:rgba(255,255,255,0.9);}
 
     .hero{padding:60px 48px 48px;max-width:900px;margin:0 auto;text-align:center;}
     .hero-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:12px;font-weight:500;}
@@ -26,7 +32,6 @@
 
     .calculator{max-width:900px;margin:0 auto;padding:0 48px 80px;}
 
-    /* DISTANCE SELECTOR */
     .dist-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:40px;}
     .dist-btn{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 10px;text-align:center;cursor:pointer;transition:all 0.15s;}
     .dist-btn:hover{border-color:rgba(30,144,255,0.3);background:rgba(30,144,255,0.05);}
@@ -35,7 +40,6 @@
     .dist-btn-name{font-size:13px;font-weight:500;margin-bottom:4px;}
     .dist-btn-sub{font-size:10px;color:var(--muted);}
 
-    /* INPUTS */
     .inputs-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:32px;}
     .input-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;}
     .input-card-icon{font-size:24px;margin-bottom:10px;display:block;}
@@ -46,7 +50,6 @@
     .time-sep{font-size:20px;color:var(--faint);font-weight:300;}
     .input-hint{font-size:11px;color:var(--faint);margin-top:8px;}
 
-    /* EXPERIENCE SELECTOR */
     .exp-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:32px;}
     .exp-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;cursor:pointer;transition:all 0.15s;text-align:center;}
     .exp-btn:hover{border-color:rgba(30,144,255,0.3);}
@@ -54,11 +57,9 @@
     .exp-btn-title{font-size:14px;font-weight:500;margin-bottom:3px;}
     .exp-btn-sub{font-size:11px;color:var(--muted);}
 
-    /* PREDICT BUTTON */
     .predict-btn{width:100%;padding:18px;background:var(--blue);border:none;border-radius:12px;color:#fff;font-size:17px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s;margin-bottom:32px;}
     .predict-btn:hover{background:var(--blue-dark);}
 
-    /* RESULTS */
     #results{display:none;animation:fu 0.5s ease both;}
     @keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
@@ -86,7 +87,6 @@
     .cta-primary{background:var(--blue);color:#fff;border:none;padding:16px;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;display:block;text-align:center;}
     .cta-secondary{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:16px;border-radius:12px;font-size:15px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;display:block;text-align:center;}
 
-    /* CUSTOM DISTANCE */
     .custom-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;}
     .custom-input-wrap{display:flex;flex-direction:column;gap:6px;}
     .custom-label{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:1px;}
@@ -94,7 +94,6 @@
     .custom-input:focus{border-color:var(--blue);}
 
     .section-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px;}
-    .divider{height:1px;background:var(--border);margin:28px 0;}
 
     @media(max-width:768px){
       nav{padding:0 20px;}
@@ -113,13 +112,19 @@
 <body>
 
 <nav>
-  <a href="index.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri" /></a>
-  <ul class="nav-links">
-    <li><a href="index.html">Home</a></li>
-    <li><a href="predict.html" style="color:#fff;font-weight:500;">Race Predictor</a></li>
-    <li><a href="plan.html">Training Plans</a></li>
-  </ul>
-  <a href="plan.html" class="nav-cta">Get my plan</a>
+  <a href="index.html" class="nav-logo">
+    <img src="irontri_logo.png" alt="irontri" />
+  </a>
+  <div class="nav-right">
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="predict.html" class="active">Race Predictor</a></li>
+      <li><a href="plan.html">Training Plans</a></li>
+      <li><a href="dashboard.html" id="nav-dashboard" style="display:none;">Dashboard</a></li>
+    </ul>
+    <a href="plan.html" class="nav-cta" id="nav-cta">Get my plan</a>
+    <a href="profile.html" class="nav-user" id="nav-user" style="display:none;"></a>
+  </div>
 </nav>
 
 <div class="hero">
@@ -130,7 +135,6 @@
 
 <div class="calculator">
 
-  <!-- STEP 1: DISTANCE -->
   <div class="section-title">1. Choose your race distance</div>
   <div class="dist-grid">
     <div class="dist-btn active" onclick="selectDist(this,'sprint')" id="d-sprint">
@@ -160,7 +164,6 @@
     </div>
   </div>
 
-  <!-- CUSTOM DISTANCE (hidden by default) -->
   <div id="custom-wrap" style="display:none;margin-bottom:32px;">
     <div class="section-title">Custom race distances</div>
     <div class="custom-grid">
@@ -179,7 +182,6 @@
     </div>
   </div>
 
-  <!-- STEP 2: EXPERIENCE -->
   <div class="section-title">2. Your triathlon experience</div>
   <div class="exp-row" style="margin-bottom:32px;">
     <div class="exp-btn active" onclick="selectExp(this,'beginner')">
@@ -196,7 +198,6 @@
     </div>
   </div>
 
-  <!-- STEP 3: CURRENT TIMES -->
   <div class="section-title">3. Your current best times <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--faint);font-weight:300;">(leave blank if unsure)</span></div>
   <div class="inputs-grid">
     <div class="input-card">
@@ -232,7 +233,6 @@
 
   <button class="predict-btn" onclick="predict()">Predict my finish time →</button>
 
-  <!-- RESULTS -->
   <div id="results">
     <div class="result-hero">
       <div class="result-label">Your predicted finish time</div>
@@ -290,196 +290,139 @@
 
     <div class="cta-row">
       <a href="plan.html" class="cta-primary">Build my training plan →</a>
-      <button class="cta-secondary" onclick="clearResults();document.getElementById('results').style.display='none';">Try different numbers</button>
+      <button class="cta-secondary" onclick="document.getElementById('results').style.display='none';">Try different numbers</button>
     </div>
   </div>
 
 </div>
 
 <script>
+  // ── Show logged-in user in nav ──
+  const userName = localStorage.getItem('irontri_user_name');
+  if (userName) {
+    const navUser = document.getElementById('nav-user');
+    const navDash = document.getElementById('nav-dashboard');
+    const navCta  = document.getElementById('nav-cta');
+    navUser.textContent = '👤 ' + userName;
+    navUser.style.display = 'inline';
+    navDash.style.display = 'inline';
+    navCta.href = 'dashboard.html';
+    navCta.textContent = 'Dashboard';
+  }
+
   let selectedDist = 'sprint';
   let selectedExp = 'beginner';
 
   const distances = {
-    sprint: { swim: 750, bike: 20, run: 5, name: 'Sprint Triathlon', t1: 2.5, t2: 1.5 },
-    olympic: { swim: 1500, bike: 40, run: 10, name: 'Olympic Triathlon', t1: 3, t2: 2 },
-    half: { swim: 1900, bike: 90, run: 21.1, name: 'Half Ironman 70.3', t1: 5, t2: 4 },
-    full: { swim: 3800, bike: 180, run: 42.2, name: 'Full Ironman', t1: 8, t2: 6 },
-    custom: { swim: 0, bike: 0, run: 0, name: 'Custom Triathlon', t1: 3, t2: 2 }
+    sprint: { swim:750,  bike:20,  run:5,    name:'Sprint Triathlon',   t1:2.5, t2:1.5 },
+    olympic:{ swim:1500, bike:40,  run:10,   name:'Olympic Triathlon',  t1:3,   t2:2   },
+    half:   { swim:1900, bike:90,  run:21.1, name:'Half Ironman 70.3',  t1:5,   t2:4   },
+    full:   { swim:3800, bike:180, run:42.2, name:'Full Ironman',       t1:8,   t2:6   },
+    custom: { swim:0,    bike:0,   run:0,    name:'Custom Triathlon',   t1:3,   t2:2   }
   };
 
-  // Experience modifiers (multiplied with base times)
-  const expMod = { beginner: 1.25, intermediate: 1.05, advanced: 0.92 };
+  const expMod = { beginner:1.25, intermediate:1.05, advanced:0.92 };
 
   function selectDist(el, dist) {
     document.querySelectorAll('.dist-btn').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
     selectedDist = dist;
     document.getElementById('custom-wrap').style.display = dist === 'custom' ? 'block' : 'none';
-    clearResults();
+    document.getElementById('results').style.display = 'none';
   }
 
   function selectExp(el, exp) {
     document.querySelectorAll('.exp-btn').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
     selectedExp = exp;
-    clearResults();
+    document.getElementById('results').style.display = 'none';
   }
 
   function updateCustom() {
-    const s = parseFloat(document.getElementById('c-swim').value) || 0;
-    const b = parseFloat(document.getElementById('c-bike').value) || 0;
-    const r = parseFloat(document.getElementById('c-run').value) || 0;
-    distances.custom.swim = s;
-    distances.custom.bike = b;
-    distances.custom.run = r;
+    distances.custom.swim = parseFloat(document.getElementById('c-swim').value) || 0;
+    distances.custom.bike = parseFloat(document.getElementById('c-bike').value) || 0;
+    distances.custom.run  = parseFloat(document.getElementById('c-run').value)  || 0;
   }
 
   function clearResults() {
-    // keep results visible but don't auto-hide
+    document.getElementById('results').style.display = 'none';
   }
 
-  function fmtTime(totalSecs) {
-    const h = Math.floor(totalSecs / 3600);
-    const m = Math.floor((totalSecs % 3600) / 60);
-    const s = Math.floor(totalSecs % 60);
-    if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    return `${m}:${String(s).padStart(2,'0')}`;
+  function fmtTime(s) {
+    const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=Math.floor(s%60);
+    if(h>0) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    return `${m}:${String(sec).padStart(2,'0')}`;
   }
-
-  function fmtMins(totalSecs) {
-    const m = Math.floor(totalSecs / 60);
-    const s = Math.floor(totalSecs % 60);
-    return `${m}:${String(s).padStart(2,'0')}`;
+  function fmtMins(s) {
+    return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
   }
 
   function predict() {
     const d = distances[selectedDist];
-    const mod = expMod[selectedExp];
-
-    if (selectedDist === 'custom' && (d.swim === 0 || d.bike === 0 || d.run === 0)) {
-      alert('Please enter your custom race distances first!');
-      return;
+    if (selectedDist === 'custom' && (d.swim===0||d.bike===0||d.run===0)) {
+      alert('Please enter your custom race distances first!'); return;
     }
 
-    // Get user inputs
-    const swimMin = parseFloat(document.getElementById('swim-min').value) || null;
-    const swimSec = parseFloat(document.getElementById('swim-sec').value) || 0;
+    const swimMin   = parseFloat(document.getElementById('swim-min').value)   || null;
+    const swimSec   = parseFloat(document.getElementById('swim-sec').value)   || 0;
     const bikeSpeed = parseFloat(document.getElementById('bike-speed').value) || null;
-    const runMin = parseFloat(document.getElementById('run-min').value) || null;
-    const runSec = parseFloat(document.getElementById('run-sec').value) || 0;
+    const runMin    = parseFloat(document.getElementById('run-min').value)    || null;
+    const runSec    = parseFloat(document.getElementById('run-sec').value)    || 0;
 
-    // BASE TIMES PER 100m SWIM (seconds)
-    // Beginner: ~2:30/100m, Intermediate: ~2:00/100m, Advanced: ~1:40/100m
-    const base100mSwim = { beginner: 150, intermediate: 120, advanced: 100 };
-    const base100mSwimTime = base100mSwim[selectedExp];
-
-    // Calculate swim time
-    let swimPer100m;
-    if (swimMin !== null) {
-      // User gave 100m time directly — this IS the per 100m pace
-      swimPer100m = swimMin * 60 + swimSec;
-    } else {
-      swimPer100m = base100mSwimTime;
-    }
-    // Add 5% fatigue for race conditions
+    const base100m = { beginner:150, intermediate:120, advanced:100 };
+    let swimPer100m = swimMin !== null ? (swimMin*60+swimSec) : base100m[selectedExp];
     swimPer100m *= 1.05;
-    const swimSecs = (d.swim / 100) * swimPer100m;
+    const swimSecs = (d.swim/100) * swimPer100m;
 
-    // Calculate bike time
     let bikeSecs;
     if (bikeSpeed !== null) {
-      // Reduce speed by 8% for race fatigue vs training
-      const raceSpeed = bikeSpeed * 0.92;
-      bikeSecs = (d.bike / raceSpeed) * 3600;
+      bikeSecs = (d.bike / (bikeSpeed*0.92)) * 3600;
     } else {
-      const defaultSpeed = { beginner: 24, intermediate: 30, advanced: 36 };
-      bikeSecs = (d.bike / defaultSpeed[selectedExp]) * 3600;
+      bikeSecs = (d.bike / {beginner:24,intermediate:30,advanced:36}[selectedExp]) * 3600;
     }
 
-    // Calculate run time
+    const fatigue = { sprint:1.08, olympic:1.12, half:1.18, full:1.25, custom:1.12 };
     let runSecs;
     if (runMin !== null) {
-      // Scale 5km pace to race distance with fatigue factor
-      const pace5kmSec = (runMin * 60 + runSec) / 5; // per km
-      // After swim+bike, run pace slows:
-      const fatigueFactor = { sprint: 1.08, olympic: 1.12, half: 1.18, full: 1.25, custom: 1.12 };
-      const racePace = pace5kmSec * (fatigueFactor[selectedDist] || 1.12);
-      runSecs = racePace * d.run;
+      runSecs = ((runMin*60+runSec)/5) * fatigue[selectedDist] * d.run;
     } else {
-      const defaultPacePerKm = { beginner: 390, intermediate: 330, advanced: 270 }; // seconds per km
-      const fatigueFactor = { sprint: 1.08, olympic: 1.12, half: 1.18, full: 1.25, custom: 1.12 };
-      runSecs = defaultPacePerKm[selectedExp] * (fatigueFactor[selectedDist] || 1.12) * d.run;
+      runSecs = {beginner:390,intermediate:330,advanced:270}[selectedExp] * fatigue[selectedDist] * d.run;
     }
 
-    // Transitions (in seconds)
-    const t1Secs = d.t1 * 60;
-    const t2Secs = d.t2 * 60;
+    const t1Secs = d.t1*60, t2Secs = d.t2*60;
+    const totalSecs = Math.round(swimSecs+t1Secs+bikeSecs+t2Secs+runSecs);
 
-    // Total
-    const totalSecs = Math.round(swimSecs + t1Secs + bikeSecs + t2Secs + runSecs);
-
-    // Range ±10%
-    const rangeLow = Math.round(totalSecs * 0.92);
-    const rangeHigh = Math.round(totalSecs * 1.10);
-
-    // Display results
     document.getElementById('results').style.display = 'block';
-    document.getElementById('r-total').textContent = fmtTime(totalSecs);
+    document.getElementById('r-total').textContent  = fmtTime(totalSecs);
     document.getElementById('r-total2').textContent = fmtTime(totalSecs);
-    document.getElementById('r-race').textContent = d.name + ' · ' + selectedExp.charAt(0).toUpperCase() + selectedExp.slice(1);
-    document.getElementById('r-range').textContent = `Estimated range: ${fmtTime(rangeLow)} – ${fmtTime(rangeHigh)}`;
-
-    document.getElementById('r-swim').textContent = fmtMins(swimSecs);
+    document.getElementById('r-race').textContent   = d.name+' · '+selectedExp.charAt(0).toUpperCase()+selectedExp.slice(1);
+    document.getElementById('r-range').textContent  = `Estimated range: ${fmtTime(Math.round(totalSecs*0.92))} – ${fmtTime(Math.round(totalSecs*1.10))}`;
+    document.getElementById('r-swim').textContent   = fmtMins(swimSecs);
     document.getElementById('r-swim-pace').textContent = `${fmtMins(swimPer100m)}/100m`;
+    document.getElementById('r-t1').textContent     = fmtMins(t1Secs);
+    document.getElementById('r-t2').textContent     = fmtMins(t2Secs);
+    document.getElementById('r-bike').textContent   = fmtTime(bikeSecs);
+    document.getElementById('r-bike-pace').textContent = `${(d.bike/(bikeSecs/3600)).toFixed(1)} km/h avg`;
+    document.getElementById('r-run').textContent    = fmtTime(runSecs);
+    document.getElementById('r-run-pace').textContent  = `${fmtMins(runSecs/d.run)}/km pace`;
 
-    document.getElementById('r-t1').textContent = fmtMins(t1Secs);
-    document.getElementById('r-t2').textContent = fmtMins(t2Secs);
+    const bikePct=Math.round(bikeSecs/totalSecs*100);
+    const tPct=Math.round((t1Secs+t2Secs)/totalSecs*100);
+    const insights=[
+      `Your bike leg accounts for ${bikePct}% of your total time. Even small speed improvements here have a big impact on your overall finish time.`,
+      tPct>5 ? `Your transitions (${fmtMins(t1Secs+t2Secs)} combined) represent ${tPct}% of your race. Practising T1 and T2 in training can save you 1–3 minutes on race day.` : null,
+      selectedExp==='beginner' ? `As a first-timer, your biggest gains come from consistent training rather than speed work. Focus on completing all three disciplines comfortably first.` :
+      selectedExp==='intermediate' ? `At your level, brick sessions (bike immediately followed by run) will make the biggest difference to your run split.` :
+      `At advanced level, gains come from threshold work, pacing strategy, and race nutrition. Fuelling on the bike is often where competitive athletes find the most time.`,
+      `A structured ${d.name} training plan typically improves finish times by 8–18% over a 12–16 week block. That could mean finishing in as fast as ${fmtTime(Math.round(totalSecs*0.85))}.`
+    ].filter(Boolean);
 
-    document.getElementById('r-bike').textContent = fmtTime(bikeSecs);
-    const actualBikeSpeed = (d.bike / (bikeSecs / 3600)).toFixed(1);
-    document.getElementById('r-bike-pace').textContent = `${actualBikeSpeed} km/h avg`;
-
-    document.getElementById('r-run').textContent = fmtTime(runSecs);
-    const runPacePerKm = runSecs / d.run;
-    document.getElementById('r-run-pace').textContent = `${fmtMins(runPacePerKm)}/km pace`;
-
-    // Generate insights
-    const insights = generateInsights(d, swimSecs, bikeSecs, runSecs, t1Secs, t2Secs, totalSecs);
-    document.getElementById('insight-list').innerHTML = insights.map(i =>
+    document.getElementById('insight-list').innerHTML = insights.map(i=>
       `<div class="insight-item"><div class="insight-dot"></div><div class="insight-text">${i}</div></div>`
     ).join('');
 
-    // Scroll to results
-    setTimeout(() => document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-  }
-
-  function generateInsights(d, swimSecs, bikeSecs, runSecs, t1, t2, total) {
-    const insights = [];
-    const swimPct = Math.round(swimSecs / total * 100);
-    const bikePct = Math.round(bikeSecs / total * 100);
-    const runPct = Math.round(runSecs / total * 100);
-    const tPct = Math.round((t1 + t2) / total * 100);
-
-    insights.push(`Your bike leg accounts for ${bikePct}% of your total time — as in all triathlons, the bike is where the most time is spent. Even small speed improvements here have a big impact on your overall finish time.`);
-
-    if (tPct > 5) {
-      insights.push(`Your transitions (${fmtMins(t1 + t2)} combined) represent ${tPct}% of your race. Practising T1 and T2 in training can save you 1-3 minutes on race day — often more than expensive gear upgrades.`);
-    }
-
-    if (selectedExp === 'beginner') {
-      insights.push(`As a first-timer, your biggest gains will come from consistent training rather than speed work. Focus on completing all three disciplines comfortably before worrying about pace.`);
-    } else if (selectedExp === 'intermediate') {
-      insights.push(`At your level, brick sessions (bike immediately followed by run) will make the biggest difference to your run split. Your legs will adapt to running off the bike and your run time will improve significantly.`);
-    } else {
-      insights.push(`At advanced level, your gains will come from sport-specific threshold work, pacing strategy, and race nutrition. Dialling in your fuelling on the bike is often where competitive athletes find the most time.`);
-    }
-
-    insights.push(`A structured ${d.name} training plan typically improves finish times by 8-18% over a 12-16 week block. Based on your prediction, that could mean finishing in as fast as ${fmtTime(Math.round(total * 0.85))}.`);
-
-    return insights;
+    setTimeout(()=>document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'}),100);
   }
 </script>
-
 </body>
 </html>
