@@ -154,6 +154,27 @@
     .eb.filled{background:var(--blue);}
     .eb.empty{background:rgba(255,255,255,0.08);}
 
+    /* EXPLAINER MODAL */
+    .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;}
+    .modal-overlay.open{display:flex;}
+    .modal{background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:28px;max-width:480px;width:100%;animation:fu 0.3s ease both;}
+    .modal-header{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+    .modal-icon{font-size:32px;}
+    .modal-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;}
+    .modal-close{margin-left:auto;background:rgba(255,255,255,0.08);border:none;color:var(--muted);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+    .modal-close:hover{background:rgba(255,255,255,0.15);color:#fff;}
+    .modal-body{font-size:14px;color:rgba(255,255,255,0.75);line-height:1.8;}
+    .modal-body p{margin-bottom:12px;}
+    .modal-body p:last-child{margin-bottom:0;}
+    .modal-tag{display:inline-block;font-size:11px;padding:3px 10px;border-radius:100px;margin-bottom:14px;font-weight:500;}
+    .info-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--faint);font-size:11px;padding:3px 8px;border-radius:100px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;margin-left:8px;}
+    .info-btn:hover{background:rgba(30,144,255,0.12);border-color:rgba(30,144,255,0.3);color:var(--blue);}
+
+    /* RPE EXPLAINER */
+    .rpe-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin-top:12px;align-items:center;}
+    .rpe-num{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--blue);}
+    .rpe-desc{font-size:13px;color:rgba(255,255,255,0.65);}
+
     /* VOLUME BREAKDOWN */
     .vol-breakdown{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;}
 
@@ -606,7 +627,7 @@ function selectDay(i){
     <div class="sd-header" style="border-left:3px solid ${t.color};">
       <div class="sd-icon">${t.icon}</div>
       <div class="sd-info">
-        <div class="sd-title">${d.name||d.type+' Session'}</div>
+        <div class="sd-title">${d.name||d.type+' Session'} <button class="info-btn" onclick="showExplainer('${d.type}')">What is this? ℹ️</button></div>
         <div class="sd-meta">${fullDateStr} · ${d.duration||60} minutes</div>
         <div class="sd-badges">
           <span class="sd-badge ${t.cls}" style="border-color:${t.color}20;">${d.type}</span>
@@ -620,7 +641,7 @@ function selectDay(i){
       ${d.warmup?`<div class="sd-section"><div class="sd-sec-title">🔥 Warm up</div><div class="sd-sec-content">${d.warmup}</div></div>`:''}
       ${d.mainset?`<div class="sd-section"><div class="sd-sec-title">💪 Main set</div><div class="sd-sec-content">${d.mainset}</div></div>`:''}
       ${d.cooldown?`<div class="sd-section"><div class="sd-sec-title">❄️ Cool down</div><div class="sd-sec-content">${d.cooldown}</div></div>`:''}
-      ${d.effort?`<div class="sd-section"><div class="sd-sec-title">📊 Effort level — RPE ${d.effort}/10</div><div class="effort-bar">${effortBars}</div></div>`:''}
+      ${d.effort?`<div class="sd-section"><div class="sd-sec-title">📊 Effort level — RPE ${d.effort}/10 <button class="info-btn" onclick="showExplainer('RPE')">What is RPE? ℹ️</button></div><div class="effort-bar">${effortBars}</div></div>`:''}
       ${d.coachNote?`<div class="sd-section"><div class="sd-sec-title">💬 Coach note</div><div class="sd-sec-content" style="font-style:italic;color:var(--muted);">"${d.coachNote}"</div></div>`:''}
     </div>`;
 }
@@ -769,5 +790,106 @@ function jumpToPhase(phase){
 
 prog(1);
 </script>
+<!-- EXPLAINER MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" id="modal-icon"></div>
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" onclick="document.getElementById('modal').classList.remove('open')">✕</button>
+    </div>
+    <div id="modal-body" class="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const explainers = {
+  'Swim': {
+    icon: '🏊',
+    title: 'Swim Session',
+    tag: {text:'Discipline',color:'#38bdf8'},
+    body: `<p>Swim sessions are the first leg of every triathlon. Unlike pool swimming for fitness, triathlon swim training focuses on efficiency — getting from A to B using as little energy as possible so you have plenty left for the bike and run.</p>
+    <p><strong>Key focus areas:</strong> stroke technique, breathing rhythm, open water confidence and pacing. Even small improvements in your 100m pace add up significantly over race distance.</p>
+    <p><strong>80/20 rule:</strong> Most of your swim sessions should feel comfortable and controlled (RPE 4-6). Save the hard efforts for interval sets — short bursts with recovery.</p>`
+  },
+  'Bike': {
+    icon: '🚴',
+    title: 'Bike Session',
+    tag: {text:'Discipline',color:'#fb923c'},
+    body: `<p>The bike leg is where most of your race time is spent — up to 50% of your total finish time. It's also where smart pacing wins races. Going too hard on the bike destroys your run.</p>
+    <p><strong>Two types of bike sessions:</strong> Long endurance rides build your aerobic base and teach your body to burn fat as fuel. Interval sessions (threshold, VO2) build power and speed.</p>
+    <p><strong>Key tip:</strong> Always ride at a cadence of 85-95rpm rather than grinding a big gear. High cadence is more efficient and saves your legs for the run.</p>`
+  },
+  'Run': {
+    icon: '🏃',
+    title: 'Run Session',
+    tag: {text:'Discipline',color:'#4ade80'},
+    body: `<p>The run is the final leg — and the hardest. You're already fatigued from the swim and bike, which is why triathlon running feels nothing like a standalone 5km or 10km.</p>
+    <p><strong>Types of run sessions:</strong> Easy aerobic runs build your base. Tempo runs improve your lactate threshold. Interval sessions develop speed and running economy. Long runs build endurance.</p>
+    <p><strong>Key tip:</strong> Most of your running should feel easy — conversational pace (RPE 4-6). This trains your aerobic system and keeps injury risk low. Save the effort for specific hard sessions.</p>`
+  },
+  'Brick': {
+    icon: '🧱',
+    title: 'Brick Session',
+    tag: {text:'Key session',color:'#a78bfa'},
+    body: `<p>A Brick session combines two disciplines back to back — usually bike followed immediately by a run. The name comes from how your legs feel when you get off the bike: like bricks.</p>
+    <p><strong>Why they matter:</strong> Running after cycling uses your muscles differently than a standalone run. Your body needs to adapt to this transition — and Brick sessions are the only way to do it.</p>
+    <p><strong>What to expect:</strong> The first 5-10 minutes of your run will feel terrible. Your legs will feel heavy and unresponsive. This is completely normal — it gets better with practice and your body adapts over weeks of training.</p>
+    <p><strong>Key tip:</strong> Keep your run pace easy in Brick sessions, especially early in your plan. The goal is adaptation, not speed.</p>`
+  },
+  'Strength': {
+    icon: '💪',
+    title: 'Strength Session',
+    tag: {text:'Conditioning',color:'#fbbf24'},
+    body: `<p>Strength training is one of the most overlooked parts of triathlon training — but it's one of the highest returns on your time. Stronger muscles mean more power, better form under fatigue, and far fewer injuries.</p>
+    <p><strong>Triathlon-specific focus:</strong> Core stability (for swimming and running posture), glutes and hip flexors (for cycling power and run efficiency), and single-leg exercises (for balance and injury prevention).</p>
+    <p><strong>Key tip:</strong> Strength sessions should not be brutal. 30-45 minutes of focused, controlled exercises is all you need. Save your energy for swim, bike and run sessions.</p>`
+  },
+  'Rest': {
+    icon: '😴',
+    title: 'Rest Day',
+    tag: {text:'Recovery',color:'rgba(255,255,255,0.3)'},
+    body: `<p>Rest days are not wasted days — they are where your fitness is actually built. During training you create stress on your body. During rest, your body adapts, repairs and comes back stronger.</p>
+    <p><strong>Active recovery is fine:</strong> A 20-30 minute easy walk, light stretching or foam rolling is perfectly fine on rest days. Avoid anything that elevates your heart rate significantly.</p>
+    <p><strong>The biggest mistake:</strong> Most amateur triathletes overtrain and under-recover. Protecting your rest days is just as important as completing your hard sessions. Never skip a rest day to add extra training.</p>`
+  },
+  'RPE': {
+    icon: '📊',
+    title: 'RPE — Rate of Perceived Exertion',
+    tag: {text:'Training concept',color:'#1E90FF'},
+    body: `<p>RPE is a simple scale from 1 to 10 that describes how hard a session feels. It's the most practical way to measure effort across all three disciplines without needing a heart rate monitor or power meter.</p>
+    <div class="rpe-grid">
+      <div class="rpe-num">1-2</div><div class="rpe-desc">Almost no effort. Gentle walk.</div>
+      <div class="rpe-num">3-4</div><div class="rpe-desc">Easy. Fully conversational. Could go for hours.</div>
+      <div class="rpe-num">5-6</div><div class="rpe-desc">Comfortable. Can speak in sentences. Aerobic zone.</div>
+      <div class="rpe-num">7</div><div class="rpe-desc">Moderate. Short sentences only. Starting to work.</div>
+      <div class="rpe-num">8</div><div class="rpe-desc">Hard. A few words only. Threshold effort.</div>
+      <div class="rpe-num">9</div><div class="rpe-desc">Very hard. Barely talking. Near maximum.</div>
+      <div class="rpe-num">10</div><div class="rpe-desc">Maximum effort. Unsustainable. All out sprint.</div>
+    </div>`
+  }
+};
+
+function showExplainer(type) {
+  const e = explainers[type];
+  if (!e) return;
+  document.getElementById('modal-icon').textContent = e.icon;
+  document.getElementById('modal-title').textContent = e.title;
+  document.getElementById('modal-body').innerHTML = `<span class="modal-tag" style="background:${e.tag.color}20;color:${e.tag.color};border:1px solid ${e.tag.color}40;">${e.tag.text}</span>` + e.body;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal')) {
+    document.getElementById('modal').classList.remove('open');
+  }
+}
+
+// Close on escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('modal').classList.remove('open');
+});
+</script>
+
 </body>
 </html>
