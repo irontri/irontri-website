@@ -1,4 +1,4 @@
-const CACHE_NAME = 'irontri-v14';
+const CACHE_NAME = 'irontri-v15';
 const STATIC_ASSETS = [
   '/irontri_logo.png',
   '/irontri_logo.jpg',
