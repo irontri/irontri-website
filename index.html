@@ -1011,21 +1011,12 @@
       <p style="font-size:12px; color:rgba(255,255,255,0.3);">Spots are filling fast — price goes up once we hit 500 members.</p>
     </div>
 
-    <!-- MailerLite claim spot form -->
-    <div style="max-width:420px; margin:0 auto;" id="claim-form">
-      <form class="ml-block-form" action="https://assets.mailerlite.com/jsonp/2220906/forms/182918184673740575/subscribe" data-code="" method="post" target="_blank" onsubmit="claimSuccess()">
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <input aria-label="email" aria-required="true" type="email" name="fields[email]" placeholder="Your email address" required
-            style="flex:1; min-width:200px; padding:14px 18px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.05); color:#fff; font-size:15px; font-family:'DM Sans',sans-serif; outline:none;" />
-          <button type="submit"
-            style="background:#1E90FF; color:#fff; border:none; padding:14px 24px; border-radius:10px; font-size:15px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap;">
-            Claim my free spot →
-          </button>
-        </div>
-        <input type="hidden" name="ml-submit" value="1">
-        <input type="hidden" name="anticsrf" value="true">
-      </form>
-      <p id="claim-confirm" style="display:none; margin-top:16px; font-size:14px; color:#1E90FF; font-weight:500;">🎉 Spot claimed! We'll be in touch when we launch.</p>
+    <!-- Claim spot — direct to signup -->
+    <div style="max-width:420px; margin:0 auto;">
+      <a href="/auth.html" style="display:block; background:#1E90FF; color:#fff; border:none; width:100%; padding:16px; border-radius:10px; font-size:16px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; text-align:center; text-decoration:none;">
+        Claim my free spot →
+      </a>
+      <p style="text-align:center; font-size:12px; color:rgba(255,255,255,0.3); margin-top:10px;">Free forever · No credit card needed</p>
     </div>
   </div>
 
@@ -1363,27 +1354,22 @@
   </footer>
 
 <!-- LIVE SPOTS COUNTER -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (async () => {
   try {
-    const sb = window.supabase.createClient(
-      'https://aezfxagplaxlmovqbmfd.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU'
-    );
-    const { count } = await sb.auth.admin?.listUsers?.() || {};
-    // Use a simple API call to count users via the plans table signups
     const res = await fetch('https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/rpc/get_user_count', {
       headers: {
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU'
-      }
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU',
+        'Content-Type': 'application/json'
+      },
+      method: 'POST',
+      body: JSON.stringify({})
     });
     if (res.ok) {
-      const num = await res.json();
-      if (num && num > 0) {
-        const total = Math.max(num, 1);
-        const pct = Math.min(Math.round(total / 500 * 100), 100);
-        document.getElementById('spots-count').textContent = total;
+      const count = await res.json();
+      if (count && count > 0) {
+        const pct = Math.min(Math.round(count / 500 * 100), 100);
+        document.getElementById('spots-count').textContent = count;
         document.getElementById('spots-bar').style.width = pct + '%';
       }
     }
