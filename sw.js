@@ -1,5 +1,4 @@
-const CACHE_NAME = 'irontri-v11';
-
+const CACHE_NAME = 'irontri-v12';
 // Only cache static non-HTML assets
 const STATIC_ASSETS = [
   '/irontri_logo.png',
@@ -8,7 +7,6 @@ const STATIC_ASSETS = [
   '/icon-512.png',
   '/manifest.json'
 ];
-
 // Install
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -16,7 +14,6 @@ self.addEventListener('install', e => {
   );
   self.skipWaiting();
 });
-
 // Activate — clean up old caches
 self.addEventListener('activate', e => {
   e.waitUntil(
@@ -26,7 +23,6 @@ self.addEventListener('activate', e => {
   );
   self.clients.claim();
 });
-
 // Fetch — never cache HTML, always fetch fresh
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
@@ -40,7 +36,6 @@ self.addEventListener('fetch', e => {
       url.hostname.includes('mailerlite')) {
     return;
   }
-
   // For static assets, use cache first
   e.respondWith(
     caches.match(e.request).then(cached => {
