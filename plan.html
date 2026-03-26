@@ -800,6 +800,16 @@ function changeWeek(dir){
 }
 
 async function buildPlan(){
+  // Check if logged in first
+  const userName = localStorage.getItem('irontri_user_name');
+  if (!userName) {
+    // Save quiz answers to localStorage so they don't lose their progress
+    localStorage.setItem('irontri_pending_answers', JSON.stringify(A));
+    // Redirect to signup
+    window.location.href = '/auth.html?redirect=plan';
+    return;
+  }
+
   const w=wks(A.date);
   document.getElementById('summary').style.display='none';
   document.getElementById('gen').style.display='block';
@@ -1294,14 +1304,3 @@ function showExplainer(type) {
   document.getElementById('modal-body').innerHTML = `<span class="modal-tag" style="background:${e.tag.color}20;color:${e.tag.color};border:1px solid ${e.tag.color}40;">${e.tag.text}</span>` + e.body;
   document.getElementById('modal').classList.add('open');
 }
-
-function closeModal(e) {
-  if (e.target === document.getElementById('modal')) {
-    document.getElementById('modal').classList.remove('open');
-  }
-}
-
-// Close on escape key
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') document.getElementById('modal').classList.remove('open');
-});
