@@ -196,6 +196,7 @@
 
   async function logOut() {
     await sb.auth.signOut();
+    localStorage.removeItem('irontri_user_name');
     window.location.href = 'index.html';
   }
 
