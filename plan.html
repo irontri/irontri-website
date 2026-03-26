@@ -468,6 +468,13 @@
     <button class="wbtn" id="wnext" onclick="changeWeek(1)">→</button>
   </div>
 
+  <!-- LOAD MORE WEEKS -->
+  <div id="load-more-wrap" style="display:none;text-align:center;margin:16px 0;">
+    <button id="load-more-btn" onclick="loadNextWeeks()" style="background:rgba(30,144,255,0.12);border:1px solid rgba(30,144,255,0.3);color:#1E90FF;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;">
+      Load weeks 5–8 →
+    </button>
+  </div>
+
   <!-- WEEK SUMMARY STATS -->
   <div class="week-summary" id="wsummary"></div>
 
@@ -615,6 +622,18 @@ function renderWeek(){
   document.getElementById('wsub').textContent=(w.phase||'')+' · '+dateRange;
   document.getElementById('wprev').disabled=curWeek===0;
   document.getElementById('wnext').disabled=curWeek===planData.weeks.length-1;
+
+  // Show "Load next 4 weeks" button on last week
+  const isLastWeek = curWeek === planData.weeks.length - 1;
+  const loadWrap = document.getElementById('load-more-wrap');
+  if (isLastWeek) {
+    const nextStart = planData.weeks.length + 1;
+    const nextEnd = planData.weeks.length + 4;
+    document.getElementById('load-more-btn').textContent = `Load weeks ${nextStart}–${nextEnd} →`;
+    loadWrap.style.display = 'block';
+  } else {
+    loadWrap.style.display = 'none';
+  }
 
   // week summary
   const sessions=w.days.filter(d=>d.type!=='Rest').length;
@@ -833,7 +852,7 @@ Return this exact JSON structure:
 }
 
 Rules:
-- Create 2 weeks of the plan only (first 2 weeks is enough to show the structure, users can navigate)
+- Create 4 weeks of the plan (first 4 weeks to give athletes a solid block to work with)
 - Each week has exactly 7 days (Monday to Sunday)
 - Training days (${A.days.join(', ')}) get sessions, all other days are type "Rest"
 - Distribute sessions intelligently: spread swim/bike/run across available days, never two hard sessions back to back
@@ -1228,42 +1247,23 @@ const sb2 = window.supabase.createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU'
 );
 
-async function checkAndSavePlan(planText) {
-  try {
-    let session = null;
-    const { data: d1 } = await sb2.auth.getSession();
-    session = d1?.session;
+async function loadNextWeeks() {
+  const btn = document.getElementById('load-more-btn');
+  btn.textContent = 'Generating next 4 weeks...';
+  btn.disabled = true;
 
-    if (!session) {
-      await new Promise(r => setTimeout(r, 1500));
-      const { data: d2 } = await sb2.auth.getSession();
-      session = d2?.session;
-    }
+  const currentWeekCount = planData.weeks.length;
+  const nextWeekStart = currentWeekCount + 1;
 
-    if (session) {
-      // Logged in — save directly
-      const { error } = await sb2.from('plans').insert({
-        user_id: session.user.id,
-        plan_data: planText,
-        race: A.race || 'Triathlon'
-      });
-      if (!error) {
-        document.getElementById('saved-banner').style.display = 'block';
-      } else {
-        // Save failed — store locally as backup
-        localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race}));
-        document.getElementById('save-banner').style.display = 'block';
-      }
-    } else {
-      // Not logged in — store plan in localStorage so it saves after signup
-      localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race}));
-      document.getElementById('save-banner').style.display = 'block';
-    }
-  } catch(e) {
-    localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race}));
-    document.getElementById('save-banner').style.display = 'block';
-  }
-}
-</script>
-</body>
-</html>
+  const prompt = `You are an expert triathlon coach. Generate the NEXT 4 weeks of a training plan continuing from week ${currentWeekCount}.
+
+Athlete:
+Name: ${A.name}, Race: ${A.race}, Goal time: ${A.goaltimeText||'No specific time target'}, Experience: ${A.exp}, Fitness: ${A.fitness}
+Hours/week: ${A.hours}, Training days: ${A.days.join(', ')}, Weakest: ${A.weak}
+
+Continue with progressive overload from weeks ${currentWeekCount-3}-${currentWeekCount}:
+- Week ${nextWeekStart} = continued build phase
+- Week ${nextWeekStart+1} = peak phase (highest volume)
+- Week ${nextWeekStart+2} = peak phase (race specific)
+- Week ${nextWeekStart+3} = taper/recovery
+
