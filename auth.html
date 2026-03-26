@@ -198,3 +198,14 @@ async function savePendingPlan(userId) {
     const { plan, race } = JSON.parse(pending);
     const { error } = await _sb.from('plans').insert({
       user_id: uid,
+      plan_data: plan,
+      race: race || 'Triathlon'
+    });
+    if (!error) localStorage.removeItem('irontri_pending_plan');
+  } catch(e) {
+    console.error('savePendingPlan:', e);
+  }
+}
+</script>
+</body>
+</html>
