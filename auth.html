@@ -15,35 +15,24 @@
     nav{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:68px;background:#1E90FF;}
     .nav-logo{display:flex;align-items:center;text-decoration:none;}
     .nav-logo img{height:120px;width:auto;mix-blend-mode:screen;filter:brightness(10);}
-
     .auth-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;}
     .auth-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:40px;width:100%;max-width:420px;}
-
     .auth-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;text-align:center;}
     .auth-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:32px;}
-
     .tabs{display:flex;background:rgba(255,255,255,0.05);border-radius:10px;padding:4px;margin-bottom:28px;}
     .tab{flex:1;padding:10px;text-align:center;font-size:14px;font-weight:500;border-radius:8px;cursor:pointer;transition:all 0.2s;color:var(--muted);}
     .tab.active{background:var(--blue);color:#fff;}
-
     .form-group{margin-bottom:16px;}
     .form-label{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--faint);margin-bottom:6px;display:block;}
     .form-input{width:100%;padding:14px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;}
     .form-input:focus{border-color:var(--blue);}
     .form-input::placeholder{color:var(--faint);}
-
     .btn-auth{width:100%;padding:15px;background:var(--blue);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s;margin-top:8px;}
     .btn-auth:hover{background:var(--blue-dark);}
     .btn-auth:disabled{opacity:0.5;cursor:not-allowed;}
-
     .auth-msg{text-align:center;font-size:13px;margin-top:16px;padding:12px;border-radius:8px;display:none;}
     .auth-msg.error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#f87171;}
     .auth-msg.success{background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);color:#4ade80;}
-
-    .divider{display:flex;align-items:center;gap:12px;margin:20px 0;}
-    .divider-line{flex:1;height:1px;background:rgba(255,255,255,0.08);}
-    .divider-text{font-size:12px;color:var(--faint);}
-
     .benefits{margin-bottom:28px;}
     .benefit{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-bottom:8px;}
     .benefit-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
@@ -51,20 +40,19 @@
 </head>
 <body>
 <nav>
-  <a href="index.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri" /></a>
+  <a href="/index.html" class="nav-logo"><img src="/irontri_logo.png" alt="irontri" /></a>
 </nav>
 
 <div class="auth-wrap">
   <div class="auth-card">
     <div class="auth-title">Welcome to irontri</div>
-    <div class="auth-sub">Save your plan and track your progress</div>
+    <div class="auth-sub" id="auth-sub">Save your plan and track your progress</div>
 
     <div class="tabs">
       <div class="tab active" id="tab-signup" onclick="switchTab('signup')">Create account</div>
       <div class="tab" id="tab-login" onclick="switchTab('login')">Log in</div>
     </div>
 
-    <!-- SIGNUP FORM -->
     <div id="form-signup">
       <div class="benefits">
         <div class="benefit"><div class="benefit-dot"></div>Save your personalised training plan</div>
@@ -84,11 +72,10 @@
         <label class="form-label">Password</label>
         <input type="password" class="form-input" id="signup-password" placeholder="At least 6 characters" />
       </div>
-      <button class="btn-auth" onclick="signUp()" id="btn-signup">Create my free account →</button>
+      <button class="btn-auth" id="btn-signup" onclick="doSignUp()">Create my free account →</button>
       <div class="auth-msg" id="msg-signup"></div>
     </div>
 
-    <!-- LOGIN FORM -->
     <div id="form-login" style="display:none;">
       <div class="form-group">
         <label class="form-label">Email address</label>
@@ -98,123 +85,116 @@
         <label class="form-label">Password</label>
         <input type="password" class="form-input" id="login-password" placeholder="Your password" />
       </div>
-      <button class="btn-auth" onclick="logIn()" id="btn-login">Log in →</button>
+      <button class="btn-auth" id="btn-login" onclick="doLogIn()">Log in →</button>
       <div class="auth-msg" id="msg-login"></div>
     </div>
-
   </div>
 </div>
 
 <script>
-  const SUPABASE_URL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const _url = 'https://aezfxagplaxlmovqbmfd.supabase.co';
+const _key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
+const _sb = window.supabase.createClient(_url, _key);
 
-  // Check if already logged in
-  sb.auth.getSession().then(({data:{session}}) => {
-    if (session) window.location.href = 'dashboard.html';
+// Redirect if already logged in
+_sb.auth.getSession().then(({data:{session}}) => {
+  if (session) window.location.href = '/dashboard.html';
+});
+
+function switchTab(tab) {
+  document.getElementById('tab-signup').classList.toggle('active', tab==='signup');
+  document.getElementById('tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('form-signup').style.display = tab==='signup' ? 'block' : 'none';
+  document.getElementById('form-login').style.display = tab==='login' ? 'block' : 'none';
+}
+
+function showMsg(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'auth-msg ' + type;
+  el.style.display = 'block';
+}
+
+async function doSignUp() {
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const btn = document.getElementById('btn-signup');
+
+  if (!name || !email || !password) return showMsg('msg-signup', 'Please fill in all fields', 'error');
+  if (password.length < 6) return showMsg('msg-signup', 'Password must be at least 6 characters', 'error');
+
+  btn.disabled = true;
+  btn.textContent = 'Creating account...';
+
+  const { data, error } = await _sb.auth.signUp({
+    email, password,
+    options: { data: { full_name: name } }
   });
 
-  // Check for redirect from plan page
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('redirect') === 'save') {
-    document.querySelector('.auth-sub').textContent = 'Create a free account to save your training plan';
+  if (error) {
+    showMsg('msg-signup', error.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Create my free account →';
+    return;
   }
 
-  function switchTab(tab) {
-    document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
-    document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-    document.getElementById('form-signup').style.display = tab === 'signup' ? 'block' : 'none';
-    document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
+  localStorage.setItem('irontri_user_name', name);
+  showMsg('msg-signup', '🎉 Account created! Saving your plan...', 'success');
+
+  // Wait for session then save pending plan
+  await new Promise(r => setTimeout(r, 1500));
+  await savePendingPlan(data.user?.id);
+  setTimeout(() => window.location.href = '/dashboard.html', 500);
+}
+
+async function doLogIn() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('btn-login');
+
+  if (!email || !password) return showMsg('msg-login', 'Please enter your email and password', 'error');
+
+  btn.disabled = true;
+  btn.textContent = 'Logging in...';
+
+  const { data, error } = await _sb.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    showMsg('msg-login', error.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Log in →';
+    return;
   }
 
-  function showMsg(id, msg, type) {
-    const el = document.getElementById(id);
-    el.textContent = msg;
-    el.className = 'auth-msg ' + type;
-    el.style.display = 'block';
-  }
+  const loginName = data.user?.user_metadata?.full_name || email.split('@')[0];
+  localStorage.setItem('irontri_user_name', loginName);
+  showMsg('msg-login', '✅ Logged in! Redirecting...', 'success');
+  await savePendingPlan(data.user?.id);
+  setTimeout(() => window.location.href = '/dashboard.html', 1000);
+}
 
-  async function signUp() {
-    const name = document.getElementById('signup-name').value.trim();
-    const email = document.getElementById('signup-email').value.trim();
-    const password = document.getElementById('signup-password').value;
-    const btn = document.getElementById('btn-signup');
-
-    if (!name || !email || !password) return showMsg('msg-signup', 'Please fill in all fields', 'error');
-    if (password.length < 6) return showMsg('msg-signup', 'Password must be at least 6 characters', 'error');
-
-    btn.disabled = true;
-    btn.textContent = 'Creating account...';
-
-    const { data, error } = await sb.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: name } }
+async function savePendingPlan(userId) {
+  try {
+    let uid = userId;
+    if (!uid) {
+      const { data: { session } } = await _sb.auth.getSession();
+      uid = session?.user?.id;
+    }
+    if (!uid) return;
+    const pending = localStorage.getItem('irontri_pending_plan');
+    if (!pending) return;
+    const { plan, race } = JSON.parse(pending);
+    const { error } = await _sb.from('plans').insert({
+      user_id: uid,
+      plan_data: plan,
+      race: race || 'Triathlon'
     });
-
-    if (error) {
-      showMsg('msg-signup', error.message, 'error');
-      btn.disabled = false;
-      btn.textContent = 'Create my free account →';
-      return;
-    }
-
-    showMsg('msg-signup', '🎉 Account created! Saving your plan...', 'success');
-    localStorage.setItem('irontri_user_name', name);
-    // Wait for session to be established then save plan
-    await new Promise(r => setTimeout(r, 1000));
-    await savePendingPlan(data.user?.id);
-    setTimeout(() => window.location.href = 'dashboard.html', 2000);
+    if (!error) localStorage.removeItem('irontri_pending_plan');
+  } catch(e) {
+    console.error('savePendingPlan:', e);
   }
-
-  async function logIn() {
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-    const btn = document.getElementById('btn-login');
-
-    if (!email || !password) return showMsg('msg-login', 'Please enter your email and password', 'error');
-
-    btn.disabled = true;
-    btn.textContent = 'Logging in...';
-
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      showMsg('msg-login', error.message, 'error');
-      btn.disabled = false;
-      btn.textContent = 'Log in →';
-      return;
-    }
-
-    showMsg('msg-login', '✅ Logged in! Saving your plan...', 'success');
-    const loginName = data.user?.user_metadata?.full_name || email.split('@')[0];
-    localStorage.setItem('irontri_user_name', loginName);
-    await savePendingPlan(data.user?.id);
-    setTimeout(() => window.location.href = 'dashboard.html', 1500);
-  }
-
-  async function savePendingPlan(userId) {
-    try {
-      // Get fresh session to ensure we have the right user ID
-      let uid = userId;
-      if (!uid) {
-        const { data: { session } } = await sb.auth.getSession();
-        uid = session?.user?.id;
-      }
-      if (!uid) return;
-
-      const pending = localStorage.getItem('irontri_pending_plan');
-      if (!pending) return;
-
-      const { plan, race } = JSON.parse(pending);
-      const { error } = await sb.from('plans').insert({
-        user_id: uid,
-        plan_data: plan,
-        race: race || 'Triathlon'
-      });
-      if (!error) {
-        localStorage.removeItem('irontri_pending_plan');
-        console.log('Plan saved successfully!');
-      } else {
-        console.error('Plan save error:', error);
+}
+</script>
+</body>
+</html>
