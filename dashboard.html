@@ -9,32 +9,66 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root{--blue:#1E90FF;--blue-dark:#1478d4;--bg:#0a0a0a;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--text:#fff;--muted:rgba(255,255,255,0.5);--faint:rgba(255,255,255,0.25);}
+    :root{--blue:#1E90FF;--blue-dark:#1478d4;--bg:#0a0a0a;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--text:#fff;--muted:rgba(255,255,255,0.5);--faint:rgba(255,255,255,0.25);--strava:#FC4C02;}
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
     nav{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:68px;background:#1E90FF;}
     .nav-logo{display:flex;align-items:center;text-decoration:none;}
     .nav-logo img{height:120px;width:auto;mix-blend-mode:screen;filter:brightness(10);}
     .nav-right{display:flex;align-items:center;gap:16px;}
-    .nav-user{font-size:14px;color:rgba(255,255,255,0.85);}
+    .nav-user{font-size:14px;color:rgba(255,255,255,0.85);text-decoration:none;}
+    .nav-user:hover{color:#fff;}
     .btn-logout{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
     .btn-logout:hover{background:rgba(255,255,255,0.25);}
 
     .dash{max-width:900px;margin:0 auto;padding:40px 32px;}
 
-    /* WELCOME */
     .welcome{margin-bottom:32px;}
     .welcome h1{font-family:'Syne',sans-serif;font-size:clamp(24px,4vw,36px);font-weight:800;letter-spacing:-1px;margin-bottom:6px;}
     .welcome p{font-size:15px;color:var(--muted);}
 
-    /* STATS ROW */
     .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:32px;}
     .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;}
     .stat-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--blue);}
     .stat-lbl{font-size:12px;color:var(--muted);margin-top:4px;}
 
-    /* PLAN CARD */
     .section-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:16px;}
+
+    /* STRAVA CONNECT BANNER */
+    .strava-banner{background:rgba(252,76,2,0.08);border:1px solid rgba(252,76,2,0.25);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+    .strava-logo{font-size:28px;flex-shrink:0;}
+    .strava-text{flex:1;}
+    .strava-text h3{font-size:15px;font-weight:600;margin-bottom:3px;}
+    .strava-text p{font-size:13px;color:var(--muted);}
+    .btn-strava{background:var(--strava);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;text-decoration:none;display:inline-block;}
+    .btn-strava:hover{background:#e04400;}
+
+    /* STRAVA CONNECTED */
+    .strava-connected{background:rgba(252,76,2,0.06);border:1px solid rgba(252,76,2,0.2);border-radius:16px;padding:20px 24px;margin-bottom:24px;}
+    .strava-connected-top{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+    .strava-connected-info{flex:1;}
+    .strava-connected-info h3{font-size:15px;font-weight:600;}
+    .strava-connected-info p{font-size:12px;color:var(--muted);margin-top:2px;}
+    .strava-status{display:flex;align-items:center;gap:6px;font-size:12px;color:#4ade80;}
+    .strava-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;flex-shrink:0;}
+    .btn-disconnect{background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--faint);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+    .btn-disconnect:hover{border-color:rgba(239,68,68,0.3);color:#f87171;}
+
+    /* ACTIVITY FEED */
+    .activity-feed{display:flex;flex-direction:column;gap:8px;}
+    .activity-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;transition:border-color 0.15s;}
+    .activity-item:hover{border-color:rgba(252,76,2,0.3);}
+    .activity-icon{font-size:22px;flex-shrink:0;width:36px;text-align:center;}
+    .activity-info{flex:1;min-width:0;}
+    .activity-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .activity-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+    .activity-stats{display:flex;gap:16px;text-align:right;flex-shrink:0;}
+    .activity-stat{display:flex;flex-direction:column;align-items:flex-end;}
+    .activity-stat-val{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+    .activity-stat-lbl{font-size:10px;color:var(--faint);margin-top:1px;}
+    .activity-matched{font-size:10px;color:#4ade80;margin-top:3px;}
+
+    /* PLAN CARD */
     .plan-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:16px;transition:all 0.2s;cursor:pointer;}
     .plan-card:hover{border-color:rgba(30,144,255,0.3);background:rgba(30,144,255,0.05);}
     .plan-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px;}
@@ -47,22 +81,23 @@
     .btn-delete{background:transparent;color:var(--muted);border:1px solid var(--border);padding:10px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
     .btn-delete:hover{border-color:rgba(239,68,68,0.3);color:#f87171;}
 
-    /* EMPTY STATE */
     .empty{text-align:center;padding:60px 24px;background:var(--surface);border:1px solid var(--border);border-radius:16px;}
     .empty-icon{font-size:48px;margin-bottom:16px;}
     .empty h3{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;}
     .empty p{font-size:14px;color:var(--muted);margin-bottom:24px;}
     .btn-create{background:var(--blue);color:#fff;border:none;padding:14px 28px;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-block;}
 
-    /* LOADING */
     .loading{text-align:center;padding:60px;color:var(--muted);}
     .spinner{width:36px;height:36px;border:3px solid rgba(30,144,255,0.15);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
     @keyframes spin{to{transform:rotate(360deg)}}
 
+    .feed-loading{text-align:center;padding:20px;color:var(--faint);font-size:13px;}
+
     @media(max-width:600px){
       nav{padding:0 20px;}
       .dash{padding:24px 16px;}
-      .stats-row{grid-template-columns:repeat(3,1fr);}
+      .activity-stats{display:none;}
+      .strava-banner{flex-direction:column;align-items:flex-start;}
     }
   </style>
 </head>
@@ -70,7 +105,7 @@
 <nav>
   <a href="index.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri" /></a>
   <div class="nav-right">
-    <span class="nav-user" id="nav-user"></span>
+    <a href="profile.html" class="nav-user" id="nav-user"></a>
     <button class="btn-logout" onclick="logOut()">Log out</button>
   </div>
 </nav>
@@ -93,9 +128,12 @@
       <div class="stat-card"><div class="stat-val" id="s-member">🏅</div><div class="stat-lbl">Founding member</div></div>
     </div>
 
+    <!-- STRAVA SECTION -->
+    <div id="strava-section"></div>
+
+    <!-- PLANS -->
     <div class="section-title">Your training plans</div>
     <div id="plans-list"></div>
-
     <div style="margin-top:24px;">
       <a href="/plan.html" class="btn-create">+ Build a new plan</a>
     </div>
@@ -103,104 +141,234 @@
 </div>
 
 <script>
-  const SUPABASE_URL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const STRAVA_CLIENT_ID = '216800';
+let currentUser = null;
 
-  let currentUser = null;
+// Sport type → emoji + label
+const SPORT = {
+  Swim:{icon:'🏊',label:'Swim',color:'#38bdf8'},
+  Ride:{icon:'🚴',label:'Bike',color:'#fb923c'},
+  Run:{icon:'🏃',label:'Run',color:'#4ade80'},
+  VirtualRide:{icon:'🚴',label:'Virtual Bike',color:'#fb923c'},
+  VirtualRun:{icon:'🏃',label:'Virtual Run',color:'#4ade80'},
+  Walk:{icon:'🚶',label:'Walk',color:'#a78bfa'},
+  WeightTraining:{icon:'💪',label:'Strength',color:'#fbbf24'},
+  Workout:{icon:'💪',label:'Workout',color:'#fbbf24'},
+};
 
-  async function init() {
-    // Wait for Supabase to restore session
-    const { data: { session } } = await sb.auth.getSession();
-    
-    if (!session) {
-      // Try once more after a short delay
-      await new Promise(r => setTimeout(r, 1000));
-      const { data: { session: session2 } } = await sb.auth.getSession();
-      if (!session2) {
-        window.location.href = 'auth.html';
-        return;
-      }
-      currentUser = session2.user;
-    } else {
-      currentUser = session.user;
-    }
-    
-    const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
-    document.getElementById('nav-user').textContent = name;
-    document.getElementById('welcome-title').textContent = 'Welcome back, ' + name + '! 👋';
-    document.getElementById('welcome-sub').textContent = 'Here\'s your training overview';
-    loadPlans();
+async function init() {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) {
+    await new Promise(r => setTimeout(r, 1000));
+    const { data:{ session:s2 } } = await sb.auth.getSession();
+    if (!s2) { window.location.href = 'auth.html'; return; }
+    currentUser = s2.user;
+  } else {
+    currentUser = session.user;
   }
 
-  async function loadPlans() {
-    const { data: plans, error } = await sb
-      .from('plans')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .order('created_at', { ascending: false });
+  const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+  document.getElementById('nav-user').textContent = '👤 ' + name;
+  document.getElementById('welcome-title').textContent = 'Welcome back, ' + name + '! 👋';
 
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('content').style.display = 'block';
+  await Promise.all([loadPlans(), loadStravaSection()]);
+}
 
-    if (error || !plans || plans.length === 0) {
-      document.getElementById('s-plans').textContent = '0';
-      document.getElementById('plans-list').innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">🏊🚴🏃</div>
-          <h3>No plans yet</h3>
-          <p>Build your first personalised triathlon training plan — it only takes 2 minutes.</p>
-          <a href="/plan.html" class="btn-create">Build my first plan →</a>
-        </div>`;
+async function loadStravaSection() {
+  // Check if user has Strava connected in our users table
+  const { data: userData } = await sb.from('users')
+    .select('strava_access_token, strava_refresh_token, strava_token_expires_at, strava_athlete_id')
+    .eq('id', currentUser.id)
+    .single();
+
+  const section = document.getElementById('strava-section');
+
+  if (!userData?.strava_access_token) {
+    // Not connected — show connect banner
+    const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=https://irontriapp.com/strava-callback.html&approval_prompt=force&scope=activity:read_all`;
+    section.innerHTML = `
+      <div class="strava-banner">
+        <div class="strava-logo">🟠</div>
+        <div class="strava-text">
+          <h3>Connect Strava</h3>
+          <p>Sync your swims, rides and runs automatically. Activities will be matched to your plan sessions.</p>
+        </div>
+        <a href="${authUrl}" class="btn-strava">Connect Strava →</a>
+      </div>`;
+    return;
+  }
+
+  // Connected — get a fresh access token if needed
+  let accessToken = userData.strava_access_token;
+  if (Date.now() / 1000 > userData.strava_token_expires_at - 300) {
+    accessToken = await refreshStravaToken(userData.strava_refresh_token);
+  }
+
+  if (!accessToken) {
+    section.innerHTML = `<div class="strava-banner"><div class="strava-logo">🟠</div><div class="strava-text"><h3>Strava needs reconnecting</h3><p>Your connection expired — reconnect to keep syncing.</p></div><a href="https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=https://irontriapp.com/strava-callback.html&approval_prompt=force&scope=activity:read_all" class="btn-strava">Reconnect →</a></div>`;
+    return;
+  }
+
+  // Show connected state + activity feed
+  section.innerHTML = `
+    <div class="strava-connected">
+      <div class="strava-connected-top">
+        <div style="font-size:28px;">🟠</div>
+        <div class="strava-connected-info">
+          <h3>Strava connected</h3>
+          <div class="strava-status"><div class="strava-dot"></div>Syncing automatically</div>
+        </div>
+        <button class="btn-disconnect" onclick="disconnectStrava()">Disconnect</button>
+      </div>
+      <div class="section-title" style="margin-bottom:12px;font-size:15px;">Recent activities</div>
+      <div class="activity-feed" id="activity-feed">
+        <div class="feed-loading">Loading your activities...</div>
+      </div>
+    </div>`;
+
+  loadActivities(accessToken);
+}
+
+async function refreshStravaToken(refreshToken) {
+  try {
+    const r = await fetch('/api/strava-exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'refresh', refresh_token: refreshToken }),
+    });
+    const data = await r.json();
+    if (!r.ok) return null;
+    // Update tokens in Supabase
+    await sb.from('users').update({
+      strava_access_token: data.access_token,
+      strava_refresh_token: data.refresh_token,
+      strava_token_expires_at: data.expires_at,
+    }).eq('id', currentUser.id);
+    return data.access_token;
+  } catch { return null; }
+}
+
+async function loadActivities(accessToken) {
+  try {
+    const r = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=8', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const activities = await r.json();
+    const feed = document.getElementById('activity-feed');
+
+    if (!activities?.length) {
+      feed.innerHTML = '<div class="feed-loading">No recent activities found on Strava.</div>';
       return;
     }
 
-    document.getElementById('s-plans').textContent = plans.length;
-    document.getElementById('s-race').textContent = plans[0].race ? plans[0].race.split(' ')[0] : '—';
-
-    document.getElementById('plans-list').innerHTML = plans.map(p => {
-      const date = new Date(p.created_at).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'numeric'});
-      let planObj = null;
-      try { planObj = JSON.parse(p.plan_data); } catch(e) {}
-      const weeks = planObj?.weeks?.length || '—';
+    feed.innerHTML = activities.map(a => {
+      const sport = SPORT[a.sport_type] || SPORT[a.type] || {icon:'🏅',label:a.sport_type,color:'#888'};
+      const dist = a.distance ? (a.distance / 1000).toFixed(1) + ' km' : '';
+      const time = a.moving_time ? fmtTime(a.moving_time) : '';
+      const date = new Date(a.start_date_local).toLocaleDateString('en-AU', {day:'numeric',month:'short'});
       return `
-        <div class="plan-card" onclick="viewPlan('${p.id}')">
-          <div class="plan-card-top">
-            <div>
-              <div class="plan-card-title">${p.race || 'Training Plan'}</div>
-              <div class="plan-card-date">Created ${date}</div>
-            </div>
+        <div class="activity-item">
+          <div class="activity-icon">${sport.icon}</div>
+          <div class="activity-info">
+            <div class="activity-name">${a.name}</div>
+            <div class="activity-meta">${date} · <span style="color:${sport.color}">${sport.label}</span></div>
           </div>
-          <div class="plan-card-meta">
-            <span class="plan-pill">${p.race || 'Triathlon'}</span>
-            <span class="plan-pill">${weeks} weeks</span>
-          </div>
-          <div class="plan-card-actions">
-            <button class="btn-view" onclick="event.stopPropagation();viewPlan('${p.id}')">View plan →</button>
-            <button class="btn-delete" onclick="event.stopPropagation();deletePlan('${p.id}')">Delete</button>
+          <div class="activity-stats">
+            ${dist ? `<div class="activity-stat"><div class="activity-stat-val">${dist}</div><div class="activity-stat-lbl">Distance</div></div>` : ''}
+            ${time ? `<div class="activity-stat"><div class="activity-stat-val">${time}</div><div class="activity-stat-lbl">Time</div></div>` : ''}
           </div>
         </div>`;
     }).join('');
+  } catch(e) {
+    document.getElementById('activity-feed').innerHTML = '<div class="feed-loading">Could not load activities.</div>';
+  }
+}
+
+function fmtTime(secs) {
+  const h = Math.floor(secs/3600);
+  const m = Math.floor((secs%3600)/60);
+  const s = secs%60;
+  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+async function disconnectStrava() {
+  if (!confirm('Disconnect Strava? Your activities will no longer sync.')) return;
+  await sb.from('users').update({
+    strava_access_token: null,
+    strava_refresh_token: null,
+    strava_token_expires_at: null,
+    strava_athlete_id: null,
+  }).eq('id', currentUser.id);
+  loadStravaSection();
+}
+
+async function loadPlans() {
+  const { data: plans, error } = await sb
+    .from('plans').select('*').eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+
+  if (error || !plans || plans.length === 0) {
+    document.getElementById('s-plans').textContent = '0';
+    document.getElementById('plans-list').innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">🏊🚴🏃</div>
+        <h3>No plans yet</h3>
+        <p>Build your first personalised triathlon training plan — it only takes 2 minutes.</p>
+        <a href="/plan.html" class="btn-create">Build my first plan →</a>
+      </div>`;
+    return;
   }
 
-  function viewPlan(id) {
-    localStorage.setItem('irontri_plan_id', id);
-    window.location.href = '/plan.html?load=' + id;
-  }
+  document.getElementById('s-plans').textContent = plans.length;
+  document.getElementById('s-race').textContent = plans[0].race ? plans[0].race.split(' ')[0] : '—';
 
-  async function deletePlan(id) {
-    if (!confirm('Delete this plan? This cannot be undone.')) return;
-    await sb.from('plans').delete().eq('id', id);
-    loadPlans();
-  }
+  document.getElementById('plans-list').innerHTML = plans.map(p => {
+    const date = new Date(p.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
+    let planObj = null;
+    try { planObj = JSON.parse(p.plan_data); } catch(e) {}
+    const weeks = planObj?.weeks?.length || '—';
+    return `
+      <div class="plan-card" onclick="viewPlan('${p.id}')">
+        <div class="plan-card-top">
+          <div>
+            <div class="plan-card-title">${p.race || 'Training Plan'}</div>
+            <div class="plan-card-date">Created ${date}</div>
+          </div>
+        </div>
+        <div class="plan-card-meta">
+          <span class="plan-pill">${p.race || 'Triathlon'}</span>
+          <span class="plan-pill">${weeks} weeks</span>
+        </div>
+        <div class="plan-card-actions">
+          <button class="btn-view" onclick="event.stopPropagation();viewPlan('${p.id}')">View plan →</button>
+          <button class="btn-delete" onclick="event.stopPropagation();deletePlan('${p.id}')">Delete</button>
+        </div>
+      </div>`;
+  }).join('');
+}
 
-  async function logOut() {
-    await sb.auth.signOut();
-    localStorage.removeItem('irontri_user_name');
-    window.location.href = 'index.html';
-  }
+function viewPlan(id) { window.location.href = '/plan.html?load=' + id; }
 
-  init();
+async function deletePlan(id) {
+  if (!confirm('Delete this plan? This cannot be undone.')) return;
+  await sb.from('plans').delete().eq('id', id);
+  loadPlans();
+}
+
+async function logOut() {
+  await sb.auth.signOut();
+  localStorage.removeItem('irontri_user_name');
+  window.location.href = 'index.html';
+}
+
+init();
 </script>
 </body>
 </html>
