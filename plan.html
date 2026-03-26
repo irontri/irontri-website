@@ -486,9 +486,9 @@
   <div id="save-banner" style="display:none;background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.25);border-radius:16px;padding:24px;margin-bottom:16px;text-align:center;">
     <div style="font-size:22px;margin-bottom:8px;">💾</div>
     <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;">Save your training plan</div>
-    <div style="font-size:14px;color:var(--muted);margin-bottom:16px;">Create a free account to access your plan anytime and track your progress.</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:16px;">Your plan is ready! Create a free account and it will be automatically saved to your profile.</div>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-      <a href="/auth.html" style="display:inline-block;background:var(--blue);color:#fff;padding:12px 28px;border-radius:10px;font-size:15px;font-weight:500;text-decoration:none;">Create free account →</a>
+      <a href="/auth.html" style="display:inline-block;background:var(--blue);color:#fff;padding:12px 28px;border-radius:10px;font-size:15px;font-weight:500;text-decoration:none;">Create free account & save plan →</a>
       <a href="/auth.html" style="display:inline-block;background:transparent;border:1px solid var(--border);color:var(--muted);padding:12px 20px;border-radius:10px;font-size:14px;text-decoration:none;">Already have an account? Log in</a>
     </div>
   </div>
@@ -1216,7 +1216,6 @@ const sb2 = window.supabase.createClient(
 
 async function checkAndSavePlan(planText) {
   try {
-    // Try getting session — retry once for mobile Safari
     let session = null;
     const { data: d1 } = await sb2.auth.getSession();
     session = d1?.session;
@@ -1228,6 +1227,7 @@ async function checkAndSavePlan(planText) {
     }
 
     if (session) {
+      // Logged in — save directly
       const { error } = await sb2.from('plans').insert({
         user_id: session.user.id,
         plan_data: planText,
@@ -1236,14 +1236,17 @@ async function checkAndSavePlan(planText) {
       if (!error) {
         document.getElementById('saved-banner').style.display = 'block';
       } else {
-        console.error('Save error:', error);
+        // Save failed — store locally as backup
+        localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race}));
         document.getElementById('save-banner').style.display = 'block';
       }
     } else {
+      // Not logged in — store plan in localStorage so it saves after signup
+      localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race}));
       document.getElementById('save-banner').style.display = 'block';
     }
   } catch(e) {
-    console.error('Save catch:', e);
+    localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race}));
     document.getElementById('save-banner').style.display = 'block';
   }
 }
