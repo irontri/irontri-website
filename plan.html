@@ -186,7 +186,7 @@
   <a href="index.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri" /></a>
   <a href="index.html" class="nav-back">← Back</a>
 </nav>
-<div class="prog-wrap">
+<div class="prog-wrap" id="prog-wrap">
   <div class="prog-top"><span class="prog-lbl" id="pt">Question 1 of 11</span><span class="prog-lbl" id="pp">9%</span></div>
   <div class="prog-track"><div class="prog-fill" id="pf" style="width:9%"></div></div>
 </div>
@@ -720,9 +720,54 @@ Return ONLY the JSON object. No markdown, no explanation.`;
     setTimeout(()=>{
       document.getElementById('gen').style.display='none';
       document.getElementById('quiz-wrap').style.display='none';
-      document.getElementById('prog-wrap')||null;
-      document.querySelector('.prog-wrap').style.display='none';
+      document.getElementById('prog-wrap').style.display='none';
       const planEl=document.getElementById('plan');
       planEl.style.display='block';
 
       // Header
+      document.getElementById('ptitle').textContent=A.name+"'s "+A.race+" Plan";
+      document.getElementById('psub').textContent=A.exp.split(' — ')[0]+' · '+w+' weeks · '+A.hours+' hrs/week · Age '+A.age;
+      document.getElementById('pintro').textContent=planData.intro||'';
+
+      // Stats
+      document.getElementById('pstats').innerHTML=[
+        {v:w,l:'Total weeks'},{v:A.hours+'h',l:'Per week'},
+        {v:A.days.length,l:'Sessions/week'},{v:A.race.split(' ')[0],l:'Race type'}
+      ].map(s=>`<div class="ps"><div class="psv">${s.v}</div><div class="psl">${s.l}</div></div>`).join('');
+
+      // Phase pills
+      const phases=[...new Set(planData.weeks.map(w=>w.phase))];
+      document.getElementById('phases').innerHTML=phases.map((p,i)=>
+        `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="jumpToPhase('${p}')">${p} Phase</button>`
+      ).join('');
+
+      curWeek=0;curDay=null;
+      renderWeek();
+      window.scrollTo({top:0,behavior:'smooth'});
+    },17000);
+
+  }catch(e){
+    console.error('Plan error:',e);
+    setTimeout(()=>{
+      document.getElementById('gen').style.display='none';
+      document.getElementById('quiz-wrap').style.display='none';
+      document.querySelector('.prog-wrap').style.display='none';
+      document.getElementById('plan').style.display='block';
+      document.getElementById('ptitle').textContent='Something went wrong';
+      document.getElementById('pintro').textContent='Error: '+e.message+'. Please go back and try again.';
+      document.getElementById('pstats').innerHTML='';
+      document.getElementById('cal').innerHTML='';
+    },17000);
+  }
+}
+
+function jumpToPhase(phase){
+  const idx=planData.weeks.findIndex(w=>w.phase===phase);
+  if(idx>=0){curWeek=idx;curDay=null;renderWeek();}
+  document.querySelectorAll('.phase-pill').forEach(p=>p.classList.toggle('active',p.dataset.phase===phase));
+}
+
+prog(1);
+</script>
+</body>
+</html>
