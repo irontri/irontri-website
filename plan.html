@@ -508,19 +508,12 @@ function renderWeek(){
   const w=planData.weeks[curWeek];
   if(!w)return;
 
-  // Calculate start date from athlete's chosen start date
-  const planStartDate = A.startDate ? new Date(A.startDate) : new Date();
-  // Roll to Monday of that week
-  const startDow = planStartDate.getDay();
-  const daysToMon = startDow === 0 ? -6 : 1 - startDow;
-  planStartDate.setDate(planStartDate.getDate() + daysToMon);
+  // Calculate start date from athlete's chosen start date - use exact date they picked
+  const planStartDate = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
   planStartDate.setDate(planStartDate.getDate() + (curWeek * 7));
 
   // week nav date range
-  const planStartDate2 = A.startDate ? new Date(A.startDate) : new Date();
-  const dow2 = planStartDate2.getDay();
-  const daysToMon2 = dow2 === 0 ? -6 : 1 - dow2;
-  planStartDate2.setDate(planStartDate2.getDate() + daysToMon2);
+  const planStartDate2 = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
   planStartDate2.setDate(planStartDate2.getDate() + (curWeek * 7));
   const endDate = new Date(planStartDate2);
   endDate.setDate(planStartDate2.getDate() + 6);
@@ -619,10 +612,7 @@ function selectDay(i){
     el.classList.toggle('active',idx===i);
   });
 
-  const dayDate2 = A.startDate ? new Date(A.startDate) : new Date();
-  const dow3 = dayDate2.getDay();
-  const daysToMon3 = dow3 === 0 ? -6 : 1 - dow3;
-  dayDate2.setDate(dayDate2.getDate() + daysToMon3);
+  const dayDate2 = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
   dayDate2.setDate(dayDate2.getDate() + (curWeek * 7) + i);
   const months3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const fullDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
