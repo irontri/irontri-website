@@ -352,11 +352,16 @@
 <!-- Q11 -->
 <div class="q" id="q11">
   <div class="qlbl">Almost there!</div><div class="qtitle">Last step — tell us who we're coaching</div>
-  <p class="qsub">We'll use your race date to build the perfect plan length.</p>
+  <p class="qsub">We'll use your race date and start date to build the perfect plan.</p>
   <div class="is">
     <input type="text" id="iname" placeholder="Your first name" oninput="cf()" />
     <input type="email" id="iemail" placeholder="Your email address" oninput="cf()" />
+    <input type="date" id="istart" oninput="cf()" style="border-color:rgba(30,144,255,0.4);" />
     <input type="date" id="idate" oninput="cf()" />
+  </div>
+  <div style="display:flex;gap:16px;font-size:12px;color:var(--faint);margin-top:-16px;margin-bottom:8px;padding:0 2px;">
+    <span>↑ Plan start date</span>
+    <span style="margin-left:auto;">↑ Race date</span>
   </div>
   <div class="qnav"><button class="bb" onclick="go(10)">← Back</button><button class="bn" id="n11" onclick="showSum()" disabled>See my plan summary →</button></div>
 </div>
@@ -453,7 +458,7 @@
 </div>
 
 <script>
-const A={goal:'',race:'',exp:'',fitness:'',weak:'',hours:8,days:[],pool:'',injury:'',age:'',name:'',email:'',date:''};
+const A={goal:'',race:'',exp:'',fitness:'',weak:'',hours:8,days:[],pool:'',injury:'',age:'',name:'',email:'',startDate:'',date:''};
 const T=11;
 let planData=null;
 let curWeek=0;
@@ -465,7 +470,7 @@ function pick(el,key,val){el.closest('.opts').querySelectorAll('.opt').forEach(o
 function pg(el,key,val){el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n10'};if(m[key])document.getElementById(m[key]).disabled=false;}
 function setH(v){A.hours=parseInt(v);document.getElementById('hv').innerHTML=v+' <span>hours/week</span>';const h={3:'Light — great for beginners',5:'Good starting point',7:'Solid volume',8:'Good balance for most',10:'Strong commitment',12:'Serious training load',15:'High performance',18:'Elite volume',20:'Maximum load'};const k=Object.keys(h).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);document.getElementById('hh').textContent=h[k]||'';}
 function td(btn,day){btn.classList.toggle('sel');if(btn.classList.contains('sel'))A.days.push(day);else A.days=A.days.filter(d=>d!==day);document.getElementById('n7').disabled=A.days.length===0;}
-function cf(){A.name=document.getElementById('iname').value.trim();A.email=document.getElementById('iemail').value.trim();A.date=document.getElementById('idate').value;document.getElementById('n11').disabled=!(A.name.length>1&&A.email.includes('@'));}
+function cf(){A.name=document.getElementById('iname').value.trim();A.email=document.getElementById('iemail').value.trim();A.startDate=document.getElementById('istart').value;A.date=document.getElementById('idate').value;document.getElementById('n11').disabled=!(A.name.length>1&&A.email.includes('@')&&A.startDate);}
 function wks(d){if(!d)return 16;const w=Math.round((new Date(d)-new Date())/(7*24*60*60*1000));return Math.min(Math.max(w,8),24);}
 
 function showSum(){
@@ -480,8 +485,9 @@ function showSum(){
   const items=[
     {l:'Race',v:A.race},{l:'Goal',v:A.goal.split(' — ')[0]||A.goal},
     {l:'Experience',v:A.exp.split(' — ')[0]||A.exp},{l:'Age group',v:A.age},
+    {l:'Plan starts',v:A.startDate ? new Date(A.startDate).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : 'ASAP'},
     {l:'Weekly training',v:A.hours+' hours'},{l:'Training days',v:A.days.join(', ')},
-    {l:'Focus',v:A.weak.split(' — ')[0]||A.weak},{l:'Pool',v:A.pool.split(' — ')[0]||A.pool}
+    {l:'Focus',v:A.weak.split(' — ')[0]||A.weak}
   ];
   document.getElementById('sg').innerHTML=items.map(i=>`<div class="sc"><div class="sl">${i.l}</div><div class="sv">${i.v}</div></div>`).join('');
   window.scrollTo({top:0,behavior:'smooth'});
@@ -500,20 +506,19 @@ function renderWeek(){
   const w=planData.weeks[curWeek];
   if(!w)return;
 
-  // Calculate start date for this week
-  const startDate = A.date ? new Date() : new Date();
-  const planStartDate = new Date();
-  // Start from next Monday
-  const dayOfWeek = planStartDate.getDay();
-  const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
-  planStartDate.setDate(planStartDate.getDate() + (dayOfWeek === 1 ? 0 : daysUntilMonday));
-  // Add weeks offset
+  // Calculate start date from athlete's chosen start date
+  const planStartDate = A.startDate ? new Date(A.startDate) : new Date();
+  // Roll to Monday of that week
+  const startDow = planStartDate.getDay();
+  const daysToMon = startDow === 0 ? -6 : 1 - startDow;
+  planStartDate.setDate(planStartDate.getDate() + daysToMon);
   planStartDate.setDate(planStartDate.getDate() + (curWeek * 7));
 
-  // week nav
-  const planStartDate2 = new Date();
-  const dow = planStartDate2.getDay();
-  planStartDate2.setDate(planStartDate2.getDate() + (dow === 1 ? 0 : dow === 0 ? 1 : 8 - dow));
+  // week nav date range
+  const planStartDate2 = A.startDate ? new Date(A.startDate) : new Date();
+  const dow2 = planStartDate2.getDay();
+  const daysToMon2 = dow2 === 0 ? -6 : 1 - dow2;
+  planStartDate2.setDate(planStartDate2.getDate() + daysToMon2);
   planStartDate2.setDate(planStartDate2.getDate() + (curWeek * 7));
   const endDate = new Date(planStartDate2);
   endDate.setDate(planStartDate2.getDate() + 6);
@@ -612,9 +617,10 @@ function selectDay(i){
     el.classList.toggle('active',idx===i);
   });
 
-  const dayDate2 = new Date();
-  const dow2 = dayDate2.getDay();
-  dayDate2.setDate(dayDate2.getDate() + (dow2 === 1 ? 0 : dow2 === 0 ? 1 : 8 - dow2));
+  const dayDate2 = A.startDate ? new Date(A.startDate) : new Date();
+  const dow3 = dayDate2.getDay();
+  const daysToMon3 = dow3 === 0 ? -6 : 1 - dow3;
+  dayDate2.setDate(dayDate2.getDate() + daysToMon3);
   dayDate2.setDate(dayDate2.getDate() + (curWeek * 7) + i);
   const months3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const fullDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
