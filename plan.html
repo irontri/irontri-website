@@ -586,8 +586,8 @@ function renderWeek(){
     return `<div class="cal-day${d.type==='Rest'?' rest':''}${isActive?' active':''}" onclick="selectDay(${i})">
       <div class="cal-day-name">${allDays[i]}</div>
       <div style="font-size:10px;color:var(--faint);margin-bottom:4px;">${dateStr}</div>
-      <div class="cal-day-icon">${t.icon}</div>
-      <div class="cal-day-type ${t.cls}">${d.type}</div>
+      <div class="cal-day-icon">${d.swapped ? '😓' : t.icon}</div>
+      <div class="cal-day-type ${t.cls}">${d.swapped ? 'Easy' : d.type}</div>
       <div class="cal-day-dur">${d.duration?d.duration+'m':''}</div>
     </div>`;
   }).join('');
@@ -662,6 +662,11 @@ function selectDay(i){
       ${d.effort?`<div class="sd-section"><div class="sd-sec-title">📊 Effort level — RPE ${d.effort}/10 <button class="info-btn" onclick="showExplainer('RPE')">What is RPE? ℹ️</button></div><div class="effort-bar">${effortBars}</div></div>`:''}
       ${d.coachNote?`<div class="sd-section"><div class="sd-sec-title">💬 Coach note</div><div class="sd-sec-content" style="font-style:italic;color:var(--muted);">"${d.coachNote}"</div></div>`:''}
       ${strengthHTML}
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+        <button onclick="swapSession(${i})" style="width:100%;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='rgba(251,191,36,0.15)'" onmouseout="this.style.background='rgba(251,191,36,0.08)'">
+          😓 Not feeling 100%? Swap for an easier session
+        </button>
+      </div>
     </div>`;
 }
 
@@ -860,7 +865,89 @@ function jumpToWeek(i) {
   document.getElementById('plan').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-// STRENGTH SESSION BUILDER
+// NOT FEELING 100% — SESSION SWAP
+const easySwaps = {
+  'Swim': {
+    name: 'Easy Recovery Swim',
+    duration: 20,
+    effort: 3,
+    purpose: 'Gentle movement to keep the body active without adding stress. Focus purely on feeling good in the water.',
+    warmup: '200m very easy freestyle — no pressure, just move.',
+    mainset: '4x50m easy backstroke or freestyle at RPE 3/10. Rest as long as you need between each. If you feel good, great. If not, stop early.',
+    cooldown: '100m easy, focus on long slow strokes.',
+    coachNote: 'This is about moving your body gently, not training. If you feel worse after the warm up, get out and rest. No guilt.'
+  },
+  'Bike': {
+    name: 'Easy Recovery Spin',
+    duration: 25,
+    effort: 3,
+    purpose: 'Light movement to flush the legs and keep blood flowing without taxing your system.',
+    warmup: '5 min very easy spinning, cadence 90+rpm, no resistance.',
+    mainset: '15 min easy riding at RPE 3/10. Keep cadence high and resistance very low. You should be able to sing.',
+    cooldown: '5 min easy spin, gradually slow down.',
+    coachNote: 'This replaces your planned session. Do not push. If you feel worse after 10 minutes, stop and rest. Your body needs recovery more than training right now.'
+  },
+  'Run': {
+    name: 'Easy Recovery Walk/Jog',
+    duration: 20,
+    effort: 3,
+    purpose: 'Gentle movement to keep the legs active. Walk if needed — there is no shame in walking today.',
+    warmup: '5 min easy walk.',
+    mainset: '10 min easy jog or walk at RPE 3/10. Go by feel — walk whenever you want. No pace targets today.',
+    cooldown: '5 min easy walk. Stretch calves and hip flexors.',
+    coachNote: 'Walking counts. Moving your body gently is always better than lying on the couch feeling guilty. Come back strong tomorrow.'
+  },
+  'Brick': {
+    name: 'Easy Swim Only',
+    duration: 25,
+    effort: 3,
+    purpose: 'On days you are not feeling great, drop the brick and do an easy swim only. Swimming is the most recovery-friendly discipline.',
+    warmup: '200m easy freestyle.',
+    mainset: '300m easy continuous swimming at RPE 3-4/10. Backstroke, freestyle, whatever feels good.',
+    cooldown: '100m easy, focus on breathing.',
+    coachNote: 'Brick sessions are high demand. When you are not 100%, replacing with easy swimming keeps you moving without digging a deeper hole.'
+  },
+  'Strength': {
+    name: 'Mobility & Stretching Only',
+    duration: 20,
+    effort: 2,
+    purpose: 'Skip the strength work today and focus purely on mobility. This still contributes to your recovery and injury prevention.',
+    warmup: 'None needed.',
+    mainset: 'Hip 90/90 stretch (90 sec each side) → Pigeon pose (90 sec each side) → Thoracic rotation (10 each side) → Downward dog to cobra (8 slow reps) → Foam roll quads and IT band (90 sec each leg).',
+    cooldown: '5 min lying down with legs elevated against a wall.',
+    coachNote: 'This is not a wasted session. Mobility work on tired days is one of the most underrated recovery tools in triathlon training.'
+  }
+};
+
+function swapSession(dayIndex) {
+  const w = planData.weeks[curWeek];
+  const d = w.days[dayIndex];
+  const swap = easySwaps[d.type];
+  if (!swap) return;
+
+  const confirmed = confirm(`Swap "${d.name || d.type}" for an easier session?\n\n"${swap.name}" (${swap.duration} min, RPE ${swap.effort}/10)\n\nYour original session will be replaced for today.`);
+  if (!confirmed) return;
+
+  // Replace the session data temporarily
+  w.days[dayIndex] = {
+    ...d,
+    name: swap.name,
+    duration: swap.duration,
+    effort: swap.effort,
+    purpose: swap.purpose,
+    warmup: swap.warmup,
+    mainset: swap.mainset,
+    cooldown: swap.cooldown,
+    coachNote: swap.coachNote,
+    swapped: true
+  };
+
+  // Re-render the calendar and select the swapped day
+  renderWeek();
+  selectDay(dayIndex);
+}
+
+
 const strengthExercises = {
   base: [
     {name:'Glute Bridge',sets:'3',reps:'15',target:'Glutes & core',icon:'🍑',tip:'Drive through heels, hold 2 sec at top. Essential for cycling power and run stability.'},
