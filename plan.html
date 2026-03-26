@@ -1081,14 +1081,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btn = document.getElementById('load-more-btn');
   if (btn) btn.addEventListener('click', () => { if(typeof loadNextWeeks==='function') loadNextWeeks(); });
 
+  // Wait for sb2 to be initialized
+  let attempts = 0;
+  while (!sb2 && attempts < 20) {
+    await new Promise(r => setTimeout(r, 100));
+    attempts++;
+  }
+
   // Check if loading a saved plan from dashboard
   const urlParams = new URLSearchParams(window.location.search);
   const loadId = urlParams.get('load');
-  if (loadId && sb2) {
+  if (loadId) {
     try {
       document.getElementById('quiz-wrap').style.display = 'none';
       document.querySelector('.prog-wrap').style.display = 'none';
       document.getElementById('gen').style.display = 'block';
+
+      // Wait for sb2 to initialize
+      let attempts = 0;
+      while (!sb2 && attempts < 30) {
+        await new Promise(r => setTimeout(r, 100));
+        attempts++;
+      }
+      if (!sb2) throw new Error('Supabase not loaded');
 
       const { data: plan, error } = await sb2.from('plans').select('*').eq('id', loadId).single();
       if (!error && plan) {
