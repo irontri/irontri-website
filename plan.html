@@ -1052,6 +1052,8 @@ async function toggleComplete(dayIndex) {
     console.error('Complete error:', e);
   }
 }
+
+async function checkAndSavePlan(planText) {
   try {
     if (!sb2) { localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race})); document.getElementById('save-banner').style.display='block'; return; }
     let session = null;
