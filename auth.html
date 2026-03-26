@@ -162,7 +162,8 @@
 
     showMsg('msg-signup', '🎉 Account created! Saving your plan...', 'success');
     localStorage.setItem('irontri_user_name', name);
-    // Save any pending plan
+    // Wait for session to be established then save plan
+    await new Promise(r => setTimeout(r, 1000));
     await savePendingPlan(data.user?.id);
     setTimeout(() => window.location.href = 'dashboard.html', 2000);
   }
@@ -194,27 +195,26 @@
   }
 
   async function savePendingPlan(userId) {
-    if (!userId) return;
-    const pending = localStorage.getItem('irontri_pending_plan');
-    if (!pending) return;
     try {
+      // Get fresh session to ensure we have the right user ID
+      let uid = userId;
+      if (!uid) {
+        const { data: { session } } = await sb.auth.getSession();
+        uid = session?.user?.id;
+      }
+      if (!uid) return;
+
+      const pending = localStorage.getItem('irontri_pending_plan');
+      if (!pending) return;
+
       const { plan, race } = JSON.parse(pending);
-      await sb.from('plans').insert({
-        user_id: userId,
+      const { error } = await sb.from('plans').insert({
+        user_id: uid,
         plan_data: plan,
         race: race || 'Triathlon'
       });
-      localStorage.removeItem('irontri_pending_plan');
-    } catch(e) {}
-  }
-
-  // Allow enter key to submit
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      const activeForm = document.getElementById('form-login').style.display === 'none' ? 'signup' : 'login';
-      activeForm === 'signup' ? signUp() : logIn();
-    }
-  });
-</script>
-</body>
-</html>
+      if (!error) {
+        localStorage.removeItem('irontri_pending_plan');
+        console.log('Plan saved successfully!');
+      } else {
+        console.error('Plan save error:', error);
