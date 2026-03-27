@@ -939,6 +939,27 @@ Rules:
 - paceTarget: a specific pace string tailored to the athlete's goal time and session type. Examples: "1:45-2:00 /100m" for swim, "28-32 km/h" for bike, "5:30-6:00 /km" for run, "N/A" for strength/rest
 - heartRateZone: integer 1-5 matching the effort. Zone 1-2 = easy/recovery, Zone 3 = tempo, Zone 4 = threshold, Zone 5 = max
 
+${A.race === 'Full Ironman' ? `
+FULL IRONMAN COACHING REFERENCE (proven sub-9h structure, coach Erich Felbabel HK National Team):
+- Every 4th week = full recovery week. Cut volume 50%. Include 2-3 full rest days. coachNote must say: SLEEP A LOT. EAT WELL. HYDRATE WELL. REST REST REST.
+- Sunday long ride: 3-4h TT position aerobic non-stop. coachNote must say: NOT FAST. Aerobic only.
+- Threshold bike: 30min warmup + 45min non-stop above FTP + 15min cooldown
+- Saturday: long aerobic swim 3500+ yds + aerobic run 60-75min + 15min core work
+- Bricks: first 10-15min fast off bike, then settle to IM run pace
+- Long runs: 10x1km at marathon pace with easy jogging recovery
+- Swim variety: technique/drill sessions, 50s speed sets, long aerobic pull sets
+- Coaching tone must be direct and specific. Examples: TT position > 2h non-stop NOT FAST. Spin the legs. Stay aerobic. Keep cadence high 85+. Race on race day not survive.
+- Recovery week coachNote: Critical Success Factor = absorb the training = recovery week
+- Peak weeks: race-simulation brick sessions at IM pace
+` : A.race === 'Half Ironman 70.3' ? `
+HALF IRONMAN COACHING REFERENCE:
+- Every 4th week = recovery week. Reduce volume 40%.
+- Long ride: 2.5-3h with 70.3 pace intervals + 20-30min brick run
+- Long run: 1h30-1h45 with 70.3 race pace in the middle
+- Swim: 2000-3000m with race-pace 400m sets
+- Brick sessions: 15min at 70.3 run pace straight off bike
+` : ''}
+
 Return ONLY the JSON object. No markdown, no explanation.`;
 
   try{
