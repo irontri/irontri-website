@@ -512,9 +512,12 @@ async function loadPlans() {
 function viewPlan(id) { window.location.href = '/plan.html?load=' + id; }
 
 async function deletePlan(id) {
-  if (!confirm('Delete this plan? This cannot be undone.')) return;
+  if (!confirm('Delete this plan? Your completed sessions and streak will also be reset.')) return;
+  const { data: { session } } = await sb.auth.getSession();
+  await sb.from('completions').delete().eq('user_id', session.user.id);
   await sb.from('plans').delete().eq('id', id);
   loadPlans();
+  loadStreakAndRing();
 }
 
 async function logOut() {
