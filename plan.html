@@ -1236,10 +1236,10 @@ async function toggleComplete(dayIndex) {
       completions.add(key);
       btn.textContent = '✅ Session completed!';
       btn.style.background = 'rgba(74,222,128,0.2)';
-      showRpePrompt(dayIndex);
     }
     renderWeek();
     selectDay(dayIndex);
+    if (completions.has(key)) showRpePrompt(dayIndex);
   } catch(e) { console.error('Complete error:', e); }
 }
 
