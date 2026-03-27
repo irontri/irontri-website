@@ -1227,7 +1227,7 @@ async function shareToStrava(dayIndex, btnEl) {
     const weekLabel = `Week ${curWeek + 1}`;
     const typeEmoji = {Swim:'🏊',Bike:'🚴',Run:'🏃',Brick:'🏃🚴',Strength:'💪',Rest:'😴'}[sessionType] || '🏋️';
     const separator = matchingActivity.description ? '\n' + matchingActivity.description : '';
-    const newDesc = `${typeEmoji} ${weekLabel} · ${sessionName} — Trained with irontri.com 🔥${separator}`;
+    const newDesc = `${typeEmoji} ${weekLabel} · ${sessionName} — Trained with irontriapp.com 🔥${separator}`;
 
     // Update via serverless (keeps token server-side safe — but we use the client token here)
     const updateR = await fetch('/api/strava-exchange', {
