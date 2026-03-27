@@ -942,7 +942,7 @@ Return ONLY the JSON object. No markdown, no explanation.`;
       curWeek=0;curDay=null;
       renderWeek();
       renderGraph();
-      loadCompletions().then(() => renderWeek());
+      loadCompletions().then(() => { renderWeek(); syncStravaActivities(); });
       checkAndSavePlan(txt);
       window.scrollTo({top:0,behavior:'smooth'});
     },17000);
@@ -1010,6 +1010,121 @@ async function loadCompletions() {
     if (data) data.forEach(c => completions.add(`${c.week_num}-${c.day}`));
   } catch(e) {}
 }
+
+
+// ── STRAVA AUTO-MATCH ──────────────────────────────────────────────────────
+// Maps Strava sport types to plan session types
+const STRAVA_TO_PLAN = {
+  'Swim': 'Swim',
+  'Ride': 'Bike',
+  'VirtualRide': 'Bike',
+  'Run': 'Run',
+  'VirtualRun': 'Run',
+};
+
+async function syncStravaActivities() {
+  if (!sb2 || !planData || !A.startDate) return;
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (!session) return;
+
+    // Get Strava tokens
+    const { data: userData } = await sb2.from('users')
+      .select('strava_access_token, strava_refresh_token, strava_token_expires_at')
+      .eq('id', session.user.id).single();
+    if (!userData?.strava_access_token) return;
+
+    // Refresh token if needed
+    let token = userData.strava_access_token;
+    if (Date.now() / 1000 > userData.strava_token_expires_at - 300) {
+      const r = await fetch('/api/strava-exchange', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({action:'refresh', refresh_token: userData.strava_refresh_token})
+      });
+      const d = await r.json();
+      if (d.access_token) {
+        token = d.access_token;
+        await sb2.from('users').update({
+          strava_access_token: d.access_token,
+          strava_refresh_token: d.refresh_token,
+          strava_token_expires_at: d.expires_at
+        }).eq('id', session.user.id);
+      } else return;
+    }
+
+    // Fetch recent Strava activities (last 60 days)
+    const after = Math.floor(Date.now()/1000) - (60 * 24 * 3600);
+    const r = await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=60&after=${after}`, {
+      headers: {Authorization: `Bearer ${token}`}
+    });
+    const activities = await r.json();
+    if (!Array.isArray(activities) || !activities.length) return;
+
+    const planStart = new Date(A.startDate + 'T00:00:00');
+    let newMatches = 0;
+
+    for (const act of activities) {
+      const planType = STRAVA_TO_PLAN[act.sport_type] || STRAVA_TO_PLAN[act.type];
+      if (!planType) continue;
+
+      const actDate = new Date(act.start_date_local.split('T')[0] + 'T00:00:00');
+      const diffDays = Math.round((actDate - planStart) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) continue;
+
+      const weekNum = Math.floor(diffDays / 7);
+      const dayOfWeek = diffDays % 7; // 0=Mon, 6=Sun
+
+      if (weekNum >= planData.weeks.length) continue;
+      const week = planData.weeks[weekNum];
+      if (!week) continue;
+
+      const planDay = week.days[dayOfWeek];
+      if (!planDay) continue;
+
+      // Match: sport type must align (Brick counts if Run or Bike)
+      const typeMatch =
+        planDay.type === planType ||
+        (planDay.type === 'Brick' && (planType === 'Bike' || planType === 'Run'));
+
+      if (!typeMatch) continue;
+
+      const key = `${weekNum}-${dayOfWeek}`;
+      if (completions.has(key)) continue; // already marked
+
+      // Auto-tick it
+      const { error } = await sb2.from('completions').insert({
+        user_id: session.user.id,
+        plan_id: 'current',
+        week_num: weekNum,
+        day: String(dayOfWeek)
+      });
+      if (!error) {
+        completions.add(key);
+        newMatches++;
+      }
+    }
+
+    if (newMatches > 0) {
+      renderWeek();
+      showStravaMatchBanner(newMatches);
+    }
+  } catch(e) {
+    console.log('Strava sync error:', e);
+  }
+}
+
+function showStravaMatchBanner(count) {
+  const existing = document.getElementById('strava-match-banner');
+  if (existing) existing.remove();
+  const banner = document.createElement('div');
+  banner.id = 'strava-match-banner';
+  banner.style.cssText = 'background:rgba(252,76,2,0.12);border:1px solid rgba(252,76,2,0.3);border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;animation:fu 0.4s ease both;';
+  banner.innerHTML = `<span style="font-size:20px;">🟠</span><div style="flex:1;font-size:14px;"><strong>${count} session${count>1?'s':''} auto-ticked from Strava!</strong><span style="color:rgba(255,255,255,0.5);margin-left:8px;font-size:13px;">Your activities matched your plan.</span></div><button onclick="this.parentElement.remove()" style="background:transparent;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:18px;padding:0 4px;">×</button>`;
+  const planEl = document.getElementById('plan');
+  planEl.insertBefore(banner, planEl.firstChild);
+  setTimeout(() => banner?.remove(), 8000);
+}
+// ── END STRAVA AUTO-MATCH ──────────────────────────────────────────────────
 
 async function toggleComplete(dayIndex) {
   const key = `${curWeek}-${dayIndex}`;
@@ -1114,6 +1229,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderGraph();
         await loadCompletions();
         renderWeek();
+        syncStravaActivities();
       } else {
         document.getElementById('gen').style.display = 'none';
         document.getElementById('quiz-wrap').style.display = 'block';
