@@ -838,6 +838,14 @@ function selectDay(i){
         <button onclick="swapSession(${i})" style="width:100%;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">
           😓 Not feeling 100%? Swap for an easier session
         </button>
+        <div style="display:flex;gap:8px;">
+          <button onclick="openMovePicker(${curWeek},${i})" style="flex:1;background:transparent;border:1px solid rgba(30,144,255,0.35);color:#1E90FF;padding:11px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='rgba(30,144,255,0.1)'" onmouseout="this.style.background='transparent'">
+            📅 Move to another day
+          </button>
+          <button onclick="skipSession(${curWeek},${i})" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:11px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)';this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.4)'">
+            ✕ Skip session
+          </button>
+        </div>
         ${completions.has(curWeek+'-'+i) && d.type !== 'Rest' ? '<button id="strava-share-btn-'+i+'" onclick="shareToStrava('+i+', this)" class="strava-share-btn">🟠 Share this session to Strava</button>' : ''}
       </div>
     </div>`;
@@ -1666,6 +1674,101 @@ function showExplainer(type) {
 function closeModal(e) {
   if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('open');
 }
+
+// ── SKIP SESSION ──────────────────────────────────────────────────────────────
+function skipSession(weekIdx, dayIdx) {
+  const day = planData.weeks[weekIdx].days[dayIdx];
+  if (!day || day.type === 'Rest') return;
+  if (!confirm('Skip "' + (day.name || day.type) + '"?\n\nThis session will be removed from your week. You can always build a new plan.')) return;
+  // Replace with a Rest day, keeping the day name
+  planData.weeks[weekIdx].days[dayIdx] = {
+    day: day.day,
+    type: 'Rest',
+    name: 'Rest Day (skipped)',
+    duration: 0,
+    effort: 0
+  };
+  checkAndSavePlan(JSON.stringify(planData));
+  curDay = null;
+  renderWeek();
+  document.getElementById('sd').style.display = 'none';
+  showIronToast('Session skipped', '#555');
+}
+
+// ── MOVE TO ANOTHER DAY ───────────────────────────────────────────────────────
+function openMovePicker(weekIdx, dayIdx) {
+  const w = planData.weeks[weekIdx];
+  const movingDay = w.days[dayIdx];
+  const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const shortNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  // Available days = rest days in this week (not the current day)
+  const available = w.days
+    .map(function(d, i) { return {d: d, i: i}; })
+    .filter(function(x) { return x.i !== dayIdx && x.d.type === 'Rest'; });
+
+  if (available.length === 0) {
+    showIronToast('No rest days available this week to move to', '#e74c3c');
+    return;
+  }
+
+  const existing = document.getElementById('iron-move-modal');
+  if (existing) existing.remove();
+
+  const dayListHTML = available.map(function(x) {
+    return '<button onclick="confirmMove(' + weekIdx + ',' + dayIdx + ',' + x.i + ')" style="width:100%;text-align:left;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:13px 16px;color:#fff;font-size:14px;cursor:pointer;font-family:\'DM Sans\',sans-serif;display:flex;justify-content:space-between;align-items:center;transition:all 0.15s;margin-bottom:8px;" onmouseover="this.style.borderColor=\'rgba(30,144,255,0.5)\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\'">' +
+      '<span>' + dayNames[x.i] + '</span>' +
+      '<span style="font-size:11px;color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:20px;">Rest day</span>' +
+    '</button>';
+  }).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'iron-move-modal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);';
+  modal.innerHTML = '<div style="background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:28px;max-width:380px;width:100%;animation:fu 0.3s ease both;">' +
+    '<div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Move session</div>' +
+    '<div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Move "' + (movingDay.name || movingDay.type) + '" to a rest day this week</div>' +
+    dayListHTML +
+    '<button onclick="document.getElementById(\'iron-move-modal\').remove()" style="width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-size:14px;cursor:pointer;font-family:\'DM Sans\',sans-serif;margin-top:4px;">Cancel</button>' +
+  '</div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+}
+
+function confirmMove(weekIdx, fromDay, toDay) {
+  const w = planData.weeks[weekIdx];
+  // Swap the days (preserve the .day field for day-of-week label)
+  const fromDayLabel = w.days[fromDay].day;
+  const toDayLabel = w.days[toDay].day;
+  const session = Object.assign({}, w.days[fromDay], {day: toDayLabel});
+  const rest = Object.assign({}, w.days[toDay], {day: fromDayLabel});
+  w.days[fromDay] = rest;
+  w.days[toDay] = session;
+
+  const modal = document.getElementById('iron-move-modal');
+  if (modal) modal.remove();
+  document.getElementById('sd').style.display = 'none';
+
+  checkAndSavePlan(JSON.stringify(planData));
+  curDay = toDay;
+  renderWeek();
+  selectDay(toDay);
+
+  const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  showIronToast('Moved to ' + dayNames[toDay] + ' ✓', '#1E90FF');
+}
+
+function showIronToast(msg, color) {
+  const old = document.getElementById('iron-toast');
+  if (old) old.remove();
+  const t = document.createElement('div');
+  t.id = 'iron-toast';
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:' + color + ';color:#fff;padding:11px 22px;border-radius:30px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4);font-family:\'DM Sans\',sans-serif;animation:fu 0.3s ease;pointer-events:none;';
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.remove(); }, 3000);
+}
+// ── END SKIP & MOVE ───────────────────────────────────────────────────────────
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.getElementById('modal').classList.remove('open');
