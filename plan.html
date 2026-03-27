@@ -204,6 +204,25 @@
     .wsv{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--blue);}
     .wsl{font-size:11px;color:var(--muted);margin-top:3px;}
 
+
+    /* ── RPE RATING ── */
+    .rpe-prompt{margin-top:12px;background:rgba(30,144,255,0.06);border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:16px;animation:fu 0.3s ease both;}
+    .rpe-prompt-title{font-size:13px;color:var(--muted);margin-bottom:12px;text-align:center;}
+    .rpe-options{display:flex;gap:8px;justify-content:center;}
+    .rpe-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
+    .rpe-btn:hover{transform:scale(1.1);}
+    .rpe-btn.r1,.rpe-btn.r2{border-color:#4ade80;color:#4ade80;}
+    .rpe-btn.r3{border-color:#fbbf24;color:#fbbf24;}
+    .rpe-btn.r4{border-color:#fb923c;color:#fb923c;}
+    .rpe-btn.r5{border-color:#f87171;color:#f87171;}
+    .rpe-btn.selected{transform:scale(1.15);}
+    .rpe-btn.r1.selected,.rpe-btn.r2.selected{background:#4ade8020;}
+    .rpe-btn.r3.selected{background:#fbbf2420;}
+    .rpe-btn.r4.selected{background:#fb923c20;}
+    .rpe-btn.r5.selected{background:#f8717120;}
+    .rpe-label{font-size:11px;color:var(--faint);text-align:center;margin-top:8px;}
+    .rpe-saved{font-size:13px;color:#4ade80;text-align:center;margin-top:10px;display:none;}
+
     /* TARGETS BLOCK */
     .targets-block{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:20px;}
     .target-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;}
@@ -1132,6 +1151,74 @@ function showStravaMatchBanner(count) {
 }
 // ── END STRAVA AUTO-MATCH ──────────────────────────────────────────────────
 
+
+// ── RPE RATING ──────────────────────────────────────────────────────────────
+const RPE_LABELS = {
+  1: 'Very easy 😌',
+  2: 'Easy 🙂',
+  3: 'Moderate 😤',
+  4: 'Hard 😰',
+  5: 'All out 🔥'
+};
+
+function showRpePrompt(dayIndex) {
+  // Remove any existing RPE prompt
+  const existing = document.getElementById('rpe-prompt');
+  if (existing) existing.remove();
+
+  const prompt = document.createElement('div');
+  prompt.className = 'rpe-prompt';
+  prompt.id = 'rpe-prompt';
+  prompt.innerHTML = `
+    <div class="rpe-prompt-title">How did that session feel?</div>
+    <div class="rpe-options">
+      ${[1,2,3,4,5].map(n => `
+        <button class="rpe-btn r${n}" onclick="saveRpe(${dayIndex}, ${n}, this)" title="${RPE_LABELS[n]}">
+          ${n}
+        </button>`).join('')}
+    </div>
+    <div class="rpe-label">1 = Very easy &nbsp;·&nbsp; 5 = All out</div>
+    <div class="rpe-saved" id="rpe-saved">✅ Saved! Thanks for the feedback.</div>
+  `;
+
+  // Insert after the complete button
+  const btn = document.getElementById(`complete-btn-${dayIndex}`);
+  if (btn) btn.parentElement.insertBefore(prompt, btn.nextSibling);
+}
+
+async function saveRpe(dayIndex, rating, btnEl) {
+  // Highlight selected
+  document.querySelectorAll('.rpe-btn').forEach(b => b.classList.remove('selected'));
+  btnEl.classList.add('selected');
+
+  // Save to Supabase completions — update the row with rpe rating
+  if (!sb2) return;
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (!session) return;
+
+    await sb2.from('completions')
+      .update({ rpe: rating })
+      .eq('user_id', session.user.id)
+      .eq('week_num', curWeek)
+      .eq('day', String(dayIndex));
+
+    // Show saved confirmation
+    const saved = document.getElementById('rpe-saved');
+    if (saved) {
+      saved.style.display = 'block';
+      setTimeout(() => {
+        const prompt = document.getElementById('rpe-prompt');
+        if (prompt) prompt.style.opacity = '0';
+        setTimeout(() => prompt?.remove(), 400);
+      }, 1800);
+    }
+  } catch(e) {
+    console.log('RPE save error:', e);
+  }
+}
+// ── END RPE ──────────────────────────────────────────────────────────────────
+
 async function toggleComplete(dayIndex) {
   const key = `${curWeek}-${dayIndex}`;
   const btn = document.getElementById(`complete-btn-${dayIndex}`);
@@ -1149,6 +1236,7 @@ async function toggleComplete(dayIndex) {
       completions.add(key);
       btn.textContent = '✅ Session completed!';
       btn.style.background = 'rgba(74,222,128,0.2)';
+      showRpePrompt(dayIndex);
     }
     renderWeek();
     selectDay(dayIndex);
