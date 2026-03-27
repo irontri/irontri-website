@@ -27,11 +27,29 @@
     .welcome h1{font-family:'Syne',sans-serif;font-size:clamp(24px,4vw,36px);font-weight:800;letter-spacing:-1px;margin-bottom:6px;}
     .welcome p{font-size:15px;color:var(--muted);}
 
-    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:32px;}
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px;}
     .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;}
     .stat-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--blue);}
     .stat-lbl{font-size:12px;color:var(--muted);margin-top:4px;}
 
+
+    /* STREAK */
+    .streak-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;position:relative;overflow:hidden;}
+    .streak-card.active{background:rgba(251,146,60,0.08);border-color:rgba(251,146,60,0.35);}
+    .streak-fire{font-size:22px;margin-bottom:2px;}
+    .streak-num{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#fb923c;line-height:1;}
+    .streak-lbl{font-size:12px;color:var(--muted);margin-top:4px;}
+    .streak-best{font-size:10px;color:var(--faint);margin-top:2px;}
+    /* WEEK RING */
+    .week-ring-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:24px;}
+    .ring-svg{flex-shrink:0;}
+    .ring-text-wrap{flex:1;}
+    .ring-title{font-size:14px;font-weight:500;margin-bottom:4px;}
+    .ring-sub{font-size:13px;color:var(--muted);}
+    .ring-days{display:flex;gap:6px;margin-top:12px;}
+    .ring-day{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--faint);}
+    .ring-day.done{background:var(--blue);border-color:var(--blue);color:#fff;}
+    .ring-day.today{border-color:var(--blue);color:var(--blue);}
     .section-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:16px;}
 
     /* STRAVA CONNECT BANNER */
@@ -125,7 +143,29 @@
     <div class="stats-row" id="stats-row">
       <div class="stat-card"><div class="stat-val" id="s-plans">0</div><div class="stat-lbl">Training plans</div></div>
       <div class="stat-card"><div class="stat-val" id="s-race">—</div><div class="stat-lbl">Latest race</div></div>
-      <div class="stat-card"><div class="stat-val" id="s-member">🏅</div><div class="stat-lbl">Founding member</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-sessions">0</div><div class="stat-lbl">Sessions done</div></div>
+      <div class="streak-card" id="streak-card">
+        <div class="streak-fire">🔥</div>
+        <div class="streak-num" id="streak-num">0</div>
+        <div class="streak-lbl">Day streak</div>
+        <div class="streak-best" id="streak-best"></div>
+      </div>
+    </div>
+
+    <!-- WEEK RING -->
+    <div class="week-ring-wrap" id="week-ring-wrap" style="display:none;">
+      <svg class="ring-svg" width="72" height="72" viewBox="0 0 72 72">
+        <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
+        <circle id="ring-progress" cx="36" cy="36" r="30" fill="none" stroke="#1E90FF" stroke-width="7"
+          stroke-linecap="round" stroke-dasharray="188.5" stroke-dashoffset="188.5"
+          transform="rotate(-90 36 36)" style="transition:stroke-dashoffset 0.8s ease;"/>
+        <text x="36" y="40" text-anchor="middle" font-family="Syne,sans-serif" font-size="16" font-weight="800" fill="#fff" id="ring-label">0/0</text>
+      </svg>
+      <div class="ring-text-wrap">
+        <div class="ring-title" id="ring-title">This week's sessions</div>
+        <div class="ring-sub" id="ring-sub">Complete your first session to start your streak</div>
+        <div class="ring-days" id="ring-days"></div>
+      </div>
     </div>
 
     <!-- STRAVA SECTION -->
@@ -306,6 +346,120 @@ async function disconnectStrava() {
   loadStravaSection();
 }
 
+
+// ── STREAK & WEEK RING ─────────────────────────────────────────────────────
+async function loadStreakAndRing() {
+  if (!sb) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+
+    const { data: completions } = await sb.from('completions')
+      .select('created_at')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+
+    if (!completions || !completions.length) return;
+
+    // Total sessions
+    document.getElementById('s-sessions').textContent = completions.length;
+
+    // Get unique dates (YYYY-MM-DD in local time using UTC date string)
+    const dates = [...new Set(
+      completions.map(c => c.created_at.slice(0, 10))
+    )].sort().reverse(); // newest first
+
+    // ── STREAK CALC ──
+    let streak = 0;
+    let best = 0;
+    let tempStreak = 1;
+    const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+    // Current streak — count consecutive days from today or yesterday
+    const startDate = dates[0] === today || dates[0] === yesterday ? dates[0] : null;
+    if (startDate) {
+      streak = 1;
+      for (let i = 1; i < dates.length; i++) {
+        const prev = new Date(dates[i - 1]);
+        const curr = new Date(dates[i]);
+        const diff = Math.round((prev - curr) / 86400000);
+        if (diff === 1) { streak++; } else { break; }
+      }
+    }
+
+    // Best streak ever
+    tempStreak = 1;
+    for (let i = 1; i < dates.length; i++) {
+      const prev = new Date(dates[i - 1]);
+      const curr = new Date(dates[i]);
+      const diff = Math.round((prev - curr) / 86400000);
+      if (diff === 1) { tempStreak++; best = Math.max(best, tempStreak); }
+      else { tempStreak = 1; }
+    }
+    best = Math.max(best, streak, 1);
+
+    // Render streak card
+    const streakEl = document.getElementById('streak-num');
+    const streakCard = document.getElementById('streak-card');
+    const bestEl = document.getElementById('streak-best');
+    streakEl.textContent = streak;
+    if (streak > 0) streakCard.classList.add('active');
+    if (best > streak) bestEl.textContent = 'Best: ' + best + ' days';
+
+    // ── WEEK RING ──
+    // Get this week's sessions (Mon-Sun)
+    const now = new Date();
+    const dayOfWeek = (now.getDay() + 6) % 7; // 0=Mon
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - dayOfWeek);
+    weekStart.setHours(0, 0, 0, 0);
+
+    const thisWeekDates = dates.filter(d => new Date(d) >= weekStart);
+    const sessionsThisWeek = thisWeekDates.length;
+
+    // Get target sessions from plan if available (default 5)
+    const { data: plans } = await sb.from('plans').select('plan_data').eq('user_id', session.user.id).order('created_at', {ascending: false}).limit(1);
+    let targetSessions = 5;
+    if (plans?.[0]) {
+      try {
+        const p = JSON.parse(plans[0].plan_data);
+        const week1 = p.weeks?.[0];
+        if (week1) targetSessions = week1.days?.filter(d => d.type !== 'Rest').length || 5;
+      } catch(e) {}
+    }
+
+    // Render ring
+    const circumference = 188.5;
+    const pct = Math.min(sessionsThisWeek / targetSessions, 1);
+    const offset = circumference - (pct * circumference);
+    document.getElementById('ring-progress').style.strokeDashoffset = offset;
+    document.getElementById('ring-progress').style.stroke = sessionsThisWeek >= targetSessions ? '#4ade80' : '#1E90FF';
+    document.getElementById('ring-label').textContent = sessionsThisWeek + '/' + targetSessions;
+    document.getElementById('ring-title').textContent = sessionsThisWeek >= targetSessions ? '✅ Week complete!' : 'This week sessions';
+    document.getElementById('ring-sub').textContent = sessionsThisWeek >= targetSessions
+      ? 'Amazing week — you hit every session!'
+      : (targetSessions - sessionsThisWeek) + ' session' + (targetSessions - sessionsThisWeek !== 1 ? 's' : '') + ' to go this week';
+
+    // Day dots (Mon-Sun)
+    const days = ['M','T','W','T','F','S','S'];
+    const weekDateSet = new Set(thisWeekDates);
+    const ringDaysEl = document.getElementById('ring-days');
+    ringDaysEl.innerHTML = days.map((d, i) => {
+      const dayDate = new Date(weekStart);
+      dayDate.setDate(weekStart.getDate() + i);
+      const dateStr = dayDate.toISOString().slice(0, 10);
+      const isToday = dateStr === today;
+      const isDone = weekDateSet.has(dateStr);
+      return `<div class="ring-day ${isDone ? 'done' : isToday ? 'today' : ''}">${d}</div>`;
+    }).join('');
+
+    document.getElementById('week-ring-wrap').style.display = 'flex';
+
+  } catch(e) { console.log('Streak error:', e); }
+}
+// ── END STREAK ─────────────────────────────────────────────────────────────
+
 async function loadPlans() {
   const { data: plans, error } = await sb
     .from('plans').select('*').eq('user_id', currentUser.id)
@@ -313,6 +467,7 @@ async function loadPlans() {
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('content').style.display = 'block';
+  loadStreakAndRing();
 
   if (error || !plans || plans.length === 0) {
     document.getElementById('s-plans').textContent = '0';
