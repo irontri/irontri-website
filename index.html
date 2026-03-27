@@ -196,6 +196,8 @@
       .strava-inner{grid-template-columns:1fr;}
       .features-grid .feature-card.wide{grid-column:span 1;flex-direction:column;}
       .features-grid{grid-template-columns:1fr;}
+      .hero{grid-template-columns:1fr !important;gap:40px !important;}
+      .hero > div:last-child{display:none;}
     }
     @media(max-width:768px){
       nav{padding:0 20px;}
@@ -207,16 +209,6 @@
       footer{padding:40px 24px 24px;}
       .pricing-features{grid-template-columns:1fr;}
       .devices-inner{gap:32px;}
-    }
-  
-    @media(max-width:900px){
-      .hero{grid-template-columns:1fr !important;gap:40px !important;}
-      .hero > div:last-child{display:none;}
-    }
-  
-    @media(max-width:900px){
-      .hero{grid-template-columns:1fr !important;gap:40px !important;}
-      .hero > div:last-child{display:none;}
     }
   </style>
   <script src="/nav-auth.js" defer></script>
@@ -248,16 +240,46 @@
 </nav>
 
 <!-- HERO -->
-<section class="hero">
-  <div class="hero-badge">
-    <span class="badge-dot"></span>
-    Personalised triathlon coaching
+<section class="hero" style="max-width:1200px;margin:0 auto;padding:80px 56px 60px;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;">
+  <div>
+    <div class="hero-badge"><span class="badge-dot"></span>Personalised triathlon coaching</div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:clamp(36px,5vw,62px);font-weight:800;line-height:1.05;letter-spacing:-2.5px;margin-bottom:24px;">Train smarter. Race <span class="accent">faster.</span> Finish stronger.</h1>
+    <p class="hero-sub">From complete beginner to Ironman finisher — personalised swim, bike &amp; run plans built around you, powered by your Strava data.</p>
+    <div class="hero-cta">
+      <a href="plan.html" class="btn-primary">Get my free training plan →</a>
+      <a href="#how" class="btn-outline">See how it works</a>
+    </div>
   </div>
-  <h1>Train smarter. Race <span class="accent">faster.</span> Finish stronger.</h1>
-  <p class="hero-sub">From complete beginner to Ironman finisher — personalised swim, bike & run plans built around you, powered by your Strava data.</p>
-  <div class="hero-cta">
-    <a href="plan.html" class="btn-primary">Get my free training plan →</a>
-    <a href="#how" class="btn-outline">See how it works</a>
+  <div>
+    <div style="background:linear-gradient(135deg,rgba(30,144,255,0.12),rgba(30,144,255,0.04));border:1px solid rgba(30,144,255,0.25);border-radius:20px;padding:24px;font-family:'DM Sans',sans-serif;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;">Week 3 · Build Phase</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.06);padding:3px 10px;border-radius:20px;">8h 25m total</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:20px;">
+        <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.3);border-radius:10px;padding:8px 4px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:5px;text-transform:uppercase;">Mon</div><div style="font-size:16px;margin-bottom:3px;">✅</div><div style="font-size:8px;font-weight:600;padding:2px 4px;border-radius:6px;background:rgba(56,189,248,0.13);color:#38bdf8;">Swim</div></div>
+        <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.3);border-radius:10px;padding:8px 4px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:5px;text-transform:uppercase;">Tue</div><div style="font-size:16px;margin-bottom:3px;">✅</div><div style="font-size:8px;font-weight:600;padding:2px 4px;border-radius:6px;background:rgba(251,146,60,0.13);color:#fb923c;">Bike</div></div>
+        <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.3);border-radius:10px;padding:8px 4px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:5px;text-transform:uppercase;">Wed</div><div style="font-size:16px;margin-bottom:3px;">✅</div><div style="font-size:8px;font-weight:600;padding:2px 4px;border-radius:6px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.3);">Rest</div></div>
+        <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.3);border-radius:10px;padding:8px 4px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:5px;text-transform:uppercase;">Thu</div><div style="font-size:16px;margin-bottom:3px;">✅</div><div style="font-size:8px;font-weight:600;padding:2px 4px;border-radius:6px;background:rgba(74,222,128,0.13);color:#4ade80;">Run</div></div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 4px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:5px;text-transform:uppercase;">Fri</div><div style="font-size:16px;margin-bottom:3px;">🧱</div><div style="font-size:8px;font-weight:600;padding:2px 4px;border-radius:6px;background:rgba(167,139,250,0.13);color:#a78bfa;">Brick</div></div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 4px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:5px;text-transform:uppercase;">Sat</div><div style="font-size:16px;margin-bottom:3px;">🏊</div><div style="font-size:8px;font-weight:600;padding:2px 4px;border-radius:6px;background:rgba(56,189,248,0.13);color:#38bdf8;">Swim</div></div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 4px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:5px;text-transform:uppercase;">Sun</div><div style="font-size:16px;margin-bottom:3px;">🚴</div><div style="font-size:8px;font-weight:600;padding:2px 4px;border-radius:6px;background:rgba(251,146,60,0.13);color:#fb923c;">Bike</div></div>
+      </div>
+      <div style="background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:12px;padding:14px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <span style="font-size:20px;">🏊</span>
+          <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Threshold Intervals</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">Saturday · 70 min · Zone 4</div></div>
+          <div style="font-size:11px;color:#38bdf8;background:rgba(56,189,248,0.1);padding:3px 8px;border-radius:8px;">1:45/100m</div>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5;">8×100m at RPE 8 · 15 sec rest · Focus on hip rotation and early catch</div>
+      </div>
+      <div style="background:linear-gradient(135deg,rgba(30,144,255,0.1),rgba(30,144,255,0.05));border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:12px 14px;">
+        <div style="display:flex;align-items:flex-start;gap:8px;">
+          <span style="font-size:14px;">💬</span>
+          <div style="font-size:12px;color:rgba(255,255,255,0.65);line-height:1.6;font-style:italic;">"Good effort on those 8×100s — holding 1:48 average in week 3 tells me your threshold is responding well. Keep that hip rotation cue."</div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -317,14 +339,14 @@
   <div class="strava-inner">
     <div class="strava-text">
       <div class="strava-logo-badge">
-        🟠 Strava integration
+        🏃 Strava integration
       </div>
       <div class="section-label" style="color:var(--strava);">Works with what you already use</div>
       <div class="strava-title">Your Strava activities auto-match to your plan.</div>
       <p class="strava-desc">Connect your Strava account once and irontri does the rest. Every ride, run and swim you record automatically ticks off the matching session in your training plan — no manual logging, no extra apps.</p>
       <div class="strava-features">
         <div class="strava-feature">
-          <div class="strava-feature-icon">🔄</div>
+          <div class="strava-feature-icon">📄</div>
           <div class="strava-feature-text">
             <strong>Auto-sync</strong>
             Activities from Strava are matched to your plan sessions by sport type and date — automatically.
@@ -346,7 +368,7 @@
         </div>
       </div>
       <a href="plan.html" class="strava-cta">
-        🟠 Get started — connect Strava free →
+        🏃 Get started — connect Strava free →
       </a>
     </div>
     <div class="strava-visual">
@@ -405,13 +427,13 @@
       <span class="disc-emoji">🏊</span>
       <div class="disc-name">Swim</div>
       <p class="disc-desc">Technique drills, open water sets, endurance blocks, and race-pace intervals structured to make you efficient and confident in the water.</p>
-      <span class="disc-tag">Pool & open water</span>
+      <span class="disc-tag">Pool &amp; open water</span>
     </div>
     <div class="disc-card">
       <span class="disc-emoji">🚴</span>
       <div class="disc-name">Bike</div>
       <p class="disc-desc">Power-based intervals, long endurance rides, and brick sessions timed so you peak exactly on race day — not a week before.</p>
-      <span class="disc-tag">Indoor & outdoor</span>
+      <span class="disc-tag">Indoor &amp; outdoor</span>
     </div>
     <div class="disc-card">
       <span class="disc-emoji">🏃</span>
@@ -423,7 +445,7 @@
       <span class="disc-emoji">💪</span>
       <div class="disc-name">Strength</div>
       <p class="disc-desc">Targeted strength and mobility sessions that reduce injury risk, improve economy across all three disciplines, and keep you racing longer.</p>
-      <span class="disc-tag">Bodyweight & gym</span>
+      <span class="disc-tag">Bodyweight &amp; gym</span>
     </div>
   </div>
 </section>
@@ -437,7 +459,7 @@
     <div class="feature-card wide">
       <div class="feature-wide-text">
         <span class="feature-icon">📅</span>
-        <div class="feature-title">Plans with pace & zone targets</div>
+        <div class="feature-title">Plans with pace &amp; zone targets</div>
         <p class="feature-desc">Every session comes with a specific pace target and heart rate zone — not vague instructions. Swim at 1:45/100m, bike at Zone 2, run at 5:30/km. irontri calculates these from your goal finish time automatically.</p>
       </div>
       <div class="feature-wide-visual">
@@ -458,7 +480,7 @@
         </div>
         <div class="mock-session">
           <div class="mock-session-dot dot-rest"></div>
-          <span class="mock-session-label">Recovery & mobility</span>
+          <span class="mock-session-label">Recovery &amp; mobility</span>
           <span class="mock-session-time">Rest day</span>
         </div>
       </div>
@@ -479,7 +501,7 @@
       <p class="feature-desc">Enter your target finish time and irontri breaks it into swim pace, bike speed, and run pace — and builds every session around those targets.</p>
     </div>
     <div class="feature-card">
-      <span class="feature-icon">🎯</span>
+      <span class="feature-icon">📈</span>
       <div class="feature-title">Progressive overload</div>
       <p class="feature-desc">Volume builds week by week with scheduled recovery weeks and a taper before race day — the proven formula that gets athletes to the start line ready.</p>
     </div>
@@ -540,11 +562,11 @@
     <div class="price-sub">Free forever · First 500 members only</div>
     <div class="pricing-features">
       <div class="pf-item"><div class="pf-check"></div>Full personalised training plan</div>
-      <div class="pf-item"><div class="pf-check"></div>Swim, bike & run workouts</div>
+      <div class="pf-item"><div class="pf-check"></div>Swim, bike &amp; run workouts</div>
       <div class="pf-item"><div class="pf-check"></div>Strava auto-sync</div>
-      <div class="pf-item"><div class="pf-check"></div>Pace & HR zone targets</div>
+      <div class="pf-item"><div class="pf-check"></div>Pace &amp; HR zone targets</div>
       <div class="pf-item"><div class="pf-check"></div>Race predictor tool</div>
-      <div class="pf-item"><div class="pf-check"></div>Strength & mobility sessions</div>
+      <div class="pf-item"><div class="pf-check"></div>Strength &amp; mobility sessions</div>
     </div>
     <div class="spots-wrap">
       <div class="spots-bar-track">
@@ -567,11 +589,11 @@
       <a href="plan.html" class="btn-primary">Get started free →</a>
     </div>
     <div class="devices-logos">
-      <div class="device-pill strava-pill"><span class="device-icon">🟠</span>Strava</div>
+      <div class="device-pill strava-pill"><span class="device-icon">🏃</span>Strava</div>
       <div class="device-pill"><span class="device-icon">⌚</span>Garmin</div>
       <div class="device-pill"><span class="device-icon">🍎</span>Apple Watch</div>
-      <div class="device-pill"><span class="device-icon">🔶</span>Wahoo</div>
-      <div class="device-pill"><span class="device-icon">💜</span>COROS</div>
+      <div class="device-pill"><span class="device-icon">💡</span>Wahoo</div>
+      <div class="device-pill"><span class="device-icon">📟</span>COROS</div>
       <div class="device-pill"><span class="device-icon">📊</span>TrainingPeaks</div>
     </div>
   </div>
