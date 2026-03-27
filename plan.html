@@ -830,6 +830,7 @@ function selectDay(i){
         <button onclick="swapSession(${i})" style="width:100%;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">
           😓 Not feeling 100%? Swap for an easier session
         </button>
+        ${completions.has(curWeek+'-'+i) && day.type !== 'Rest' ? '<button id="strava-share-btn-'+i+'" onclick="shareToStrava('+i+', this)" class="strava-share-btn">🟠 Share this session to Strava</button>' : ''}
       </div>
     </div>`;
 }
@@ -1160,9 +1161,12 @@ function showStravaMatchBanner(count) {
 
 
 // ── STRAVA SHARE ─────────────────────────────────────────────────────────────
-async function shareToStrava(dayIndex, sessionName, sessionType) {
-  const btn = document.getElementById(`strava-share-btn-${dayIndex}`);
+async function shareToStrava(dayIndex, btnEl) {
+  const btn = btnEl || document.getElementById('strava-share-btn-'+dayIndex);
   if (!btn || btn.classList.contains('shared')) return;
+  const day = planData.weeks[curWeek].days[dayIndex];
+  const sessionName = day.name || 'Training session';
+  const sessionType = day.type;
 
   btn.textContent = '⏳ Sharing to Strava...';
   btn.disabled = true;
