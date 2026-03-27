@@ -1197,11 +1197,17 @@ async function saveRpe(dayIndex, rating, btnEl) {
     const { data: { session } } = await sb2.auth.getSession();
     if (!session) return;
 
-    await sb2.from('completions')
-      .update({ rpe: rating })
+    // Get the completion id first, then update by id
+    const { data: rows } = await sb2.from('completions')
+      .select('id')
       .eq('user_id', session.user.id)
       .eq('week_num', curWeek)
-      .eq('day', String(dayIndex));
+      .eq('day', String(dayIndex))
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (rows?.[0]?.id) {
+      await sb2.from('completions').update({ rpe: rating }).eq('id', rows[0].id);
+    }
 
     // Show saved confirmation
     const saved = document.getElementById('rpe-saved');
