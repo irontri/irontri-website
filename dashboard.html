@@ -293,7 +293,7 @@ async function refreshStravaToken(refreshToken) {
 
 async function loadActivities(accessToken) {
   try {
-    const r = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=8', {
+    const r = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=4', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
     const activities = await r.json();
