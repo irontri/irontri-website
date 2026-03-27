@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
 <script>
@@ -144,7 +144,7 @@ async function doSignUp() {
   localStorage.setItem('irontri_user_name', name);
   showMsg('msg-signup', '🎉 Account created! Saving your plan...', 'success');
   await new Promise(r => setTimeout(r, 1500));
-  await savePendingPlan(data.user?.id);
+  await savePendingPlan(data.user && data.user.id);
   const redirectTo = new URLSearchParams(window.location.search).get('redirect');
   setTimeout(() => window.location.href = redirectTo === 'plan' ? '/plan.html' : '/dashboard.html', 500);
 }
@@ -158,18 +158,18 @@ async function doLogIn() {
   btn.textContent = 'Logging in...';
   const { data, error } = await _sb.auth.signInWithPassword({ email, password });
   if (error) { showMsg('msg-login', error.message, 'error'); btn.disabled = false; btn.textContent = 'Log in →'; return; }
-  const loginName = data.user?.user_metadata?.full_name || email.split('@')[0];
+  const loginName = (data.user && data.user.user_metadata && data.user.user_metadata.full_name) || email.split('@')[0];
   localStorage.setItem('irontri_user_name', loginName);
   showMsg('msg-login', '✅ Logged in! Redirecting...', 'success');
-  await savePendingPlan(data.user?.id);
+  await savePendingPlan(data.user && data.user.id);
   const loginRedirect = new URLSearchParams(window.location.search).get('redirect');
   setTimeout(() => window.location.href = loginRedirect === 'plan' ? '/plan.html' : '/dashboard.html', 1000);
 }
 
 async function savePendingPlan(userId) {
   try {
-    let uid = userId;
-    if (!uid) { const { data: { session } } = await _sb.auth.getSession(); uid = session?.user?.id; }
+    var uid = userId;
+    if (!uid) { const { data: { session } } = await _sb.auth.getSession(); uid = session && session.user && session.user.id; }
     if (!uid) return;
     const pending = localStorage.getItem('irontri_pending_plan');
     if (!pending) return;
