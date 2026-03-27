@@ -470,7 +470,7 @@
 <div id="gen" style="display:none;text-align:center;padding:80px 32px;">
   <div class="spinner"></div>
   <div class="gt">Building your plan...</div>
-  <p class="gs">Around 20 seconds</p>
+  <p class="gs" id="gen-time-msg">Around 20-40 seconds — please wait</p>
   <div class="gsteps" id="gsteps">
     <div class="gst" id="gs1"><div class="gd"></div><span id="gs1-text">Analysing your race & goal</span></div>
     <div class="gst" id="gs2"><div class="gd"></div><span id="gs2-text">Calculating weekly training load</span></div>
@@ -866,6 +866,12 @@ async function buildPlan(){
   document.getElementById('summary').style.display='none';
   document.getElementById('gen').style.display='block';
   window.scrollTo({top:0,behavior:'smooth'});
+  const timeMsg = document.getElementById('gen-time-msg');
+  if (timeMsg) {
+    if (A.race === 'Full Ironman') timeMsg.textContent = 'Building your Ironman plan — up to 45 seconds';
+    else if (A.race === 'Half Ironman 70.3') timeMsg.textContent = 'Building your 70.3 plan — around 30 seconds';
+    else timeMsg.textContent = 'Around 20 seconds';
+  }
   const goalTimeMsg = A.goaltimeText && !A.goaltimeText.includes('finish') && !A.goaltimeText.includes('best') 
     ? `Setting pace targets for ${A.goaltimeText}` 
     : 'Calculating your training zones';
