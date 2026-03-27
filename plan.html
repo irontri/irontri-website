@@ -1404,9 +1404,107 @@ async function toggleComplete(dayIndex) {
     }
     renderWeek();
     selectDay(dayIndex);
-    if (completions.has(key)) showRpePrompt(dayIndex);
+    if (completions.has(key)) {
+      showRpePrompt(dayIndex);
+      showCoachInsight(dayIndex);
+    }
   } catch(e) { console.error('Complete error:', e); }
 }
+
+// ── COACH INSIGHT ─────────────────────────────────────────────────────────────
+async function showCoachInsight(dayIndex) {
+  // Remove any existing insight
+  const existing = document.getElementById('coach-insight');
+  if (existing) existing.remove();
+
+  const day = planData.weeks[curWeek].days[dayIndex];
+  if (!day || day.type === 'Rest') return;
+
+  const week = planData.weeks[curWeek];
+  const sessionsCompleted = [...completions].filter(k => k.startsWith(curWeek + '-')).length;
+  const totalSessions = week.days.filter(d => d.type !== 'Rest').length;
+  const weekNum = curWeek + 1;
+  const totalWeeks = planData.weeks.length;
+  const athleteName = A.name || localStorage.getItem('irontri_user_name') || 'Athlete';
+
+  // Build the insight card immediately (loading state)
+  const card = document.createElement('div');
+  card.id = 'coach-insight';
+  card.style.cssText = 'margin-top:12px;background:linear-gradient(135deg,rgba(30,144,255,0.08),rgba(30,144,255,0.04));border:1px solid rgba(30,144,255,0.25);border-radius:12px;padding:16px;animation:fu 0.4s ease both;';
+  card.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <span style="font-size:20px;">💬</span>
+      <span style="font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(30,144,255,0.8);font-weight:600;">Coach insight</span>
+    </div>
+    <div id="coach-insight-text" style="font-size:14px;color:rgba(255,255,255,0.75);line-height:1.7;min-height:20px;">
+      <span style="color:rgba(255,255,255,0.3);">Analysing your session...</span>
+    </div>`;
+
+  // Insert after the RPE prompt or complete button
+  const rpeEl = document.getElementById('rpe-prompt');
+  const completeBtn = document.getElementById('complete-btn-' + dayIndex);
+  const insertAfter = rpeEl || completeBtn;
+  if (insertAfter && insertAfter.parentNode) {
+    insertAfter.parentNode.insertBefore(card, insertAfter.nextSibling);
+  }
+
+  // Build prompt for Claude
+  const prompt = `You are a world-class triathlon coach. Give a short, specific, encouraging post-session insight (2-3 sentences max) to ${athleteName} who just completed this session.
+
+SESSION JUST COMPLETED:
+- Type: ${day.type}
+- Name: ${day.name}
+- Duration: ${day.duration} minutes
+- Effort: RPE ${day.effort}/10
+- Pace target: ${day.paceTarget || 'N/A'}
+- Main set: ${day.mainset || 'N/A'}
+
+PLAN CONTEXT:
+- Race: ${A.race || planData.race}
+- Week ${weekNum} of ${totalWeeks} (${week.phase} phase)
+- Sessions done this week: ${sessionsCompleted} of ${totalSessions}
+
+Rules:
+- Address them by first name (${athleteName.split(' ')[0]})
+- Be specific about what they just did, not generic
+- Reference the phase or race if relevant
+- Mention one thing to focus on or look forward to next
+- Sound like a real coach texting after a session, not an AI
+- NO emojis, no bullet points, just 2-3 warm direct sentences`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5',
+        max_tokens: 120,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content && data.content[0] && data.content[0].text;
+    const insightEl = document.getElementById('coach-insight-text');
+    if (insightEl && text) {
+      // Typewriter effect — feels alive
+      insightEl.textContent = '';
+      let i = 0;
+      const type = () => {
+        if (i < text.length) {
+          insightEl.textContent += text[i++];
+          setTimeout(type, 18);
+        }
+      };
+      type();
+    }
+  } catch(e) {
+    const insightEl = document.getElementById('coach-insight-text');
+    if (insightEl) insightEl.style.display = 'none';
+    console.log('Coach insight error:', e);
+  }
+}
+// ── END COACH INSIGHT ─────────────────────────────────────────────────────────
 
 async function checkAndSavePlan(planText) {
   try {
