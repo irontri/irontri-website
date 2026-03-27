@@ -916,6 +916,10 @@ Return ONLY the JSON object. No markdown, no explanation.`;
     const jsonEnd=txt.lastIndexOf('}');
     if(jsonStart>-1&&jsonEnd>-1){txt=txt.substring(jsonStart,jsonEnd+1);}
     planData=JSON.parse(txt);
+    // Inject startDate into plan data so it's available when loading from dashboard
+    planData.startDate = A.startDate;
+    planData.race = A.race;
+    txt = JSON.stringify(planData);
 
     setTimeout(()=>{
       document.getElementById('gen').style.display='none';
@@ -991,7 +995,9 @@ async function loadNextWeeks() {
     let txt = d.plan || '';
     txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
     const newData = JSON.parse(txt);
+    const savedStartDate = planData.startDate;
     planData.weeks = [...planData.weeks, ...newData.weeks];
+    planData.startDate = savedStartDate;
     curWeek = currentWeekCount;
     renderWeek();
     renderGraph();
@@ -1204,8 +1210,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         let txt = plan.plan_data || '';
         txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
         planData = JSON.parse(txt);
-        A.race = plan.race || 'Triathlon';
+        A.race = plan.race || planData.race || 'Triathlon';
         A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
+        A.startDate = planData.startDate || '';
 
         document.getElementById('gen').style.display = 'none';
         document.getElementById('plan').style.display = 'block';
