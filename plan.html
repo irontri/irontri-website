@@ -205,6 +205,12 @@
     .wsl{font-size:11px;color:var(--muted);margin-top:3px;}
 
 
+
+    /* ── STRAVA SHARE ── */
+    .strava-share-btn{width:100%;background:rgba(252,76,2,0.1);border:1px solid rgba(252,76,2,0.3);color:#FC4C02;padding:13px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;}
+    .strava-share-btn:hover{background:rgba(252,76,2,0.2);border-color:rgba(252,76,2,0.5);}
+    .strava-share-btn.shared{background:rgba(74,222,128,0.08);border-color:rgba(74,222,128,0.3);color:#4ade80;cursor:default;}
+
     /* ── RPE RATING ── */
     .rpe-prompt{margin-top:12px;background:rgba(30,144,255,0.06);border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:16px;animation:fu 0.3s ease both;}
     .rpe-prompt-title{font-size:13px;color:var(--muted);margin-bottom:12px;text-align:center;}
@@ -1151,6 +1157,103 @@ function showStravaMatchBanner(count) {
 }
 // ── END STRAVA AUTO-MATCH ──────────────────────────────────────────────────
 
+
+
+// ── STRAVA SHARE ─────────────────────────────────────────────────────────────
+async function shareToStrava(dayIndex, sessionName, sessionType) {
+  const btn = document.getElementById(`strava-share-btn-${dayIndex}`);
+  if (!btn || btn.classList.contains('shared')) return;
+
+  btn.textContent = '⏳ Sharing to Strava...';
+  btn.disabled = true;
+
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (!session) return;
+
+    // Get Strava access token
+    const { data: userData } = await sb2.from('users')
+      .select('strava_access_token, strava_refresh_token, strava_token_expires_at')
+      .eq('id', session.user.id).single();
+
+    if (!userData?.strava_access_token) {
+      btn.textContent = '⚠️ Connect Strava first';
+      return;
+    }
+
+    // Refresh token if needed
+    let token = userData.strava_access_token;
+    if (Date.now() / 1000 > userData.strava_token_expires_at - 300) {
+      const r = await fetch('/api/strava-exchange', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({action:'refresh', refresh_token: userData.strava_refresh_token})
+      });
+      const d = await r.json();
+      if (d.access_token) {
+        token = d.access_token;
+        await sb2.from('users').update({
+          strava_access_token: d.access_token,
+          strava_refresh_token: d.refresh_token,
+          strava_token_expires_at: d.expires_at
+        }).eq('id', session.user.id);
+      }
+    }
+
+    // Find the matching Strava activity from last 7 days
+    const after = Math.floor(Date.now()/1000) - (7 * 24 * 3600);
+    const r = await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=20&after=${after}`, {
+      headers: {Authorization: `Bearer ${token}`}
+    });
+    const activities = await r.json();
+
+    const STRAVA_TO_PLAN = { Swim:'Swim', Ride:'Bike', VirtualRide:'Bike', Run:'Run', VirtualRun:'Run' };
+    const matchingActivity = activities?.find(a => {
+      const planType = STRAVA_TO_PLAN[a.sport_type] || STRAVA_TO_PLAN[a.type];
+      return planType === sessionType || (sessionType === 'Brick' && (planType === 'Bike' || planType === 'Run'));
+    });
+
+    if (!matchingActivity) {
+      // No matching activity — share a generic message
+      btn.innerHTML = '⚠️ No recent Strava activity found — record one first!';
+      btn.disabled = false;
+      return;
+    }
+
+    // Build the description
+    const weekLabel = `Week ${curWeek + 1}`;
+    const typeEmoji = {Swim:'🏊',Bike:'🚴',Run:'🏃',Brick:'🏃🚴',Strength:'💪',Rest:'😴'}[sessionType] || '🏋️';
+    const separator = matchingActivity.description ? '\n' + matchingActivity.description : '';
+    const newDesc = `${typeEmoji} ${weekLabel} · ${sessionName} — Trained with irontri.com 🔥${separator}`;
+
+    // Update via serverless (keeps token server-side safe — but we use the client token here)
+    const updateR = await fetch('/api/strava-exchange', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        action: 'update_activity',
+        access_token: token,
+        activity_id: matchingActivity.id,
+        description: newDesc,
+      })
+    });
+
+    const result = await updateR.json();
+    if (result.success) {
+      btn.className = 'strava-share-btn shared';
+      btn.innerHTML = '✅ Shared to Strava!';
+      // Store so we don't share again
+      sessionStorage.setItem(`strava-shared-${curWeek}-${dayIndex}`, '1');
+    } else {
+      btn.textContent = '⚠️ Share failed — try reconnecting Strava';
+      btn.disabled = false;
+    }
+  } catch(e) {
+    btn.textContent = '⚠️ Something went wrong';
+    btn.disabled = false;
+    console.log('Strava share error:', e);
+  }
+}
+// ── END STRAVA SHARE ──────────────────────────────────────────────────────────
 
 // ── RPE RATING ──────────────────────────────────────────────────────────────
 const RPE_LABELS = {
