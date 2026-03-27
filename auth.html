@@ -8,6 +8,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-BDZ8K3RR10');
+</script>
   <style>
     :root{--blue:#1E90FF;--blue-dark:#1478d4;--bg:#0a0a0a;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--text:#fff;--muted:rgba(255,255,255,0.5);--faint:rgba(255,255,255,0.25);}
     *{margin:0;padding:0;box-sizing:border-box;}
@@ -96,7 +104,6 @@ const _url = 'https://aezfxagplaxlmovqbmfd.supabase.co';
 const _key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
 const _sb = window.supabase.createClient(_url, _key);
 
-// Redirect if already logged in
 _sb.auth.getSession().then(({data:{session}}) => {
   if (session) {
     const redirect = new URLSearchParams(window.location.search).get('redirect');
@@ -104,7 +111,6 @@ _sb.auth.getSession().then(({data:{session}}) => {
   }
 });
 
-// Show message if coming from plan page
 const params = new URLSearchParams(window.location.search);
 if (params.get('redirect') === 'plan') {
   document.getElementById('auth-sub').textContent = 'Create a free account to generate your training plan';
@@ -129,29 +135,14 @@ async function doSignUp() {
   const email = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value;
   const btn = document.getElementById('btn-signup');
-
   if (!name || !email || !password) return showMsg('msg-signup', 'Please fill in all fields', 'error');
   if (password.length < 6) return showMsg('msg-signup', 'Password must be at least 6 characters', 'error');
-
   btn.disabled = true;
   btn.textContent = 'Creating account...';
-
-  const { data, error } = await _sb.auth.signUp({
-    email, password,
-    options: { data: { full_name: name } }
-  });
-
-  if (error) {
-    showMsg('msg-signup', error.message, 'error');
-    btn.disabled = false;
-    btn.textContent = 'Create my free account →';
-    return;
-  }
-
+  const { data, error } = await _sb.auth.signUp({ email, password, options: { data: { full_name: name } } });
+  if (error) { showMsg('msg-signup', error.message, 'error'); btn.disabled = false; btn.textContent = 'Create my free account →'; return; }
   localStorage.setItem('irontri_user_name', name);
   showMsg('msg-signup', '🎉 Account created! Saving your plan...', 'success');
-
-  // Wait for session then save pending plan
   await new Promise(r => setTimeout(r, 1500));
   await savePendingPlan(data.user?.id);
   const redirectTo = new URLSearchParams(window.location.search).get('redirect');
@@ -162,21 +153,11 @@ async function doLogIn() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   const btn = document.getElementById('btn-login');
-
   if (!email || !password) return showMsg('msg-login', 'Please enter your email and password', 'error');
-
   btn.disabled = true;
   btn.textContent = 'Logging in...';
-
   const { data, error } = await _sb.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    showMsg('msg-login', error.message, 'error');
-    btn.disabled = false;
-    btn.textContent = 'Log in →';
-    return;
-  }
-
+  if (error) { showMsg('msg-login', error.message, 'error'); btn.disabled = false; btn.textContent = 'Log in →'; return; }
   const loginName = data.user?.user_metadata?.full_name || email.split('@')[0];
   localStorage.setItem('irontri_user_name', loginName);
   showMsg('msg-login', '✅ Logged in! Redirecting...', 'success');
@@ -188,23 +169,14 @@ async function doLogIn() {
 async function savePendingPlan(userId) {
   try {
     let uid = userId;
-    if (!uid) {
-      const { data: { session } } = await _sb.auth.getSession();
-      uid = session?.user?.id;
-    }
+    if (!uid) { const { data: { session } } = await _sb.auth.getSession(); uid = session?.user?.id; }
     if (!uid) return;
     const pending = localStorage.getItem('irontri_pending_plan');
     if (!pending) return;
     const { plan, race } = JSON.parse(pending);
-    const { error } = await _sb.from('plans').insert({
-      user_id: uid,
-      plan_data: plan,
-      race: race || 'Triathlon'
-    });
+    const { error } = await _sb.from('plans').insert({ user_id: uid, plan_data: plan, race: race || 'Triathlon' });
     if (!error) localStorage.removeItem('irontri_pending_plan');
-  } catch(e) {
-    console.error('savePendingPlan:', e);
-  }
+  } catch(e) { console.error('savePendingPlan:', e); }
 }
 </script>
 </body>
