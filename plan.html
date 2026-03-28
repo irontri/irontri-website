@@ -490,6 +490,22 @@
         <div class="plan-title" id="ptitle">Your Training Plan</div>
         <div class="plan-subtitle" id="psub">Personalised for you</div>
       </div>
+      <button onclick="openPauseModal()" id="pause-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);padding:8px 16px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s;">
+        ⏸️ Pause plan
+      </button>
+    </div>
+    <!-- PAUSE BANNER -->
+    <div id="pause-banner" style="display:none;background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.3);border-radius:12px;padding:14px 18px;margin-bottom:12px;display:none;align-items:center;justify-content:space-between;gap:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">⏸️</span>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:#fb923c;">Plan paused</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;" id="pause-resume-date">Resuming soon</div>
+        </div>
+      </div>
+      <button onclick="resumePlan()" style="background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.3);color:#fb923c;padding:7px 14px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">
+        Resume now
+      </button>
     </div>
     <div class="plan-intro" id="pintro"></div>
   </div>
@@ -1025,7 +1041,7 @@ Return ONLY the JSON object. No markdown, no explanation.`;
       renderWeek();
       renderGraph();
       loadCompletions().then(() => { renderWeek(); syncStravaActivities(); });
-      checkAndSavePlan(txt);
+      if(A.date){planData.raceDate=A.date;} checkAndSavePlan(JSON.stringify(planData));
       window.scrollTo({top:0,behavior:'smooth'});
     },17000);
 
@@ -1560,10 +1576,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         A.race = plan.race || planData.race || 'Triathlon';
         A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
         A.startDate = planData.startDate || '';
+        A.date = planData.raceDate || A.date || '';
 
         document.getElementById('gen').style.display = 'none';
         document.getElementById('plan').style.display = 'block';
         document.querySelector('.prog-wrap').style.display = 'none';
+        setTimeout(() => window.dispatchEvent(new Event('plan-loaded')), 100);
 
         const w = planData.weeks?.length || 0;
         document.getElementById('ptitle').textContent = A.name + "'s " + A.race + " Plan";
@@ -1867,7 +1885,190 @@ function showIronToast(msg, color) {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.getElementById('modal').classList.remove('open');
 });
+
+// ── PLAN PAUSE ──────────────────────────────────────────────────────────────
+let pauseDays = 0;
+
+function openPauseModal() {
+  pauseDays = 0;
+  document.getElementById('pause-days-input').value = '';
+  document.getElementById('pause-preview').style.display = 'none';
+  document.querySelectorAll('.pause-opt').forEach(b => b.style.borderColor = 'rgba(255,255,255,0.15)');
+  document.getElementById('pause-modal').style.display = 'flex';
+}
+
+function closePauseModal() {
+  document.getElementById('pause-modal').style.display = 'none';
+}
+
+function selectPauseDays(days, btn) {
+  pauseDays = days;
+  document.getElementById('pause-days-input').value = '';
+  document.querySelectorAll('.pause-opt').forEach(b => {
+    b.style.background = 'rgba(255,255,255,0.06)';
+    b.style.borderColor = 'rgba(255,255,255,0.15)';
+    b.style.color = 'rgba(255,255,255,0.8)';
+  });
+  btn.style.background = 'rgba(30,144,255,0.15)';
+  btn.style.borderColor = 'var(--blue)';
+  btn.style.color = '#fff';
+  showPausePreview();
+}
+
+function showPausePreview() {
+  if (pauseDays < 1) return;
+  const resume = new Date();
+  resume.setDate(resume.getDate() + pauseDays);
+  const opts = {weekday:'long', day:'numeric', month:'long'};
+  const shortOpts = {day:'numeric', month:'short', year:'numeric'};
+
+  let msg = `Your plan will resume ${resume.toLocaleDateString('en-AU', opts)}. All upcoming sessions shift forward by ${pauseDays} day${pauseDays===1?'':'s'}.`;
+
+  // Check if pause pushes past race date
+  const raceDate = planData.raceDate || A.date;
+  if (raceDate) {
+    const race = new Date(raceDate);
+    const totalWeeks = planData.weeks ? planData.weeks.length : 0;
+    const planEnd = new Date(planData.startDate || new Date());
+    planEnd.setDate(planEnd.getDate() + totalWeeks * 7);
+    const newPlanEnd = new Date(planEnd);
+    newPlanEnd.setDate(newPlanEnd.getDate() + pauseDays);
+
+    if (newPlanEnd > race) {
+      const daysOver = Math.ceil((newPlanEnd - race) / 86400000);
+      const weeksOver = Math.round(daysOver / 7);
+      document.getElementById('pause-preview').style.background = 'rgba(239,68,68,0.08)';
+      document.getElementById('pause-preview').style.borderColor = 'rgba(239,68,68,0.3)';
+      msg = `⚠️ Your race is on ${race.toLocaleDateString('en-AU', shortOpts)}. Pausing ${pauseDays} days means your plan finishes ${weeksOver > 0 ? weeksOver + ' week' + (weeksOver===1?'':'s') : daysOver + ' day' + (daysOver===1?'':'s')} after race day — you may need to skip some later sessions. Consider a shorter pause.`;
+    } else {
+      document.getElementById('pause-preview').style.background = 'rgba(30,144,255,0.08)';
+      document.getElementById('pause-preview').style.borderColor = 'rgba(30,144,255,0.2)';
+    }
+  }
+
+  document.getElementById('pause-preview-text').textContent = msg;
+  document.getElementById('pause-preview').style.display = 'block';
+}
+
+document.getElementById('pause-days-input')?.addEventListener('input', showPausePreview);
+
+async function confirmPause() {
+  const days = pauseDays || parseInt(document.getElementById('pause-days-input').value) || 0;
+  if (days < 1) { showIronToast('Please select or enter a number of days', '#ef4444'); return; }
+
+  // Shift planData.startDate forward
+  const oldStart = planData.startDate ? new Date(planData.startDate) : new Date();
+  const newStart = new Date(oldStart);
+  newStart.setDate(newStart.getDate() + days);
+  planData.startDate = newStart.toISOString().split('T')[0];
+  planData.pausedUntil = planData.startDate;
+  planData.pausedDays = (planData.pausedDays || 0) + days;
+
+  // Save back to Supabase
+  const btn = document.querySelector('#pause-modal button:last-child');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  try {
+    const { data: d1 } = await sb2.auth.getSession();
+    const session = d1?.session;
+    if (session) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const loadId = urlParams.get('load');
+      if (loadId) {
+        await sb2.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', loadId);
+      }
+    }
+  } catch(e) { console.error('Pause save error', e); }
+
+  closePauseModal();
+
+  // Show pause banner
+  const resume = new Date(planData.startDate);
+  const opts = {weekday:'short', day:'numeric', month:'short'};
+  document.getElementById('pause-resume-date').textContent =
+    `Resuming ${resume.toLocaleDateString('en-AU', opts)} · ${days} day${days===1?'':'s'} added to your plan`;
+  document.getElementById('pause-banner').style.display = 'flex';
+  document.getElementById('pause-btn').style.display = 'none';
+
+  showIronToast(`Plan paused for ${days} day${days===1?'':'s'} ⏸️`, '#fb923c');
+}
+
+async function resumePlan() {
+  if (!confirm('Resume your plan now? Remaining paused time will be cancelled.')) return;
+
+  // Shift startDate back to today
+  const today = new Date().toISOString().split('T')[0];
+  const pausedUntil = planData.pausedUntil ? new Date(planData.pausedUntil) : new Date();
+  const daysLeft = Math.max(0, Math.ceil((pausedUntil - new Date()) / 86400000));
+
+  planData.startDate = today;
+  delete planData.pausedUntil;
+
+  try {
+    const { data: d1 } = await sb2.auth.getSession();
+    const session = d1?.session;
+    if (session) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const loadId = urlParams.get('load');
+      if (loadId) {
+        await sb2.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', loadId);
+      }
+    }
+  } catch(e) { console.error('Resume save error', e); }
+
+  document.getElementById('pause-banner').style.display = 'none';
+  document.getElementById('pause-btn').style.display = 'flex';
+  showIronToast('Plan resumed! 💪', '#4ade80');
+}
+
+// Show pause banner on load if plan is currently paused
+window.addEventListener('plan-loaded', () => {
+  if (planData.pausedUntil) {
+    const resume = new Date(planData.pausedUntil);
+    if (resume > new Date()) {
+      const opts = {weekday:'short', day:'numeric', month:'short'};
+      document.getElementById('pause-resume-date').textContent =
+        `Resuming ${resume.toLocaleDateString('en-AU', opts)}`;
+      document.getElementById('pause-banner').style.display = 'flex';
+      document.getElementById('pause-btn').style.display = 'none';
+    }
+  }
+});
+// ── END PLAN PAUSE ──────────────────────────────────────────────────────────
+
 </script>
+
+
+<!-- PAUSE PLAN MODAL -->
+<div id="pause-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:32px;max-width:400px;width:100%;">
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px;">⏸️ Pause your plan</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.55);margin-bottom:24px;line-height:1.6;">Injured, sick, or just need a break? Your plan will shift forward and pick up exactly where you left off.</div>
+
+    <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:rgba(255,255,255,0.7);">Pause for how long?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px;">
+      <button onclick="selectPauseDays(7, this)" class="pause-opt" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);padding:12px 8px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;">1 week</button>
+      <button onclick="selectPauseDays(14, this)" class="pause-opt" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);padding:12px 8px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;">2 weeks</button>
+      <button onclick="selectPauseDays(21, this)" class="pause-opt" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);padding:12px 8px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;">3 weeks</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);">Or enter days:</div>
+      <input type="number" id="pause-days-input" min="1" max="60" placeholder="e.g. 10"
+        style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:8px 12px;border-radius:8px;font-size:13px;width:80px;font-family:'DM Sans',sans-serif;"
+        oninput="pauseDays = parseInt(this.value) || 0; document.querySelectorAll('.pause-opt').forEach(b=>b.style.borderColor='rgba(255,255,255,0.15)');" />
+    </div>
+
+    <div id="pause-preview" style="background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:12px 16px;margin-bottom:24px;font-size:13px;color:rgba(255,255,255,0.6);display:none;">
+      📅 <span id="pause-preview-text"></span>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button onclick="closePauseModal()" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);padding:12px;border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">Cancel</button>
+      <button onclick="confirmPause()" style="flex:2;background:var(--blue);border:none;color:#fff;padding:12px;border-radius:10px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">Pause plan</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
