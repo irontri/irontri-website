@@ -930,7 +930,7 @@ async function buildPlan(){
     '1. MAINSET: Exact intervals, exact rest, exact pace, one technique cue. Never vague. E.g. "8x100m descending 1:55 to 1:45, 15sec rest, high elbow on catch."\n' +
     '2. COACH NOTE: Reference why this session exists in the week. "Hard bike tomorrow — keep this controlled, move blood not create fatigue."\n' +
     '3. SWIM mainsets: exact intervals + rest + technique cue.\n' +
-    '4. BIKE mainsets: always include cadence. "85-90rpm, pushing not grinding."\n' +
+    '4. BIKE mainsets: always include cadence AND power as % of FTP with example watts. Format: "85-90rpm at 75-80% FTP (e.g. 150-165w — scale to your FTP)". Every bike session must include both % FTP and example watt range in brackets.\n' +
     '5. RUN mainsets: always include technique cue. "175-180spm, land under hips not in front."\n' +
     '6. SESSION NAMES: Evocative and specific. "Descending 100s — Find Your Pace" not "Swim Intervals."\n' +
     '7. weeklyNarrative field: 2 sentences on why this week is structured this way.\n' +
@@ -943,7 +943,7 @@ async function buildPlan(){
     '- Week 1-2: Base. Week 3: Build. Week 4: Peak/Build.\n' +
     '- Types: Swim/Bike/Run/Brick/Strength/Rest. Brick name: "Brick — Bike + Run"\n' +
     '- duration: int minutes. effort: RPE 1-10. zone: HR 1-5.\n' +
-    '- paceTarget: Swim="/100m", Bike="km/h", Run="/km", else "N/A". Always a specific range.\n\n' +
+    '- paceTarget: Swim="/100m", Bike="% FTP with watts e.g. '75-80% FTP (~150-165w)'", Run="/km", else "N/A". Always a specific range.\n\n' +
     (A.race === 'Full Ironman' ? 'IRONMAN: Long ride 180-240min TT position aerobic only (coachNote must say NOT FAST, Aerobic, 85+ cadence). Long run 90-120min with race-pace km in middle. Threshold bike 90min (30WU+45FTP+15CD). Week 4 = recovery (coachNote must say SLEEP EAT HYDRATE, fitness is made in recovery).\n\n' :
      A.race === 'Half Ironman 70.3' ? '70.3: Long ride 150-180min with race-pace intervals + 20-30min brick. Long run 90-105min, race pace in final third. Swim 2000-3000m with race-pace sets. Week 4 = recovery -40% volume.\n\n' :
      A.race === 'Olympic Triathlon' ? 'OLYMPIC: High intensity. Ride 75-90min threshold. Run 50-65min tempo. Swim 1500-2500m race-pace 200/400s. Bricks 15-20min at race pace.\n\n' :
