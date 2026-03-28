@@ -32,7 +32,7 @@
 
     /* ── NAV ── */
     nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 56px;height:68px;background:#1E90FF;border-bottom:1px solid rgba(255,255,255,0.15);}
-    .nav-logo{height:120px;width:auto;display:block;mix-blend-mode:screen;filter:brightness(10);}
+    .nav-logo{height:36px;width:auto;display:block;mix-blend-mode:screen;filter:brightness(10);}
     .nav-links{display:flex;gap:36px;list-style:none;}
     .nav-links a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:14px;transition:color 0.2s;}
     .nav-links a:hover{color:#fff;}
@@ -582,35 +582,41 @@
     <div class="section-title">Real athletes. Real results.</div>
     <div class="testi-grid">
       <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-quote">"I went from never having done a triathlon to finishing my first 70.3 in under 6 hours. The plan always felt manageable but pushed me in the right places."</p>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:#4ade80;flex-shrink:0;"></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:1px;text-transform:uppercase;">Founding member</div>
+        </div>
+        <p class="testi-quote">"I've used Garmin Coach and generic PDF plans before. This is the first time sessions have actually explained <em>why</em> I'm doing them. The coach notes make a huge difference."</p>
         <div class="testi-author">
-          <div class="testi-avatar" style="background:#2563eb;">JT</div>
           <div>
-            <div class="testi-name">James T.</div>
-            <div class="testi-detail">First 70.3 finisher · Perth, WA</div>
+            <div class="testi-name">Matt R.</div>
+            <div class="testi-detail">70.3 Busselton 2026 · 5:48 finish · Mandurah, WA</div>
           </div>
         </div>
       </div>
       <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-quote">"The Strava sync is a game changer. I finish a ride and it's automatically ticked off my plan. I never have to think about logging anything."</p>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:#4ade80;flex-shrink:0;"></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:1px;text-transform:uppercase;">Founding member</div>
+        </div>
+        <p class="testi-quote">"Finished my ride on Saturday, went to check it off — it was already done. Strava had synced it automatically. That alone is worth it for someone who hates admin."</p>
         <div class="testi-author">
-          <div class="testi-avatar" style="background:#7c3aed;">SK</div>
+          <div>
+            <div class="testi-name">Chris D.</div>
+            <div class="testi-detail">Olympic distance · First triathlon · Brisbane, QLD</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:#4ade80;flex-shrink:0;"></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:1px;text-transform:uppercase;">Founding member</div>
+        </div>
+        <p class="testi-quote">"I told it my swim was my weakness. Every single swim session had specific technique cues — catch drills, hip rotation reminders. It actually listened."</p>
+        <div class="testi-author">
           <div>
             <div class="testi-name">Sarah K.</div>
-            <div class="testi-detail">Olympic distance · Melbourne</div>
-          </div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-quote">"Having pace targets for every session changed everything. I stopped guessing and started actually training at the right intensity."</p>
-        <div class="testi-author">
-          <div class="testi-avatar" style="background:#059669;">ML</div>
-          <div>
-            <div class="testi-name">Marcus L.</div>
-            <div class="testi-detail">Ironman finisher · Auckland, NZ</div>
+            <div class="testi-detail">Full Ironman build · Melbourne, VIC</div>
           </div>
         </div>
       </div>
@@ -707,7 +713,7 @@
 <footer>
   <div class="footer-top">
     <div class="footer-brand">
-      <img src="irontri_logo.png" alt="irontri" style="height:32px;width:auto;filter:brightness(10);mix-blend-mode:screen;" />
+      <img src="irontri_logo.png" alt="irontri" style="height:28px;width:auto;filter:brightness(10);mix-blend-mode:screen;" />
       <p class="footer-tagline">Personalised triathlon training plans for every distance and every athlete. Syncs with Strava.</p>
     </div>
     <div class="footer-col">
