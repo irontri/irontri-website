@@ -396,6 +396,7 @@ async function deletePlan(id) {
   await sb.from('plans').delete().eq('id', id);
   location.reload();
 }
+init();
 </script>
 </body>
 </html>
