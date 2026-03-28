@@ -394,7 +394,9 @@ async function deletePlan(id) {
   if (!confirm('Delete this plan? Your completed sessions and streak will also be reset.')) return;
   const { data:{ session } } = await sb.auth.getSession();
   await sb.from('completions').delete().eq('user_id', session.user.id);
-  await sb.fr
+  await sb.from('plans').delete().eq('id', id);
+  location.reload();
+}
 });
 </script>
 </body>
