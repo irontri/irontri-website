@@ -110,7 +110,7 @@
 <nav>
   <a href="index.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri" /></a>
   <div class="nav-right">
-    <a href="mailto:deanfinnimore@hotmail.com?subject=irontri%20feedback&body=Hi%20Dean%2C%20here's%20my%20feedback%3A" style="color:rgba(255,255,255,0.75);font-size:13px;text-decoration:none;padding:7px 14px;border:1px solid rgba(255,255,255,0.25);border-radius:8px;">💬 Feedback</a>
+    <a href="/cdn-cgi/l/email-protection#b7d3d2d6d9d1ded9d9dedad8c5d2f7dfd8c3dad6dedb99d4d8da88c4c2d5ddd2d4c38adec5d8d9c3c5de928587d1d2d2d3d5d6d4dc91d5d8d3ce8affde928587f3d2d6d99285f4928587dfd2c5d290c4928587dace928587d1d2d2d3d5d6d4dc9284f6" style="color:rgba(255,255,255,0.75);font-size:13px;text-decoration:none;padding:7px 14px;border:1px solid rgba(255,255,255,0.25);border-radius:8px;">💬 Feedback</a>
     <a href="profile.html" class="nav-user" id="nav-user"></a>
     <button class="btn-logout" onclick="logOut()">Log out</button>
   </div>
@@ -165,7 +165,7 @@
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 const SUPABASE_URL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -348,43 +348,6 @@ function viewPlan(id) { window.location.href = '/plan.html?load=' + id; }
 function startRename(id) {
   document.getElementById('rename-form-' + id).style.display = 'block';
   const input = document.getElementById('rename-input-' + id);
-  // Pre-fill with current name
-  input.value = document.getElementById('name-display-' + id).textContent;
-  input.focus();
-  input.select();
-}
-
-function cancelRename(id) {
-  document.getElementById('rename-form-' + id).style.display = 'none';
-}
-
-async function saveRename(id) {
-  const input = document.getElementById('rename-input-' + id);
-  const newName = input.value.trim();
-  if (!newName) return;
-  const btn = input.nextElementSibling;
-  btn.textContent = 'Saving...';
-  btn.disabled = true;
-  try {
-    const { data: plan, error } = await sb.from('plans').select('plan_data').eq('id', id).single();
-    if (error || !plan) throw new Error('Could not load plan');
-    let planObj = {};
-    try { planObj = JSON.parse(plan.plan_data); } catch(e) {}
-    planObj.planName = newName;
-    const { error: updateErr } = await sb.from('plans').update({ plan_data: JSON.stringify(planObj) }).eq('id', id);
-    if (updateErr) throw updateErr;
-    document.getElementById('name-display-' + id).textContent = newName;
-    document.getElementById('rename-form-' + id).style.display = 'none';
-  } catch(e) {
-    btn.textContent = 'Save';
-    btn.disabled = false;
-    alert('Could not save — please try again.');
-  }
-}
-
-function startRename(id) {
-  document.getElementById('rename-form-' + id).style.display = 'block';
-  const input = document.getElementById('rename-input-' + id);
   input.value = document.getElementById('name-display-' + id).textContent;
   input.focus();
   input.select();
@@ -422,18 +385,4 @@ async function deletePlan(id) {
   if (!confirm('Delete this plan? Your completed sessions and streak will also be reset.')) return;
   const { data:{ session } } = await sb.auth.getSession();
   await sb.from('completions').delete().eq('user_id',session.user.id);
-  await sb.from('plans').delete().eq('id',id);
-  loadPlans();
-  loadStreakAndRing();
-}
-
-async function logOut() {
-  await sb.auth.signOut();
-  localStorage.removeItem('irontri_user_name');
-  window.location.href = 'index.html';
-}
-
-init();
-</script>
-</body>
-</html>
+  await sb.from('plans').delete().eq
