@@ -949,48 +949,58 @@ async function buildPlan(){
     'Return ONLY the JSON object. No markdown, no explanation.';
 
   try{
-    const r=await fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
-    const d=await r.json();
-    let txt=d.plan||'';
-    txt=txt.replace(/```json/g,'').replace(/```/g,'').trim();
-    const jsonStart=txt.indexOf('{');
-    const jsonEnd=txt.lastIndexOf('}');
-    if(jsonStart>-1&&jsonEnd>-1){txt=txt.substring(jsonStart,jsonEnd+1);}
-    planData=JSON.parse(txt);
-    // Inject startDate into plan data so it's available when loading from dashboard
-    planData.startDate = A.startDate;
-    planData.race = A.race;
-    txt = JSON.stringify(planData);
+    // Split into 2 API calls (weeks 1-2, then weeks 3-4) to avoid Vercel timeout
+    const prompt1 = prompt + '\n\nGenerate ONLY weeks 1 and 2. Return JSON with keys: intro, weeks (array of 2 weeks only).';
+    const prompt2 = prompt + '\n\nGenerate ONLY weeks 3 and 4 (Build and Peak phases). Return JSON with keys: weeks (array of 2 weeks only, weekNumber starting at 3). No intro needed.';
 
-    setTimeout(()=>{
-      document.getElementById('gen').style.display='none';
-      document.getElementById('quiz-wrap').style.display='none';
-      document.getElementById('prog-wrap').style.display='none';
-      const planEl=document.getElementById('plan');
-      planEl.style.display='block';
-      planEl.style.pointerEvents='all';
+    const [r1, r2] = await Promise.all([
+      fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt1})}),
+      fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt2})})
+    ]);
 
-      document.getElementById('ptitle').textContent=A.name+"'s "+A.race+" Plan";
-      document.getElementById('psub').textContent=A.exp.split(' — ')[0]+' · '+w+' weeks · '+A.hours+' hrs/week · Age '+A.age;
-      document.getElementById('pintro').textContent=planData.intro||'';
+    const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
 
-      document.getElementById('pstats').innerHTML=[
-        {v:w,l:'Total weeks'},{v:A.hours+'h',l:'Per week'},
-        {v:A.days.length,l:'Sessions/week'},{v:A.race.split(' ')[0],l:'Race type'}
-      ].map(s=>`<div class="ps"><div class="psv">${s.v}</div><div class="psl">${s.l}</div></div>`).join('');
+    // Parse both responses
+    function parsePlan(txt) {
+      txt = (txt||'').replace(/```json/g,'').replace(/```/g,'').trim();
+      const s = txt.indexOf('{'); const e = txt.lastIndexOf('}');
+      if(s===-1||e===-1) throw new Error('No JSON found');
+      return JSON.parse(txt.slice(s,e+1));
+    }
 
-      const phases=[...new Set(planData.weeks.map(w=>w.phase))];
-      document.getElementById('phases').innerHTML=phases.map((p,i)=>
-        `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="jumpToPhase('${p}')">${p} Phase</button>`
-      ).join('');
+    const p1 = parsePlan(d1.plan);
+    const p2 = parsePlan(d2.plan);
 
-      curWeek=0;curDay=null;
-      renderWeek();
-      renderGraph();
-      loadCompletions().then(() => { renderWeek(); syncStravaActivities(); });
-      if(A.date){planData.raceDate=A.date;} checkAndSavePlan(JSON.stringify(planData));
-      window.scrollTo({top:0,behavior:'smooth'});
-    });
+    // Merge: take intro from p1, combine weeks
+    planData = p1;
+    planData.weeks = [...(p1.weeks||[]), ...(p2.weeks||[])];
+
+    // Fix week numbers in case AI got them wrong
+    planData.weeks.forEach((wk,i) => { wk.weekNumber = i+1; });
+
+    if(!planData.weeks || planData.weeks.length === 0) throw new Error('No weeks in plan');
+
+    document.getElementById('ptitle').textContent = (A.name ? A.name+"'s " : '') + A.race + ' Plan';
+    document.getElementById('psub').textContent = 'Personalised for you';
+    document.getElementById('pintro').textContent = planData.intro||'';
+
+    document.getElementById('pstats').innerHTML=[
+      {v:planData.weeks.length,l:'Total weeks'},{v:A.hours+'h',l:'Per week'},
+      {v:A.days.length,l:'Sessions/week'},{v:A.race.split(' ')[0],l:'Race type'}
+    ].map(s=>`<div class="ps"><div class="psv">${s.v}</div><div class="psl">${s.l}</div></div>`).join('');
+
+    const phases=[...new Set(planData.weeks.map(w=>w.phase))];
+    document.getElementById('phases').innerHTML=phases.map((p,i)=>
+      `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="jumpToPhase('${p}')">${p} Phase</button>`
+    ).join('');
+
+    curWeek=0;curDay=null;
+    renderWeek();
+    renderGraph();
+    loadCompletions().then(() => { renderWeek(); syncStravaActivities(); });
+    if(A.date){planData.raceDate=A.date;} checkAndSavePlan(JSON.stringify(planData));
+    window.scrollTo({top:0,behavior:'smooth'});
+    setTimeout(() => window.dispatchEvent(new Event('plan-loaded')), 100);
 
   }catch(e){
     console.error('Plan error:',e);
