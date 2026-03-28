@@ -677,6 +677,15 @@ const typeInfo={
   'Race':    {icon:'🏁', cls:'type-race',     color:'#f87171', label:'Race'}
 };
 
+
+function fmtDur(mins) {
+  if (!mins) return '';
+  if (mins < 60) return mins + 'm';
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m > 0 ? h + 'h ' + m + 'm' : h + 'h';
+}
+
 function renderWeek(){
   const w=planData.weeks[curWeek];
   if(!w)return;
@@ -758,7 +767,7 @@ function renderWeek(){
       <div style="font-size:10px;color:var(--faint);margin-bottom:4px;">${dateStr}</div>
       <div class="cal-day-icon">${isComplete ? '✅' : d.swapped ? '😓' : t.icon}</div>
       <div class="cal-day-type ${t.cls}">${d.swapped ? 'Easy' : t.label}</div>
-      <div class="cal-day-dur">${d.duration?d.duration+'m':''}</div>
+      <div class="cal-day-dur">${d.duration?fmtDur(d.duration):''}</div>
     </div>`;
   }).join('');
 
@@ -817,7 +826,7 @@ function selectDay(i){
       <div class="sd-icon">${t.icon}</div>
       <div class="sd-info">
         <div class="sd-title">${d.name||d.type+' Session'} <button class="info-btn" onclick="showExplainer('${d.type}')">What is this? ℹ️</button></div>
-        <div class="sd-meta">${fullDateStr} · ${d.duration||60} minutes</div>
+        <div class="sd-meta">${fullDateStr} · ${fmtDur(d.duration||60)}</div>
         <div class="sd-badges">
           <span class="sd-badge ${t.cls}" style="border-color:${t.color}40;font-size:12px;font-weight:600;">${t.icon} ${t.label}</span>
           ${d.effort?`<span class="sd-badge" style="border-color:rgba(255,255,255,0.1);color:var(--muted);">RPE ${d.effort}/10</span>`:''}
@@ -1428,7 +1437,7 @@ async function showCoachInsight(dayIndex) {
 SESSION JUST COMPLETED:
 - Type: ${day.type}
 - Name: ${day.name}
-- Duration: ${day.duration} minutes
+- Duration: ${fmtDur(day.duration)}
 - Effort: RPE ${day.effort}/10
 - Pace target: ${day.paceTarget || 'N/A'}
 - Main set: ${day.mainset || 'N/A'}
