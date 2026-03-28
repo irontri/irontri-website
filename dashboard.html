@@ -20,27 +20,20 @@
     .nav-user:hover{color:#fff;}
     .btn-logout{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
     .btn-logout:hover{background:rgba(255,255,255,0.25);}
-
     .dash{max-width:900px;margin:0 auto;padding:40px 32px;}
-
     .welcome{margin-bottom:32px;}
     .welcome h1{font-family:'Syne',sans-serif;font-size:clamp(24px,4vw,36px);font-weight:800;letter-spacing:-1px;margin-bottom:6px;}
     .welcome p{font-size:15px;color:var(--muted);}
-
     .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px;}
     .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;}
     .stat-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--blue);}
     .stat-lbl{font-size:12px;color:var(--muted);margin-top:4px;}
-
-
-    /* STREAK */
     .streak-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;position:relative;overflow:hidden;}
     .streak-card.active{background:rgba(251,146,60,0.08);border-color:rgba(251,146,60,0.35);}
     .streak-fire{font-size:22px;margin-bottom:2px;}
     .streak-num{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#fb923c;line-height:1;}
     .streak-lbl{font-size:12px;color:var(--muted);margin-top:4px;}
     .streak-best{font-size:10px;color:var(--faint);margin-top:2px;}
-    /* WEEK RING */
     .week-ring-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:24px;}
     .ring-svg{flex-shrink:0;}
     .ring-text-wrap{flex:1;}
@@ -51,8 +44,6 @@
     .ring-day.done{background:var(--blue);border-color:var(--blue);color:#fff;}
     .ring-day.today{border-color:var(--blue);color:var(--blue);}
     .section-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:16px;}
-
-    /* STRAVA CONNECT BANNER */
     .strava-banner{background:rgba(252,76,2,0.08);border:1px solid rgba(252,76,2,0.25);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
     .strava-logo{font-size:28px;flex-shrink:0;}
     .strava-text{flex:1;}
@@ -60,8 +51,6 @@
     .strava-text p{font-size:13px;color:var(--muted);}
     .btn-strava{background:var(--strava);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;text-decoration:none;display:inline-block;}
     .btn-strava:hover{background:#e04400;}
-
-    /* STRAVA CONNECTED */
     .strava-connected{background:rgba(252,76,2,0.06);border:1px solid rgba(252,76,2,0.2);border-radius:16px;padding:20px 24px;margin-bottom:24px;}
     .strava-connected-top{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
     .strava-connected-info{flex:1;}
@@ -71,8 +60,6 @@
     .strava-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;flex-shrink:0;}
     .btn-disconnect{background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--faint);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
     .btn-disconnect:hover{border-color:rgba(239,68,68,0.3);color:#f87171;}
-
-    /* ACTIVITY FEED */
     .activity-feed{display:flex;flex-direction:column;gap:8px;}
     .activity-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;transition:border-color 0.15s;}
     .activity-item:hover{border-color:rgba(252,76,2,0.3);}
@@ -84,9 +71,6 @@
     .activity-stat{display:flex;flex-direction:column;align-items:flex-end;}
     .activity-stat-val{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
     .activity-stat-lbl{font-size:10px;color:var(--faint);margin-top:1px;}
-    .activity-matched{font-size:10px;color:#4ade80;margin-top:3px;}
-
-    /* PLAN CARD */
     .plan-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:16px;transition:all 0.2s;cursor:pointer;}
     .plan-card:hover{border-color:rgba(30,144,255,0.3);background:rgba(30,144,255,0.05);}
     .plan-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px;}
@@ -98,19 +82,15 @@
     .btn-view{background:var(--blue);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
     .btn-delete{background:transparent;color:var(--muted);border:1px solid var(--border);padding:10px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
     .btn-delete:hover{border-color:rgba(239,68,68,0.3);color:#f87171;}
-
     .empty{text-align:center;padding:60px 24px;background:var(--surface);border:1px solid var(--border);border-radius:16px;}
     .empty-icon{font-size:48px;margin-bottom:16px;}
     .empty h3{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;}
     .empty p{font-size:14px;color:var(--muted);margin-bottom:24px;}
     .btn-create{background:var(--blue);color:#fff;border:none;padding:14px 28px;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-block;}
-
     .loading{text-align:center;padding:60px;color:var(--muted);}
     .spinner{width:36px;height:36px;border:3px solid rgba(30,144,255,0.15);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
     @keyframes spin{to{transform:rotate(360deg)}}
-
     .feed-loading{text-align:center;padding:20px;color:var(--faint);font-size:13px;}
-
     @media(max-width:600px){
       nav{padding:0 20px;}
       .dash{padding:24px 16px;}
@@ -118,7 +98,6 @@
       .strava-banner{flex-direction:column;align-items:flex-start;}
     }
   </style>
-<!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -161,7 +140,6 @@
       </div>
     </div>
 
-    <!-- WEEK RING -->
     <div class="week-ring-wrap" id="week-ring-wrap" style="display:none;">
       <svg class="ring-svg" width="72" height="72" viewBox="0 0 72 72">
         <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
@@ -177,10 +155,8 @@
       </div>
     </div>
 
-    <!-- STRAVA SECTION -->
     <div id="strava-section"></div>
 
-    <!-- PLANS -->
     <div class="section-title">Your training plans</div>
     <div id="plans-list"></div>
     <div style="margin-top:24px;">
@@ -196,7 +172,6 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const STRAVA_CLIENT_ID = '216800';
 let currentUser = null;
 
-// Sport type → emoji + label
 const SPORT = {
   Swim:{icon:'🏊',label:'Swim',color:'#38bdf8'},
   Ride:{icon:'🚴',label:'Bike',color:'#fb923c'},
@@ -218,292 +193,142 @@ async function init() {
   } else {
     currentUser = session.user;
   }
-
   const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
   document.getElementById('nav-user').textContent = '👤 ' + name;
   document.getElementById('welcome-title').textContent = 'Welcome back, ' + name + '! 👋';
-
   await Promise.all([loadPlans(), loadStravaSection()]);
 }
 
 async function loadStravaSection() {
-  // Check if user has Strava connected in our users table
   const { data: userData } = await sb.from('users')
     .select('strava_access_token, strava_refresh_token, strava_token_expires_at, strava_athlete_id')
-    .eq('id', currentUser.id)
-    .single();
-
+    .eq('id', currentUser.id).single();
   const section = document.getElementById('strava-section');
-
   if (!userData?.strava_access_token) {
-    // Not connected — show connect banner
     const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=https://irontriapp.com/strava-callback.html&approval_prompt=force&scope=activity:read_all,activity:write`;
-    section.innerHTML = `
-      <div class="strava-banner">
-        <div class="strava-logo">🟠</div>
-        <div class="strava-text">
-          <h3>Connect Strava</h3>
-          <p>Sync your swims, rides and runs automatically. Activities will be matched to your plan sessions.</p>
-        </div>
-        <a href="${authUrl}" class="btn-strava">Connect Strava →</a>
-      </div>`;
+    section.innerHTML = `<div class="strava-banner"><div class="strava-logo">🟠</div><div class="strava-text"><h3>Connect Strava</h3><p>Sync your swims, rides and runs automatically.</p></div><a href="${authUrl}" class="btn-strava">Connect Strava →</a></div>`;
     return;
   }
-
-  // Connected — get a fresh access token if needed
   let accessToken = userData.strava_access_token;
   if (Date.now() / 1000 > userData.strava_token_expires_at - 300) {
     accessToken = await refreshStravaToken(userData.strava_refresh_token);
   }
-
   if (!accessToken) {
-    section.innerHTML = `<div class="strava-banner"><div class="strava-logo">🟠</div><div class="strava-text"><h3>Strava needs reconnecting</h3><p>Your connection expired — reconnect to keep syncing.</p></div><a href="https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=https://irontriapp.com/strava-callback.html&approval_prompt=force&scope=activity:read_all,activity:write" class="btn-strava">Reconnect →</a></div>`;
+    section.innerHTML = `<div class="strava-banner"><div class="strava-logo">🟠</div><div class="strava-text"><h3>Strava needs reconnecting</h3><p>Your connection expired.</p></div><a href="https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=https://irontriapp.com/strava-callback.html&approval_prompt=force&scope=activity:read_all,activity:write" class="btn-strava">Reconnect →</a></div>`;
     return;
   }
-
-  // Show connected state + activity feed
-  section.innerHTML = `
-    <div class="strava-connected">
-      <div class="strava-connected-top">
-        <div style="font-size:28px;">🟠</div>
-        <div class="strava-connected-info">
-          <h3>Strava connected</h3>
-          <div class="strava-status"><div class="strava-dot"></div>Syncing automatically</div>
-        </div>
-        <button class="btn-disconnect" onclick="disconnectStrava()">Disconnect</button>
-      </div>
-      <div class="section-title" style="margin-bottom:12px;font-size:15px;">Recent activities</div>
-      <div class="activity-feed" id="activity-feed">
-        <div class="feed-loading">Loading your activities...</div>
-      </div>
-    </div>`;
-
+  section.innerHTML = `<div class="strava-connected"><div class="strava-connected-top"><div style="font-size:28px;">🟠</div><div class="strava-connected-info"><h3>Strava connected</h3><div class="strava-status"><div class="strava-dot"></div>Syncing automatically</div></div><button class="btn-disconnect" onclick="disconnectStrava()">Disconnect</button></div><div class="section-title" style="margin-bottom:12px;font-size:15px;">Recent activities</div><div class="activity-feed" id="activity-feed"><div class="feed-loading">Loading your activities...</div></div></div>`;
   loadActivities(accessToken);
 }
 
 async function refreshStravaToken(refreshToken) {
   try {
-    const r = await fetch('/api/strava-exchange', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'refresh', refresh_token: refreshToken }),
-    });
+    const r = await fetch('/api/strava-exchange', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'refresh',refresh_token:refreshToken})});
     const data = await r.json();
     if (!r.ok) return null;
-    // Update tokens in Supabase
-    await sb.from('users').update({
-      strava_access_token: data.access_token,
-      strava_refresh_token: data.refresh_token,
-      strava_token_expires_at: data.expires_at,
-    }).eq('id', currentUser.id);
+    await sb.from('users').update({strava_access_token:data.access_token,strava_refresh_token:data.refresh_token,strava_token_expires_at:data.expires_at}).eq('id',currentUser.id);
     return data.access_token;
   } catch { return null; }
 }
 
 async function loadActivities(accessToken) {
   try {
-    const r = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=4', {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
+    const r = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=4',{headers:{Authorization:`Bearer ${accessToken}`}});
     const activities = await r.json();
     const feed = document.getElementById('activity-feed');
-
-    if (!activities?.length) {
-      feed.innerHTML = '<div class="feed-loading">No recent activities found on Strava.</div>';
-      return;
-    }
-
+    if (!activities?.length) { feed.innerHTML = '<div class="feed-loading">No recent activities found.</div>'; return; }
     feed.innerHTML = activities.map(a => {
       const sport = SPORT[a.sport_type] || SPORT[a.type] || {icon:'🏅',label:a.sport_type,color:'#888'};
-      const dist = a.distance ? (a.distance / 1000).toFixed(1) + ' km' : '';
+      const dist = a.distance ? (a.distance/1000).toFixed(1)+' km' : '';
       const time = a.moving_time ? fmtTime(a.moving_time) : '';
-      const date = new Date(a.start_date_local).toLocaleDateString('en-AU', {day:'numeric',month:'short'});
-      return `
-        <div class="activity-item">
-          <div class="activity-icon">${sport.icon}</div>
-          <div class="activity-info">
-            <div class="activity-name">${a.name}</div>
-            <div class="activity-meta">${date} · <span style="color:${sport.color}">${sport.label}</span></div>
-          </div>
-          <div class="activity-stats">
-            ${dist ? `<div class="activity-stat"><div class="activity-stat-val">${dist}</div><div class="activity-stat-lbl">Distance</div></div>` : ''}
-            ${time ? `<div class="activity-stat"><div class="activity-stat-val">${time}</div><div class="activity-stat-lbl">Time</div></div>` : ''}
-          </div>
-        </div>`;
+      const date = new Date(a.start_date_local).toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+      return `<div class="activity-item"><div class="activity-icon">${sport.icon}</div><div class="activity-info"><div class="activity-name">${a.name}</div><div class="activity-meta">${date} · <span style="color:${sport.color}">${sport.label}</span></div></div><div class="activity-stats">${dist?`<div class="activity-stat"><div class="activity-stat-val">${dist}</div><div class="activity-stat-lbl">Distance</div></div>`:''} ${time?`<div class="activity-stat"><div class="activity-stat-val">${time}</div><div class="activity-stat-lbl">Time</div></div>`:''}</div></div>`;
     }).join('');
-  } catch(e) {
-    document.getElementById('activity-feed').innerHTML = '<div class="feed-loading">Could not load activities.</div>';
-  }
+  } catch(e) { document.getElementById('activity-feed').innerHTML = '<div class="feed-loading">Could not load activities.</div>'; }
 }
 
 function fmtTime(secs) {
-  const h = Math.floor(secs/3600);
-  const m = Math.floor((secs%3600)/60);
-  const s = secs%60;
-  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;
+  if(h>0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   return `${m}:${String(s).padStart(2,'0')}`;
 }
 
 async function disconnectStrava() {
-  if (!confirm('Disconnect Strava? Your activities will no longer sync.')) return;
-  await sb.from('users').update({
-    strava_access_token: null,
-    strava_refresh_token: null,
-    strava_token_expires_at: null,
-    strava_athlete_id: null,
-  }).eq('id', currentUser.id);
+  if (!confirm('Disconnect Strava?')) return;
+  await sb.from('users').update({strava_access_token:null,strava_refresh_token:null,strava_token_expires_at:null,strava_athlete_id:null}).eq('id',currentUser.id);
   loadStravaSection();
 }
 
-
-// ── STREAK & WEEK RING ─────────────────────────────────────────────────────
 async function loadStreakAndRing() {
   if (!sb) return;
   try {
-    const { data: { session } } = await sb.auth.getSession();
+    const { data:{ session } } = await sb.auth.getSession();
     if (!session) return;
-
-    const { data: completions } = await sb.from('completions')
-      .select('created_at')
-      .eq('user_id', session.user.id)
-      .order('created_at', { ascending: false });
-
+    const { data: completions } = await sb.from('completions').select('created_at').eq('user_id',session.user.id).order('created_at',{ascending:false});
     if (!completions || !completions.length) return;
-
-    // Total sessions
     document.getElementById('s-sessions').textContent = completions.length;
-
-    // Get unique dates (YYYY-MM-DD in local time using UTC date string)
-    const dates = [...new Set(
-      completions.map(c => c.created_at.slice(0, 10))
-    )].sort().reverse(); // newest first
-
-    // ── STREAK CALC ──
-    let streak = 0;
-    let best = 0;
-    let tempStreak = 1;
-    const today = new Date().toISOString().slice(0, 10);
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-
-    // Current streak — count consecutive days from today or yesterday
-    const startDate = dates[0] === today || dates[0] === yesterday ? dates[0] : null;
-    if (startDate) {
-      streak = 1;
-      for (let i = 1; i < dates.length; i++) {
-        const prev = new Date(dates[i - 1]);
-        const curr = new Date(dates[i]);
-        const diff = Math.round((prev - curr) / 86400000);
-        if (diff === 1) { streak++; } else { break; }
-      }
-    }
-
-    // Best streak ever
-    tempStreak = 1;
-    for (let i = 1; i < dates.length; i++) {
-      const prev = new Date(dates[i - 1]);
-      const curr = new Date(dates[i]);
-      const diff = Math.round((prev - curr) / 86400000);
-      if (diff === 1) { tempStreak++; best = Math.max(best, tempStreak); }
-      else { tempStreak = 1; }
-    }
-    best = Math.max(best, streak, 1);
-
-    // Render streak card
-    const streakEl = document.getElementById('streak-num');
-    const streakCard = document.getElementById('streak-card');
-    const bestEl = document.getElementById('streak-best');
-    streakEl.textContent = streak;
-    if (streak > 0) streakCard.classList.add('active');
-    if (best > streak) bestEl.textContent = 'Best: ' + best + ' days';
-
-    // ── WEEK RING ──
-    // Get this week's sessions (Mon-Sun)
-    const now = new Date();
-    const dayOfWeek = (now.getDay() + 6) % 7; // 0=Mon
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - dayOfWeek);
-    weekStart.setHours(0, 0, 0, 0);
-
-    const thisWeekDates = dates.filter(d => new Date(d) >= weekStart);
-    const sessionsThisWeek = thisWeekDates.length;
-
-    // Get target sessions from plan if available (default 5)
-    const { data: plans } = await sb.from('plans').select('plan_data').eq('user_id', session.user.id).order('created_at', {ascending: false}).limit(1);
-    let targetSessions = 5;
-    if (plans?.[0]) {
-      try {
-        const p = JSON.parse(plans[0].plan_data);
-        const week1 = p.weeks?.[0];
-        if (week1) targetSessions = week1.days?.filter(d => d.type !== 'Rest').length || 5;
-      } catch(e) {}
-    }
-
-    // Render ring
-    const circumference = 188.5;
-    const pct = Math.min(sessionsThisWeek / targetSessions, 1);
-    const offset = circumference - (pct * circumference);
-    document.getElementById('ring-progress').style.strokeDashoffset = offset;
-    document.getElementById('ring-progress').style.stroke = sessionsThisWeek >= targetSessions ? '#4ade80' : '#1E90FF';
-    document.getElementById('ring-label').textContent = sessionsThisWeek + '/' + targetSessions;
-    document.getElementById('ring-title').textContent = sessionsThisWeek >= targetSessions ? '✅ Week complete!' : 'This week sessions';
-    document.getElementById('ring-sub').textContent = sessionsThisWeek >= targetSessions
-      ? 'Amazing week — you hit every session!'
-      : (targetSessions - sessionsThisWeek) + ' session' + (targetSessions - sessionsThisWeek !== 1 ? 's' : '') + ' to go this week';
-
-    // Day dots (Mon-Sun)
-    const days = ['M','T','W','T','F','S','S'];
-    const weekDateSet = new Set(thisWeekDates);
-    const ringDaysEl = document.getElementById('ring-days');
-    ringDaysEl.innerHTML = days.map((d, i) => {
-      const dayDate = new Date(weekStart);
-      dayDate.setDate(weekStart.getDate() + i);
-      const dateStr = dayDate.toISOString().slice(0, 10);
-      const isToday = dateStr === today;
-      const isDone = weekDateSet.has(dateStr);
-      return `<div class="ring-day ${isDone ? 'done' : isToday ? 'today' : ''}">${d}</div>`;
-    }).join('');
-
-    document.getElementById('week-ring-wrap').style.display = 'flex';
-
-  } catch(e) { console.log('Streak error:', e); }
+    const dates = [...new Set(completions.map(c=>c.created_at.slice(0,10)))].sort().reverse();
+    let streak=0,best=0,tempStreak=1;
+    const today=new Date().toISOString().slice(0,10);
+    const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+    const startDate=dates[0]===today||dates[0]===yesterday?dates[0]:null;
+    if(startDate){streak=1;for(let i=1;i<dates.length;i++){const prev=new Date(dates[i-1]),curr=new Date(dates[i]),diff=Math.round((prev-curr)/86400000);if(diff===1){streak++;}else{break;}}}
+    tempStreak=1;for(let i=1;i<dates.length;i++){const prev=new Date(dates[i-1]),curr=new Date(dates[i]),diff=Math.round((prev-curr)/86400000);if(diff===1){tempStreak++;best=Math.max(best,tempStreak);}else{tempStreak=1;}}
+    best=Math.max(best,streak,1);
+    document.getElementById('streak-num').textContent=streak;
+    if(streak>0)document.getElementById('streak-card').classList.add('active');
+    if(best>streak)document.getElementById('streak-best').textContent='Best: '+best+' days';
+    const now=new Date(),dayOfWeek=(now.getDay()+6)%7,weekStart=new Date(now);
+    weekStart.setDate(now.getDate()-dayOfWeek);weekStart.setHours(0,0,0,0);
+    const thisWeekDates=dates.filter(d=>new Date(d)>=weekStart);
+    const sessionsThisWeek=thisWeekDates.length;
+    const { data: plans } = await sb.from('plans').select('plan_data').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(1);
+    let targetSessions=5;
+    if(plans?.[0]){try{const p=JSON.parse(plans[0].plan_data);const week1=p.weeks?.[0];if(week1)targetSessions=week1.days?.filter(d=>d.type!=='Rest').length||5;}catch(e){}}
+    const circumference=188.5,pct=Math.min(sessionsThisWeek/targetSessions,1),offset=circumference-(pct*circumference);
+    document.getElementById('ring-progress').style.strokeDashoffset=offset;
+    document.getElementById('ring-progress').style.stroke=sessionsThisWeek>=targetSessions?'#4ade80':'#1E90FF';
+    document.getElementById('ring-label').textContent=sessionsThisWeek+'/'+targetSessions;
+    document.getElementById('ring-title').textContent=sessionsThisWeek>=targetSessions?'✅ Week complete!':'This week sessions';
+    document.getElementById('ring-sub').textContent=sessionsThisWeek>=targetSessions?'Amazing week — you hit every session!':(targetSessions-sessionsThisWeek)+' session'+(targetSessions-sessionsThisWeek!==1?'s':'')+' to go this week';
+    const days=['M','T','W','T','F','S','S'],weekDateSet=new Set(thisWeekDates),ringDaysEl=document.getElementById('ring-days');
+    ringDaysEl.innerHTML=days.map((d,i)=>{const dayDate=new Date(weekStart);dayDate.setDate(weekStart.getDate()+i);const dateStr=dayDate.toISOString().slice(0,10);const isToday=dateStr===today;const isDone=weekDateSet.has(dateStr);return `<div class="ring-day ${isDone?'done':isToday?'today':''}">${d}</div>`;}).join('');
+    document.getElementById('week-ring-wrap').style.display='flex';
+  } catch(e){console.log('Streak error:',e);}
 }
-// ── END STREAK ─────────────────────────────────────────────────────────────
 
 async function loadPlans() {
-  const { data: plans, error } = await sb
-    .from('plans').select('*').eq('user_id', currentUser.id)
-    .order('created_at', { ascending: false });
-
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('content').style.display = 'block';
+  const { data: plans, error } = await sb.from('plans').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
+  document.getElementById('loading').style.display='none';
+  document.getElementById('content').style.display='block';
   loadStreakAndRing();
-
-  if (error || !plans || plans.length === 0) {
-    document.getElementById('s-plans').textContent = '0';
-    document.getElementById('plans-list').innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">🏊🚴🏃</div>
-        <h3>No plans yet</h3>
-        <p>Build your first personalised triathlon training plan — it only takes 2 minutes.</p>
-        <a href="/plan.html" class="btn-create">Build my first plan →</a>
-      </div>`;
+  if (error || !plans || plans.length===0) {
+    document.getElementById('s-plans').textContent='0';
+    document.getElementById('plans-list').innerHTML=`<div class="empty"><div class="empty-icon">🏊🚴🏃</div><h3>No plans yet</h3><p>Build your first personalised triathlon training plan — it only takes 2 minutes.</p><a href="/plan.html" class="btn-create">Build my first plan →</a></div>`;
     return;
   }
-
-  document.getElementById('s-plans').textContent = plans.length;
-  document.getElementById('s-race').textContent = plans[0].race ? plans[0].race.split(' ')[0] : '—';
-
+  document.getElementById('s-plans').textContent=plans.length;
+  document.getElementById('s-race').textContent=plans[0].race?plans[0].race.split(' ')[0]:'—';
   document.getElementById('plans-list').innerHTML = plans.map(p => {
     const date = new Date(p.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
     let planObj = null;
     try { planObj = JSON.parse(p.plan_data); } catch(e) {}
     const weeks = planObj?.weeks?.length || '—';
+    const displayName = planObj?.planName || p.race || 'Training Plan';
     return `
       <div class="plan-card" onclick="viewPlan('${p.id}')">
         <div class="plan-card-top">
-          <div>
-            <div class="plan-card-title">${p.race || 'Training Plan'}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="plan-card-title" id="name-display-${p.id}">${displayName}</div>
             <div class="plan-card-date">Created ${date}</div>
+          </div>
+          <button onclick="event.stopPropagation();startRename('${p.id}')" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(30,144,255,0.4)';this.style.color='#1E90FF'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.4)'">✏️ Rename</button>
+        </div>
+        <div id="rename-form-${p.id}" style="display:none;margin-bottom:12px;" onclick="event.stopPropagation()">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="rename-input-${p.id}" type="text" placeholder="Enter plan name..." style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(30,144,255,0.4);border-radius:8px;padding:9px 14px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;" onkeydown="if(event.key==='Enter')saveRename('${p.id}');if(event.key==='Escape')cancelRename('${p.id}')" />
+            <button onclick="saveRename('${p.id}')" style="background:var(--blue);border:none;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">Save</button>
+            <button onclick="cancelRename('${p.id}')" style="background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);padding:9px 12px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">✕</button>
           </div>
         </div>
         <div class="plan-card-meta">
@@ -520,11 +345,84 @@ async function loadPlans() {
 
 function viewPlan(id) { window.location.href = '/plan.html?load=' + id; }
 
+function startRename(id) {
+  document.getElementById('rename-form-' + id).style.display = 'block';
+  const input = document.getElementById('rename-input-' + id);
+  // Pre-fill with current name
+  input.value = document.getElementById('name-display-' + id).textContent;
+  input.focus();
+  input.select();
+}
+
+function cancelRename(id) {
+  document.getElementById('rename-form-' + id).style.display = 'none';
+}
+
+async function saveRename(id) {
+  const input = document.getElementById('rename-input-' + id);
+  const newName = input.value.trim();
+  if (!newName) return;
+  const btn = input.nextElementSibling;
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  try {
+    const { data: plan, error } = await sb.from('plans').select('plan_data').eq('id', id).single();
+    if (error || !plan) throw new Error('Could not load plan');
+    let planObj = {};
+    try { planObj = JSON.parse(plan.plan_data); } catch(e) {}
+    planObj.planName = newName;
+    const { error: updateErr } = await sb.from('plans').update({ plan_data: JSON.stringify(planObj) }).eq('id', id);
+    if (updateErr) throw updateErr;
+    document.getElementById('name-display-' + id).textContent = newName;
+    document.getElementById('rename-form-' + id).style.display = 'none';
+  } catch(e) {
+    btn.textContent = 'Save';
+    btn.disabled = false;
+    alert('Could not save — please try again.');
+  }
+}
+
+function startRename(id) {
+  document.getElementById('rename-form-' + id).style.display = 'block';
+  const input = document.getElementById('rename-input-' + id);
+  input.value = document.getElementById('name-display-' + id).textContent;
+  input.focus();
+  input.select();
+}
+
+function cancelRename(id) {
+  document.getElementById('rename-form-' + id).style.display = 'none';
+}
+
+async function saveRename(id) {
+  const input = document.getElementById('rename-input-' + id);
+  const newName = input.value.trim();
+  if (!newName) return;
+  const saveBtn = input.nextElementSibling;
+  saveBtn.textContent = 'Saving...';
+  saveBtn.disabled = true;
+  try {
+    const { data: plan, error } = await sb.from('plans').select('plan_data').eq('id', id).single();
+    if (error || !plan) throw new Error('Could not load plan');
+    let planObj = {};
+    try { planObj = JSON.parse(plan.plan_data); } catch(e) {}
+    planObj.planName = newName;
+    const { error: updateErr } = await sb.from('plans').update({ plan_data: JSON.stringify(planObj) }).eq('id', id);
+    if (updateErr) throw updateErr;
+    document.getElementById('name-display-' + id).textContent = newName;
+    document.getElementById('rename-form-' + id).style.display = 'none';
+  } catch(e) {
+    saveBtn.textContent = 'Save';
+    saveBtn.disabled = false;
+    alert('Could not save — please try again.');
+  }
+}
+
 async function deletePlan(id) {
   if (!confirm('Delete this plan? Your completed sessions and streak will also be reset.')) return;
-  const { data: { session } } = await sb.auth.getSession();
-  await sb.from('completions').delete().eq('user_id', session.user.id);
-  await sb.from('plans').delete().eq('id', id);
+  const { data:{ session } } = await sb.auth.getSession();
+  await sb.from('completions').delete().eq('user_id',session.user.id);
+  await sb.from('plans').delete().eq('id',id);
   loadPlans();
   loadStreakAndRing();
 }
