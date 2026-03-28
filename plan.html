@@ -912,92 +912,128 @@ async function buildPlan(){
   });
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
-  const prompt=`You are a world-class triathlon coach building a personalised training plan. Return ONLY valid JSON, no other text.
+  const prompt=`You are an elite triathlon coach with 20+ years experience coaching age groupers to Kona qualifiers. You write training plans that feel genuinely different week to week — not cookie-cutter AI output. Return ONLY valid JSON, no other text.
 
-ATHLETE:
-Name: ${A.name}, Race: ${A.race}, Goal time: ${A.goaltimeText||'No specific time target'}, Experience: ${A.exp}, Fitness: ${A.fitness}
-Weakness: ${A.weak}, Hours/week: ${A.hours}, Training days: ${A.days.join(', ')}
-Pool: ${A.pool}, Injury: ${A.injury}, Age: ${A.age}, Weeks: ${w}
+ATHLETE PROFILE:
+- Name: ${A.name}
+- Race: ${A.race}
+- Goal: ${A.goaltimeText||'Complete the race'}
+- Experience: ${A.exp}
+- Current fitness: ${A.fitness}
+- Biggest weakness: ${A.weak}
+- Available hours/week: ${A.hours}
+- Training days: ${A.days.join(', ')}
+- Pool access: ${A.pool}
+- Injuries/limitations: ${A.injury||'None'}
+- Age: ${A.age}
+- Weeks until race: ${w}
 
-Return this exact JSON structure:
+COACHING PHILOSOPHY — READ THIS CAREFULLY:
+Every session must feel like it was written by a real coach who knows this athlete. Not generic. Not vague.
+
+SESSION QUALITY RULES (non-negotiable):
+1. MAINSET must be SPECIFIC. Never write "30min easy run." Write "30min continuous at 6:00-6:30/km — should feel like you could hold a full conversation. If you're breathing hard you're going too fast."
+2. COACH NOTES must reference WHY this session exists in the context of the week. E.g. "You've got a hard bike tomorrow so keep this controlled — this is about moving blood not creating fatigue."
+3. Every swim mainset must include exact intervals with specific rest: "8x100m descending from 1:55 to 1:45 — each one slightly faster. 15 sec rest only. Focus: high elbow on the catch, drive from the hips not the shoulders."
+4. Every bike mainset must reference cadence: "Hold 85-90rpm throughout. Resistance should feel like you're pushing but not grinding."
+5. Every run mainset must include a technique cue: "Short quick steps, cadence 175-180spm. Land under your hips not in front."
+6. PHASE CHARACTER — sessions must FEEL different across phases:
+   - Base: long and conversational, technique-focused, RPE 4-6. Build the engine quietly.
+   - Build: purposeful discomfort. Threshold work, race-pace sets, RPE 6-8. Now we test the engine.
+   - Peak: race simulation. Everything at race pace. RPE 7-9. Trust the training.
+   - Taper: short, sharp, confident. Maintain neuromuscular sharpness without accumulating fatigue.
+7. WEEKLY NARRATIVE: The "focus" field must capture the character of the whole week in 3-5 words. Examples: "Finding your engine", "Pushing the threshold", "Race pace baptism", "Trust the process", "Quiet miles, loud adaptation"
+8. SESSION NAMES must be specific and evocative. Not "Swim Intervals." Use "Descending 100s — Find Your Pace", "Threshold Ladder — Hurt a Little", "Long Slow Distance — Just Move", "Brick Confidence Builder", "Speed Endurance — The Uncomfortable Truth"
+9. WARMUP must be progressive and specific. Not "400m easy." Write "400m as: 100m freestyle / 100m catch-up drill / 100m pull buoy / 100m build to session pace. Let the body wake up."
+10. Never repeat the same mainset structure twice across the plan. Every session is unique.
+11. WEAKNESSES: ${A.weak} — directly address this weakness. If swim is weak, add extra technique cues to every swim. If run is weak, add more run-specific cues. Reference it in the intro.
+
+SESSION STRUCTURE RULES:
+- Training days (${A.days.join(', ')}) get sessions, all other days are Rest
+- Never schedule two hard sessions (RPE 7+) back to back
+- Always follow a hard day with easy or rest
+- Week 1-2: Base (RPE 4-6, technique, aerobic volume)
+- Week 3: Build (RPE 6-8, intervals, threshold)
+- Week 4: Build/Peak (RPE 7-9, race pace, bricks)
+- Session types: "Swim", "Bike", "Run", "Brick", "Strength", "Rest"
+- Brick sessions: name "Brick — Bike + Run", cover both in mainset
+- duration: integer minutes
+- effort: RPE 1-10 integer
+- zone: HR zone 1-5 integer
+- paceTarget: specific to this athlete's goal time. Swim: "/100m", Bike: "km/h", Run: "/km", Strength/Rest: "N/A"
+- heartRateZone: 1-5 integer
+
+PACE TARGETS — calculate from goal time ${A.goaltimeText||'completion'}:
+- Base sessions: 10-15% slower than race pace
+- Build sessions: at or slightly faster than race pace
+- Recovery sessions: 20-30% slower than race pace
+- Always give a specific range e.g. "1:48-2:00 /100m" not just "easy"
+
+${A.race === 'Full Ironman' ? `
+IRONMAN-SPECIFIC RULES:
+MANDATORY DURATIONS (non-negotiable):
+- Long ride (Sunday): 180-240 min, TT position, aerobic only. coachNote must include: "NOT FAST. Aerobic only. TT position. 85+ cadence. You should be able to hold a conversation."
+- Long run: 90-120 min with race-pace kilometers in the middle third
+- Threshold bike: 90-120 min (30min WU + 45min above FTP non-stop + 15min CD)
+- Saturday swim: 60-70 min, 3500-4200m
+- Brick run off bike: 20-30 min at IM run pace
+WEEKLY RHYTHM: Hard Tue/Thu/Sat/Sun. Easy Mon/Wed/Fri.
+- Week 4 = FULL RECOVERY. Cut intensity 50%. 2 full rest days. coachNote must include: "SLEEP. EAT. HYDRATE. This week is where the fitness is made — in how well you recover, not in the sessions themselves."
+- Brick sessions: first 10-15min fast off bike, then settle to IM run pace
+- Long runs: include 6-10x1km at marathon pace with easy jog recovery between
+- Swim variety: mix technique/drill sessions, speed 50s, long aerobic pull sets — never the same twice
+` : A.race === 'Half Ironman 70.3' ? `
+70.3-SPECIFIC RULES:
+- Long ride: 150-180 min with 70.3 pace intervals in the middle + 20-30min brick run
+- Long run: 90-105 min with 70.3 race pace in the final third
+- Swim: 2000-3000m, include race-pace 400m and 200m sets
+- Brick sessions: 15-20min at 70.3 run pace off the bike — focus on quick leg turnover
+- Week 4 = recovery week, reduce volume 40%, keep some intensity
+` : A.race === 'Olympic Triathlon' ? `
+OLYMPIC-SPECIFIC RULES:
+- Olympic is a 2hr maximal effort — train accordingly
+- Long ride: 75-90 min with sustained threshold intervals
+- Long run: 50-65 min with tempo sections at Olympic race pace
+- Swim: 1500-2500m, race-pace 200m and 400m sets
+- Bricks: 15-20min at Olympic race pace — this should be uncomfortable
+` : A.race === 'Sprint Triathlon' ? `
+SPRINT-SPECIFIC RULES:
+- Sprint is 60-90 min at near-maximum effort — it should hurt
+- Bike: 45-60 min with VO2max intervals, high cadence
+- Run: 30-45 min with speed work and strides
+- Swim: 800-1500m, fast 50s and 100s with short rest
+- Bricks: 10-15min full gas run off bike
+` : ``}
+
+RETURN THIS EXACT JSON STRUCTURE:
 {
-  "intro": "2-3 warm personalised sentences to ${A.name} about their ${A.race} plan",
+  "intro": "3-4 sentences to ${A.name}. Reference their specific goal (${A.goaltimeText||'completing the race'}), acknowledge their weakness (${A.weak}), and tell them what the next ${w} weeks will feel like. Be direct. Make them feel coached, not managed.",
   "weeks": [
     {
       "weekNumber": 1,
       "phase": "Base",
-      "focus": "Aerobic base",
+      "focus": "Finding your engine",
+      "weeklyNarrative": "2-3 sentences explaining the week. Why is it structured this way? What should the athlete feel by Sunday? Reference the specific sessions.",
       "days": [
         {
           "day": "Monday",
           "type": "Swim",
-          "name": "Technique & Endurance",
+          "name": "Catch Mechanics — Long & Easy",
           "duration": 45,
           "effort": 5,
           "zone": 2,
-          "purpose": "Build aerobic base and refine stroke technique",
-          "warmup": "400m easy freestyle, focus on long smooth strokes",
-          "mainset": "6x100m at RPE 5/10 with 20 sec rest between each. Focus on catch and pull.",
-          "cooldown": "200m easy backstroke",
-          "coachNote": "If this feels too easy, that is perfect. Base work should feel comfortable.",
-          "paceTarget": "1:45-2:00 /100m",
+          "purpose": "One specific sentence: what physiological adaptation does this session create?",
+          "warmup": "Specific progressive warmup with drills and purpose, not just 'easy freestyle'",
+          "mainset": "Exact intervals, exact rest periods, exact pace targets, one specific technique cue per set",
+          "cooldown": "Short specific cooldown with a purpose",
+          "coachNote": "Why this session exists in context of the week. Reference what comes before and after. Speak directly to the athlete. Coach voice.",
+          "paceTarget": "1:50-2:05 /100m",
           "heartRateZone": 2
         }
       ]
     }
   ]
 }
-
-Rules:
-- Create 4 weeks of the plan
-- Each week has exactly 7 days (Monday to Sunday)
-- Training days (${A.days.join(', ')}) get sessions, all other days are type "Rest"
-- Distribute sessions intelligently: spread swim/bike/run across available days, never two hard sessions back to back
-- Week 1 = Base phase (easy, technique focus, RPE 4-6)
-- Week 2 = Base phase (slightly more volume)
-- Week 3 = Build phase (introduce intervals, RPE 6-7)
-- Week 4 = Build phase (brick sessions, race pace work, RPE 7-8)
-- Session types: "Swim", "Bike", "Run", "Brick", "Strength", "Rest"
-- For Brick sessions combine bike+run: name it "Brick — Bike + Run", include both in mainset
-- duration is in minutes (integer)
-- effort is RPE 1-10 (integer)
-- zone is HR zone 1-5 (integer)
-- Every session MUST have specific distances/times in mainset
-- Make it triathlon specific with proper periodisation for ${A.race}
-- focus field should be 1-3 words like "Aerobic base", "Technique", "Threshold", "Race pace"
-- Vary session names to be descriptive
-- paceTarget: a specific pace string tailored to the athlete's goal time and session type. Examples: "1:45-2:00 /100m" for swim, "28-32 km/h" for bike, "5:30-6:00 /km" for run, "N/A" for strength/rest
-- heartRateZone: integer 1-5 matching the effort. Zone 1-2 = easy/recovery, Zone 3 = tempo, Zone 4 = threshold, Zone 5 = max
-
-${A.race === 'Full Ironman' ? `
-FULL IRONMAN COACHING REFERENCE (proven sub-9h structure, coach Erich Felbabel HK National Team):
-MANDATORY SESSION DURATIONS — these are non-negotiable minimums:
-- Sunday long ride: duration MUST be 180-240 minutes (3-4 hours). Never shorter.
-- Saturday swim: duration MUST be 60-70 minutes (3500-4500 yds)
-- Saturday run: duration MUST be 60-75 minutes after the swim
-- Long run days: duration MUST be 90-120 minutes
-- Threshold bike: duration MUST be 90-120 minutes (30min WU + 45min FTP + 15min CD)
-- Brick run off bike: duration MUST be 20-30 minutes
-- Recovery week rides: still minimum 90 minutes, just easier
-STRUCTURE RULES:
-- Every 4th week = full recovery week. Cut intensity 50% but keep some volume. Include 2 full rest days. coachNote must say: SLEEP A LOT. EAT WELL. HYDRATE WELL. REST REST REST.
-- Sunday long ride: TT position aerobic non-stop. coachNote must say: NOT FAST. Aerobic only.
-- Threshold bike: 30min warmup + 45min non-stop above FTP + 15min cooldown
-- Saturday: long aerobic swim + aerobic run + 15min core work (3 separate sessions same day)
-- Bricks: first 10-15min fast off bike, then settle to IM run pace
-- Long runs: 10x1km at marathon pace with easy jogging recovery
-- Swim variety: technique/drill sessions, 50s speed sets, long aerobic pull sets
-- Coaching tone must be direct and specific: TT position > 2h non-stop NOT FAST. Spin the legs. Stay aerobic. Keep cadence high 85+. Race on race day not survive.
-- Recovery week coachNote: Critical Success Factor = absorb the training = recovery week
-- Peak weeks: race-simulation bricks at IM pace. Long ride 200+ minutes.
-` : A.race === 'Half Ironman 70.3' ? `
-HALF IRONMAN COACHING REFERENCE:
-- Every 4th week = recovery week. Reduce volume 40%.
-- Long ride: 2.5-3h with 70.3 pace intervals + 20-30min brick run
-- Long run: 1h30-1h45 with 70.3 race pace in the middle
-- Swim: 2000-3000m with race-pace 400m sets
-- Brick sessions: 15min at 70.3 run pace straight off bike
-` : ''}
 
 Return ONLY the JSON object. No markdown, no explanation.`;
 
