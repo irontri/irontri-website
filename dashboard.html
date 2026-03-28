@@ -314,7 +314,8 @@ async function loadPlans() {
     let planObj = null;
     try { planObj = JSON.parse(p.plan_data); } catch(e) {}
     const weeks = planObj?.weeks?.length || '—';
-    const displayName = p.name || planObj?.planName || p.race || 'Training Plan';
+    const savedNames = JSON.parse(localStorage.getItem('irontri_plan_names') || '{}');
+    const displayName = savedNames[p.id] || p.name || planObj?.planName || p.race || 'Training Plan';
     return `
       <div class="plan-card" onclick="viewPlan('${p.id}')">
         <div class="plan-card-top">
@@ -365,30 +366,22 @@ async function saveRename(id) {
   saveBtn.textContent = 'Saving...';
   saveBtn.disabled = true;
   try {
-    // Try saving to a dedicated name column first
+    // Save to Supabase name column
     const { error } = await sb
       .from('plans')
       .update({ name: newName })
       .eq('id', id);
 
-    if (error) {
-      // Column may not exist yet — fall back to patching plan_data
-      const { data: row, error: fetchErr } = await sb
-        .from('plans').select('plan_data').eq('id', id).single();
-      if (fetchErr || !row) throw new Error('Could not load plan');
-      const planObj = JSON.parse(row.plan_data);
-      planObj.planName = newName;
-      const { error: updateErr } = await sb
-        .from('plans').update({ plan_data: JSON.stringify(planObj) }).eq('id', id);
-      if (updateErr) throw updateErr;
-    }
+    // Always save to localStorage as reliable fallback
+    const names = JSON.parse(localStorage.getItem('irontri_plan_names') || '{}');
+    names[id] = newName;
+    localStorage.setItem('irontri_plan_names', JSON.stringify(names));
 
     document.getElementById('name-display-' + id).textContent = newName;
     document.getElementById('rename-form-' + id).style.display = 'none';
     saveBtn.textContent = 'Save';
     saveBtn.disabled = false;
   } catch(e) {
-    console.error('Rename error:', e);
     saveBtn.textContent = 'Save';
     saveBtn.disabled = false;
     alert('Could not save: ' + e.message);
