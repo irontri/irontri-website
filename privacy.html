@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — irontri</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root{--blue:#1E90FF;--bg:#0a0a0a;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--text:#fff;--muted:rgba(255,255,255,0.6);}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    nav{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:68px;background:#1E90FF;}
+    .nav-logo{display:flex;align-items:center;text-decoration:none;}
+    .nav-logo img{height:120px;width:auto;mix-blend-mode:screen;filter:brightness(10);}
+    .nav-back{color:rgba(255,255,255,0.85);text-decoration:none;font-size:14px;}
+    .container{max-width:760px;margin:0 auto;padding:60px 32px;}
+    h1{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;}
+    .updated{font-size:13px;color:var(--muted);margin-bottom:48px;}
+    h2{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-top:40px;margin-bottom:12px;}
+    p{font-size:15px;color:var(--muted);line-height:1.8;margin-bottom:14px;}
+    ul{padding-left:20px;margin-bottom:14px;}
+    ul li{font-size:15px;color:var(--muted);line-height:1.8;margin-bottom:6px;}
+    a{color:var(--blue);text-decoration:none;}
+    a:hover{text-decoration:underline;}
+    .strava-section{background:rgba(252,76,2,0.06);border:1px solid rgba(252,76,2,0.2);border-radius:14px;padding:24px;margin-top:40px;margin-bottom:40px;}
+    .strava-section h2{margin-top:0;color:#FC4C02;}
+    .divider{border:none;border-top:1px solid var(--border);margin:40px 0;}
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri" /></a>
+  <a href="index.html" class="nav-back">← Back</a>
+</nav>
+
+<div class="container">
+  <h1>Privacy Policy</h1>
+  <div class="updated">Last updated: 28 March 2026</div>
+
+  <p>irontri ("we", "us", or "our") is a personalised triathlon training platform operated by Dean Finnimore. This Privacy Policy explains how we collect, use, and protect your information when you use irontriapp.com.</p>
+
+  <h2>1. Information We Collect</h2>
+  <p>We collect the following information when you use irontri:</p>
+  <ul>
+    <li><strong>Account information:</strong> Your email address and name when you create an account.</li>
+    <li><strong>Training profile:</strong> Information you provide through our quiz — your race goals, fitness level, training availability, and schedule preferences.</li>
+    <li><strong>Training data:</strong> Sessions you mark as complete, RPE ratings, and plan interactions.</li>
+    <li><strong>Strava data:</strong> If you connect Strava, we access your recent activities (swim, bike, run) to automatically match completed sessions to your training plan. See section 3 for full details.</li>
+  </ul>
+
+  <h2>2. How We Use Your Information</h2>
+  <p>We use your information to:</p>
+  <ul>
+    <li>Generate and personalise your triathlon training plan</li>
+    <li>Track your training progress, streaks and session completions</li>
+    <li>Automatically sync completed activities from Strava to your plan</li>
+    <li>Add irontri session details to your Strava activity descriptions (only when you request it)</li>
+    <li>Improve our training plans and platform based on usage patterns</li>
+  </ul>
+  <p>We do not sell your personal data to third parties. We do not use your data for advertising purposes.</p>
+
+  <div class="strava-section">
+    <h2>🟠 Strava Data Usage</h2>
+    <p>irontri integrates with the Strava API. When you connect your Strava account, we:</p>
+    <ul>
+      <li><strong>Read</strong> your recent activities (type, date, distance, duration) to automatically match completed workouts to your training plan</li>
+      <li><strong>Write</strong> session descriptions to your Strava activities — only when you explicitly click "Share to Strava" on a session</li>
+      <li><strong>Store</strong> your Strava access token and refresh token securely in our database to maintain your connection</li>
+    </ul>
+    <p>We do not store your full activity history. We do not share your Strava data with any third parties. We only access the minimum data required to provide the Strava sync feature.</p>
+    <p>You can disconnect Strava at any time from your dashboard. Disconnecting immediately removes your stored Strava tokens from our system.</p>
+    <p>Our use of Strava data complies with the <a href="https://www.strava.com/legal/api" target="_blank">Strava API Agreement</a>.</p>
+  </div>
+
+  <h2>3. Data Storage & Security</h2>
+  <p>Your data is stored securely using <a href="https://supabase.com" target="_blank">Supabase</a>, a managed database platform with industry-standard encryption at rest and in transit. We use row-level security to ensure your data is only accessible to you.</p>
+  <p>We take reasonable steps to protect your data, but no internet transmission is 100% secure. Please use a strong password and keep your account credentials private.</p>
+
+  <h2>4. Data Retention</h2>
+  <p>We retain your account data for as long as your account is active. If you delete your account or request data deletion, we will remove your personal information and training data within 30 days.</p>
+
+  <h2>5. Your Rights</h2>
+  <p>You have the right to:</p>
+  <ul>
+    <li>Access the personal data we hold about you</li>
+    <li>Request correction of inaccurate data</li>
+    <li>Request deletion of your account and all associated data</li>
+    <li>Disconnect Strava and revoke our access to your Strava data at any time</li>
+  </ul>
+  <p>To exercise any of these rights, email us at <a href="mailto:deanfinnimore@hotmail.com">deanfinnimore@hotmail.com</a>.</p>
+
+  <h2>6. Third-Party Services</h2>
+  <p>irontri uses the following third-party services:</p>
+  <ul>
+    <li><strong>Supabase</strong> — database and authentication</li>
+    <li><strong>Anthropic Claude API</strong> — AI-powered training plan generation</li>
+    <li><strong>Strava API</strong> — activity sync (only when connected)</li>
+    <li><strong>Google Analytics</strong> — anonymous usage analytics</li>
+    <li><strong>Vercel</strong> — website hosting</li>
+  </ul>
+
+  <h2>7. Cookies</h2>
+  <p>We use essential cookies to keep you logged in to your account. We use Google Analytics cookies to understand how people use the site. These are anonymous and contain no personal information.</p>
+
+  <h2>8. Children's Privacy</h2>
+  <p>irontri is not directed at children under 13. We do not knowingly collect personal information from children under 13.</p>
+
+  <h2>9. Changes to This Policy</h2>
+  <p>We may update this Privacy Policy from time to time. We will notify you of any significant changes by posting the new policy on this page with an updated date.</p>
+
+  <h2>10. Contact Us</h2>
+  <p>If you have any questions about this Privacy Policy, please contact us at:<br />
+  <a href="mailto:deanfinnimore@hotmail.com">deanfinnimore@hotmail.com</a></p>
+
+</div>
+</body>
+</html>
