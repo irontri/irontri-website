@@ -376,7 +376,15 @@
     <input type="range" min="3" max="20" value="8" step="1" oninput="setH(this.value)">
     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:6px;"><span>3 hrs</span><span>20 hrs</span></div>
   </div>
-  <div class="qnav"><button class="bb" onclick="go(6)">← Back</button><button class="bn" onclick="go(8)">Continue →</button></div>
+  <div style="margin-top:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);">
+    <div style="font-size:12px;font-weight:500;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">🚴 Your FTP — optional</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Your Functional Threshold Power in watts. Leave blank if you don't know — we'll estimate it.</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <input type="number" id="iftp" min="50" max="500" placeholder="e.g. 220" oninput="A.ftp=this.value" style="width:130px;padding:13px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'" />
+      <span style="font-size:14px;color:var(--muted);">watts</span>
+    </div>
+  </div>
+  <div class="qnav" style="margin-top:28px;"><button class="bb" onclick="go(6)">← Back</button><button class="bn" onclick="go(8)">Continue →</button></div>
 </div>
 
 <!-- Q7 -->
@@ -588,7 +596,7 @@
 </div>
 
 <script>
-const A={goal:'',race:'',goaltime:'',goaltimeText:'',exp:'',fitness:'',weak:'',hours:8,days:[],pool:'',injury:'',age:'',name:'',email:'',startDate:'',date:''};
+const A={goal:'',race:'',goaltime:'',goaltimeText:'',exp:'',fitness:'',weak:'',hours:8,days:[],pool:'',injury:'',age:'',name:'',email:'',startDate:'',date:'',ftp:''};
 const T=12;
 let planData=null;
 let curWeek=0;
@@ -925,7 +933,7 @@ async function buildPlan(){
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
   const prompt = 'You are an elite triathlon coach. Return ONLY valid JSON, no other text.\n\n' +
-    'ATHLETE: Name: ' + A.name + ', Race: ' + A.race + ', Goal: ' + (A.goaltimeText||'Complete') + ', Experience: ' + A.exp + ', Fitness: ' + A.fitness + ', Weakness: ' + A.weak + ', Hours/week: ' + A.hours + ', Days: ' + A.days.join(', ') + ', Pool: ' + A.pool + ', Injury: ' + (A.injury||'None') + ', Age: ' + A.age + ', Weeks: ' + w + '\n\n' +
+    'ATHLETE: Name: ' + A.name + ', Race: ' + A.race + ', Goal: ' + (A.goaltimeText||'Complete') + ', Experience: ' + A.exp + ', Fitness: ' + A.fitness + ', Weakness: ' + A.weak + ', Hours/week: ' + A.hours + ', FTP: ' + (A.ftp ? A.ftp+'w' : 'unknown — estimate from experience') + ', Days: ' + A.days.join(', ') + ', Pool: ' + A.pool + ', Injury: ' + (A.injury||'None') + ', Age: ' + A.age + ', Weeks: ' + w + '\n\n' +
     'MANDATORY SESSION QUALITY RULES:\n' +
     '1. MAINSET: Exact intervals, exact rest, exact pace, one technique cue. Never vague. E.g. "8x100m descending 1:55 to 1:45, 15sec rest, high elbow on catch."\n' +
     '2. COACH NOTE: Reference why this session exists in the week. "Hard bike tomorrow — keep this controlled, move blood not create fatigue."\n' +
