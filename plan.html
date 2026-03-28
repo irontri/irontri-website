@@ -980,6 +980,10 @@ async function buildPlan(){
 
     if(!planData.weeks || planData.weeks.length === 0) throw new Error('No weeks in plan');
 
+    document.getElementById('gen').style.display='none';
+    document.getElementById('plan').style.display='block';
+    document.querySelector('.prog-wrap').style.display='none';
+
     document.getElementById('ptitle').textContent = (A.name ? A.name+"'s " : '') + A.race + ' Plan';
     document.getElementById('psub').textContent = 'Personalised for you';
     document.getElementById('pintro').textContent = planData.intro||'';
