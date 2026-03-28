@@ -669,29 +669,57 @@
 
 <!-- PRICING -->
 <section class="pricing" id="pricing">
-  <div class="section-label">Founding member offer</div>
-  <div class="section-title">Free. Forever. For the first 500.</div>
-  <p class="section-sub">irontri is free for our founding members — no credit card, no trial period, no catch.</p>
-  <div class="pricing-card">
-    <div class="founding-badge">Founding member offer</div>
-    <div class="price-big">$0</div>
-    <div class="price-sub">Free forever · First 500 members only</div>
-    <div class="pricing-features">
-      <div class="pf-item"><div class="pf-check"></div>Full personalised training plan</div>
-      <div class="pf-item"><div class="pf-check"></div>Swim, bike &amp; run workouts</div>
-      <div class="pf-item"><div class="pf-check"></div>Strava auto-sync</div>
-      <div class="pf-item"><div class="pf-check"></div>Pace &amp; HR zone targets</div>
-      <div class="pf-item"><div class="pf-check"></div>Race predictor tool</div>
-      <div class="pf-item"><div class="pf-check"></div>Strength &amp; mobility sessions</div>
+  <div style="max-width:780px;margin:0 auto;">
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+      <div style="width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 2s infinite;"></div>
+      <span style="font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#4ade80;">468 spots remaining</span>
     </div>
-    <div class="spots-wrap">
-      <div class="spots-bar-track">
-        <div class="spots-bar-fill" id="spots-bar" style="width:12%;"></div>
+
+    <div style="font-family:'Syne',sans-serif;font-size:clamp(32px,5vw,56px);font-weight:800;letter-spacing:-2px;line-height:1.05;margin-bottom:16px;">
+      The first 500 members<br>get irontri <span style="color:var(--blue);">free. Forever.</span>
+    </div>
+
+    <p style="font-size:17px;color:var(--muted);line-height:1.7;font-weight:300;max-width:540px;margin-bottom:48px;">
+      No trial. No credit card. No catch. When we launch paid plans, founding members keep everything free — permanently.
+    </p>
+
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:40px;display:flex;gap:48px;align-items:center;flex-wrap:wrap;margin-bottom:32px;">
+
+      <div style="flex:1;min-width:240px;">
+        <div style="font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:20px;">What you get</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:center;gap:12px;font-size:15px;color:rgba(255,255,255,0.85);">
+            <span style="color:var(--blue);font-size:16px;">→</span> Personalised swim, bike &amp; run plan
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;font-size:15px;color:rgba(255,255,255,0.85);">
+            <span style="color:var(--blue);font-size:16px;">→</span> Pace &amp; heart rate targets every session
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;font-size:15px;color:rgba(255,255,255,0.85);">
+            <span style="color:var(--blue);font-size:16px;">→</span> Strava auto-sync
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;font-size:15px;color:rgba(255,255,255,0.85);">
+            <span style="color:var(--blue);font-size:16px;">→</span> Race predictor tool
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;font-size:15px;color:rgba(255,255,255,0.85);">
+            <span style="color:var(--blue);font-size:16px;">→</span> Strength &amp; mobility sessions
+          </div>
+        </div>
       </div>
-      <div class="spots-text"><span id="spots-count">62</span> of 500 spots taken</div>
+
+      <div style="flex:0 0 220px;text-align:center;">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">Founding member spots</div>
+        <div style="font-family:'Syne',sans-serif;font-size:64px;font-weight:800;letter-spacing:-3px;line-height:1;color:#fff;margin-bottom:4px;"><span id="spots-count">32</span></div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">of 500 claimed</div>
+        <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;margin-bottom:24px;">
+          <div id="spots-bar" style="width:6.4%;height:100%;background:var(--blue);border-radius:100px;transition:width 1s ease;"></div>
+        </div>
+        <a href="/auth.html" style="display:block;background:var(--blue);color:#fff;padding:15px 24px;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='#1478d4'" onmouseout="this.style.background='#1E90FF'">Claim my free spot →</a>
+        <p style="font-size:12px;color:var(--faint);margin-top:10px;">No credit card · Free forever</p>
+      </div>
+
     </div>
-    <a href="/auth.html" class="pricing-cta">Claim my free spot →</a>
-    <p class="pricing-note">Free forever · No credit card needed</p>
+
   </div>
 </section>
 
