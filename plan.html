@@ -1394,6 +1394,17 @@ async function saveRpe(dayIndex, rating, btnEl) {
         setTimeout(() => prompt?.remove(), 400);
       }, 1800);
     }
+
+    // ── RPE ADAPTATION ──────────────────────────────────────────────────────
+    // If too easy (1-2) or too hard (4-5), adapt remaining sessions of same type
+    if (rating === 1 || rating === 2 || rating === 4 || rating === 5) {
+      const sessionType = planData.weeks[curWeek]?.days[dayIndex]?.type;
+      if (sessionType && sessionType !== 'Rest' && sessionType !== 'Brick' && sessionType !== 'Strength') {
+        await adaptFutureSessions(sessionType, rating, curWeek, dayIndex);
+      }
+    }
+    // ── END RPE ADAPTATION ──────────────────────────────────────────────────
+
   } catch(e) {
     console.log('RPE save error:', e);
   }
@@ -2082,6 +2093,117 @@ window.addEventListener('plan-loaded', () => {
   }
 });
 // ── END PLAN PAUSE ──────────────────────────────────────────────────────────
+
+
+// ── RPE ADAPTATION ENGINE ──────────────────────────────────────────────────
+async function adaptFutureSessions(sessionType, rpe, fromWeek, fromDay) {
+  const tooEasy = rpe <= 2;
+  const tooHard = rpe >= 4;
+  const direction = tooEasy ? 'harder' : 'easier';
+  const typeLabel = sessionType.toLowerCase();
+
+  // Collect all future incomplete sessions of this type
+  const futureSessions = [];
+  for (let w = fromWeek; w < planData.weeks.length; w++) {
+    const days = planData.weeks[w].days;
+    for (let d = 0; d < days.length; d++) {
+      if (w === fromWeek && d <= fromDay) continue; // skip past sessions
+      const day = days[d];
+      if (day.type === sessionType && !day.adapted) {
+        futureSessions.push({ w, d, day });
+      }
+    }
+  }
+
+  if (futureSessions.length === 0) return;
+
+  // Show adapting toast
+  showIronToast(`Adapting your upcoming ${typeLabel} sessions...`, 'var(--blue)');
+
+  // Build prompt for the AI to rewrite mainsets only
+  const sessionsJson = futureSessions.map(({w, d, day}) => ({
+    weekNum: w + 1,
+    dayIndex: d,
+    name: day.name,
+    duration: day.duration,
+    effort: day.effort,
+    zone: day.zone,
+    paceTarget: day.paceTarget,
+    warmup: day.warmup,
+    mainset: day.mainset,
+    cooldown: day.cooldown
+  }));
+
+  const prompt = `You are a triathlon coach. The athlete just rated their ${sessionType} session RPE ${rpe}/5 (${tooEasy ? 'too easy — needs more challenge' : 'too hard — needs to be scaled back'}).
+
+Rewrite the following upcoming ${sessionType} sessions to be ${direction}. ${tooEasy
+  ? 'Increase intensity: add intervals, reduce rest periods, increase reps, or increase target pace. Keep duration the same.'
+  : 'Reduce intensity: reduce intervals, add rest periods, reduce reps, or soften target pace. Keep duration the same.'
+}
+
+For each session, return ONLY updated fields: name, mainset, paceTarget, effort (1-10), zone (1-5).
+Keep warmup and cooldown unchanged.
+
+Sessions to adapt:
+${JSON.stringify(sessionsJson, null, 2)}
+
+Return ONLY a JSON array with the same length. Each item: { weekNum, dayIndex, name, mainset, paceTarget, effort, zone }
+No markdown, no explanation.`;
+
+  try {
+    const r = await fetch('/api/generate-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    const data = await r.json();
+    let txt = (data.plan || '').replace(/```json/g,'').replace(/```/g,'').trim();
+    const start = txt.indexOf('[');
+    const end = txt.lastIndexOf(']');
+    if (start === -1 || end === -1) throw new Error('No JSON array in response');
+    const adapted = JSON.parse(txt.slice(start, end + 1));
+
+    // Apply updates to planData
+    for (const item of adapted) {
+      const w = item.weekNum - 1;
+      const d = item.dayIndex;
+      const day = planData.weeks[w]?.days[d];
+      if (!day) continue;
+      if (item.name) day.name = item.name;
+      if (item.mainset) day.mainset = item.mainset;
+      if (item.paceTarget) day.paceTarget = item.paceTarget;
+      if (item.effort) day.effort = item.effort;
+      if (item.zone) day.zone = item.zone;
+      day.adapted = true;
+      day.adaptedRpe = rpe;
+    }
+
+    // Save back to Supabase
+    const urlParams = new URLSearchParams(window.location.search);
+    const loadId = urlParams.get('load');
+    if (loadId) {
+      await sb2.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', loadId);
+    }
+
+    // Re-render current week
+    renderWeek();
+    if (typeof curDay === 'number') selectDay(curDay);
+
+    // Success toast
+    const count = adapted.length;
+    showIronToast(
+      tooEasy
+        ? `💪 Done — ${count} upcoming ${typeLabel} session${count===1?'':'s'} stepped up`
+        : `👌 Done — ${count} upcoming ${typeLabel} session${count===1?'':'s'} scaled back`,
+      tooEasy ? '#4ade80' : '#fb923c'
+    );
+
+  } catch(e) {
+    console.error('RPE adapt error:', e);
+    showIronToast('Could not adapt sessions right now', '#ef4444');
+  }
+}
+// ── END RPE ADAPTATION ENGINE ──────────────────────────────────────────────
 
 </script>
 
