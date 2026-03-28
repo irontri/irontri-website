@@ -110,7 +110,7 @@
 <nav>
   <a href="index.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri" /></a>
   <div class="nav-right">
-    <a href="mailto:deanfinnimore@hotmail.com?subject=irontri%20feedback&body=Hi%20Dean%2C%20here's%20my%20feedback%3A" style="color:rgba(255,255,255,0.75);font-size:13px;text-decoration:none;padding:7px 14px;border:1px solid rgba(255,255,255,0.25);border-radius:8px;">💬 Feedback</a>
+    <a href="/cdn-cgi/l/email-protection#107475717e76797e7e797d7f627550787f647d71797c3e737f7d2f6365727a7573642d79627f7e646279352220767575747271737b36727f74692d58793522205475717e3522533522207875627537633522207d69352220767575747271737b352351" style="color:rgba(255,255,255,0.75);font-size:13px;text-decoration:none;padding:7px 14px;border:1px solid rgba(255,255,255,0.25);border-radius:8px;">💬 Feedback</a>
     <a href="profile.html" class="nav-user" id="nav-user"></a>
     <button class="btn-logout" onclick="logOut()">Log out</button>
   </div>
@@ -165,7 +165,7 @@
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 const SUPABASE_URL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -206,7 +206,7 @@ async function loadStravaSection() {
   const section = document.getElementById('strava-section');
   if (!userData?.strava_access_token) {
     const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=https://irontriapp.com/strava-callback.html&approval_prompt=force&scope=activity:read_all,activity:write`;
-    section.innerHTML = `<div class="strava-banner"><div class="strava-logo">🟠</div><div class="strava-text"><h3>Connect Strava</h3><p>Sync your swims, rides and runs automatically.</p></div><a href="${authUrl}" class="btn-strava">Connect Strava →</a></div>`;
+    section.innerHTML = `<div class="strava-banner" style="opacity:0.8;"><div class="strava-logo">🟠</div><div class="strava-text"><h3>Strava integration coming soon</h3><p>We're awaiting approval from Strava. Your activities will sync automatically once live — no action needed from you.</p></div><div style="background:rgba(252,76,2,0.15);border:1px solid rgba(252,76,2,0.3);color:#FC4C02;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;white-space:nowrap;">🔜 Coming soon</div></div>`;
     return;
   }
   let accessToken = userData.strava_access_token;
@@ -392,17 +392,4 @@ async function deletePlan(id) {
   if (!confirm('Delete this plan? Your completed sessions and streak will also be reset.')) return;
   const { data:{ session } } = await sb.auth.getSession();
   await sb.from('completions').delete().eq('user_id', session.user.id);
-  await sb.from('plans').delete().eq('id', id);
-  loadPlans();
-}
-
-async function logOut() {
-  await sb.auth.signOut();
-  localStorage.removeItem('irontri_user_name');
-  window.location.href = 'index.html';
-}
-
-init();
-</script>
-</body>
-</html>
+  await sb.fr
