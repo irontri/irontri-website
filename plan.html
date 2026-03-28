@@ -36,7 +36,7 @@
     .or{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
     .opt.sel .or{background:var(--blue);border-color:var(--blue);}
     .opt.sel .or::after{content:'';width:6px;height:4px;border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(-45deg) translateY(-1px);display:block;}
-    .ogrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px;}
+    .ogrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px;} #q2 .ogrid{grid-template-columns:1fr 1fr 1fr;}
     .og{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 16px;cursor:pointer;transition:all 0.15s;text-align:center;}
     .og:hover{background:rgba(30,144,255,0.07);border-color:rgba(30,144,255,0.3);}
     .og.sel{background:rgba(30,144,255,0.12);border-color:var(--blue);}
@@ -292,6 +292,7 @@
   <div class="ogrid">
     <div class="og" onclick="pg(this,'race','Sprint Triathlon')"><span class="ogi">⚡</span><div class="ogt">Sprint</div><div class="ogs">750m · 20km · 5km</div></div>
     <div class="og" onclick="pg(this,'race','Olympic Triathlon')"><span class="ogi">🏅</span><div class="ogt">Olympic</div><div class="ogs">1.5km · 40km · 10km</div></div>
+    <div class="og" onclick="pg(this,'race','T100 Triathlon')"><span class="ogi">💯</span><div class="ogt">T100</div><div class="ogs">2km · 80km · 18km</div></div>
     <div class="og" onclick="pg(this,'race','Half Ironman 70.3')"><span class="ogi">🔥</span><div class="ogt">Half Ironman</div><div class="ogs">1.9km · 90km · 21km</div></div>
     <div class="og" onclick="pg(this,'race','Full Ironman')"><span class="ogi">🦾</span><div class="ogt">Full Ironman</div><div class="ogs">3.8km · 180km · 42km</div></div>
   </div>
@@ -618,7 +619,7 @@ function updateGoalTime(){
   if(h===0&&m===0)return;
   const totalMins=h*60+m;
   A.goaltimeText=`${h}:${String(m).padStart(2,'0')} (${totalMins} minutes)`;
-  const splits={'Sprint Triathlon':{swim:750,bike:20,run:5,t1:2.5,t2:1.5},'Olympic Triathlon':{swim:1500,bike:40,run:10,t1:3,t2:2},'Half Ironman 70.3':{swim:1900,bike:90,run:21.1,t1:5,t2:4},'Full Ironman':{swim:3800,bike:180,run:42.2,t1:8,t2:6}};
+  const splits={'Sprint Triathlon':{swim:750,bike:20,run:5,t1:2.5,t2:1.5},'Olympic Triathlon':{swim:1500,bike:40,run:10,t1:3,t2:2},'T100 Triathlon':{swim:2000,bike:80,run:18,t1:4,t2:3},'Half Ironman 70.3':{swim:1900,bike:90,run:21.1,t1:5,t2:4},'Full Ironman':{swim:3800,bike:180,run:42.2,t1:8,t2:6}};
   const d=splits[A.race];
   if(!d){document.getElementById('n3').disabled=false;return;}
   const swimMins=Math.round(totalMins*0.12);
@@ -913,6 +914,7 @@ async function buildPlan(){
   const timeMsg = document.getElementById('gen-time-msg');
   if (timeMsg) {
     if (A.race === 'Full Ironman') timeMsg.textContent = 'Building your Ironman plan — up to 45 seconds';
+    else if (A.race === 'T100 Triathlon') timeMsg.textContent = 'Building your T100 plan — up to 45 seconds';
     else if (A.race === 'Half Ironman 70.3') timeMsg.textContent = 'Building your 70.3 plan — up to 60 seconds';
     else timeMsg.textContent = 'Up to 60 seconds — worth the wait';
   }
@@ -953,6 +955,7 @@ async function buildPlan(){
     '- duration: int minutes. effort: RPE 1-10. zone: HR 1-5.\n' +
     '- paceTarget: Swim="/100m", Bike="km/h", Run="/km", else "N/A". Always a specific range.\n\n' +
     (A.race === 'Full Ironman' ? 'IRONMAN: Long ride 180-240min TT position aerobic only (coachNote must say NOT FAST, Aerobic, 85+ cadence). Long run 90-120min with race-pace km in middle. Threshold bike 90min (30WU+45FTP+15CD). Week 4 = recovery (coachNote must say SLEEP EAT HYDRATE, fitness is made in recovery).\n\n' :
+     A.race === 'T100 Triathlon' ? 'T100: Intensity between Olympic and 70.3. Swim 2000-2500m with race-pace sets. Bike 80-100min threshold at high cadence, slightly faster than 70.3 effort. Run 60-75min with race pace in final third. Bricks 20-25min at race pace. Week 4 = recovery -40% volume.\n\n' :
      A.race === 'Half Ironman 70.3' ? '70.3: Long ride 150-180min with race-pace intervals + 20-30min brick. Long run 90-105min, race pace in final third. Swim 2000-3000m with race-pace sets. Week 4 = recovery -40% volume.\n\n' :
      A.race === 'Olympic Triathlon' ? 'OLYMPIC: High intensity. Ride 75-90min threshold. Run 50-65min tempo. Swim 1500-2500m race-pace 200/400s. Bricks 15-20min at race pace.\n\n' :
      A.race === 'Sprint Triathlon' ? 'SPRINT: Max intensity. Bike 45-60min VO2max intervals. Run 30-45min speed work. Swim 800-1500m fast 50s/100s. Brick 10-15min full gas.\n\n' : '') +
