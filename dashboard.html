@@ -206,7 +206,7 @@ async function loadStravaSection() {
   const section = document.getElementById('strava-section');
   if (!userData?.strava_access_token) {
     const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=https://irontriapp.com/strava-callback.html&approval_prompt=force&scope=activity:read_all,activity:write`;
-    section.innerHTML = `<div class="strava-banner" style="opacity:0.8;"><div class="strava-logo">🟠</div><div class="strava-text"><h3>Strava integration coming soon</h3><p>We're awaiting approval from Strava. Your activities will sync automatically once live — no action needed from you.</p></div><div style="background:rgba(252,76,2,0.15);border:1px solid rgba(252,76,2,0.3);color:#FC4C02;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;white-space:nowrap;">🔜 Coming soon</div></div>`;
+    section.innerHTML = `<div class="strava-banner"><div class="strava-logo">🟠</div><div class="strava-text"><h3>Strava sync — coming soon</h3><p>We're finalising our Strava integration. Once live, your swims, rides and runs will automatically sync to your plan — no manual logging needed.</p></div><div style="background:rgba(252,76,2,0.12);border:1px solid rgba(252,76,2,0.25);color:#FC4C02;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;white-space:nowrap;">🔜 Coming soon</div></div>`;
     return;
   }
   let accessToken = userData.strava_access_token;
