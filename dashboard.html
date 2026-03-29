@@ -200,7 +200,13 @@
   
   <!-- PACE IMPROVEMENT -->
   <div class="pace-card" id="pace-card">
-    <div class="pace-card-title">📈 Your progress since week 1</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);font-weight:600;">📈 Your progress since week 1</div>
+    <div style="display:flex;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:3px;gap:2px;">
+      <button id="dash-metric" onclick="setDashUnits('metric')" style="padding:4px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:#1E90FF;color:#fff;transition:all 0.15s;">km / m</button>
+      <button id="dash-imperial" onclick="setDashUnits('imperial')" style="padding:4px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;">mi / yd</button>
+    </div>
+  </div>
     <div class="pace-rows" id="pace-rows"></div>
   </div>
   <div class="today-card" id="today-card">
@@ -588,6 +594,55 @@ async function loadTodaySession() {
   } catch(e) { console.log('Today session error:', e); }
 }
 
+
+// ── DASHBOARD UNIT TOGGLE ────────────────────────────────────────────────────
+let dashUnits = localStorage.getItem('irontri_units') || 'metric';
+let _paceRowsCache = [];
+
+function setDashUnits(units) {
+  dashUnits = units;
+  localStorage.setItem('irontri_units', units);
+  const m = document.getElementById('dash-metric');
+  const i = document.getElementById('dash-imperial');
+  if(m){ m.style.background=units==='metric'?'#1E90FF':'transparent'; m.style.color=units==='metric'?'#fff':'rgba(255,255,255,0.4)'; }
+  if(i){ i.style.background=units==='imperial'?'#1E90FF':'transparent'; i.style.color=units==='imperial'?'#fff':'rgba(255,255,255,0.4)'; }
+  if(_paceRowsCache.length) renderDashPaceRows(units);
+}
+
+function convertPaceStr(str, units) {
+  if(!str || str==='N/A' || str==='—' || units==='metric') return str;
+  const swim = str.match(/(\d+):(\d+)\/100m/i);
+  if(swim){ const s=parseInt(swim[1])*60+parseInt(swim[2]); const c=Math.round(s*(100/109.361)); return Math.floor(c/60)+':'+String(c%60).padStart(2,'0')+'/100yd'; }
+  const run = str.match(/(\d+):(\d+)\/km/i);
+  if(run){ const s=parseInt(run[1])*60+parseInt(run[2]); const c=Math.round(s*1.60934); return Math.floor(c/60)+':'+String(c%60).padStart(2,'0')+'/mi'; }
+  const bike = str.match(/([\d.]+)\s*km\/h/i);
+  if(bike) return (parseFloat(bike[1])*0.621371).toFixed(1)+' mph';
+  return str;
+}
+
+function renderDashPaceRows(units) {
+  const el = document.getElementById('pace-rows');
+  if(!el || !_paceRowsCache.length) return;
+  const sportMeta = { Swim:{icon:'🏊',color:'#38bdf8',label:'Swim'}, Bike:{icon:'🚴',color:'#fb923c',label:'Bike'}, Run:{icon:'🏃',color:'#4ade80',label:'Run'} };
+  el.innerHTML = _paceRowsCache.map(r => {
+    const meta = sportMeta[r.sport];
+    const fromDisp = convertPaceStr(r.fromStr, units);
+    const toDisp = convertPaceStr(r.toStr, units);
+    return `<div class="pace-row">
+      <div class="pace-sport">${meta.icon}</div>
+      <div class="pace-label">${meta.label}</div>
+      <div class="pace-bar-wrap"><div class="pace-bar" style="width:${r.barPct}%;background:${r.improved?meta.color:'rgba(255,255,255,0.15)'}"></div></div>
+      <div class="pace-values">
+        <span class="pace-from">${fromDisp}</span>
+        <span style="color:rgba(255,255,255,0.2);font-size:11px;">→</span>
+        <span class="pace-to">${toDisp}</span>
+        <span class="pace-delta ${r.same?'same':'better'}">${r.same?'no change':r.deltaStr}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+// ── END DASHBOARD UNIT TOGGLE ─────────────────────────────────────────────────
+
 // ── PACE IMPROVEMENT TRACKER ─────────────────────────────────────────────────
 function extractPaceSeconds(paceStr) {
   if (!paceStr || paceStr === 'N/A') return null;
@@ -686,6 +741,7 @@ async function loadPaceImprovement() {
     }
 
     if (rows.length === 0) return;
+    _paceRowsCache = rows;
 
     const card = document.getElementById('pace-card');
     const rowsEl = document.getElementById('pace-rows');
@@ -706,6 +762,8 @@ async function loadPaceImprovement() {
         </div>
       </div>`).join('');
 
+    if (dashUnits === 'imperial') setDashUnits('imperial');
+    else { const m=document.getElementById('dash-metric'); if(m){m.style.background='#1E90FF';m.style.color='#fff';} }
   } catch(e) { console.log('Pace tracker error:', e); }
 }
 // ── END PACE IMPROVEMENT TRACKER ─────────────────────────────────────────────
