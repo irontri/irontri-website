@@ -458,7 +458,10 @@ async function loadTodaySession() {
       planData = JSON.parse(txt);
     } catch(e) { return; }
 
-    if (!planData.weeks || !planData.startDate) return;
+    // Fall back to created_at for plans that predate startDate storage
+    const resolvedStart = planData.startDate || plan.created_at?.split('T')[0];
+    if (!planData.weeks || !resolvedStart) return;
+    planData.startDate = resolvedStart;
 
     // Race countdown
     const raceDate = planData.raceDate;
