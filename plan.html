@@ -976,7 +976,7 @@ Generate ${w} weeks using 3:1 periodisation and Erich Felbabel principles. Every
     const d = await r.json();
     let txt = d.plan || '';
     txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
-    const newData = JSON.parse(txt);
+    const newData =JSON.parse(txt.replace(/^```json\s*/,'').replace(/```\s*$/,'').trim()));
     const savedStartDate = planData.startDate;
     planData.weeks = [...planData.weeks, ...newData.weeks];
     planData.startDate = savedStartDate;
