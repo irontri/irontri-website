@@ -260,7 +260,28 @@
   gtag('js', new Date());
   gtag('config', 'G-BDZ8K3RR10');
 </script>
-</head>
+<style id="claude-agent-animation-styles">
+      @keyframes claude-pulse {
+        0% {
+          box-shadow: 
+            inset 0 0 10px rgba(217, 119, 87, 0.5),
+            inset 0 0 20px rgba(217, 119, 87, 0.3),
+            inset 0 0 30px rgba(217, 119, 87, 0.1);
+        }
+        50% {
+          box-shadow: 
+            inset 0 0 15px rgba(217, 119, 87, 0.7),
+            inset 0 0 25px rgba(217, 119, 87, 0.5),
+            inset 0 0 35px rgba(217, 119, 87, 0.2);
+        }
+        100% {
+          box-shadow: 
+            inset 0 0 10px rgba(217, 119, 87, 0.5),
+            inset 0 0 20px rgba(217, 119, 87, 0.3),
+            inset 0 0 30px rgba(217, 119, 87, 0.1);
+        }
+      }
+    </style></head>
 <body>
 <nav>
   <a href="index.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri"></a>
@@ -976,7 +997,7 @@ Generate ${w} weeks using 3:1 periodisation and Erich Felbabel principles. Every
     const d = await r.json();
     let txt = d.plan || '';
     txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
-    const newData =JSON.parse(txt.replace(/^```json\s*/,'').replace(/```\s*$/,'').trim()));
+    const newData =JSON.parse(txt.replace(/^```json\s*/,'').replace(/```\s*$/,'').trim());
     const savedStartDate = planData.startDate;
     planData.weeks = [...planData.weeks, ...newData.weeks];
     planData.startDate = savedStartDate;
@@ -2145,4 +2166,5 @@ No markdown, no explanation.`;
         <span id="claude-static-close-tooltip" style="position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%); padding: 6px 12px; background: #30302E; color: #FAF9F5; border-radius: 6px; font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Dismiss</span>
       </button>
     </div>
-</body></html>
+
+<div id="claude-agent-glow-border" style="position: fixed; inset: 0px; pointer-events: none; z-index: 2147483646; opacity: 1; transition: opacity 0.3s ease-in-out; animation: 2s ease-in-out 0s infinite normal none running claude-pulse; box-shadow: rgba(217, 119, 87, 0.5) 0px 0px 10px inset, rgba(217, 119, 87, 0.3) 0px 0px 20px inset, rgba(217, 119, 87, 0.1) 0px 0px 30px inset;"></div></body></html>
