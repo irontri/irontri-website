@@ -250,6 +250,14 @@
       .ogrid{grid-template-columns:1fr;}
       .sg{grid-template-columns:1fr;}
     }
+  
+    /* ── THRESHOLD INPUTS ── */
+    .thresh-card{border-radius:12px;padding:14px 16px;margin-bottom:0;}
+    .thresh-card-swim{background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.15);}
+    .thresh-card-bike{background:rgba(251,146,60,0.06);border:1px solid rgba(251,146,60,0.15);}
+    .thresh-card-run{background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);}
+    .thresh-title{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+    .thresh-input{width:58px;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
 <!-- Google Analytics -->
@@ -1124,7 +1132,53 @@ function updateRTP(){
     ftpHint.textContent='✓ FTP '+ftp+'w — zones Z1-Z5 calculated';
   }
 }
+
+let currentUnits = localStorage.getItem('irontri_units') || 'metric';
+
+function setUnits(units) {
+  currentUnits = units;
+  A.units = units;
+  localStorage.setItem('irontri_units', units);
+  const m = document.getElementById('btn-metric');
+  const i = document.getElementById('btn-imperial');
+  if(m){ m.style.background=units==='metric'?'#1E90FF':'transparent'; m.style.color=units==='metric'?'#fff':'rgba(255,255,255,0.4)'; }
+  if(i){ i.style.background=units==='imperial'?'#1E90FF':'transparent'; i.style.color=units==='imperial'?'#fff':'rgba(255,255,255,0.4)'; }
+  const sl = document.getElementById('swim-unit-label');
+  const rl = document.getElementById('run-unit-label');
+  if(sl) sl.textContent = units==='metric' ? '/ 100m' : '/ 100yd';
+  if(rl) rl.textContent = units==='metric' ? '/ km' : '/ mile';
+  const sd = document.getElementById('swim-thresh-desc');
+  const rd = document.getElementById('run-thresh-desc');
+  if(sd) sd.textContent = units==='metric' ? 'Threshold pace per 100m. 400m TT minus 200m TT = your CSS.' : 'Threshold pace per 100yd. 400yd TT minus 200yd TT = your CSS.';
+  if(rd) rd.textContent = units==='metric' ? '1-hour race pace per km. Roughly your 10km race pace. RPE 7-8.' : '1-hour race pace per mile. Roughly your 10km race pace. RPE 7-8.';
+  // Convert existing values
+  const cm=parseInt(document.getElementById('icss-min')?.value)||0, cs=parseInt(document.getElementById('icss-sec')?.value)||0;
+  if(cm||cs){ const t=cm*60+cs; const c=units==='imperial'?Math.round(t*(100/109.361)):Math.round(t*(109.361/100)); if(document.getElementById('icss-min')) document.getElementById('icss-min').value=Math.floor(c/60)||''; if(document.getElementById('icss-sec')) document.getElementById('icss-sec').value=String(c%60).padStart(2,'0'); updateCSS(); }
+  const rm=parseInt(document.getElementById('irtp-min')?.value)||0, rs=parseInt(document.getElementById('irtp-sec')?.value)||0;
+  if(rm||rs){ const t=rm*60+rs; const c=units==='imperial'?Math.round(t*1.60934):Math.round(t/1.60934); if(document.getElementById('irtp-min')) document.getElementById('irtp-min').value=Math.floor(c/60)||''; if(document.getElementById('irtp-sec')) document.getElementById('irtp-sec').value=String(c%60).padStart(2,'0'); updateRTP(); }
+}
+
+function updateCSS(){
+  const m=parseInt(document.getElementById('icss-min').value)||0;
+  const s=parseInt(document.getElementById('icss-sec').value)||0;
+  if(!m&&!s)return;
+  const unit = currentUnits==='imperial' ? '/100yd' : '/100m';
+  A.css=m+':'+String(s).padStart(2,'0')+unit;
+  const h=document.getElementById('css-hint');
+  if(h){h.style.display='block';h.textContent='✓ '+A.css;}
+}
+
+function updateRTP(){
+  const m=parseInt(document.getElementById('irtp-min').value)||0;
+  const s=parseInt(document.getElementById('irtp-sec').value)||0;
+  if(!m&&!s)return;
+  const unit = currentUnits==='imperial' ? '/mile' : '/km';
+  A.runThreshold=m+':'+String(s).padStart(2,'0')+unit;
+  const h=document.getElementById('rtp-hint');
+  if(h){h.style.display='block';h.textContent='✓ '+A.runThreshold;}
+}
 prog(1);
+setTimeout(()=>{ if(currentUnits==='imperial') setUnits('imperial'); },50);
   // Apply saved unit preference
   setTimeout(()=>{ if(currentUnits==='imperial') setUnits('imperial'); }, 100);
 
@@ -2114,57 +2168,3 @@ async function resumePlan() {
   if (!confirm('Resume your plan now? Remaining paused time will be cancelled.')) return;
 
   // Shift startDate back to today
-  const today = new Date().toISOString().split('T')[0];
-  const pausedUntil = planData.pausedUntil ? new Date(planData.pausedUntil) : new Date();
-  const daysLeft = Math.max(0, Math.ceil((pausedUntil - new Date()) / 86400000));
-
-  planData.startDate = today;
-  delete planData.pausedUntil;
-
-  try {
-    const { data: d1 } = await sb2.auth.getSession();
-    const session = d1?.session;
-    if (session) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const loadId = urlParams.get('load');
-      if (loadId) {
-        await sb2.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', loadId);
-      }
-    }
-  } catch(e) { console.error('Resume save error', e); }
-
-  document.getElementById('pause-banner').style.display = 'none';
-  document.getElementById('pause-btn').style.display = 'flex';
-  showIronToast('Plan resumed! 💪', '#4ade80');
-}
-
-// Show pause banner on load if plan is currently paused
-window.addEventListener('plan-loaded', () => {
-  if (planData.pausedUntil) {
-    const resume = new Date(planData.pausedUntil);
-    if (resume > new Date()) {
-      const opts = {weekday:'short', day:'numeric', month:'short'};
-      document.getElementById('pause-resume-date').textContent =
-        `Resuming ${resume.toLocaleDateString('en-AU', opts)}`;
-      document.getElementById('pause-banner').style.display = 'flex';
-      document.getElementById('pause-btn').style.display = 'none';
-    }
-  }
-});
-// ── END PLAN PAUSE ──────────────────────────────────────────────────────────
-
-
-// ── RPE ADAPTATION ENGINE ──────────────────────────────────────────────────
-async function adaptFutureSessions(sessionType, rpe, fromWeek, fromDay) {
-  const tooEasy = rpe <= 2;
-  const tooHard = rpe >= 4;
-  const direction = tooEasy ? 'harder' : 'easier';
-  const typeLabel = sessionType.toLowerCase();
-
-  // Collect all future incomplete sessions of this type
-  const futureSessions = [];
-  for (let w = fromWeek; w < planData.weeks.length; w++) {
-    const days = planData.weeks[w].days;
-    for (let d = 0; d < days.length; d++) {
-      if (w === fromWeek && d <= fromDay) continue; // skip past sessions
-      const day = days[d];
