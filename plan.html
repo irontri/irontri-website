@@ -379,7 +379,13 @@
     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:6px;"><span>3 hrs</span><span>20 hrs</span></div>
   </div>
   <div style="margin-top:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);">
-    <div style="font-size:12px;font-weight:500;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">🎯 Your threshold data — optional</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+      <div style="font-size:12px;font-weight:500;color:var(--blue);letter-spacing:1px;text-transform:uppercase;">🎯 Your threshold data — optional</div>
+      <div style="display:flex;align-items:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:3px;gap:2px;">
+        <button id="btn-metric" onclick="setUnits('metric')" style="padding:5px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:#1E90FF;color:#fff;transition:all 0.15s;">km / m</button>
+        <button id="btn-imperial" onclick="setUnits('imperial')" style="padding:5px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;">mi / yd</button>
+      </div>
+    </div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:18px;">Enter what you know — leave blank if unsure and we'll estimate from your goal time and experience.</div>
 
     <div style="display:flex;flex-direction:column;gap:14px;">
@@ -390,7 +396,7 @@
           <span style="font-size:16px;">🏊</span>
           <span style="font-size:13px;font-weight:600;color:#38bdf8;">CSS Pace — Critical Swim Speed</span>
         </div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Your threshold swim pace per 100m. Find it with a 400m TT minus your 200m TT.</div>
+        <div id="swim-threshold-desc" style="font-size:12px;color:var(--muted);margin-bottom:10px;">Your threshold swim pace per 100m. Find it with a 400m TT minus your 200m TT.</div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:6px;">
             <input type="number" id="icss-min" min="0" max="5" placeholder="1" oninput="updateCSS()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
@@ -422,7 +428,7 @@
           <span style="font-size:16px;">🏃</span>
           <span style="font-size:13px;font-weight:600;color:#4ade80;">Run Threshold Pace</span>
         </div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Your 1-hour race pace per km, or roughly your 10km race pace. RPE 7-8/10.</div>
+        <div id="run-threshold-desc" style="font-size:12px;color:var(--muted);margin-bottom:10px;">Your 1-hour race pace per km, or roughly your 10km race pace. RPE 7-8/10.</div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:6px;">
             <input type="number" id="irtp-min" min="2" max="9" placeholder="4" oninput="updateRTP()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#4ade80'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
@@ -1119,6 +1125,8 @@ function updateRTP(){
   }
 }
 prog(1);
+  // Apply saved unit preference
+  setTimeout(()=>{ if(currentUnits==='imperial') setUnits('imperial'); }, 100);
 
 let sb2 = null;
 try {
@@ -2160,133 +2168,3 @@ async function adaptFutureSessions(sessionType, rpe, fromWeek, fromDay) {
     for (let d = 0; d < days.length; d++) {
       if (w === fromWeek && d <= fromDay) continue; // skip past sessions
       const day = days[d];
-      if (day.type === sessionType && !day.adapted) {
-        futureSessions.push({ w, d, day });
-      }
-    }
-  }
-
-  if (futureSessions.length === 0) return;
-
-  // Show adapting toast
-  showIronToast(`Adapting your upcoming ${typeLabel} sessions...`, 'var(--blue)');
-
-  // Build prompt for the AI to rewrite mainsets only
-  const sessionsJson = futureSessions.map(({w, d, day}) => ({
-    weekNum: w + 1,
-    dayIndex: d,
-    name: day.name,
-    duration: day.duration,
-    effort: day.effort,
-    zone: day.zone,
-    paceTarget: day.paceTarget,
-    warmup: day.warmup,
-    mainset: day.mainset,
-    cooldown: day.cooldown
-  }));
-
-  const prompt = `You are a triathlon coach. The athlete just rated their ${sessionType} session RPE ${rpe}/5 (${tooEasy ? 'too easy — needs more challenge' : 'too hard — needs to be scaled back'}).
-
-Rewrite the following upcoming ${sessionType} sessions to be ${direction}. ${tooEasy
-  ? 'Increase intensity: add intervals, reduce rest periods, increase reps, or increase target pace. Keep duration the same.'
-  : 'Reduce intensity: reduce intervals, add rest periods, reduce reps, or soften target pace. Keep duration the same.'
-}
-
-For each session, return ONLY updated fields: name, mainset, paceTarget, effort (1-10), zone (1-5).
-Keep warmup and cooldown unchanged.
-
-Sessions to adapt:
-${JSON.stringify(sessionsJson, null, 2)}
-
-Return ONLY a JSON array with the same length. Each item: { weekNum, dayIndex, name, mainset, paceTarget, effort, zone }
-No markdown, no explanation.`;
-
-  try {
-    const r = await fetch('/api/generate-plan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
-    });
-    const data = await r.json();
-    let txt = (data.plan || '').replace(/```json/g,'').replace(/```/g,'').trim();
-    const start = txt.indexOf('[');
-    const end = txt.lastIndexOf(']');
-    if (start === -1 || end === -1) throw new Error('No JSON array in response');
-    const adapted = JSON.parse(txt.slice(start, end + 1));
-
-    // Apply updates to planData
-    for (const item of adapted) {
-      const w = item.weekNum - 1;
-      const d = item.dayIndex;
-      const day = planData.weeks[w]?.days[d];
-      if (!day) continue;
-      if (item.name) day.name = item.name;
-      if (item.mainset) day.mainset = item.mainset;
-      if (item.paceTarget) day.paceTarget = item.paceTarget;
-      if (item.effort) day.effort = item.effort;
-      if (item.zone) day.zone = item.zone;
-      day.adapted = true;
-      day.adaptedRpe = rpe;
-    }
-
-    // Save back to Supabase
-    const urlParams = new URLSearchParams(window.location.search);
-    const loadId = urlParams.get('load');
-    if (loadId) {
-      await sb2.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', loadId);
-    }
-
-    // Re-render current week
-    renderWeek();
-    if (typeof curDay === 'number') selectDay(curDay);
-
-    // Success toast
-    const count = adapted.length;
-    showIronToast(
-      tooEasy
-        ? `💪 Done — ${count} upcoming ${typeLabel} session${count===1?'':'s'} stepped up`
-        : `👌 Done — ${count} upcoming ${typeLabel} session${count===1?'':'s'} scaled back`,
-      tooEasy ? '#4ade80' : '#fb923c'
-    );
-
-  } catch(e) {
-    console.error('RPE adapt error:', e);
-    showIronToast('Could not adapt sessions right now', '#ef4444');
-  }
-}
-// ── END RPE ADAPTATION ENGINE ──────────────────────────────────────────────
-
-</script>
-
-
-<!-- PAUSE PLAN MODAL -->
-<div id="pause-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:32px;max-width:400px;width:100%;">
-    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px;">⏸️ Pause your plan</div>
-    <div style="font-size:14px;color:rgba(255,255,255,0.55);margin-bottom:24px;line-height:1.6;">Injured, sick, or just need a break? Your plan will shift forward and pick up exactly where you left off.</div>
-
-    <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:rgba(255,255,255,0.7);">Pause for how long?</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px;">
-      <button onclick="selectPauseDays(7, this)" class="pause-opt" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);padding:12px 8px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;">1 week</button>
-      <button onclick="selectPauseDays(14, this)" class="pause-opt" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);padding:12px 8px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;">2 weeks</button>
-      <button onclick="selectPauseDays(21, this)" class="pause-opt" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);padding:12px 8px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;">3 weeks</button>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
-      <div style="font-size:13px;color:rgba(255,255,255,0.5);">Or enter days:</div>
-      <input type="number" id="pause-days-input" min="1" max="60" placeholder="e.g. 10" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:8px 12px;border-radius:8px;font-size:13px;width:80px;font-family:'DM Sans',sans-serif;" oninput="pauseDays = parseInt(this.value) || 0; document.querySelectorAll('.pause-opt').forEach(b=&gt;b.style.borderColor='rgba(255,255,255,0.15)');">
-    </div>
-
-    <div id="pause-preview" style="background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:12px 16px;margin-bottom:24px;font-size:13px;color:rgba(255,255,255,0.6);display:none;">
-      📅 <span id="pause-preview-text"></span>
-    </div>
-
-    <div style="display:flex;gap:10px;">
-      <button onclick="closePauseModal()" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);padding:12px;border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">Cancel</button>
-      <button onclick="confirmPause()" style="flex:2;background:var(--blue);border:none;color:#fff;padding:12px;border-radius:10px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">Pause plan</button>
-    </div>
-  </div>
-</div>
-
-
-</body></html>
