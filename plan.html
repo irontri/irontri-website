@@ -288,22 +288,22 @@
   <a href="javascript:history.back()" class="nav-back">← Back</a>
 </nav>
 <div class="prog-wrap" id="prog-wrap">
-  <div class="prog-top"><span class="prog-lbl" id="pt">Question 1 of 12</span><span class="prog-lbl" id="pp">8%</span></div>
-  <div class="prog-track"><div class="prog-fill" id="pf" style="width:8%"></div></div>
+  <div class="prog-top"><span class="prog-lbl" id="pt">Plan ready</span><span class="prog-lbl" id="pp">100%</span></div>
+  <div class="prog-track"><div class="prog-fill" id="pf" style="width: 100%;"></div></div>
 </div>
 <div class="quiz" id="quiz-wrap">
 
 <!-- Q1 -->
-<div class="q active" id="q1">
+<div class="q" id="q1">
   <div class="qlbl">Your goal</div><div class="qtitle">What do you want to achieve?</div>
   <p class="qsub">This shapes everything — your plan intensity, structure and sessions.</p>
   <div class="opts">
     <div class="opt" onclick="pick(this,'goal','Train for a specific triathlon race')"><span class="oi">🏁</span><div class="ob"><div class="ot">Train for a specific race</div><div class="od">I have a race booked and need a structured plan</div></div><div class="or"></div></div>
-    <div class="opt" onclick="pick(this,'goal','Complete my first triathlon')"><span class="oi">🌱</span><div class="ob"><div class="ot">Complete my first triathlon</div><div class="od">I'm new to triathlon and want to cross that finish line</div></div><div class="or"></div></div>
+    <div class="opt sel" onclick="pick(this,'goal','Complete my first triathlon')"><span class="oi">🌱</span><div class="ob"><div class="ot">Complete my first triathlon</div><div class="od">I'm new to triathlon and want to cross that finish line</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'goal','Improve my triathlon performance and go faster')"><span class="oi">📈</span><div class="ob"><div class="ot">Improve my performance</div><div class="od">I've done triathlons and want to get faster</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'goal','Build triathlon fitness and consistency')"><span class="oi">💪</span><div class="ob"><div class="ot">Build fitness and consistency</div><div class="od">No race yet — just want to get fitter across all three</div></div><div class="or"></div></div>
   </div>
-  <div class="qnav"><button class="bn" id="n1" onclick="go(2)" disabled="">Continue →</button></div>
+  <div class="qnav"><button class="bn" id="n1" onclick="go(2)">Continue →</button></div>
 </div>
 
 <!-- Q2 -->
@@ -313,11 +313,11 @@
   <div class="ogrid">
     <div class="og" onclick="pg(this,'race','Sprint Triathlon')"><span class="ogi">⚡</span><div class="ogt">Sprint</div><div class="ogs">750m · 20km · 5km</div></div>
     <div class="og" onclick="pg(this,'race','Olympic Triathlon')"><span class="ogi">🏅</span><div class="ogt">Olympic</div><div class="ogs">1.5km · 40km · 10km</div></div>
-    <div class="og" onclick="pg(this,'race','T100 Triathlon')"><span class="ogi">💯</span><div class="ogt">T100</div><div class="ogs">2km · 80km · 18km</div></div>
+    <div class="og sel" onclick="pg(this,'race','T100 Triathlon')"><span class="ogi">💯</span><div class="ogt">T100</div><div class="ogs">2km · 80km · 18km</div></div>
     <div class="og" onclick="pg(this,'race','Half Ironman 70.3')"><span class="ogi">🔥</span><div class="ogt">Half Ironman</div><div class="ogs">1.9km · 90km · 21km</div></div>
     <div class="og" onclick="pg(this,'race','Full Ironman')"><span class="ogi">🦾</span><div class="ogt">Full Ironman</div><div class="ogs">3.8km · 180km · 42km</div></div>
   </div>
-  <div class="qnav"><button class="bb" onclick="go(1)">← Back</button><button class="bn" id="n2" onclick="go(3)" disabled="">Continue →</button></div>
+  <div class="qnav"><button class="bb" onclick="go(1)">← Back</button><button class="bn" id="n2" onclick="go(3)">Continue →</button></div>
 </div>
 
 <!-- Q3 GOAL TIME -->
@@ -327,7 +327,7 @@
   <div class="opts">
     <div class="opt" onclick="pick(this,'goaltime','Just finish — I want to complete the race')"><span class="oi">🏁</span><div class="ob"><div class="ot">Just finish</div><div class="od">Completing the race is the goal — no time target</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'goaltime','I have a goal time in mind')"><span class="oi">⏱️</span><div class="ob"><div class="ot">I have a goal time</div><div class="od">I want to target a specific finish time</div></div><div class="or"></div></div>
-    <div class="opt" onclick="pick(this,'goaltime','Personal best — I want to beat my previous time')"><span class="oi">🏆</span><div class="ob"><div class="ot">Personal best</div><div class="od">I've done this distance before and want to go faster</div></div><div class="or"></div></div>
+    <div class="opt sel" onclick="pick(this,'goaltime','Personal best — I want to beat my previous time')"><span class="oi">🏆</span><div class="ob"><div class="ot">Personal best</div><div class="od">I've done this distance before and want to go faster</div></div><div class="or"></div></div>
   </div>
 
   <div id="goaltime-input" style="display:none;margin-bottom:28px;">
@@ -346,7 +346,7 @@
     <div id="gt-breakdown" style="margin-top:16px;padding:14px;background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:10px;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.8;display:none;"></div>
   </div>
 
-  <div class="qnav"><button class="bb" onclick="go(2)">← Back</button><button class="bn" id="n3" onclick="go(4)" disabled="">Continue →</button></div>
+  <div class="qnav"><button class="bb" onclick="go(2)">← Back</button><button class="bn" id="n3" onclick="go(4)">Continue →</button></div>
 </div>
 
 <!-- Q4 -->
@@ -354,12 +354,12 @@
   <div class="qlbl">Your experience</div><div class="qtitle">How experienced are you in triathlon?</div>
   <p class="qsub">Be honest — this sets the right load from day one.</p>
   <div class="opts">
-    <div class="opt" onclick="pick(this,'exp','Complete beginner — never done a triathlon')"><span class="oi">🌱</span><div class="ob"><div class="ot">Complete beginner</div><div class="od">Never done a triathlon before</div></div><div class="or"></div></div>
+    <div class="opt sel" onclick="pick(this,'exp','Complete beginner — never done a triathlon')"><span class="oi">🌱</span><div class="ob"><div class="ot">Complete beginner</div><div class="od">Never done a triathlon before</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'exp','Some experience — completed 1 to 3 triathlons')"><span class="oi">🏊</span><div class="ob"><div class="ot">Some experience</div><div class="od">Done 1–3 triathlons, comfortable in all three</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'exp','Intermediate — race regularly and want to improve')"><span class="oi">🚴</span><div class="ob"><div class="ot">Intermediate</div><div class="od">Race regularly and want structured training</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'exp','Advanced — competitive triathlete chasing a personal best')"><span class="oi">🏆</span><div class="ob"><div class="ot">Advanced / Competitive</div><div class="od">Serious racer optimising for a PB</div></div><div class="or"></div></div>
   </div>
-  <div class="qnav"><button class="bb" onclick="go(3)">← Back</button><button class="bn" id="n4" onclick="go(5)" disabled="">Continue →</button></div>
+  <div class="qnav"><button class="bb" onclick="go(3)">← Back</button><button class="bn" id="n4" onclick="go(5)">Continue →</button></div>
 </div>
 
 <!-- Q5 -->
@@ -367,12 +367,12 @@
   <div class="qlbl">Your fitness</div><div class="qtitle">How would you describe your general fitness right now?</div>
   <p class="qsub">Your overall activity level today — not just triathlon.</p>
   <div class="opts">
-    <div class="opt" onclick="pick(this,'fitness','Low — mostly inactive, just starting to exercise')"><span class="oi">🛋️</span><div class="ob"><div class="ot">Just getting started</div><div class="od">Mostly inactive — building from scratch</div></div><div class="or"></div></div>
+    <div class="opt sel" onclick="pick(this,'fitness','Low — mostly inactive, just starting to exercise')"><span class="oi">🛋️</span><div class="ob"><div class="ot">Just getting started</div><div class="od">Mostly inactive — building from scratch</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'fitness','Moderate — active a few times a week')"><span class="oi">🚶</span><div class="ob"><div class="ot">Moderately active</div><div class="od">Exercise a few times a week but not structured</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'fitness','Good — training consistently 4 or more times a week')"><span class="oi">🏃</span><div class="ob"><div class="ot">Good fitness</div><div class="od">Training consistently 4+ times a week</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'fitness','Very fit — high training volume and strong aerobic base')"><span class="oi">⚡</span><div class="ob"><div class="ot">Very fit</div><div class="od">High volume, strong aerobic base across sports</div></div><div class="or"></div></div>
   </div>
-  <div class="qnav"><button class="bb" onclick="go(4)">← Back</button><button class="bn" id="n5" onclick="go(6)" disabled="">Continue →</button></div>
+  <div class="qnav"><button class="bb" onclick="go(4)">← Back</button><button class="bn" id="n5" onclick="go(6)">Continue →</button></div>
 </div>
 
 <!-- Q5 -->
@@ -380,12 +380,12 @@
   <div class="qlbl">Your strengths</div><div class="qtitle">Which discipline needs the most work?</div>
   <p class="qsub">We'll give it extra focus while keeping the others moving.</p>
   <div class="opts">
-    <div class="opt" onclick="pick(this,'weak','Swim — water confidence and technique need work')"><span class="oi">🏊</span><div class="ob"><div class="ot">Swim</div><div class="od">Technique, breathing or open water confidence</div></div><div class="or"></div></div>
+    <div class="opt sel" onclick="pick(this,'weak','Swim — water confidence and technique need work')"><span class="oi">🏊</span><div class="ob"><div class="ot">Swim</div><div class="od">Technique, breathing or open water confidence</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'weak','Bike — need to build power and endurance on the bike')"><span class="oi">🚴</span><div class="ob"><div class="ot">Bike</div><div class="od">Need more power and endurance on the bike</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'weak','Run — especially running off the bike in brick sessions')"><span class="oi">🏃</span><div class="ob"><div class="ot">Run</div><div class="od">Legs fall apart on the run, especially off the bike</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'weak','All three equally — need balanced improvement')"><span class="oi">⚖️</span><div class="ob"><div class="ot">All three equally</div><div class="od">Balanced improvement needed across all disciplines</div></div><div class="or"></div></div>
   </div>
-  <div class="qnav"><button class="bb" onclick="go(5)">← Back</button><button class="bn" id="n6" onclick="go(7)" disabled="">Continue →</button></div>
+  <div class="qnav"><button class="bb" onclick="go(5)">← Back</button><button class="bn" id="n6" onclick="go(7)">Continue →</button></div>
 </div>
 
 <!-- Q6 -->
@@ -393,8 +393,8 @@
   <div class="qlbl">Your schedule</div><div class="qtitle">How many hours can you train each week?</div>
   <p class="qsub">Be realistic. A plan you stick to beats an ambitious one you abandon.</p>
   <div class="sl-sec">
-    <div class="sl-num" id="hv">8 <span>hours/week</span></div>
-    <div class="sl-hint" id="hh">Good balance for most athletes</div>
+    <div class="sl-num" id="hv">18 <span>hours/week</span></div>
+    <div class="sl-hint" id="hh">Elite volume</div>
     <input type="range" min="3" max="20" value="8" step="1" oninput="setH(this.value)">
     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:6px;"><span>3 hrs</span><span>20 hrs</span></div>
   </div>
@@ -414,11 +414,11 @@
   <div class="qlbl">Your schedule</div><div class="qtitle">Which days can you train?</div>
   <p class="qsub">Select every available day. We'll space sessions for maximum recovery.</p>
   <div class="days-row">
-    <button class="db" onclick="td(this,'Monday')">Mon</button>
-    <button class="db" onclick="td(this,'Tuesday')">Tue</button>
-    <button class="db" onclick="td(this,'Wednesday')">Wed</button>
-    <button class="db" onclick="td(this,'Thursday')">Thu</button>
-    <button class="db" onclick="td(this,'Friday')">Fri</button>
+    <button class="db sel" onclick="td(this,'Monday')">Mon</button>
+    <button class="db sel" onclick="td(this,'Tuesday')">Tue</button>
+    <button class="db sel" onclick="td(this,'Wednesday')">Wed</button>
+    <button class="db sel" onclick="td(this,'Thursday')">Thu</button>
+    <button class="db sel" onclick="td(this,'Friday')">Fri</button>
     <button class="db" onclick="td(this,'Saturday')">Sat</button>
     <button class="db" onclick="td(this,'Sunday')">Sun</button>
   </div>
@@ -432,9 +432,9 @@
   <div class="opts">
     <div class="opt" onclick="pick(this,'pool','Yes — regular pool access at a gym or public pool')"><span class="oi">🏊</span><div class="ob"><div class="ot">Yes — regular pool access</div><div class="od">I can get to a pool most weeks</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'pool','Limited — occasional pool access only')"><span class="oi">📅</span><div class="ob"><div class="ot">Limited — occasional access</div><div class="od">I can get to a pool sometimes but not every week</div></div><div class="or"></div></div>
-    <div class="opt" onclick="pick(this,'pool','No — open water only (lake, river or sea)')"><span class="oi">🌊</span><div class="ob"><div class="ot">No — open water only</div><div class="od">All swim training done in open water</div></div><div class="or"></div></div>
+    <div class="opt sel" onclick="pick(this,'pool','No — open water only (lake, river or sea)')"><span class="oi">🌊</span><div class="ob"><div class="ot">No — open water only</div><div class="od">All swim training done in open water</div></div><div class="or"></div></div>
   </div>
-  <div class="qnav"><button class="bb" onclick="go(8)">← Back</button><button class="bn" id="n9" onclick="go(10)" disabled="">Continue →</button></div>
+  <div class="qnav"><button class="bb" onclick="go(8)">← Back</button><button class="bn" id="n9" onclick="go(10)">Continue →</button></div>
 </div>
 
 <!-- Q9 -->
@@ -442,12 +442,12 @@
   <div class="qlbl">Your health</div><div class="qtitle">Any injuries we should know about?</div>
   <p class="qsub">Your safety comes first. We'll adjust the plan to keep you training.</p>
   <div class="opts">
-    <div class="opt" onclick="pick(this,'injury','No injuries — fully fit and ready to train hard')"><span class="oi">✅</span><div class="ob"><div class="ot">Fully fit — no issues</div><div class="od">No injuries or physical limitations right now</div></div><div class="or"></div></div>
+    <div class="opt sel" onclick="pick(this,'injury','No injuries — fully fit and ready to train hard')"><span class="oi">✅</span><div class="ob"><div class="ot">Fully fit — no issues</div><div class="od">No injuries or physical limitations right now</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'injury','Recovering from a recent injury — easing back in')"><span class="oi">🩹</span><div class="ob"><div class="ot">Recovering from injury</div><div class="od">Need a careful gradual return to training</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'injury','Managing a niggle — training but being cautious')"><span class="oi">⚠️</span><div class="ob"><div class="ot">Managing a niggle</div><div class="od">Minor ache — training through it carefully</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'injury','Long-term condition requiring a modified approach')"><span class="oi">💊</span><div class="ob"><div class="ot">Long-term condition</div><div class="od">A permanent condition that affects how I train</div></div><div class="or"></div></div>
   </div>
-  <div class="qnav"><button class="bb" onclick="go(9)">← Back</button><button class="bn" id="n10" onclick="go(11)" disabled="">Continue →</button></div>
+  <div class="qnav"><button class="bb" onclick="go(9)">← Back</button><button class="bn" id="n10" onclick="go(11)">Continue →</button></div>
 </div>
 
 <!-- Q10 -->
@@ -456,7 +456,7 @@
   <p class="qsub">Age affects recovery time, training load and your race category.</p>
   <div class="ogrid">
     <div class="og" onclick="pg(this,'age','18-24')"><span class="ogi">🔥</span><div class="ogt">18–24</div></div>
-    <div class="og" onclick="pg(this,'age','25-29')"><span class="ogi">⚡</span><div class="ogt">25–29</div></div>
+    <div class="og sel" onclick="pg(this,'age','25-29')"><span class="ogi">⚡</span><div class="ogt">25–29</div></div>
     <div class="og" onclick="pg(this,'age','30-34')"><span class="ogi">💪</span><div class="ogt">30–34</div></div>
     <div class="og" onclick="pg(this,'age','35-39')"><span class="ogi">🏅</span><div class="ogt">35–39</div></div>
     <div class="og" onclick="pg(this,'age','40-44')"><span class="ogi">🎯</span><div class="ogt">40–44</div></div>
@@ -464,7 +464,7 @@
     <div class="og" onclick="pg(this,'age','50-54')"><span class="ogi">⭐</span><div class="ogt">50–54</div></div>
     <div class="og" onclick="pg(this,'age','55+')"><span class="ogi">🌟</span><div class="ogt">55+</div></div>
   </div>
-  <div class="qnav"><button class="bb" onclick="go(10)">← Back</button><button class="bn" id="n11" onclick="go(12)" disabled="">Continue →</button></div>
+  <div class="qnav"><button class="bb" onclick="go(10)">← Back</button><button class="bn" id="n11" onclick="go(12)">Continue →</button></div>
 </div>
 
 <!-- Q11 -->
@@ -481,13 +481,13 @@
       <input type="date" id="idate" oninput="cf()">
     </div>
   </div>
-  <div class="qnav"><button class="bb" onclick="go(11)">← Back</button><button class="bn" id="n12" onclick="showSum()" disabled="">See my plan summary →</button></div>
+  <div class="qnav"><button class="bb" onclick="go(11)">← Back</button><button class="bn" id="n12" onclick="showSum()">See my plan summary →</button></div>
 </div>
 
 <!-- SUMMARY -->
-<div id="summary" style="display:none;">
-  <div class="sh"><h2 id="sh2">Your plan is ready</h2><p id="sp">Here's what we're working with</p></div>
-  <div class="sg" id="sg"></div>
+<div id="summary" style="display: none;">
+  <div class="sh"><h2 id="sh2">dean's T100 Triathlon Plan</h2><p id="sp">16 weeks of personalised triathlon coaching</p></div>
+  <div class="sg" id="sg"><div class="sc"><div class="sl">Race</div><div class="sv">T100 Triathlon</div></div><div class="sc"><div class="sl">Goal</div><div class="sv">Train for a specific triathlon race</div></div><div class="sc"><div class="sl">Goal time</div><div class="sv">Personal best — faster than before</div></div><div class="sc"><div class="sl">Experience</div><div class="sv">Complete beginner</div></div><div class="sc"><div class="sl">Age group</div><div class="sv">25-29</div></div><div class="sc"><div class="sl">Plan starts</div><div class="sv">29 Mar 2026</div></div><div class="sc"><div class="sl">Weekly training</div><div class="sv">18 hours</div></div><div class="sc"><div class="sl">Training days</div><div class="sv">Monday, Tuesday, Wednesday, Thursday, Friday</div></div><div class="sc"><div class="sl">Focus</div><div class="sv">Swim</div></div></div>
   <button class="scta" onclick="buildPlan()">Build my training plan →</button>
   <p class="snote">Free for founding members · No credit card needed</p>
 </div>
@@ -495,17 +495,17 @@
 </div><!-- /quiz -->
 
 <!-- GENERATING -->
-<div id="gen" style="display:none;text-align:center;padding:80px 32px;">
+<div id="gen" style="display: block; text-align: center; padding: 80px 32px;">
   <div class="spinner"></div>
   <div class="gt">Building your plan...</div>
-  <p class="gs" id="gen-time-msg">Around 20-40 seconds — please wait</p>
+  <p class="gs" id="gen-time-msg">Building your T100 plan — up to 45 seconds</p>
   <div class="gsteps" id="gsteps">
-    <div class="gst" id="gs1"><div class="gd"></div><span id="gs1-text">Analysing your race &amp; goal</span></div>
-    <div class="gst" id="gs2"><div class="gd"></div><span id="gs2-text">Calculating weekly training load</span></div>
-    <div class="gst" id="gs3"><div class="gd"></div><span id="gs3-text">Building your swim sessions</span></div>
-    <div class="gst" id="gs4"><div class="gd"></div><span id="gs4-text">Planning your bike intervals</span></div>
-    <div class="gst" id="gs5"><div class="gd"></div><span id="gs5-text">Writing your run workouts</span></div>
-    <div class="gst" id="gs6"><div class="gd"></div><span id="gs6-text">Adding coaching notes &amp; race strategy</span></div>
+    <div class="gst done" id="gs1"><div class="gd"></div><span id="gs1-text">Analysing your T100 Triathlon goal</span></div>
+    <div class="gst done" id="gs2"><div class="gd"></div><span id="gs2-text">Calculating your training zones</span></div>
+    <div class="gst done" id="gs3"><div class="gd"></div><span id="gs3-text">Building your swim sessions</span></div>
+    <div class="gst done" id="gs4"><div class="gd"></div><span id="gs4-text">Planning your bike intervals</span></div>
+    <div class="gst done" id="gs5"><div class="gd"></div><span id="gs5-text">Writing your run workouts</span></div>
+    <div class="gst done" id="gs6"><div class="gd"></div><span id="gs6-text">Adding coaching notes &amp; race strategy</span></div>
   </div>
 </div>
 
@@ -991,6 +991,7 @@ Return this exact JSON:
 
 Generate ${w} weeks using 3:1 periodisation and Erich Felbabel principles. Every session needs specific warmup, mainset, cooldown, coachNote.`
     ;
+    const currentWeekCount = (window.planData && window.planData.weeks) ? window.planData.weeks.length : 0;
     const prompt = `You are an expert triathlon coach. Generate the NEXT 4 weeks of a training plan continuing from week ${currentWeekCount}.\n\nAthlete:\nName: ${A.name}, Race: ${A.race}, Goal time: ${A.goaltimeText||'No specific time target'}, Experience: ${A.exp}, Fitness: ${A.fitness}\nHours/week: ${A.hours}, Training days: ${A.days.join(', ')}, Weakest: ${A.weak}\n\nContinue with progressive overload. Week ${nextWeekStart} = build, Week ${nextWeekStart+1} = peak, Week ${nextWeekStart+2} = peak race specific, Week ${nextWeekStart+3} = taper.\n\nReturn ONLY JSON: {"weeks":[{"week":${nextWeekStart},"phase":"Build","focus":"string","totalTime":0,"sessions":0,"days":[{"day":"Monday","type":"Rest","name":"Rest","duration":0,"effort":0,"zone":0,"focus":"Rest","warmup":"","mainset":"","cooldown":"","coachNote":""}]}]}\n\nRules: Each week has exactly 7 days Monday-Sunday. Training days (${A.days.join(', ')}) get sessions, others are Rest. Return ONLY the JSON.`;
   try {
     const r = await fetch('/api/generate-plan', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:_p})});
@@ -2168,4 +2169,5 @@ No markdown, no explanation.`;
       </button>
     </div>
 
+<div id="claude-agent-glow-border" style="position: fixed; inset: 0px; pointer-events: none; z-index: 2147483646; opacity: 1; transition: opacity 0.3s ease-in-out; animation: 2s ease-in-out 0s infinite normal none running claude-pulse; box-shadow: rgba(217, 119, 87, 0.5) 0px 0px 10px inset, rgba(217, 119, 87, 0.3) 0px 0px 20px inset, rgba(217, 119, 87, 0.1) 0px 0px 30px inset;"></div>
 <div id="claude-agent-glow-border" style="position: fixed; inset: 0px; pointer-events: none; z-index: 2147483646; opacity: 1; transition: opacity 0.3s ease-in-out; animation: 2s ease-in-out 0s infinite normal none running claude-pulse; box-shadow: rgba(217, 119, 87, 0.5) 0px 0px 10px inset, rgba(217, 119, 87, 0.3) 0px 0px 20px inset, rgba(217, 119, 87, 0.1) 0px 0px 30px inset;"></div></body></html>
