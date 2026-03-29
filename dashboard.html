@@ -97,6 +97,27 @@
       .activity-stats{display:none;}
       .strava-banner{flex-direction:column;align-items:flex-start;}
     }
+  
+    /* ── TODAY'S SESSION CARD ── */
+    .today-card{background:linear-gradient(135deg,rgba(30,144,255,0.12),rgba(30,144,255,0.06));border:1px solid rgba(30,144,255,0.3);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:none;animation:fadeUp 0.4s ease both;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .today-card-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(30,144,255,0.8);font-weight:600;margin-bottom:10px;}
+    .today-card-inner{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+    .today-icon{font-size:36px;flex-shrink:0;}
+    .today-info{flex:1;min-width:0;}
+    .today-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-0.3px;line-height:1.2;margin-bottom:4px;}
+    .today-meta{font-size:13px;color:rgba(255,255,255,0.55);display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+    .today-meta-badge{background:rgba(255,255,255,0.08);padding:3px 10px;border-radius:20px;font-size:12px;}
+    .today-go{background:#1E90FF;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;text-decoration:none;display:inline-block;transition:background 0.2s;flex-shrink:0;}
+    .today-go:hover{background:#1478d4;}
+    .today-rest{font-size:14px;color:rgba(255,255,255,0.6);line-height:1.6;}
+    .today-purpose{font-size:13px;color:rgba(255,255,255,0.5);margin-top:6px;line-height:1.5;}
+    .race-countdown{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:12px;padding:14px 20px;margin-bottom:16px;display:none;align-items:center;gap:14px;}
+    .race-countdown.show{display:flex;}
+    .rc-days{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:#f87171;line-height:1;}
+    .rc-label{font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;}
+    .rc-text{font-size:14px;color:rgba(255,255,255,0.7);}
+    .rc-race{font-weight:600;color:#fff;}
   </style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
 <script>
@@ -128,7 +149,18 @@
       <p id="welcome-sub">Here's your training overview</p>
     </div>
 
-    <div class="stats-row" id="stats-row">
+    
+  <!-- TODAY'S SESSION -->
+  <div class="race-countdown" id="race-countdown">
+    <div><div class="rc-days" id="rc-days">—</div><div class="rc-label">days to race</div></div>
+    <div class="rc-text">Until your <span class="rc-race" id="rc-race-name">race</span> 🏁</div>
+  </div>
+  <div class="today-card" id="today-card">
+    <div class="today-card-label">📅 Today's session</div>
+    <div id="today-card-inner"></div>
+  </div>
+
+  <div class="stats-row" id="stats-row">
       <div class="stat-card"><div class="stat-val" id="s-plans">0</div><div class="stat-lbl">Training plans</div></div>
       <div class="stat-card"><div class="stat-val" id="s-race">—</div><div class="stat-lbl">Latest race</div></div>
       <div class="stat-card"><div class="stat-val" id="s-sessions">0</div><div class="stat-lbl">Sessions done</div></div>
@@ -396,6 +428,118 @@ async function deletePlan(id) {
   await sb.from('plans').delete().eq('id', id);
   location.reload();
 }
+// ── TODAY'S SESSION ──────────────────────────────────────────────────────────
+const TYPE_INFO = {
+  'Swim':    {icon:'🏊', color:'#38bdf8', label:'Swim'},
+  'Bike':    {icon:'🚴', color:'#fb923c', label:'Bike'},
+  'Run':     {icon:'🏃', color:'#4ade80', label:'Run'},
+  'Brick':   {icon:'🔥', color:'#a78bfa', label:'Brick'},
+  'Strength':{icon:'💪', color:'#fbbf24', label:'Strength'},
+  'Rest':    {icon:'😴', color:'rgba(255,255,255,0.3)', label:'Rest'},
+  'Race':    {icon:'🏁', color:'#f87171', label:'Race'}
+};
+function fmtDurD(mins){if(!mins)return '';if(mins<60)return mins+'m';const h=Math.floor(mins/60),m=mins%60;return m>0?h+'h '+m+'m':h+'h';}
+
+async function loadTodaySession() {
+  if (!sb) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+
+    // Get most recently viewed plan (latest created)
+    const { data: plans } = await sb.from('plans').select('*').eq('user_id', session.user.id).order('created_at', {ascending: false}).limit(1);
+    if (!plans || plans.length === 0) return;
+
+    const plan = plans[0];
+    let planData;
+    try {
+      let txt = plan.plan_data || '';
+      txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
+      planData = JSON.parse(txt);
+    } catch(e) { return; }
+
+    if (!planData.weeks || !planData.startDate) return;
+
+    // Race countdown
+    const raceDate = planData.raceDate;
+    if (raceDate) {
+      const daysToRace = Math.ceil((new Date(raceDate) - new Date()) / 86400000);
+      if (daysToRace > 0 && daysToRace <= 200) {
+        document.getElementById('rc-days').textContent = daysToRace;
+        document.getElementById('rc-race-name').textContent = plan.race || 'race';
+        document.getElementById('race-countdown').classList.add('show');
+      }
+    }
+
+    // Calculate today's position in the plan
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const start = new Date(planData.startDate + 'T00:00:00');
+    start.setHours(0,0,0,0);
+    const diffDays = Math.round((today - start) / 86400000);
+
+    if (diffDays < 0) {
+      // Plan hasn't started yet
+      const daysUntil = Math.abs(diffDays);
+      document.getElementById('today-card').style.display = 'block';
+      document.getElementById('today-card-inner').innerHTML = `
+        <div class="today-rest">
+          <div style="font-size:18px;margin-bottom:6px;">🗓️ Your plan starts in <strong style="color:#fff;">${daysUntil} day${daysUntil===1?'':'s'}</strong></div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.45);">Rest up and get ready — your first session is ${new Date(planData.startDate).toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'})}.</div>
+        </div>`;
+      return;
+    }
+
+    const weekIdx = Math.floor(diffDays / 7);
+    const dayIdx = diffDays % 7;
+
+    if (weekIdx >= planData.weeks.length) {
+      // Plan finished
+      document.getElementById('today-card').style.display = 'block';
+      document.getElementById('today-card-inner').innerHTML = `<div class="today-rest">🏁 <strong style="color:#fff;">Plan complete!</strong> Time to build your next training block.</div>`;
+      return;
+    }
+
+    const week = planData.weeks[weekIdx];
+    const day = week?.days?.[dayIdx];
+    if (!day) return;
+
+    const t = TYPE_INFO[day.type] || TYPE_INFO['Rest'];
+    const card = document.getElementById('today-card');
+    card.style.display = 'block';
+
+    if (day.type === 'Rest') {
+      document.getElementById('today-card-inner').innerHTML = `
+        <div class="today-icon">😴</div>
+        <div class="today-info">
+          <div class="today-name">Rest Day</div>
+          <div class="today-rest" style="margin-top:6px;">Recovery is where fitness is built. Stretch, eat well, sleep.</div>
+        </div>`;
+    } else {
+      // Check if already completed today
+      const { data: comp } = await sb.from('completions').select('id').eq('user_id', session.user.id).eq('week_num', weekIdx).eq('day', String(dayIdx)).limit(1);
+      const done = comp && comp.length > 0;
+
+      document.getElementById('today-card-inner').innerHTML = `
+        <div class="today-icon">${done ? '✅' : t.icon}</div>
+        <div class="today-info">
+          <div class="today-name" style="color:${done ? '#4ade80' : '#fff'}">${day.name || day.type + ' Session'}${done ? ' — Done!' : ''}</div>
+          <div class="today-meta">
+            <span class="today-meta-badge" style="background:${t.color}20;color:${t.color};">${t.label}</span>
+            ${day.duration ? '<span class="today-meta-badge">⏱ ' + fmtDurD(day.duration) + '</span>' : ''}
+            ${day.effort ? '<span class="today-meta-badge">RPE ' + day.effort + '/10</span>' : ''}
+            <span style="color:rgba(255,255,255,0.35);">Week ${weekIdx+1} · ${week.phase||''} phase</span>
+          </div>
+          ${day.purpose ? '<div class="today-purpose">' + day.purpose + '</div>' : ''}
+        </div>
+        ${!done ? '<a href="/plan.html?load=' + plan.id + '" class="today-go">Open session →</a>' : ''}`;
+    }
+  } catch(e) { console.log('Today session error:', e); }
+}
+// ── END TODAY'S SESSION ───────────────────────────────────────────────────────
+
+  loadTodaySession();
+
 init();
 </script>
 </body>
