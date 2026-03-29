@@ -381,7 +381,7 @@
     <div style="font-size:12px;font-weight:500;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">🚴 Your FTP — optional</div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Your Functional Threshold Power in watts. Leave blank if you don't know — we'll estimate it.</div>
     <div style="display:flex;align-items:center;gap:10px;">
-      <input type="number" id="iftp" min="50" max="500" placeholder="e.g. 220" oninput="A.ftp=this.value" style="width:130px;padding:13px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'" />
+      <input type="number" id="iftp" min="50" max="500" placeholder="e.g. 220" oninput="A.ftp=this.value" style="width:130px;padding:13px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
       <span style="font-size:14px;color:var(--muted);">watts</span>
     </div>
   </div>
@@ -934,74 +934,42 @@ async function buildPlan(){
   });
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
-   prompt =
-    'You are an elite triathlon coach. Return ONLY valid JSON, no other text.\n\n' +
-    'ATHLETE: Name: ' + A.name + ', Race: ' + A.race + ', Goal: ' + (A.goaltimeText||'Complete') + ', Experience: ' + A.exp + ', Fitness: ' + A.fitness + ', Weakness: ' + A.weak + ', Hours/week: ' + A.hours + ', FTP: ' + (A.ftp ? A.ftp+'w' : 'unknown') + ', Days available: ' + A.days.join(', ') + ', Pool: ' + A.pool + ', Injury: ' + (A.injury||'None') + ', Age: ' + A.age + ', Weeks to race: ' + w + '\n\n' +
-    'COACHING FRAMEWORK — Erich Felbabel (Hong Kong National Team, sub-9h Ironman proven system):\n' +
-    'Apply ALL of the following principles to every plan regardless of distance:\n' +
-    '1. PERIODISATION: Use strict 3:1 loading — 3 progressive weeks then 1 mandatory recovery week (volume drops 30-40%). Label phases: Base (aerobic foundation) → Build (race-specific fitness) → Peak (intensity sharpening) → Taper (freshness).\n' +
-    '2. INTENSITY DISTRIBUTION: 80% of all sessions at Zone 1-2 (easy aerobic, conversational pace, RPE 3-5). 20% at Zone 3-5 (threshold, VO2max, race pace). Never more than 2 hard sessions per week. Hard day followed by easy day always.\n' +
-    '3. KEY SESSIONS per week (non-negotiable):\n' +
-    '   - Sunday: Long ride (Full Ironman: 180-240 min | 70.3: 120-180 min | Olympic: 90-120 min | Sprint: 60-90 min)\n' +
-    '   - Long run: (Full Ironman: 90-120 min | 70.3: 75-90 min | Olympic: 60-75 min | Sprint: 40-60 min)\n' +
-    '   - 1 threshold bike session: 90-120 min with specific intervals\n' +
-    '   - 1 threshold or interval swim session\n' +
-    '4. STRENGTH: 1 dedicated Strength session per week (45-60 min). Focus: single-leg squats, hip stability, posterior chain, core anti-rotation, glute bridges. NOT bodybuilding. Label type: Strength.\n' +
-    '5. MOBILITY: 1 dedicated Mobility session per week (30-45 min). Focus: hip flexors, thoracic spine, hamstrings, ITB, shoulders. Schedule on easy or rest days. Label type: Mobility.\n' +
-    '6. SESSION TYPES: Use ONLY these exact values for the type field: Swim, Bike, Run, Brick, Strength, Mobility, Rest\n' +
-    '7. FATIGUE MANAGEMENT: Never schedule Strength the day before a key quality session. Never schedule 2 hard sessions back-to-back. Always follow a hard day with Zone 1-2 recovery.\n' +
-    '8. TAPER: Final 2-3 weeks — cut volume 40-50%, maintain some intensity (1 quality session per discipline), add extra Mobility session. Athletes should feel fresh but sharp.\n' +
-    '9. RACE SIMULATION: In peak phase, include 1 race-pace brick per week at goal race intensity. Practice race nutrition during these sessions.\n\n' +
-    'FULL IRONMAN SPECIFIC RULES (apply only when race = Full Ironman):\n' +
-    '- Sunday long ride MINIMUM 180 min — never shorter in build/peak phase\n' +
-    '- Long runs 90-120 min — never a marathon training run, Ironman run is about survival pacing\n' +
-    '- Include open water swim practice from week 4 onwards\n' +
-    '- Brick sessions: minimum 3h bike followed by 30-45 min run at marathon pace\n' +
-    '- Nutrition practice: every long ride over 3h must note to practice race nutrition strategy\n' +
-    '- Heat adaptation: if applicable, note heat management in coach notes\n\n' +
-    'MANDATORY SESSION QUALITY RULES:\n' +
-    '1. MAINSET: Exact intervals, exact rest, exact pace or power, one technique cue. Never vague. E.g. "8x100m descending 1:55→1:45, 15sec rest, high elbow on catch."\n' +
-    '2. COACH NOTE: Explain WHY this session exists. Reference fatigue context. "Hard ride tomorrow — keep this controlled, move blood not create fatigue."\n' +
-    '3. SWIM: exact intervals + rest + technique cue. Always include stroke rate or catch mechanics cue.\n' +
-    '4. BIKE: always include cadence target (88-95rpm), power zone or RPE, and terrain type. E.g. "90 min at 75-80% FTP, 90rpm, flat road or trainer."\n' +
-    '5. RUN: always include pace per km, RPE, and surface. E.g. "45 min at 5:30/km, RPE 5, flat road."\n' +
-    '6. BRICK: specify bike duration + intensity, then exact run duration + target pace.\n' +
-    '7. STRENGTH: list 4-6 exercises with sets/reps. E.g. "3x12 single-leg squat, 3x15 glute bridge, 3x10 Copenhagen plank."\n' +
-    '8. MOBILITY: list 4-6 stretches/movements with hold times. E.g. "2min hip flexor stretch each side, 90sec pigeon pose each side."\n' +
-    '9. DURATION: Every session must have a realistic total duration in minutes including warm-up and cool-down.\n\n' +
-    'PHASE DEFINITIONS:\n' +
-    '- Base: Aerobic foundation, high volume low intensity, skill work, 80%+ Zone 1-2\n' +
-    '- Build: Race-specific fitness, introduce threshold intervals, brick sessions increase\n' +
-    '- Peak: Highest intensity, race simulation, sharpen fitness, 2-3 weeks\n' +
-    '- Taper: Volume drops 40-50%, sharpness maintained, extra recovery and mobility\n\n' +
-    'Return a JSON object with this exact structure:\n' +
-    '{\n' +
-    '  "intro": "2-3 sentence personalised introduction addressing the athlete by name, referencing their specific race and goal",\n' +
-    '  "weeks": [\n' +
-    '    {\n' +
-    '      "weekNumber": 1,\n' +
-    '      "phase": "Base|Build|Peak|Taper",\n' +
-    '      "focus": "one sentence week focus",\n' +
-    '      "weeklyNarrative": "2-3 sentences coaching narrative for the week — why this week is structured this way",\n' +
-    '      "days": [\n' +
-    '        {\n' +
-    '          "day": "Monday",\n' +
-    '          "type": "Swim|Bike|Run|Brick|Strength|Mobility|Rest",\n' +
-    '          "name": "descriptive session name",\n' +
-    '          "duration": 60,\n' +
-    '          "rpe": 5,\n' +
-    '          "zone": "Zone 2",\n' +
-    '          "warmup": "specific warm-up instructions",\n' +
-    '          "mainset": "exact intervals, exact rest, exact pace/power, technique cue",\n' +
-    '          "cooldown": "cool-down instructions",\n' +
-    '          "coachNote": "why this session exists in context of the week"\n' +
-    '        }\n' +
-    '      ]\n' +
-    '    }\n' +
-    '  ]\n' +
-    '}\n' +
-    'Generate ' + w + ' weeks. Apply 3:1 periodisation. Use Erich Felbabel principles throughout. Every session must have warmup, mainset, cooldown and coachNote populated with specific content — never leave them empty or generic.'
-  ;
+   
+    prompt = `You are an elite triathlon coach. Return ONLY valid JSON, no other text.
+
+ATHLETE: Name: ${A.name}, Race: ${A.race}, Goal: ${A.goaltimeText||'Complete'}, Experience: ${A.exp}, Fitness: ${A.fitness}, Weakness: ${A.weak}, Hours/week: ${A.hours}, FTP: ${A.ftp ? A.ftp+'w' : 'unknown'}, Days: ${A.days.join(', ')}, Pool: ${A.pool}, Injury: ${A.injury||'None'}, Age: ${A.age}, Weeks: ${w}
+
+COACHING FRAMEWORK - Erich Felbabel (Hong Kong National Team, sub-9h Ironman proven system):
+1. PERIODISATION: 3:1 loading - 3 progressive weeks then 1 recovery week (volume drops 30-40%). Phases: Base, Build, Peak, Taper.
+2. INTENSITY: 80% Zone 1-2 (RPE 3-5). 20% Zone 3-5. Max 2 hard sessions per week. Hard day always followed by easy day.
+3. KEY WEEKLY SESSIONS: Sunday long ride (Full Ironman 180-240min, 70.3 120-180min, Olympic 90-120min, Sprint 60-90min). Long run (Full Ironman 90-120min, 70.3 75-90min, Olympic 60-75min, Sprint 40-60min). 1 threshold bike. 1 interval swim.
+4. STRENGTH: 1 session per week 45-60min. Single-leg squats, hip stability, posterior chain, core, glute bridges. Type field value: Strength.
+5. MOBILITY: 1 session per week 30-45min. Hip flexors, thoracic spine, hamstrings, ITB, shoulders. On easy or rest days. Type field value: Mobility.
+6. SESSION TYPES - use only these exact values: Swim, Bike, Run, Brick, Strength, Mobility, Rest
+7. FATIGUE: Never Strength before key session. Never 2 hard sessions back-to-back.
+8. TAPER: Final 2-3 weeks cut volume 40-50%, keep 1 quality session per discipline, add Mobility.
+9. RACE SIM: Peak phase includes 1 race-pace brick per week with race nutrition practice.
+
+FULL IRONMAN RULES: Sunday ride minimum 180min. Long runs 90-120min survival pacing. Bricks: 3h bike then 30-45min at marathon pace. All rides over 3h include race nutrition note.
+
+SESSION QUALITY RULES:
+- MAINSET: Exact intervals, rest, pace or power, 1 technique cue. Never vague.
+- COACH NOTE: Why this session exists in week context.
+- SWIM: intervals plus rest plus technique cue.
+- BIKE: cadence 88-95rpm, power zone or RPE, terrain.
+- RUN: pace per km, RPE, surface.
+- BRICK: bike duration plus intensity, run duration plus target pace.
+- STRENGTH: 4-6 exercises with sets and reps.
+- MOBILITY: 4-6 stretches with hold times.
+- DURATION: total minutes including warmup and cooldown.
+
+PHASES: Base=aerobic foundation 80% Z1-Z2. Build=race-specific threshold intervals. Peak=highest intensity race simulation. Taper=volume drop sharpness maintained extra mobility.
+
+Return this exact JSON:
+{"intro":"2-3 sentence personalised intro addressing athlete by name, referencing race and goal","weeks":[{"weekNumber":1,"phase":"Base|Build|Peak|Taper","focus":"week focus sentence","weeklyNarrative":"2-3 sentences why structured this way","days":[{"day":"Monday","type":"Swim|Bike|Run|Brick|Strength|Mobility|Rest","name":"session name","duration":60,"rpe":5,"zone":"Zone 2","warmup":"warmup details","mainset":"exact intervals rest pace technique","cooldown":"cooldown details","coachNote":"why this session"}]}]}
+
+Generate ${w} weeks using 3:1 periodisation and Erich Felbabel principles. Every session needs specific warmup, mainset, cooldown, coachNote.`
+    ;
     const prompt = `You are an expert triathlon coach. Generate the NEXT 4 weeks of a training plan continuing from week ${currentWeekCount}.\n\nAthlete:\nName: ${A.name}, Race: ${A.race}, Goal time: ${A.goaltimeText||'No specific time target'}, Experience: ${A.exp}, Fitness: ${A.fitness}\nHours/week: ${A.hours}, Training days: ${A.days.join(', ')}, Weakest: ${A.weak}\n\nContinue with progressive overload. Week ${nextWeekStart} = build, Week ${nextWeekStart+1} = peak, Week ${nextWeekStart+2} = peak race specific, Week ${nextWeekStart+3} = taper.\n\nReturn ONLY JSON: {"weeks":[{"week":${nextWeekStart},"phase":"Build","focus":"string","totalTime":0,"sessions":0,"days":[{"day":"Monday","type":"Rest","name":"Rest","duration":0,"effort":0,"zone":0,"focus":"Rest","warmup":"","mainset":"","cooldown":"","coachNote":""}]}]}\n\nRules: Each week has exactly 7 days Monday-Sunday. Training days (${A.days.join(', ')}) get sessions, others are Rest. Return ONLY the JSON.`;
   try {
     const r = await fetch('/api/generate-plan', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
@@ -2176,4 +2144,5 @@ No markdown, no explanation.`;
         </svg>
         <span id="claude-static-close-tooltip" style="position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%); padding: 6px 12px; background: #30302E; color: #FAF9F5; border-radius: 6px; font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Dismiss</span>
       </button>
-    </div></body></html>
+    </div>
+</body></html>
