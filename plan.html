@@ -1493,7 +1493,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!error && plan) {
         let txt = plan.plan_data || '';
         txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
-        planData = JSON.parse(txt);
+        planData = JSON.parse(txt.replace(/^```[a-z]*
+/,'').replace(/
+```$/,'').trim());
         A.race = plan.race || planData.race || 'Triathlon';
         A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
         A.startDate = planData.startDate || '';
