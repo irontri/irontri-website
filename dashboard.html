@@ -118,6 +118,22 @@
     .rc-label{font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;}
     .rc-text{font-size:14px;color:rgba(255,255,255,0.7);}
     .rc-race{font-weight:600;color:#fff;}
+  
+    /* ── PACE IMPROVEMENT ── */
+    .pace-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:none;}
+    .pace-card-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:16px;}
+    .pace-rows{display:flex;flex-direction:column;gap:10px;}
+    .pace-row{display:flex;align-items:center;gap:12px;}
+    .pace-sport{font-size:18px;flex-shrink:0;width:28px;}
+    .pace-label{font-size:13px;color:rgba(255,255,255,0.5);width:40px;flex-shrink:0;}
+    .pace-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;}
+    .pace-bar{height:100%;border-radius:100px;transition:width 1s ease;}
+    .pace-values{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+    .pace-from{font-size:12px;color:rgba(255,255,255,0.35);text-decoration:line-through;}
+    .pace-to{font-size:13px;font-weight:600;color:#fff;}
+    .pace-delta{font-size:12px;font-weight:700;padding:2px 8px;border-radius:20px;}
+    .pace-delta.better{background:rgba(74,222,128,0.15);color:#4ade80;}
+    .pace-delta.same{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.35);}
   </style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
 <script>
@@ -154,6 +170,12 @@
   <div class="race-countdown" id="race-countdown">
     <div><div class="rc-days" id="rc-days">—</div><div class="rc-label">days to race</div></div>
     <div class="rc-text">Until your <span class="rc-race" id="rc-race-name">race</span> 🏁</div>
+  </div>
+  
+  <!-- PACE IMPROVEMENT -->
+  <div class="pace-card" id="pace-card">
+    <div class="pace-card-title">📈 Your progress since week 1</div>
+    <div class="pace-rows" id="pace-rows"></div>
   </div>
   <div class="today-card" id="today-card">
     <div class="today-card-label">📅 Today's session</div>
@@ -539,9 +561,133 @@ async function loadTodaySession() {
     }
   } catch(e) { console.log('Today session error:', e); }
 }
+
+// ── PACE IMPROVEMENT TRACKER ─────────────────────────────────────────────────
+function extractPaceSeconds(paceStr) {
+  if (!paceStr || paceStr === 'N/A') return null;
+  // /100m format: "1:45/100m" -> seconds per 100m
+  const swim = paceStr.match(/(\d+):(\d+)\s*\/\s*100m/i);
+  if (swim) return parseInt(swim[1]) * 60 + parseInt(swim[2]);
+  // /km format: "5:30/km" -> seconds per km
+  const run = paceStr.match(/(\d+):(\d+)\s*\/\s*km/i);
+  if (run) return parseInt(run[1]) * 60 + parseInt(run[2]);
+  // km/h format: "28 km/h" or "28.5km/h" -> float
+  const bike = paceStr.match(/([\d.]+)\s*km\/h/i);
+  if (bike) return parseFloat(bike[1]); // store as float, higher = better
+  return null;
+}
+
+function fmtPace(val, type) {
+  if (val === null) return '—';
+  if (type === 'Bike') return val.toFixed(1) + ' km/h';
+  const m = Math.floor(val / 60);
+  const s = Math.round(val % 60);
+  const unit = type === 'Swim' ? '/100m' : '/km';
+  return m + ':' + String(s).padStart(2,'0') + unit;
+}
+
+async function loadPaceImprovement() {
+  if (!sb) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+
+    const { data: plans } = await sb.from('plans')
+      .select('plan_data,race,created_at')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (!plans?.length) return;
+
+    let planData;
+    try {
+      let txt = plans[0].plan_data || '';
+      txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
+      planData = JSON.parse(txt);
+    } catch(e) { return; }
+
+    if (!planData.weeks || planData.weeks.length < 2) return;
+
+    // Build pace maps: week1 and latest week (or current week)
+    const sports = ['Swim', 'Bike', 'Run'];
+    const sportMeta = {
+      Swim: { icon: '🏊', label: 'Swim', color: '#38bdf8', higherBetter: false },
+      Bike: { icon: '🚴', label: 'Bike', color: '#fb923c', higherBetter: true },
+      Run:  { icon: '🏃', label: 'Run',  color: '#4ade80', higherBetter: false },
+    };
+
+    // Get pace from week 1 and the most recent week
+    const week1 = planData.weeks[0];
+    const latestWeek = planData.weeks[planData.weeks.length - 1];
+
+    const getPace = (week, sport) => {
+      const day = week?.days?.find(d => d.type === sport && d.paceTarget && d.paceTarget !== 'N/A');
+      return day?.paceTarget || null;
+    };
+
+    const rows = [];
+    for (const sport of sports) {
+      const fromStr = getPace(week1, sport);
+      const toStr   = getPace(latestWeek, sport);
+      if (!fromStr || !toStr) continue;
+
+      const fromVal = extractPaceSeconds(fromStr);
+      const toVal   = extractPaceSeconds(toStr);
+      if (fromVal === null || toVal === null) continue;
+
+      const meta = sportMeta[sport];
+      // Improvement: for swim/run lower is better, for bike higher is better
+      const improved = meta.higherBetter ? (toVal > fromVal) : (toVal < fromVal);
+      const same = fromVal === toVal;
+
+      // Delta label
+      let deltaStr = '';
+      if (sport === 'Bike') {
+        const diff = (toVal - fromVal).toFixed(1);
+        deltaStr = (diff > 0 ? '+' : '') + diff + ' km/h';
+      } else {
+        const diffSec = Math.round(Math.abs(toVal - fromVal));
+        const sign = improved ? '-' : '+';
+        const m = Math.floor(diffSec / 60);
+        const s = diffSec % 60;
+        deltaStr = sign + (m > 0 ? m + 'm ' : '') + s + 's';
+      }
+
+      // Bar fill: 100% = from pace, fill shows relative improvement
+      const barPct = same ? 50 : improved ? Math.min(95, 50 + 45) : Math.max(5, 50 - 30);
+
+      rows.push({ sport, meta, fromStr, toStr, fromVal, toVal, improved, same, deltaStr, barPct });
+    }
+
+    if (rows.length === 0) return;
+
+    const card = document.getElementById('pace-card');
+    const rowsEl = document.getElementById('pace-rows');
+    card.style.display = 'block';
+
+    rowsEl.innerHTML = rows.map(r => `
+      <div class="pace-row">
+        <div class="pace-sport">${r.meta.icon}</div>
+        <div class="pace-label">${r.meta.label}</div>
+        <div class="pace-bar-wrap">
+          <div class="pace-bar" style="width:${r.barPct}%;background:${r.improved ? r.meta.color : 'rgba(255,255,255,0.15)'}"></div>
+        </div>
+        <div class="pace-values">
+          <span class="pace-from">${r.fromStr}</span>
+          <span style="color:rgba(255,255,255,0.2);font-size:11px;">→</span>
+          <span class="pace-to">${r.toStr}</span>
+          <span class="pace-delta ${r.same ? 'same' : 'better'}">${r.same ? 'no change' : r.deltaStr}</span>
+        </div>
+      </div>`).join('');
+
+  } catch(e) { console.log('Pace tracker error:', e); }
+}
+// ── END PACE IMPROVEMENT TRACKER ─────────────────────────────────────────────
+
 // ── END TODAY'S SESSION ───────────────────────────────────────────────────────
 
   loadTodaySession();
+  loadPaceImprovement();
 
 init();
 </script>
