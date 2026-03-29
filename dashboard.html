@@ -92,10 +92,36 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     .feed-loading{text-align:center;padding:20px;color:var(--faint);font-size:13px;}
     @media(max-width:600px){
-      nav{padding:0 20px;}
-      .dash{padding:24px 16px;}
+      nav{padding:0 12px;}
+      .nav-user{gap:4px;}
+      .nav-user button,.nav-user a{font-size:11px;padding:5px 8px;}
+      .dash{padding:16px 14px;}
       .activity-stats{display:none;}
       .strava-banner{flex-direction:column;align-items:flex-start;}
+
+      /* Stats — 2x2 */
+      .stats-row{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
+
+      /* Pace card — hide overflow elements, simplify */
+      .pace-card{padding:14px 16px;}
+      .pace-bar-wrap{display:none;}
+      .pace-from{display:none;}
+      .pace-row{gap:8px;}
+      .pace-values{gap:6px;flex-wrap:wrap;}
+      .pace-to{font-size:12px;}
+      .pace-delta{font-size:11px;}
+      .pace-sport{font-size:16px;width:22px;}
+      .pace-label{font-size:12px;width:34px;}
+
+      /* Today card — stack vertically */
+      .today-card{padding:16px;}
+      .today-card-inner{flex-direction:column;align-items:flex-start;gap:10px;}
+      .today-go{width:100%;text-align:center;padding:13px;}
+      .today-name{font-size:17px;}
+
+      /* Race countdown */
+      .race-countdown{padding:12px 14px;}
+      .rc-days{font-size:26px;}
     }
   
     /* ── TODAY'S SESSION CARD ── */
