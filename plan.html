@@ -934,7 +934,7 @@ async function buildPlan(){
   });
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
-  const prompt =
+   prompt =
     'You are an elite triathlon coach. Return ONLY valid JSON, no other text.\n\n' +
     'ATHLETE: Name: ' + A.name + ', Race: ' + A.race + ', Goal: ' + (A.goaltimeText||'Complete') + ', Experience: ' + A.exp + ', Fitness: ' + A.fitness + ', Weakness: ' + A.weak + ', Hours/week: ' + A.hours + ', FTP: ' + (A.ftp ? A.ftp+'w' : 'unknown') + ', Days available: ' + A.days.join(', ') + ', Pool: ' + A.pool + ', Injury: ' + (A.injury||'None') + ', Age: ' + A.age + ', Weeks to race: ' + w + '\n\n' +
     'COACHING FRAMEWORK — Erich Felbabel (Hong Kong National Team, sub-9h Ironman proven system):\n' +
