@@ -410,7 +410,7 @@
             <input type="number" id="icss-min" min="0" max="5" placeholder="1" oninput="updateCSS()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
             <span style="color:var(--muted);font-size:16px;font-weight:600;">:</span>
             <input type="number" id="icss-sec" min="0" max="59" placeholder="45" oninput="updateCSS()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
-            <span style="font-size:13px;color:var(--muted);">/ 100m</span>
+            <span id="swim-unit-label" style="font-size:13px;color:var(--muted);">/ 100m</span>
           </div>
           <div id="css-hint" style="font-size:12px;color:rgba(56,189,248,0.7);display:none;"></div>
         </div>
@@ -442,7 +442,7 @@
             <input type="number" id="irtp-min" min="2" max="9" placeholder="4" oninput="updateRTP()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#4ade80'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
             <span style="color:var(--muted);font-size:16px;font-weight:600;">:</span>
             <input type="number" id="irtp-sec" min="0" max="59" placeholder="30" oninput="updateRTP()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#4ade80'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
-            <span style="font-size:13px;color:var(--muted);">/ km</span>
+            <span id="run-unit-label" style="font-size:13px;color:var(--muted);">/ km</span>
           </div>
           <div id="rtp-hint" style="font-size:12px;color:rgba(74,222,128,0.7);display:none;"></div>
         </div>
