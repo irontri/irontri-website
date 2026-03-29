@@ -1466,6 +1466,7 @@ async function checkAndSavePlan(planText) {
 document.addEventListener('DOMContentLoaded', async () => {
   // load-more-btn uses onclick directly
 
+  let sb2 = window.sb || null;
   let attempts = 0;
   while (!sb2 && attempts < 20) {
     await new Promise(r => setTimeout(r, 100));
