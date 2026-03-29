@@ -1,7 +1,12 @@
 {
-    "functions": {
-          "api/generate-plan.js": {
-                  "maxDuration": 60
-          }
+  "functions": {
+    "api/generate-plan.js": { "maxDuration": 60 },
+    "api/send-weekly-email.js": { "maxDuration": 60 }
+  },
+  "crons": [
+    {
+      "path": "/api/send-weekly-email",
+      "schedule": "0 23 * * 0"
     }
+  ]
 }
