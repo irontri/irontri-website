@@ -379,11 +379,61 @@
     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:6px;"><span>3 hrs</span><span>20 hrs</span></div>
   </div>
   <div style="margin-top:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);">
-    <div style="font-size:12px;font-weight:500;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">🚴 Your FTP — optional</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Your Functional Threshold Power in watts. Leave blank if you don't know — we'll estimate it.</div>
-    <div style="display:flex;align-items:center;gap:10px;">
-      <input type="number" id="iftp" min="50" max="500" placeholder="e.g. 220" oninput="A.ftp=this.value" style="width:130px;padding:13px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'" />
-      <span style="font-size:14px;color:var(--muted);">watts</span>
+    <div style="font-size:12px;font-weight:500;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">🎯 Your threshold data — optional</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:18px;">Enter what you know — leave blank if unsure and we'll estimate from your goal time and experience.</div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- SWIM CSS -->
+      <div style="background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.15);border-radius:12px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="font-size:16px;">🏊</span>
+          <span style="font-size:13px;font-weight:600;color:#38bdf8;">CSS Pace — Critical Swim Speed</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Your threshold swim pace per 100m. Find it with a 400m TT minus your 200m TT.</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="number" id="icss-min" min="0" max="5" placeholder="1" oninput="updateCSS()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            <span style="color:var(--muted);font-size:16px;font-weight:600;">:</span>
+            <input type="number" id="icss-sec" min="0" max="59" placeholder="45" oninput="updateCSS()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            <span style="font-size:13px;color:var(--muted);">/ 100m</span>
+          </div>
+          <div id="css-hint" style="font-size:12px;color:rgba(56,189,248,0.7);display:none;"></div>
+        </div>
+      </div>
+
+      <!-- BIKE FTP -->
+      <div style="background:rgba(251,146,60,0.06);border:1px solid rgba(251,146,60,0.15);border-radius:12px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="font-size:16px;">🚴</span>
+          <span style="font-size:13px;font-weight:600;color:#fb923c;">FTP — Functional Threshold Power</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Your 1-hour max power in watts. From a 20-min test × 0.95, or check your Garmin/Wahoo.</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="number" id="iftp" min="50" max="500" placeholder="e.g. 220" oninput="A.ftp=this.value" style="width:100px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#fb923c'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+          <span style="font-size:13px;color:var(--muted);">watts</span>
+          <div id="ftp-hint" style="font-size:12px;color:rgba(251,146,60,0.7);display:none;"></div>
+        </div>
+      </div>
+
+      <!-- RUN THRESHOLD PACE -->
+      <div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);border-radius:12px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="font-size:16px;">🏃</span>
+          <span style="font-size:13px;font-weight:600;color:#4ade80;">Run Threshold Pace</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Your 1-hour race pace per km, or roughly your 10km race pace. RPE 7-8/10.</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="number" id="irtp-min" min="2" max="9" placeholder="4" oninput="updateRTP()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#4ade80'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            <span style="color:var(--muted);font-size:16px;font-weight:600;">:</span>
+            <input type="number" id="irtp-sec" min="0" max="59" placeholder="30" oninput="updateRTP()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#4ade80'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            <span style="font-size:13px;color:var(--muted);">/ km</span>
+          </div>
+          <div id="rtp-hint" style="font-size:12px;color:rgba(74,222,128,0.7);display:none;"></div>
+        </div>
+      </div>
+
     </div>
   </div>
   <div class="qnav" style="margin-top:28px;"><button class="bb" onclick="go(6)">← Back</button><button class="bn" onclick="go(8)">Continue →</button></div>
@@ -598,7 +648,7 @@
 </div>
 
 <script>
-const A={goal:'',race:'',goaltime:'',goaltimeText:'',exp:'',fitness:'',weak:'',hours:8,days:[],pool:'',injury:'',age:'',name:'',email:'',startDate:'',date:'',ftp:''};
+const A={goal:'',race:'',goaltime:'',goaltimeText:'',exp:'',fitness:'',weak:'',hours:8,days:[],pool:'',injury:'',age:'',name:'',email:'',startDate:'',date:'',ftp:'',css:'',runThreshold:''};
 const T=12;
 let planData=null;
 let curWeek=0;
@@ -936,7 +986,7 @@ async function buildPlan(){
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
   const prompt = 'You are an elite triathlon coach. Return ONLY valid JSON, no other text.\n\n' +
-    'ATHLETE: Name: ' + A.name + ', Race: ' + A.race + ', Goal: ' + (A.goaltimeText||'Complete') + ', Experience: ' + A.exp + ', Fitness: ' + A.fitness + ', Weakness: ' + A.weak + ', Hours/week: ' + A.hours + ', FTP: ' + (A.ftp ? A.ftp+'w' : 'unknown — estimate from experience') + ', Days: ' + A.days.join(', ') + ', Pool: ' + A.pool + ', Injury: ' + (A.injury||'None') + ', Age: ' + A.age + ', Weeks: ' + w + '\n\n' +
+    'ATHLETE: Name: ' + A.name + ', Race: ' + A.race + ', Goal: ' + (A.goaltimeText||'Complete') + ', Experience: ' + A.exp + ', Fitness: ' + A.fitness + ', Weakness: ' + A.weak + ', Hours/week: ' + A.hours + ', FTP: ' + (A.ftp ? A.ftp+'w' : 'unknown') + ', CSS: ' + (A.css||'unknown') + ', Run threshold: ' + (A.runThreshold||'unknown') + ', Days: ' + A.days.join(', ') + ', Pool: ' + A.pool + ', Injury: ' + (A.injury||'None') + ', Age: ' + A.age + ', Weeks: ' + w + '\n\n' +
     'MANDATORY SESSION QUALITY RULES:\n' +
     '1. MAINSET: Exact intervals, exact rest, exact pace, one technique cue. Never vague. E.g. "8x100m descending 1:55 to 1:45, 15sec rest, high elbow on catch."\n' +
     '2. COACH NOTE: Reference why this session exists in the week. "Hard bike tomorrow — keep this controlled, move blood not create fatigue."\n' +
@@ -1042,6 +1092,32 @@ function jumpToPhase(phase){
   document.querySelectorAll('.phase-pill').forEach(p=>p.classList.toggle('active',p.dataset.phase===phase));
 }
 
+
+function updateCSS(){
+  const m=parseInt(document.getElementById('icss-min').value)||0;
+  const s=parseInt(document.getElementById('icss-sec').value)||0;
+  if(m===0&&s===0)return;
+  A.css=m+':'+String(s).padStart(2,'0')+'/100m';
+  const hint=document.getElementById('css-hint');
+  hint.style.display='block';
+  hint.textContent='✓ CSS set to '+A.css+' — zones calculated from this';
+}
+function updateRTP(){
+  const m=parseInt(document.getElementById('irtp-min').value)||0;
+  const s=parseInt(document.getElementById('irtp-sec').value)||0;
+  if(m===0&&s===0)return;
+  A.runThreshold=m+':'+String(s).padStart(2,'0')+'/km';
+  const hint=document.getElementById('rtp-hint');
+  hint.style.display='block';
+  hint.textContent='✓ Threshold set to '+A.runThreshold+' — zones calculated from this';
+  // Also show FTP hint if set
+  const ftp=document.getElementById('iftp').value;
+  if(ftp){
+    const ftpHint=document.getElementById('ftp-hint');
+    ftpHint.style.display='block';
+    ftpHint.textContent='✓ FTP '+ftp+'w — zones Z1-Z5 calculated';
+  }
+}
 prog(1);
 
 let sb2 = null;
