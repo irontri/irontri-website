@@ -889,5 +889,22 @@ if ('serviceWorker' in navigator) {
 }
 
 
-<script>(async()=>{try{const r=await fetch('https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/rpc/get_user_count',{method:'POST',headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU','Content-Type':'application/json'},body:'{}'});if(r.ok){const c=await r.json();const el=document.getElementById('live-counter');if(el&&c>0)el.textContent=c;}}catch(e){}})();</script></body>
+
+<script>
+window.addEventListener('load', function() {
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/rpc/get_user_count');
+  xhr.setRequestHeader('apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU');
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      var count = JSON.parse(xhr.responseText);
+      var el = document.getElementById('live-counter');
+      if (el && count > 0) el.textContent = count;
+    }
+  };
+  xhr.send('{}');
+});
+</script>
+</body>
 </html>
