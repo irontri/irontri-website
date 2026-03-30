@@ -1238,8 +1238,6 @@ const STRAVA_TO_PLAN = {
 };
 
 async function syncStravaActivities() {
-
-  renderExtendButton(planData);
   if (!sb2 || !planData || !A.startDate) return;
   try {
     const { data: { session } } = await sb2.auth.getSession();
@@ -2238,49 +2236,6 @@ async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
     }
   } catch(e) { console.log('Adapt error:', e); }
 }
-
-function renderExtendButton(pd){var e=document.getElementById("extend-btn-wrap");if(e)e.remove();var w=pd&&pd.weeks;if(!w||!w.length)return;var n=w.length+1;var d=document.createElement("div");d.id="extend-btn-wrap";d.style.cssText="text-align:center;padding:32px 0 16px;";d.innerHTML='<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:32px;"><div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:12px;">Your plan covers '+w.length+' weeks</div><button id="extend-plan-btn" onclick="extendPlan()" style="background:rgba(30,144,255,0.12);border:1.5px solid #1E90FF;color:#1E90FF;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">Generate weeks '+n+' to '+(n+3)+'</button><div id="extend-status" style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:10px;display:none;"></div></div>';var c=document.getElementById("plan");if(c)c.after(d);}
-async function extendPlan(){
-  var btn=document.getElementById("extend-plan-btn");
-  var st=document.getElementById("extend-status");
-  if(!btn)return;
-  btn.disabled=true;btn.textContent="Generating...";
-  if(st){st.style.display="block";st.textContent="Building your next 4 weeks...";}
-  try{
-    var pid=new URLSearchParams(location.search).get("load");
-    if(!pid)throw new Error("No plan ID in URL");
-    var sd=await sb2.auth.getSession();
-    var sess=sd.data.session;
-    if(!sess)throw new Error("Not logged in");
-    var pr=await sb2.from("plans").select("*").eq("id",pid).eq("user_id",sess.user.id).single();
-    if(pr.error)throw pr.error;
-    var pdata=pr.data;
-    var txt=pdata.plan_data;
-    txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);
-    var pd=JSON.parse(txt);
-    if(!pd.weeks||!pd.weeks.length)throw new Error("No weeks in plan");
-    var startWeek=pd.weeks.length+1;
-    var ctx={race:pdata.race||pd.planName,raceDate:pd.raceDate,startDate:pd.startDate,totalWeeksPlanned:pd.weeks.length,recentWeeks:pd.weeks.slice(-2).map(function(w){return{weekNum:w.weekNum,phase:w.phase,totalVolume:w.totalVolume};}),athleteProfile:pd.athleteProfile||{}};
-    var res=await fetch("/api/extend-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({planContext:ctx,startWeek:startWeek,numWeeks:4,race:pdata.race,userId:sess.user.id,planId:pid})});
-    if(!res.ok)throw new Error("API failed: "+res.status);
-    var data=await res.json();
-    if(!data.plan)throw new Error("No plan returned");
-    var ntxt=data.plan;
-    ntxt=ntxt.substring(ntxt.indexOf("{"),ntxt.lastIndexOf("}")+1);
-    var np=JSON.parse(ntxt);
-    if(!np.weeks||!np.weeks.length)throw new Error("No weeks in response");
-    pd.weeks=pd.weeks.concat(np.weeks);
-    await sb2.from("plans").update({plan_data:JSON.stringify(pd)}).eq("id",pid);
-    buildPlan(JSON.stringify(pd));
-    if(st)st.textContent="Done! Weeks added.";
-  }catch(e){
-    console.error("Extend plan error:",e);
-    btn.disabled=false;
-    btn.textContent="Generate next 4 weeks";
-    if(st)st.textContent="Error: "+e.message;
-  }
-}
-
 </script>
 
 <!-- PAUSE MODAL -->
