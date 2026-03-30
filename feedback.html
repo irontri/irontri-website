@@ -11,7 +11,20 @@
   <style>
     :root{--blue:#1E90FF;--blue-dark:#1478d4;--bg:#0a0a0a;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--text:#fff;--muted:rgba(255,255,255,0.5);--faint:rgba(255,255,255,0.25);}
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    
+async function goToMyPlan(e) {
+  e.preventDefault();
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = '/plan.html'; return; }
+    const { data: plans } = await sb.from('plans').select('id').eq('user_id', session.user.id).order('created_at', {ascending:false}).limit(1);
+    if (plans?.length) window.location.href = '/plan.html?load=' + plans[0].id;
+    else window.location.href = '/plan.html';
+  } catch(e) { window.location.href = '/plan.html'; }
+}
+</script>
+<script>
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:70px;}
     nav{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:68px;background:#1E90FF;}
     .nav-logo{display:flex;align-items:center;text-decoration:none;}
     .nav-logo img{height:120px;width:auto;mix-blend-mode:screen;filter:brightness(10);}
@@ -232,5 +245,19 @@ async function submitFeedback() {
   }
 }
 </script>
+
+<!-- BOTTOM TAB BAR -->
+<nav style="position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,0.08);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);">
+  <a href="/dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">📅</span>Today
+  </a>
+  <a href="#" onclick="goToMyPlan(event)" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">🗓️</span>My Plan
+  </a>
+  <a href="/feedback.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:#1E90FF;font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">💬</span>Feedback
+  </a>
+</nav>
+<!-- END BOTTOM TAB BAR -->
 </body>
 </html>
