@@ -194,7 +194,7 @@
     
   <!-- TODAY'S SESSION -->
   <div class="race-countdown" id="race-countdown">
-    <div><div class="rc-days" id="rc-days"></div><div class="rc-label">days to race</div></div>
+    <div><div class="rc-days" id="rc-days">—</div><div class="rc-label">days to race</div></div>
     <div class="rc-text">Until your <span class="rc-race" id="rc-race-name">race</span> 🏁</div>
   </div>
   
@@ -513,6 +513,11 @@ async function loadTodaySession() {
     } catch(e) { return; }
 
     // Fall back to created_at for plans that predate startDate storage
+    const resolvedStart = planData.startDate || plan.created_at?.split('T')[0];
+    if (!planData.weeks || !resolvedStart) return;
+    planData.startDate = resolvedStart;
+
+    // Race countdown
     const raceDate = planData.raceDate;
     if (raceDate) {
       const daysToRace = Math.ceil((new Date(raceDate) - new Date()) / 86400000);
@@ -765,20 +770,11 @@ async function loadPaceImprovement() {
 
 // ── END TODAY'S SESSION ───────────────────────────────────────────────────────
 
-  // Wait for auth then load dashboard features
-  setTimeout(async () => {
-    await loadTodaySession();
-    await loadPaceImprovement();
-  }, 800);
+  loadTodaySession();
+  loadPaceImprovement();
 
 init();
-
-    
-    const resolvedStart = planData.startDate || plan.created_at?.split('T')[0];
-    if (!planData.weeks || !resolvedStart) return;
-    planData.startDate = resolvedStart;
-
-    // Race countdown
 </script>
 </body>
-</html>
+</html><div id="strava-section"></div>
+    
