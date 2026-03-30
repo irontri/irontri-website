@@ -431,7 +431,7 @@ async function loadPlans() {
         </div>
         <div class="plan-card-actions">
           <button class="btn-view" onclick="event.stopPropagation();viewPlan('${p.id}')">View plan →</button>
-          <button class="btn-date" onclick="event.stopPropagation();showStartDateEditor('${p.id}', '${planObj && planObj.startDate ? planObj.startDate : ''}')">📅 Change date</button>
+          <button class="btn-date" onclick="event.stopPropagation();showStartDateEditor('${p.id}', planObj)">📅 Change date</button>
           <button class="btn-delete" onclick="event.stopPropagation();deletePlan('${p.id}')">Delete</button>
         </div>
         <div id="start-date-editor-${p.id}" style="display:none;" onclick="event.stopPropagation()"></div
@@ -492,11 +492,11 @@ async function deletePlan(id) {
   location.reload();
 }
 
-function showStartDateEditor(planId, currentStart) {
+function showStartDateEditor(planId, planObj) {
   const editor = document.getElementById('start-date-editor-' + planId);
   if (!editor) return;
   if (editor.style.display === 'block') { editor.style.display = 'none'; return; }
-  currentStart = currentStart || '';
+  const currentStart = (planObj && planObj.startDate) ? planObj.startDate : '';
   editor.style.display = 'block';
   editor.innerHTML = `<div style="margin-top:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="font-size:13px;color:rgba(255,255,255,0.5);">New start date:</span><input type="date" id="new-start-${planId}" value="${currentStart}" style="background:#111;border:1px solid rgba(255,255,255,0.15);color:#fff;padding:7px 11px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;color-scheme:dark;" /><button onclick="saveNewStartDate('${planId}')" style="background:#1E90FF;border:none;color:#fff;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">Save</button><button onclick="document.getElementById('start-date-editor-${planId}').style.display='none'" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:7px 12px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancel</button></div>`;
 }
@@ -509,12 +509,12 @@ async function saveNewStartDate(planId) {
   saveBtn.textContent = 'Saving...';
   saveBtn.disabled = true;
   try {
-    const { data, error } = await sb.from('plans').select('plan_data').eq('id', planId).single();
+    const { data, error } = await sb.from('plans').select('plan_data, created_at').eq('id', planId).single();
     if (error || !data) throw new Error('Could not load plan');
     let planData;
     try { let txt = data.plan_data || ''; txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1); planData = JSON.parse(txt); } catch(e) { throw new Error('Could not parse plan data'); }
-    const oldStartStr = planData.startDate;
-    if (!oldStartStr) throw new Error('Plan has no startDate — regenerate the plan to enable this feature');
+    const oldStartStr = planData.startDate || data.created_at?.split('T')[0];
+    if (!oldStartStr) throw new Error('Could not determine plan start date');
     const diffDays = Math.round((new Date(newStart + 'T00:00:00') - new Date(oldStartStr + 'T00:00:00')) / 86400000);
     if (diffDays === 0) { document.getElementById('start-date-editor-' + planId).style.display = 'none'; return; }
     if (planData.weeks) { planData.weeks = planData.weeks.map(week => { if (week.days) week.days = week.days.map(day => { if (day.date) { const d = new Date(day.date + 'T00:00:00'); d.setDate(d.getDate() + diffDays); day.date = d.toISOString().split('T')[0]; } return day; }); return week; }); }
