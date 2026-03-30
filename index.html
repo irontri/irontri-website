@@ -158,8 +158,8 @@
     .pf-check{width:18px;height:18px;border-radius:50%;background:rgba(30,144,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
     .pf-check::after{content:'';width:7px;height:4px;border-left:1.5px solid var(--blue);border-bottom:1.5px solid var(--blue);transform:rotate(-45deg) translateY(-1px);display:block;}
     .spots-wrap{margin-bottom:28px;}
-    .spots-bar-track{height:8px;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;max-width:300px;margin:0 auto 8px;}
-    .spots-bar-fill{height:100%;background:var(--blue);border-radius:100px;transition:width 1s ease;}
+    .xxx-bar-gone-track{height:8px;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;max-width:300px;margin:0 auto 8px;}
+    .xxx-bar-gone-fill{height:100%;background:var(--blue);border-radius:100px;transition:width 1s ease;}
     .spots-text{font-size:13px;color:var(--muted);}
     .pricing-cta{display:block;background:var(--blue);color:#fff;padding:16px 40px;border-radius:10px;font-size:16px;font-weight:500;text-decoration:none;max-width:380px;margin:0 auto;text-align:center;transition:background 0.2s;}
     .pricing-cta:hover{background:var(--blue-dark);}
@@ -338,10 +338,10 @@
 
       <div style="flex:0 0 220px;text-align:center;">
         <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">Founding member spots</div>
-        <div style="font-family:'Syne',sans-serif;font-size:64px;font-weight:800;letter-spacing:-3px;line-height:1;color:#fff;margin-bottom:4px;"><span id="spots-count">35</span></div>
+        <div style="font-family:'Syne',sans-serif;font-size:64px;font-weight:800;letter-spacing:-3px;line-height:1;color:#fff;margin-bottom:4px;"></div>
         <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">of 100 claimed</div>
         <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;margin-bottom:24px;">
-          <div id="spots-bar" style="width:35%;height:100%;background:var(--blue);border-radius:100px;transition:width 1s ease;"></div>
+          </div>
         </div>
         <a href="/auth.html" style="display:block;background:#1E90FF;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:600;text-align:center;text-decoration:none;font-family:'DM Sans',sans-serif;">Sign up free →</a>
         <p style="font-size:12px;color:var(--faint);margin-top:10px;">No credit card · Free forever</p>
@@ -889,31 +889,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-(async () => {
-  try {
-    const res = await fetch('https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/rpc/get_user_count', {
-      headers: { 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU', 'Content-Type': 'application/json' },
-      method: 'POST', body: JSON.stringify({})
-    });
-    if (res.ok) {
-      const count = await res.json();
-      if (count && count > 0) {
-        const pct = Math.min(Math.round(count / 100 * 100), 100);
-        document.getElementById('spots-bar').style.width = pct + '%';
-        if (count >= 100) {
-          document.getElementById('spots-count').textContent = '100';
-          // Update status text
-          const els = document.querySelectorAll('[id="spots-count"]');
-          // Find and update "X of 100 claimed" text node nearby
-          const countEl = document.getElementById('spots-count');
-          if (countEl && countEl.nextSibling) {
-            const parent = countEl.parentElement;
-            if (parent) parent.innerHTML = parent.innerHTML.replace(/\d+ of 100 claimed/, 'Founding spots filled 🎉');
-          }
-          // Swap CTA
-          const links = [...document.querySelectorAll('a[href*="auth.html"]')];
-          const el = document.getElementById('live-counter');
-              if (el && count > 0) el.textContent = count;
-</script>
+
 </body>
 </html>
