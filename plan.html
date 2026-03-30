@@ -1071,7 +1071,7 @@ async function buildPlan(){
       {v:planData.weeks.length,l:'Total weeks'},{v:A.hours+'h',l:'Per week'},
       {v:A.days.length,l:'Sessions/week'},{v:A.race.split(' ')[0],l:'Race type'}
     ].map(s=>`<div class="ps"><div class="psv">${s.v}</div><div class="psl">${s.l}</div></div>`).join('');
-  renderStartDateEditor(A.startDate, new URLSearchParams(location.search).get("load"));
+  
 
     const phases=[...new Set(planData.weeks.map(w=>w.phase))];
     document.getElementById('phases').innerHTML=phases.map((p,i)=>
@@ -1099,6 +1099,8 @@ async function buildPlan(){
       document.getElementById('cal').innerHTML='';
     },17000);
   }
+
+  
 
   renderStartDateEditor((JSON.parse(localStorage.getItem("irontri_pending_answers")||"{}")).startDate, new URLSearchParams(location.search).get("load"));
 }
