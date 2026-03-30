@@ -917,16 +917,16 @@ if ('serviceWorker' in navigator) {
             const wrap = claimLink.parentElement;
             wrap.innerHTML = `<div style="text-align:center">
               <p style="color:rgba(255,255,255,0.7);margin-bottom:12px;font-size:15px;">Founding spots are full — join the waitlist</p>
-              <div style="text-align:center;margin-bottom:20px;">
-  <div style="display:inline-flex;align-items:center;gap:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 24px;">
-    <div style="text-align:left;">
-      <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#fff;line-height:1;" id="live-counter">—</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">athletes signed up</div>
+              <div style="text-align:center;margin-bottom:24px;">
+  <div style="display:inline-flex;align-items:center;gap:16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:16px 28px;">
+    <div style="text-align:center;">
+      <div style="font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:#fff;line-height:1;" id="live-counter">—</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;">athletes & counting</div>
     </div>
-    <div style="width:1px;height:36px;background:rgba(255,255,255,0.1);"></div>
+    <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);"></div>
     <div style="text-align:left;">
       <div style="font-size:13px;color:#4ade80;font-weight:600;">✓ 100 founding spots filled</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">Waitlist now open</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:3px;">Waitlist now open</div>
     </div>
   </div>
 </div><div style="display:flex;gap:10px;max-width:400px;margin:0 auto;flex-wrap:wrap;">
@@ -945,18 +945,20 @@ if ('serviceWorker' in navigator) {
 })();
 
 
-// Live member counter
 (async () => {
   try {
-    const res = await fetch('https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/rpc/get_user_count', {
-      headers: { 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU', 'Content-Type': 'application/json' },
-      method: 'POST', body: JSON.stringify({})
-    });
-    if (res.ok) {
-      const count = await res.json();
-      const el = document.getElementById('live-counter');
-      if (el && count > 0) el.textContent = count;
-    }
+    const SURL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
+    const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
+    const headers = { apikey: SKEY, Authorization: 'Bearer ' + SKEY };
+    const [membersRes, waitlistRes] = await Promise.all([
+      fetch(SURL + '/rest/v1/rpc/get_user_count', { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: '{}' }),
+      fetch(SURL + '/rest/v1/waitlist?select=count', { headers: { ...headers, 'Prefer': 'count=exact' } })
+    ]);
+    const members = membersRes.ok ? await membersRes.json() : 0;
+    const waitlistCount = waitlistRes.ok ? parseInt(waitlistRes.headers.get('content-range')?.split('/')[1] || '0') : 0;
+    const total = (members || 0) + (waitlistCount || 0);
+    const el = document.getElementById('live-counter');
+    if (el && total > 0) el.textContent = total;
   } catch(e) {}
 })();
 async function joinWaitlist() {
