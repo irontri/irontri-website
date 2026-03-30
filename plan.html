@@ -2197,7 +2197,7 @@ async function resumePlan() {
   renderWeek();
   showIronToast('Plan resumed! ▶️', '#4ade80');
 
-  setTimeout(function(){renderStartDateEditor((JSON.parse(localStorage.getItem("irontri_pending_answers")||"{}")).startDate, new URLSearchParams(location.search).get("load"));}, 500);
+  setTimeout(function(){renderStartDateEditor((JSON.parse(localStorage.getItem("irontri_pending_answers")||"{}")).startDate, new URLSearchParams(location.search).get("load"));}, 1000);
 }
 // ── END PLAN PAUSE ──────────────────────────────────────────────────────────
 
