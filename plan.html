@@ -2252,7 +2252,7 @@ async function extendPlan(){
     var sd=await sb2.auth.getSession();
     var sess=sd.data.session;
     if(!sess)throw new Error("Not logged in");
-    var pr=await sb2.from("plans").select("*").eq("id",pid).single();
+    var pr=await sb2.from("plans").select("*").eq("id",pid).eq("user_id",sess.user.id).single();
     if(pr.error)throw pr.error;
     var pdata=pr.data;
     var txt=pdata.plan_data;
