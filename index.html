@@ -886,95 +886,22 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js');
-  });
-}
-
+ <script>
+// Live member counter
 (async () => {
   try {
     const res = await fetch('https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/rpc/get_user_count', {
+      method: 'POST',
       headers: { 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU', 'Content-Type': 'application/json' },
-      method: 'POST', body: JSON.stringify({})
+      body: '{}'
     });
     if (res.ok) {
       const count = await res.json();
-      if (count && count > 0) {
-        const pct = Math.min(Math.round(count / 100 * 100), 100);
-        document.getElementById('spots-bar').style.width = pct + '%';
-        if (count >= 100) {
-          document.getElementById('spots-count').textContent = '100';
-          // Update status text
-          const els = document.querySelectorAll('[id="spots-count"]');
-          // Find and update "X of 100 claimed" text node nearby
-          const countEl = document.getElementById('spots-count');
-          if (countEl && countEl.nextSibling) {
-            const parent = countEl.parentElement;
-            if (parent) parent.innerHTML = parent.innerHTML.replace(/\d+ of 100 claimed/, 'Founding spots filled 🎉');
-          }
-          // Swap CTA
-          const links = [...document.querySelectorAll('a[href*="auth.html"]')];
-          const claimLink = links.find(l => l.textContent.includes('Claim'));
-          if (claimLink) {
-            const wrap = claimLink.parentElement;
-            wrap.innerHTML = `<div style="text-align:center">
-              <p style="color:rgba(255,255,255,0.7);margin-bottom:12px;font-size:15px;">Founding spots are full — join the waitlist</p>
-              <div style="text-align:center;margin-bottom:24px;">
-  <div style="display:inline-flex;align-items:center;gap:16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:16px 28px;">
-    <div style="text-align:center;">
-      <div style="font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:#fff;line-height:1;" id="live-counter">—</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;">athletes & counting</div>
-    </div>
-    <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);"></div>
-    <div style="text-align:left;">
-      <div style="font-size:13px;color:#4ade80;font-weight:600;">✓ 100 founding spots filled</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:3px;">Waitlist now open</div>
-    </div>
-  </div>
-</div><div style="display:flex;gap:10px;max-width:400px;margin:0 auto;flex-wrap:wrap;">
-                <input type="email" id="waitlist-email" placeholder="your@email.com" style="flex:1;min-width:180px;padding:13px 16px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:#fff;font-size:14px;font-family:inherit;outline:none;">
-                <button onclick="joinWaitlist()" style="background:#1E90FF;color:#fff;border:none;padding:13px 22px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Join waitlist →</button>
-              </div>
-              <div id="waitlist-thanks" style="display:none;color:#4ade80;font-size:14px;margin-top:10px;">✅ You're on the list!</div>
-            </div>`;
-          }
-        } else {
-          document.getElementById('spots-count').textContent = count;
-        }
-      }
+      const el = document.getElementById('live-counter');
+      if (el && count > 0) el.textContent = count;
     }
   } catch(e) {}
 })();
-
-
-(async () => {
-  try {
-    const SURL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
-    const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
-    const headers = { apikey: SKEY, Authorization: 'Bearer ' + SKEY };
-    const [membersRes, waitlistRes] = await Promise.all([
-      fetch(SURL + '/rest/v1/rpc/get_user_count', { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: '{}' }),
-      fetch(SURL + '/rest/v1/waitlist?select=count', { headers: { ...headers, 'Prefer': 'count=exact' } })
-    ]);
-    const members = membersRes.ok ? await membersRes.json() : 0;
-    const waitlistCount = waitlistRes.ok ? parseInt(waitlistRes.headers.get('content-range')?.split('/')[1] || '0') : 0;
-    const total = (members || 0) + (waitlistCount || 0);
-    const el = document.getElementById('live-counter');
-    if (el && total > 0) el.textContent = total;
-  } catch(e) {}
-})();
-async function joinWaitlist() {
-  const email = document.getElementById('waitlist-email')?.value?.trim();
-  if (!email || !email.includes('@')) { alert('Please enter a valid email'); return; }
-  try {
-    await fetch('https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/waitlist', {
-      method: 'POST',
-      headers: { 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-  } catch(e) {}
-  document.getElementById('waitlist-thanks').style.display = 'block';
-  document.getElementById('waitlist-email').style.display = 'none';
-  document.querySelector('[onclick="joinWaitlist()"]').style.display = 'none';
-}
 </script>
 </body>
 </html>
