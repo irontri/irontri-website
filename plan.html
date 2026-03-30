@@ -1068,6 +1068,7 @@ async function buildPlan(){
     document.getElementById('pintro').textContent = planData.intro||'';
 
     document.getElementById('pstats').innerHTML=[
+  renderStartDateEditor(A, pid);
       {v:planData.weeks.length,l:'Total weeks'},{v:A.hours+'h',l:'Per week'},
       {v:A.days.length,l:'Sessions/week'},{v:A.race.split(' ')[0],l:'Race type'}
     ].map(s=>`<div class="ps"><div class="psv">${s.v}</div><div class="psl">${s.l}</div></div>`).join('');
@@ -2236,6 +2237,65 @@ async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
     }
   } catch(e) { console.log('Adapt error:', e); }
 }
+
+function renderStartDateEditor(planData, planId) {
+  var existing = document.getElementById('start-date-editor');
+  if (existing) existing.remove();
+  if (!planData || !planData.startDate) return;
+
+  var wrap = document.createElement('div');
+  wrap.id = 'start-date-editor';
+  wrap.style.cssText = 'display:flex;align-items:center;gap:10px;margin:8px 0 0 0;';
+  wrap.innerHTML = '<span style="font-size:12px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;">Start date</span>'
+    + '<input type="date" id="start-date-input" value="' + planData.startDate + '" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:6px 10px;font-size:13px;font-family:DM Sans,sans-serif;cursor:pointer;">'
+    + '<button onclick="saveStartDate('' + planId + '')" style="background:#1E90FF;border:none;border-radius:8px;color:#fff;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">Save</button>'
+    + '<span id="start-date-msg" style="font-size:12px;color:#4ade80;display:none;">Saved!</span>';
+
+  var pstats = document.getElementById('pstats');
+  if (pstats) pstats.after(wrap);
+}
+
+async function saveStartDate(planId) {
+  var input = document.getElementById('start-date-input');
+  var msg = document.getElementById('start-date-msg');
+  if (!input || !input.value) return;
+
+  var newDate = input.value;
+  var btn = input.nextElementSibling;
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  try {
+    var pid = planId || new URLSearchParams(location.search).get('load');
+    var sd = await sb2.auth.getSession();
+    var sess = sd.data.session;
+    if (!sess) throw new Error('Not logged in');
+
+    // Fetch current plan
+    var pr = await sb2.from('plans').select('*').eq('id', pid).eq('user_id', sess.user.id).single();
+    if (pr.error) throw pr.error;
+
+    // Update startDate in plan_data
+    var txt = pr.data.plan_data;
+    txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1);
+    var pd = JSON.parse(txt);
+    pd.startDate = newDate;
+
+    // Save back to Supabase
+    await sb2.from('plans').update({ plan_data: JSON.stringify(pd) }).eq('id', pid);
+
+    // Re-render with new start date
+    buildPlan(JSON.stringify(pd));
+
+    if (msg) { msg.style.display = 'inline'; setTimeout(function(){ msg.style.display = 'none'; }, 2000); }
+  } catch(e) {
+    console.error('saveStartDate error:', e);
+    alert('Could not save: ' + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = 'Save';
+}
+
 </script>
 
 <!-- PAUSE MODAL -->
