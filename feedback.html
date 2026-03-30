@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>irontri — Feedback</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+  <style>
+    :root{--blue:#1E90FF;--blue-dark:#1478d4;--bg:#0a0a0a;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--text:#fff;--muted:rgba(255,255,255,0.5);--faint:rgba(255,255,255,0.25);}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    nav{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:68px;background:#1E90FF;}
+    .nav-logo{display:flex;align-items:center;text-decoration:none;}
+    .nav-logo img{height:120px;width:auto;mix-blend-mode:screen;filter:brightness(10);}
+    .nav-back{color:rgba(255,255,255,0.85);text-decoration:none;font-size:14px;display:flex;align-items:center;gap:6px;}
+    .nav-back:hover{color:#fff;}
+    .wrap{max-width:620px;margin:0 auto;padding:48px 32px 80px;}
+    .page-header{margin-bottom:40px;}
+    .page-tag{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--blue);font-weight:600;margin-bottom:10px;}
+    .page-title{font-family:'Syne',sans-serif;font-size:clamp(28px,5vw,40px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:12px;}
+    .page-sub{font-size:15px;color:var(--muted);line-height:1.6;}
+
+    /* SECTION */
+    .section{margin-bottom:32px;}
+    .section-label{font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint);margin-bottom:14px;}
+
+    /* RATING STARS */
+    .rating-wrap{display:flex;gap:10px;align-items:center;}
+    .star-btn{background:none;border:none;cursor:pointer;font-size:32px;transition:transform 0.1s;padding:0;line-height:1;filter:grayscale(1) opacity(0.35);}
+    .star-btn.active{filter:none;transform:scale(1.1);}
+    .star-btn:hover{filter:none;transform:scale(1.15);}
+    .rating-label{font-size:13px;color:var(--muted);margin-left:8px;}
+
+    /* CHIPS */
+    .chips{display:flex;gap:8px;flex-wrap:wrap;}
+    .chip{background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:8px 16px;font-size:13px;color:var(--muted);cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
+    .chip:hover{border-color:rgba(30,144,255,0.4);color:#fff;}
+    .chip.sel{background:rgba(30,144,255,0.12);border-color:var(--blue);color:#fff;}
+
+    /* SESSION RATING */
+    .session-rating{display:flex;gap:8px;}
+    .rpe-btn{width:52px;height:52px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;}
+    .rpe-btn span{font-size:9px;font-weight:400;}
+    .rpe-btn:hover{transform:scale(1.05);}
+    .rpe-btn.sel-1,.rpe-btn.sel-2{background:rgba(74,222,128,0.15);border-color:#4ade80;color:#4ade80;}
+    .rpe-btn.sel-3{background:rgba(251,191,36,0.15);border-color:#fbbf24;color:#fbbf24;}
+    .rpe-btn.sel-4{background:rgba(251,146,60,0.15);border-color:#fb923c;color:#fb923c;}
+    .rpe-btn.sel-5{background:rgba(248,113,113,0.15);border-color:#f87171;color:#f87171;}
+
+    /* TEXTAREA */
+    textarea{width:100%;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;resize:vertical;min-height:120px;line-height:1.6;transition:border-color 0.2s;}
+    textarea:focus{border-color:var(--blue);}
+    textarea::placeholder{color:var(--faint);}
+
+    /* SUBMIT */
+    .submit-btn{width:100%;padding:16px;background:var(--blue);border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s;margin-top:8px;}
+    .submit-btn:hover{background:var(--blue-dark);}
+    .submit-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+    /* SUCCESS */
+    .success{display:none;text-align:center;padding:48px 24px;}
+    .success-icon{font-size:56px;margin-bottom:16px;}
+    .success h2{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px;}
+    .success p{font-size:15px;color:var(--muted);line-height:1.6;}
+    .success a{display:inline-block;margin-top:24px;color:var(--blue);font-size:14px;text-decoration:none;font-weight:500;}
+    .success a:hover{text-decoration:underline;}
+
+    @media(max-width:600px){
+      nav{padding:0 16px;}
+      .wrap{padding:32px 16px 60px;}
+      .session-rating{gap:6px;}
+      .rpe-btn{width:44px;height:44px;font-size:13px;}
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri" /></a>
+  <a href="javascript:history.back()" class="nav-back">← Back</a>
+</nav>
+
+<div class="wrap">
+  <div id="form-view">
+    <div class="page-header">
+      <div class="page-tag">Feedback</div>
+      <h1 class="page-title">Help us build a better irontri</h1>
+      <p class="page-sub">Takes 2 minutes. Every response is read by Dean personally and shapes what gets built next.</p>
+    </div>
+
+    <!-- 1. OVERALL SATISFACTION -->
+    <div class="section">
+      <div class="section-label">Overall satisfaction</div>
+      <div class="rating-wrap">
+        <button class="star-btn" onclick="setRating(1)" id="star1" title="1 star">⭐</button>
+        <button class="star-btn" onclick="setRating(2)" id="star2" title="2 stars">⭐</button>
+        <button class="star-btn" onclick="setRating(3)" id="star3" title="3 stars">⭐</button>
+        <button class="star-btn" onclick="setRating(4)" id="star4" title="4 stars">⭐</button>
+        <button class="star-btn" onclick="setRating(5)" id="star5" title="5 stars">⭐</button>
+        <span class="rating-label" id="rating-label">Tap to rate</span>
+      </div>
+    </div>
+
+    <!-- 2. SESSION QUALITY -->
+    <div class="section">
+      <div class="section-label">How are your training sessions feeling?</div>
+      <div class="session-rating">
+        <button class="rpe-btn" onclick="setSession(1)" id="s1">1<span>Too easy</span></button>
+        <button class="rpe-btn" onclick="setSession(2)" id="s2">2<span>Easy</span></button>
+        <button class="rpe-btn" onclick="setSession(3)" id="s3">3<span>Just right</span></button>
+        <button class="rpe-btn" onclick="setSession(4)" id="s4">4<span>Hard</span></button>
+        <button class="rpe-btn" onclick="setSession(5)" id="s5">5<span>Too hard</span></button>
+      </div>
+    </div>
+
+    <!-- 3. FEATURE REQUESTS -->
+    <div class="section">
+      <div class="section-label">What would make irontri better for you?</div>
+      <div class="chips" id="feature-chips">
+        <div class="chip" onclick="toggleChip(this,'Longer plans (8+ weeks)')">Longer plans</div>
+        <div class="chip" onclick="toggleChip(this,'Garmin / Apple Watch sync')">Garmin / Watch sync</div>
+        <div class="chip" onclick="toggleChip(this,'Mobile app')">Mobile app</div>
+        <div class="chip" onclick="toggleChip(this,'Nutrition guidance')">Nutrition guidance</div>
+        <div class="chip" onclick="toggleChip(this,'Heart rate zone workouts')">HR zone workouts</div>
+        <div class="chip" onclick="toggleChip(this,'Race day strategy')">Race day strategy</div>
+        <div class="chip" onclick="toggleChip(this,'Video technique guides')">Video technique</div>
+        <div class="chip" onclick="toggleChip(this,'Training with a group / club')">Group training</div>
+        <div class="chip" onclick="toggleChip(this,'More brick sessions')">More brick sessions</div>
+        <div class="chip" onclick="toggleChip(this,'Open water swim sessions')">Open water swim</div>
+      </div>
+    </div>
+
+    <!-- 4. FREE TEXT -->
+    <div class="section">
+      <div class="section-label">Anything else you want to tell us?</div>
+      <textarea id="comments" placeholder="Bugs, ideas, complaints, compliments — all welcome. Dean reads every single one."></textarea>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitFeedback()">Send feedback →</button>
+  </div>
+
+  <div class="success" id="success-view">
+    <div class="success-icon">🙏</div>
+    <h2>Thanks for the feedback!</h2>
+    <p>Dean reads every response personally. Your input directly shapes what gets built next in irontri.</p>
+    <a href="dashboard.html">← Back to dashboard</a>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let rating = 0;
+let sessionFeel = 0;
+let features = [];
+
+const ratingLabels = ['','Terrible 😬','Not great 😕','It\'s okay 😐','Really good 😊','Love it! 🔥'];
+
+function setRating(n) {
+  rating = n;
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('star'+i).classList.toggle('active', i <= n);
+  }
+  document.getElementById('rating-label').textContent = ratingLabels[n];
+}
+
+function setSession(n) {
+  sessionFeel = n;
+  for (let i = 1; i <= 5; i++) {
+    const btn = document.getElementById('s'+i);
+    btn.className = 'rpe-btn';
+    if (i === n) btn.classList.add('sel-'+n);
+  }
+}
+
+function toggleChip(el, val) {
+  el.classList.toggle('sel');
+  if (el.classList.contains('sel')) {
+    features.push(val);
+  } else {
+    features = features.filter(f => f !== val);
+  }
+}
+
+async function submitFeedback() {
+  const comments = document.getElementById('comments').value.trim();
+  const btn = document.getElementById('submit-btn');
+
+  if (!rating && !sessionFeel && !features.length && !comments) {
+    alert('Please fill in at least one field before submitting.');
+    return;
+  }
+
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  try {
+    // Get user if logged in
+    let userId = null;
+    let userEmail = null;
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        userId = session.user.id;
+        userEmail = session.user.email;
+      }
+    } catch(e) {}
+
+    const { error } = await sb.from('feedback').insert({
+      user_id: userId,
+      user_email: userEmail,
+      rating: rating || null,
+      session_feel: sessionFeel || null,
+      feature_requests: features.length ? features : null,
+      comments: comments || null,
+      created_at: new Date().toISOString()
+    });
+
+    if (error) throw error;
+
+    document.getElementById('form-view').style.display = 'none';
+    document.getElementById('success-view').style.display = 'block';
+  } catch(e) {
+    console.error('Feedback error:', e);
+    btn.textContent = 'Send feedback →';
+    btn.disabled = false;
+    alert('Something went wrong — please try again.');
+  }
+}
+</script>
+</body>
+</html>
