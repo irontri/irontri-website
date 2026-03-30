@@ -343,7 +343,7 @@
         <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;margin-bottom:24px;">
           </div>
         </div>
-        <a href="/auth.html" style="display:block;background:#1E90FF;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:600;text-align:center;text-decoration:none;font-family:'DM Sans',sans-serif;">Sign up free →</a>
+        <div style="text-align:center;margin-bottom:16px;"><div style="font-family:'Syne',sans-serif;font-size:48px;font-weight:800;color:#fff;line-height:1;" id="live-counter">—</div><div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;">athletes &amp; counting</div></div><a href="/auth.html" style="display:block;background:#1E90FF;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:600;text-align:center;text-decoration:none;font-family:'DM Sans',sans-serif;">Sign up free →</a>
         <p style="font-size:12px;color:var(--faint);margin-top:10px;">No credit card · Free forever</p>
       </div>
 
@@ -890,5 +890,5 @@ if ('serviceWorker' in navigator) {
 }
 
 
-</body>
+<script>(async()=>{try{const r=await fetch('https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/rpc/get_user_count',{method:'POST',headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU','Content-Type':'application/json'},body:'{}'});if(r.ok){const c=await r.json();const el=document.getElementById('live-counter');if(el&&c>0)el.textContent=c;}}catch(e){}})();</script></body>
 </html>
