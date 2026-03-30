@@ -513,11 +513,6 @@ async function loadTodaySession() {
     } catch(e) { return; }
 
     // Fall back to created_at for plans that predate startDate storage
-    const resolvedStart = planData.startDate || plan.created_at?.split('T')[0];
-    if (!planData.weeks || !resolvedStart) return;
-    planData.startDate = resolvedStart;
-
-    // Race countdown
     const raceDate = planData.raceDate;
     if (raceDate) {
       const daysToRace = Math.ceil((new Date(raceDate) - new Date()) / 86400000);
@@ -777,4 +772,10 @@ init();
 </script>
 </body>
 </html><div id="strava-section"></div>
+    
+    const resolvedStart = planData.startDate || plan.created_at?.split('T')[0];
+    if (!planData.weeks || !resolvedStart) return;
+    planData.startDate = resolvedStart;
+
+    // Race countdown
     
