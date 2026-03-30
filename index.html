@@ -343,7 +343,7 @@
         <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;margin-bottom:24px;">
           <div id="spots-bar" style="width:35%;height:100%;background:var(--blue);border-radius:100px;transition:width 1s ease;"></div>
         </div>
-        <a href="/auth.html" style="display:block;background:var(--blue);color:#fff;padding:15px 24px;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='#1478d4'" onmouseout="this.style.background='#1E90FF'">Claim my free spot →</a>
+        <a href="/auth.html" style="display:block;background:#1E90FF;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:600;text-align:center;text-decoration:none;font-family:'DM Sans',sans-serif;">Sign up free →</a>
         <p style="font-size:12px;color:var(--faint);margin-top:10px;">No credit card · Free forever</p>
       </div>
 
@@ -764,7 +764,7 @@
         <li style="font-size:14px;color:rgba(255,255,255,0.75);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--blue);flex-shrink:0;">✓</span>Unlimited plan rebuilds</li>
         <li style="font-size:14px;color:rgba(255,255,255,0.75);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--blue);flex-shrink:0;">✓</span>All future features</li>
       </ul>
-      <a href="/auth.html" style="display:block;background:var(--blue);color:#fff;padding:13px;border-radius:10px;font-size:14px;font-weight:600;text-align:center;text-decoration:none;">Join waitlist →</a>
+      <a href="/auth.html" style="display:block;background:#1E90FF;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:600;text-align:center;text-decoration:none;font-family:'DM Sans',sans-serif;">Sign up free →</a>
     </div>
 
     <!-- ANNUAL -->
@@ -778,7 +778,7 @@
         <li style="font-size:14px;color:rgba(255,255,255,0.75);display:flex;gap:8px;align-items:flex-start;"><span style="color:#fb923c;flex-shrink:0;">✓</span>Priority support</li>
         <li style="font-size:14px;color:rgba(255,255,255,0.75);display:flex;gap:8px;align-items:flex-start;"><span style="color:#fb923c;flex-shrink:0;">✓</span>Early access to new features</li>
       </ul>
-      <a href="/auth.html" style="display:block;background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.3);color:#fb923c;padding:13px;border-radius:10px;font-size:14px;font-weight:600;text-align:center;text-decoration:none;">Join waitlist →</a>
+      <a href="/auth.html" style="display:block;background:#1E90FF;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:600;text-align:center;text-decoration:none;font-family:'DM Sans',sans-serif;">Sign up free →</a>
     </div>
 
   </div>
@@ -912,31 +912,8 @@ if ('serviceWorker' in navigator) {
           }
           // Swap CTA
           const links = [...document.querySelectorAll('a[href*="auth.html"]')];
-           else {
-          document.getElementById('spots-count').textContent = count;
-        }
-      }
-    }
-  } catch(e) {}
-})();
-
-
-(async () => {
-  try {
-    const SURL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
-    const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
-    const headers = { apikey: SKEY, Authorization: 'Bearer ' + SKEY };
-    const [membersRes, waitlistRes] = await Promise.all([
-      fetch(SURL + '/rest/v1/rpc/get_user_count', { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: '{}' }),
-      fetch(SURL + '/rest/v1/waitlist?select=count', { headers: { ...headers, 'Prefer': 'count=exact' } })
-    ]);
-    const members = membersRes.ok ? await membersRes.json() : 0;
-    const waitlistCount = waitlistRes.ok ? parseInt(waitlistRes.headers.get('content-range')?.split('/')[1] || '0') : 0;
-    const total = (members || 0) + (waitlistCount || 0);
-    const el = document.getElementById('live-counter');
-    if (el && total > 0) el.textContent = total;
-  } catch(e) {}
-})();
+          const el = document.getElementById('live-counter');
+              if (el && count > 0) el.textContent = count;
 </script>
 </body>
 </html>
