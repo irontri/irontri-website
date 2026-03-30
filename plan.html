@@ -2271,7 +2271,7 @@ async function extendPlan(){
     if(!np.weeks||!np.weeks.length)throw new Error("No weeks in response");
     pd.weeks=pd.weeks.concat(np.weeks);
     await sb2.from("plans").update({plan_data:JSON.stringify(pd)}).eq("id",pid);
-    parsePlan(JSON.stringify(pd));
+    buildPlan(JSON.stringify(pd));
     if(st)st.textContent="Done! Weeks added.";
   }catch(e){
     console.error("Extend plan error:",e);
