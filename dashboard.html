@@ -764,7 +764,7 @@ async function loadPaceImprovement() {
           <span class="pace-from">${r.fromStr}</span>
           <span style="color:rgba(255,255,255,0.2);font-size:11px;">→</span>
           <span class="pace-to">${r.toStr}</span>
-          <span class="pace-delta ${r.same ? 'same' : 'better'}">${r.same ? 'no change' : r.deltaStr}</span>
+          <span class="pace-delta ${r.same ? 'same' : r.improved ? 'better' : 'worse'}">${r.same ? 'no change' : r.deltaStr}</span>
         </div>
       </div>`).join('');
 
