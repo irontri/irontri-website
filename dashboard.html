@@ -765,8 +765,11 @@ async function loadPaceImprovement() {
 
 // ── END TODAY'S SESSION ───────────────────────────────────────────────────────
 
-  loadTodaySession();
-  loadPaceImprovement();
+  // Wait for auth then load dashboard features
+  setTimeout(async () => {
+    await loadTodaySession();
+    await loadPaceImprovement();
+  }, 800);
 
 init();
 </script>
