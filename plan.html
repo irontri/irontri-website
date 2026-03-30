@@ -1099,6 +1099,8 @@ async function buildPlan(){
       document.getElementById('cal').innerHTML='';
     },17000);
   }
+
+  renderStartDateEditor((JSON.parse(localStorage.getItem("irontri_pending_answers")||"{}")).startDate, new URLSearchParams(location.search).get("load"));
 }
 
 function jumpToPhase(phase){
