@@ -11,7 +11,7 @@
   <style>
     :root{--blue:#1E90FF;--blue-dark:#1478d4;--bg:#0a0a0a;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--text:#fff;--muted:rgba(255,255,255,0.5);--faint:rgba(255,255,255,0.25);--strava:#FC4C02;}
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:70px;}
     nav{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:68px;background:#1E90FF;}
     .nav-logo{display:flex;align-items:center;text-decoration:none;}
     .nav-logo img{height:120px;width:auto;mix-blend-mode:screen;filter:brightness(10);}
@@ -174,7 +174,7 @@
 <nav>
   <a href="index.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri" /></a>
   <div class="nav-right">
-    <a href="/feedback.html" style="color:rgba(255,255,255,0.75);font-size:13px;text-decoration:none;padding:7px 14px;border:1px solid rgba(255,255,255,0.25);border-radius:8px;">💬 Feedback</a>
+    <a href="/cdn-cgi/l/email-protection#107475717e76797e7e797d7f627550787f647d71797c3e737f7d2f6365727a7573642d79627f7e646279352220767575747271737b36727f74692d58793522205475717e3522533522207875627537633522207d69352220767575747271737b352351" style="color:rgba(255,255,255,0.75);font-size:13px;text-decoration:none;padding:7px 14px;border:1px solid rgba(255,255,255,0.25);border-radius:8px;">💬 Feedback</a>
     <a href="profile.html" class="nav-user" id="nav-user"></a>
     <button class="btn-logout" onclick="logOut()">Log out</button>
   </div>
@@ -782,6 +782,20 @@ async function loadPaceImprovement() {
 
 init();
 </script>
+
+<!-- BOTTOM TAB BAR -->
+<nav style="position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,0.08);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);">
+  <a href="/dashboard.html" id="tab-today" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:var(--blue,#1E90FF);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">📅</span>Today
+  </a>
+  <a href="/plan.html" id="tab-plan" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">🗓️</span>My Plan
+  </a>
+  <a href="/feedback.html" id="tab-support" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">💬</span>Feedback
+  </a>
+</nav>
+<!-- END BOTTOM TAB BAR -->
 </body>
 </html>
     
