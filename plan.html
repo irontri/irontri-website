@@ -2193,6 +2193,7 @@ async function resumePlan() {
   document.getElementById('pause-btn').style.display = 'flex';
   renderWeek();
   showIronToast('Plan resumed! ▶️', '#4ade80');
+  renderStartDateEditor(A.startDate, new URLSearchParams(location.search).get('load'));
 }
 // ── END PLAN PAUSE ──────────────────────────────────────────────────────────
 
@@ -2242,6 +2243,57 @@ async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
 function renderExtendButton(pd,pid){var e=document.getElementById("extend-btn-wrap");if(e)e.remove();var w=pd&&pd.weeks;if(!w||!w.length)return;var n=w.length+1;var d=document.createElement("div");d.id="extend-btn-wrap";d.style.cssText="text-align:center;padding:32px 0 16px;";d.innerHTML='<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:32px;"><div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:12px;">Your plan covers '+w.length+' weeks</div><button id="extend-plan-btn" onclick="extendPlan()" style="background:rgba(30,144,255,0.12);border:1.5px solid #1E90FF;color:#1E90FF;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">Generate weeks '+n+' to '+(n+3)+'</button><div id="extend-status" style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:10px;display:none;"></div></div>';var c=document.getElementById("plan");if(c)c.after(d);}
 async function extendPlan(){var btn=document.getElementById("extend-plan-btn");var st=document.getElementById("extend-status");if(!btn||!planData)return;btn.disabled=true;btn.textContent="Generating...";if(st){st.style.display="block";st.textContent="Building your next 4 weeks...";}try{var sd=await sb2.auth.getSession();var sess=sd.data.session;var sw=planData.weeks.length+1;var ctx={race:planData.race||planData.planName,raceDate:planData.raceDate,startDate:planData.startDate,totalWeeksPlanned:planData.weeks.length,recentWeeks:planData.weeks.slice(-2).map(function(w){return{weekNum:w.weekNum,phase:w.phase,totalVolume:w.totalVolume};}),athleteProfile:planData.athleteProfile||{}};var res=await fetch("/api/extend-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({planContext:ctx,startWeek:sw,numWeeks:4,race:planData.race,userId:sess&&sess.user&&sess.user.id,planId:currentPlanId})});if(!res.ok)throw new Error("failed");var data=await res.json();var txt=data.plan;txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);var np=JSON.parse(txt);if(!np.weeks||!np.weeks.length)throw new Error("no weeks");planData.weeks=planData.weeks.concat(np.weeks);if(sess&&sess.user&&currentPlanId)await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",currentPlanId);parsePlan(JSON.stringify(planData));if(st)st.textContent="Done! Weeks added.";}catch(e){console.error(e);btn.disabled=false;btn.textContent="Generate weeks "+(planData.weeks.length+1)+" to "+(planData.weeks.length+4);if(st)st.textContent="Something went wrong. Try again.";}}
 
+
+function renderStartDateEditor(startDate, planId) {
+  var ex = document.getElementById("start-date-editor");
+  if (ex) ex.remove();
+  if (!startDate) return;
+  var w = document.createElement("div");
+  w.id = "start-date-editor";
+  w.style.cssText = "display:flex;align-items:center;gap:10px;margin:12px 0 0 0;flex-wrap:wrap;";
+  var lb = document.createElement("span");
+  lb.style.cssText = "font-size:12px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;";
+  lb.textContent = "Start date";
+  var ip = document.createElement("input");
+  ip.type = "date"; ip.id = "start-date-input"; ip.value = startDate;
+  ip.style.cssText = "background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:6px 10px;font-size:13px;font-family:DM Sans,sans-serif;cursor:pointer;";
+  var bt = document.createElement("button");
+  bt.id = "start-date-save-btn"; bt.textContent = "Save";
+  bt.setAttribute("onclick", "saveStartDate(" + JSON.stringify(planId) + ")");
+  bt.style.cssText = "background:#1E90FF;border:none;border-radius:8px;color:#fff;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;";
+  var mg = document.createElement("span");
+  mg.id = "start-date-msg"; mg.textContent = "Saved!";
+  mg.style.cssText = "font-size:12px;color:#4ade80;display:none;";
+  w.appendChild(lb); w.appendChild(ip); w.appendChild(bt); w.appendChild(mg);
+  var ps = document.getElementById("pstats");
+  if (ps) ps.after(w);
+}
+async function saveStartDate(planId) {
+  var ip = document.getElementById("start-date-input");
+  var mg = document.getElementById("start-date-msg");
+  var bt = document.getElementById("start-date-save-btn");
+  if (!ip || !ip.value) return;
+  var nd = ip.value;
+  if (bt) { bt.disabled = true; bt.textContent = "Saving..."; }
+  try {
+    var pid = planId || new URLSearchParams(location.search).get("load");
+    var sess = (await sb2.auth.getSession()).data.session;
+    if (!sess) throw new Error("Not logged in");
+    var pr = await sb2.from("plans").select("*").eq("id", pid).eq("user_id", sess.user.id).single();
+    if (pr.error) throw pr.error;
+    var txt = pr.data.plan_data;
+    txt = txt.substring(txt.indexOf("{"), txt.lastIndexOf("}") + 1);
+    var pd = JSON.parse(txt); pd.startDate = nd;
+    var answers = JSON.parse(localStorage.getItem("irontri_pending_answers") || "{}");
+    answers.startDate = nd;
+    localStorage.setItem("irontri_pending_answers", JSON.stringify(answers));
+    A.startDate = nd;
+    await sb2.from("plans").update({ plan_data: JSON.stringify(pd) }).eq("id", pid);
+    buildPlan(JSON.stringify(pd));
+    if (mg) { mg.style.display = "inline"; setTimeout(function() { mg.style.display = "none"; }, 2000); }
+  } catch(e) { console.error("saveStartDate:", e); alert("Could not save: " + e.message); }
+  if (bt) { bt.disabled = false; bt.textContent = "Save"; }
+}
 </script>
 
 <!-- PAUSE MODAL -->
