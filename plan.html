@@ -698,7 +698,7 @@ function updateGoalTime(){
   const runPaceSec=Math.round((runPace-runPaceMin)*60);
   const breakdown=document.getElementById('gt-breakdown');
   breakdown.style.display='block';
-  breakdown.innerHTML=`<div style="font-weight:500;margin-bottom:8px;color:#fff;">Target split breakdown:</div>🏊 Swim: ${swimMins} min (${swimPace}s/100m) &nbsp;·&nbsp; 🚴 Bike: ${bikeMins} min (${bikeSpeed}km/h) &nbsp;·&nbsp; 🏃 Run: ${runMins} min (${runPaceMin}:${String(runPaceSec).padStart(2,'0')}/km)<br><span style="color:var(--faint);font-size:12px;">Transitions: ~${transMins} min · Total: ${h}h ${m}m</span>`;
+  breakdown.innerHTML=`<div style="font-weight:500;margin-bottom:8px;color:#fff;">Target split breakdown:</div>🏊 Swim: ${swimMins} min (${swimPace}/100m) &nbsp;·&nbsp; 🚴 Bike: ${bikeMins} min (${bikeSpeed}km/h) &nbsp;·&nbsp; 🏃 Run: ${runMins} min (${runPaceMin}:${String(runPaceSec).padStart(2,'0')}/km)<br><span style="color:var(--faint);font-size:12px;">Transitions: ~${transMins} min · Total: ${h}h ${m}m</span>`;
   document.getElementById('n3').disabled=false;
 }
 function pg(el,key,val){el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
