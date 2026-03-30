@@ -917,7 +917,19 @@ if ('serviceWorker' in navigator) {
             const wrap = claimLink.parentElement;
             wrap.innerHTML = `<div style="text-align:center">
               <p style="color:rgba(255,255,255,0.7);margin-bottom:12px;font-size:15px;">Founding spots are full — join the waitlist</p>
-              <div style="display:flex;gap:10px;max-width:400px;margin:0 auto;flex-wrap:wrap;">
+              <div style="text-align:center;margin-bottom:20px;">
+  <div style="display:inline-flex;align-items:center;gap:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 24px;">
+    <div style="text-align:left;">
+      <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#fff;line-height:1;" id="live-counter">—</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">athletes signed up</div>
+    </div>
+    <div style="width:1px;height:36px;background:rgba(255,255,255,0.1);"></div>
+    <div style="text-align:left;">
+      <div style="font-size:13px;color:#4ade80;font-weight:600;">✓ 100 founding spots filled</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">Waitlist now open</div>
+    </div>
+  </div>
+</div><div style="display:flex;gap:10px;max-width:400px;margin:0 auto;flex-wrap:wrap;">
                 <input type="email" id="waitlist-email" placeholder="your@email.com" style="flex:1;min-width:180px;padding:13px 16px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:#fff;font-size:14px;font-family:inherit;outline:none;">
                 <button onclick="joinWaitlist()" style="background:#1E90FF;color:#fff;border:none;padding:13px 22px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Join waitlist →</button>
               </div>
@@ -932,6 +944,21 @@ if ('serviceWorker' in navigator) {
   } catch(e) {}
 })();
 
+
+// Live member counter
+(async () => {
+  try {
+    const res = await fetch('https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/rpc/get_user_count', {
+      headers: { 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU', 'Content-Type': 'application/json' },
+      method: 'POST', body: JSON.stringify({})
+    });
+    if (res.ok) {
+      const count = await res.json();
+      const el = document.getElementById('live-counter');
+      if (el && count > 0) el.textContent = count;
+    }
+  } catch(e) {}
+})();
 async function joinWaitlist() {
   const email = document.getElementById('waitlist-email')?.value?.trim();
   if (!email || !email.includes('@')) { alert('Please enter a valid email'); return; }
