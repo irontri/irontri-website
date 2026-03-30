@@ -1068,10 +1068,10 @@ async function buildPlan(){
     document.getElementById('pintro').textContent = planData.intro||'';
 
     document.getElementById('pstats').innerHTML=[
-  renderStartDateEditor(A, pid);
       {v:planData.weeks.length,l:'Total weeks'},{v:A.hours+'h',l:'Per week'},
       {v:A.days.length,l:'Sessions/week'},{v:A.race.split(' ')[0],l:'Race type'}
     ].map(s=>`<div class="ps"><div class="psv">${s.v}</div><div class="psl">${s.l}</div></div>`).join('');
+  renderStartDateEditor(A, pid);
 
     const phases=[...new Set(planData.weeks.map(w=>w.phase))];
     document.getElementById('phases').innerHTML=phases.map((p,i)=>
