@@ -1071,7 +1071,7 @@ async function buildPlan(){
       {v:planData.weeks.length,l:'Total weeks'},{v:A.hours+'h',l:'Per week'},
       {v:A.days.length,l:'Sessions/week'},{v:A.race.split(' ')[0],l:'Race type'}
     ].map(s=>`<div class="ps"><div class="psv">${s.v}</div><div class="psl">${s.l}</div></div>`).join('');
-  renderStartDateEditor(planData, new URLSearchParams(location.search).get("load"));
+  renderStartDateEditor(A.startDate, new URLSearchParams(location.search).get("load"));
 
     const phases=[...new Set(planData.weeks.map(w=>w.phase))];
     document.getElementById('phases').innerHTML=phases.map((p,i)=>
@@ -2238,15 +2238,15 @@ async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
   } catch(e) { console.log('Adapt error:', e); }
 }
 
-function renderStartDateEditor(planData,planId){
+function renderStartDateEditor(startDate, planId) {
   var ex=document.getElementById("start-date-editor");if(ex)ex.remove();
-  if(!planData||!planData.startDate)return;
+  if(!startDate)return;
   var w=document.createElement("div");w.id="start-date-editor";
   w.style.cssText="display:flex;align-items:center;gap:10px;margin:12px 0 0 0;flex-wrap:wrap;";
   var lb=document.createElement("span");
   lb.style.cssText="font-size:12px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;";
   lb.textContent="Start date";
-  var ip=document.createElement("input");ip.type="date";ip.id="start-date-input";ip.value=planData.startDate;
+  var ip=document.createElement("input");ip.type="date";ip.id="start-date-input";ip.value=startDate;
   ip.style.cssText="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:6px 10px;font-size:13px;font-family:DM Sans,sans-serif;cursor:pointer;";
   var bt=document.createElement("button");bt.id="start-date-save-btn";bt.textContent="Save";
   bt.setAttribute("onclick","saveStartDate("+JSON.stringify(planId)+")");
@@ -2256,7 +2256,7 @@ function renderStartDateEditor(planData,planId){
   w.appendChild(lb);w.appendChild(ip);w.appendChild(bt);w.appendChild(mg);
   var ps=document.getElementById("pstats");if(ps)ps.after(w);
 }
-async function saveStartDate(planId){
+async function saveStartDate(planId) {
   var ip=document.getElementById("start-date-input");
   var mg=document.getElementById("start-date-msg");
   var bt=document.getElementById("start-date-save-btn");
@@ -2270,7 +2270,11 @@ async function saveStartDate(planId){
     var pr=await sb2.from("plans").select("*").eq("id",pid).eq("user_id",sess.user.id).single();
     if(pr.error)throw pr.error;
     var txt=pr.data.plan_data;txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);
-    var pd=JSON.parse(txt);pd.startDate=nd;
+    var pd=JSON.parse(txt);
+    // Save startDate to localStorage answers too
+    var answers=JSON.parse(localStorage.getItem("irontri_pending_answers")||"{}");
+    answers.startDate=nd;
+    localStorage.setItem("irontri_pending_answers",JSON.stringify(answers));
     await sb2.from("plans").update({plan_data:JSON.stringify(pd)}).eq("id",pid);
     buildPlan(JSON.stringify(pd));
     if(mg){mg.style.display="inline";setTimeout(function(){mg.style.display="none";},2000);}
