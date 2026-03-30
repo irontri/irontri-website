@@ -850,7 +850,7 @@ if ('serviceWorker' in navigator) {
           const countEl = document.getElementById('spots-count');
           if (countEl && countEl.nextSibling) {
             const parent = countEl.parentElement;
-            if (parent) parent.innerHTML = parent.innerHTML.replace(/d+ of 100 claimed/, 'Founding spots filled 🎉');
+            if (parent) parent.innerHTML = parent.innerHTML.replace(/\d+ of 100 claimed/, 'Founding spots filled 🎉');
           }
           // Swap CTA
           const links = [...document.querySelectorAll('a[href*="auth.html"]')];
