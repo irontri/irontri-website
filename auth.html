@@ -119,7 +119,7 @@
 <script>
 const _url = 'https://aezfxagplaxlmovqbmfd.supabase.co';
 const _key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
-const _sb = window.supabase.createClient(_url, _key);
+const _sb = window.supabase.createClient(_url, _key, { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } });
 
 _sb.auth.getSession().then(({data:{session}}) => {
   if (session) {
