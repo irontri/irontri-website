@@ -241,7 +241,6 @@
       </div>
     </div>
 
-    <div id="strava-section"></div>
     <div class="section-title">Your training plans</div>
 
     
@@ -522,7 +521,7 @@ async function loadTodaySession() {
     const raceDate = planData.raceDate;
     if (raceDate) {
       const daysToRace = Math.ceil((new Date(raceDate) - new Date()) / 86400000);
-      if (daysToRace > 0 && daysToRace <= 200) {
+      if (daysToRace > 0 && daysToRace <= 400) {
         document.getElementById('rc-days').textContent = daysToRace;
         document.getElementById('rc-race-name').textContent = plan.race || 'race';
         document.getElementById('race-countdown').classList.add('show');
@@ -777,5 +776,5 @@ async function loadPaceImprovement() {
 init();
 </script>
 </body>
-</html>
+</html><div id="strava-section"></div>
     
