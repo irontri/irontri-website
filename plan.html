@@ -1755,10 +1755,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.querySelector('.prog-wrap').style.display = 'none';
       document.getElementById('gen').style.display = 'block';
       setTimeout(() => buildPlan(), 500);
+  setTimeout(function(){renderStartDateEditor((JSON.parse(localStorage.getItem("irontri_pending_answers")||"{}")).startDate, new URLSearchParams(location.search).get("load"));}, 3000);
     } catch(e) {}
   }
 
-  setTimeout(function(){renderStartDateEditor((JSON.parse(localStorage.getItem("irontri_pending_answers")||"{}")).startDate, new URLSearchParams(location.search).get("load"));}, 2000);
+  
 });
 </script>
 
