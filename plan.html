@@ -2197,7 +2197,7 @@ async function resumePlan() {
   renderWeek();
   showIronToast('Plan resumed! ▶️', '#4ade80');
 
-  setTimeout(function(){renderStartDateEditor((JSON.parse(localStorage.getItem("irontri_pending_answers")||"{}")).startDate, new URLSearchParams(location.search).get("load"));}, 1000);
+  }, 1000);
 }
 // ── END PLAN PAUSE ──────────────────────────────────────────────────────────
 
@@ -2330,5 +2330,18 @@ async function saveStartDate(planId) {
   </a>
 </nav>
 <!-- END BOTTOM TAB BAR -->
+
+<script>
+(function poll(){
+  var ps = document.getElementById('pstats');
+  if(ps && ps.textContent.trim()){
+    var sd = (JSON.parse(localStorage.getItem('irontri_pending_answers')||'{}')).startDate;
+    var pid = new URLSearchParams(location.search).get('load');
+    if(sd && pid) renderStartDateEditor(sd, pid);
+  } else {
+    setTimeout(poll, 500);
+  }
+})();
+</script>
 </body>
 </html>
