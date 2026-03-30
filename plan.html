@@ -2238,62 +2238,44 @@ async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
   } catch(e) { console.log('Adapt error:', e); }
 }
 
-function renderStartDateEditor(planData, planId) {
-  var existing = document.getElementById('start-date-editor');
-  if (existing) existing.remove();
-  if (!planData || !planData.startDate) return;
-
-  var wrap = document.createElement('div');
-  wrap.id = 'start-date-editor';
-  wrap.style.cssText = 'display:flex;align-items:center;gap:10px;margin:8px 0 0 0;';
-  wrap.innerHTML = '<span style="font-size:12px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;">Start date</span>'
-    + '<input type="date" id="start-date-input" value="' + planData.startDate + '" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:6px 10px;font-size:13px;font-family:DM Sans,sans-serif;cursor:pointer;">'
-    + '<button onclick="saveStartDate('' + planId + '')" style="background:#1E90FF;border:none;border-radius:8px;color:#fff;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">Save</button>'
-    + '<span id="start-date-msg" style="font-size:12px;color:#4ade80;display:none;">Saved!</span>';
-
-  var pstats = document.getElementById('pstats');
-  if (pstats) pstats.after(wrap);
+function renderStartDateEditor(planData,planId){
+  var ex=document.getElementById("start-date-editor");if(ex)ex.remove();
+  if(!planData||!planData.startDate)return;
+  var w=document.createElement("div");w.id="start-date-editor";
+  w.style.cssText="display:flex;align-items:center;gap:10px;margin:12px 0 0 0;flex-wrap:wrap;";
+  var lb=document.createElement("span");
+  lb.style.cssText="font-size:12px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;";
+  lb.textContent="Start date";
+  var ip=document.createElement("input");ip.type="date";ip.id="start-date-input";ip.value=planData.startDate;
+  ip.style.cssText="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:6px 10px;font-size:13px;font-family:DM Sans,sans-serif;cursor:pointer;";
+  var bt=document.createElement("button");bt.id="start-date-save-btn";bt.textContent="Save";
+  bt.setAttribute("onclick","saveStartDate("+JSON.stringify(planId)+")");
+  bt.style.cssText="background:#1E90FF;border:none;border-radius:8px;color:#fff;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;";
+  var mg=document.createElement("span");mg.id="start-date-msg";mg.textContent="Saved!";
+  mg.style.cssText="font-size:12px;color:#4ade80;display:none;";
+  w.appendChild(lb);w.appendChild(ip);w.appendChild(bt);w.appendChild(mg);
+  var ps=document.getElementById("pstats");if(ps)ps.after(w);
 }
-
-async function saveStartDate(planId) {
-  var input = document.getElementById('start-date-input');
-  var msg = document.getElementById('start-date-msg');
-  if (!input || !input.value) return;
-
-  var newDate = input.value;
-  var btn = input.nextElementSibling;
-  btn.disabled = true;
-  btn.textContent = 'Saving...';
-
-  try {
-    var pid = planId || new URLSearchParams(location.search).get('load');
-    var sd = await sb2.auth.getSession();
-    var sess = sd.data.session;
-    if (!sess) throw new Error('Not logged in');
-
-    // Fetch current plan
-    var pr = await sb2.from('plans').select('*').eq('id', pid).eq('user_id', sess.user.id).single();
-    if (pr.error) throw pr.error;
-
-    // Update startDate in plan_data
-    var txt = pr.data.plan_data;
-    txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1);
-    var pd = JSON.parse(txt);
-    pd.startDate = newDate;
-
-    // Save back to Supabase
-    await sb2.from('plans').update({ plan_data: JSON.stringify(pd) }).eq('id', pid);
-
-    // Re-render with new start date
+async function saveStartDate(planId){
+  var ip=document.getElementById("start-date-input");
+  var mg=document.getElementById("start-date-msg");
+  var bt=document.getElementById("start-date-save-btn");
+  if(!ip||!ip.value)return;
+  var nd=ip.value;
+  if(bt){bt.disabled=true;bt.textContent="Saving...";}
+  try{
+    var pid=planId||new URLSearchParams(location.search).get("load");
+    var sess=(await sb2.auth.getSession()).data.session;
+    if(!sess)throw new Error("Not logged in");
+    var pr=await sb2.from("plans").select("*").eq("id",pid).eq("user_id",sess.user.id).single();
+    if(pr.error)throw pr.error;
+    var txt=pr.data.plan_data;txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);
+    var pd=JSON.parse(txt);pd.startDate=nd;
+    await sb2.from("plans").update({plan_data:JSON.stringify(pd)}).eq("id",pid);
     buildPlan(JSON.stringify(pd));
-
-    if (msg) { msg.style.display = 'inline'; setTimeout(function(){ msg.style.display = 'none'; }, 2000); }
-  } catch(e) {
-    console.error('saveStartDate error:', e);
-    alert('Could not save: ' + e.message);
-  }
-  btn.disabled = false;
-  btn.textContent = 'Save';
+    if(mg){mg.style.display="inline";setTimeout(function(){mg.style.display="none";},2000);}
+  }catch(e){console.error("saveStartDate:",e);alert("Could not save: "+e.message);}
+  if(bt){bt.disabled=false;bt.textContent="Save";}
 }
 
 </script>
