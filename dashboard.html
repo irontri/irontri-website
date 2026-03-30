@@ -193,8 +193,8 @@
 
     
   <!-- TODAY'S SESSION -->
-  <div class="race-countdown" id="race-countdown">
-    <div><div class="rc-days" id="rc-days">—</div><div class="rc-label">days to race</div></div>
+  <div class="race-countdown" id="race-countdown" style="display:none;">
+    <div><div class="rc-days" id="rc-days"></div><div class="rc-label">days to race</div></div>
     <div class="rc-text">Until your <span class="rc-race" id="rc-race-name">race</span> 🏁</div>
   </div>
   
@@ -521,12 +521,14 @@ async function loadTodaySession() {
     const raceDate = planData.raceDate;
     if (raceDate) {
       const daysToRace = Math.ceil((new Date(raceDate) - new Date()) / 86400000);
-      if (daysToRace > 0 && daysToRace <= 200) {
+      if (daysToRace > 0 && daysToRace <= 365) {
         document.getElementById('rc-days').textContent = daysToRace;
         document.getElementById('rc-race-name').textContent = plan.race || 'race';
         document.getElementById('race-countdown').classList.add('show');
       }
+      // If negative or no date — stays hidden (display:none by default)
     }
+    // If no raceDate at all — countdown stays hidden
 
     // Calculate today's position in the plan
     const today = new Date();
