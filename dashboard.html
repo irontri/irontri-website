@@ -689,6 +689,11 @@ async function loadPaceImprovement() {
 
     if (!planData.weeks || planData.weeks.length < 2) return;
 
+    // Only show pace improvement if user has actually completed week 1 sessions
+    const { data: week1Completions } = await sb.from('completions')
+      .select('id').eq('user_id', session.user.id).eq('week_num', 0);
+    if (!week1Completions || week1Completions.length < 1) return;
+
     // Build pace maps: week1 and latest week (or current week)
     const sports = ['Swim', 'Bike', 'Run'];
     const sportMeta = {
