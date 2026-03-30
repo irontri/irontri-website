@@ -8,14 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-BDZ8K3RR10');
-</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-BDZ8K3RR10');</script>
   <style>
     :root{--blue:#1E90FF;--blue-dark:#1478d4;--bg:#0a0a0a;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--text:#fff;--muted:rgba(255,255,255,0.5);--faint:rgba(255,255,255,0.25);}
     *{margin:0;padding:0;box-sizing:border-box;}
@@ -41,64 +35,87 @@
     .auth-msg{text-align:center;font-size:13px;margin-top:16px;padding:12px;border-radius:8px;display:none;}
     .auth-msg.error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#f87171;}
     .auth-msg.success{background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);color:#4ade80;}
+    .auth-msg.info{background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.2);color:#60a5fa;}
     .benefits{margin-bottom:28px;}
     .benefit{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-bottom:8px;}
     .benefit-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+    .forgot-link{display:block;text-align:right;font-size:12px;color:var(--muted);text-decoration:none;margin-top:-8px;margin-bottom:16px;cursor:pointer;}
+    .forgot-link:hover{color:#fff;}
+    .back-link{display:block;text-align:center;font-size:13px;color:var(--blue);cursor:pointer;margin-top:16px;}
+    .back-link:hover{text-decoration:underline;}
   </style>
 </head>
 <body>
 <nav>
   <a href="/index.html" class="nav-logo"><img src="/irontri_logo.png" alt="irontri" /></a>
 </nav>
-
 <div class="auth-wrap">
   <div class="auth-card">
     <div class="auth-title">Welcome to irontri</div>
     <div class="auth-sub" id="auth-sub">Save your plan and track your progress</div>
 
-    <div class="tabs">
-      <div class="tab active" id="tab-signup" onclick="switchTab('signup')">Create account</div>
-      <div class="tab" id="tab-login" onclick="switchTab('login')">Log in</div>
+    <!-- MAIN AUTH FORMS -->
+    <div id="main-auth">
+      <div class="tabs">
+        <div class="tab active" id="tab-signup" onclick="switchTab('signup')">Create account</div>
+        <div class="tab" id="tab-login" onclick="switchTab('login')">Log in</div>
+      </div>
+
+      <!-- SIGNUP -->
+      <div id="form-signup">
+        <div class="benefits">
+          <div class="benefit"><div class="benefit-dot"></div>Save your personalised training plan</div>
+          <div class="benefit"><div class="benefit-dot"></div>Access your calendar anytime</div>
+          <div class="benefit"><div class="benefit-dot"></div>Track your progress week by week</div>
+          <div class="benefit"><div class="benefit-dot"></div>Free forever for founding members</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">First name</label>
+          <input type="text" class="form-input" id="signup-name" placeholder="Your name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input type="email" class="form-input" id="signup-email" placeholder="you@email.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="signup-password" placeholder="At least 6 characters" />
+        </div>
+        <button class="btn-auth" id="btn-signup" onclick="doSignUp()">Create my free account →</button>
+        <div class="auth-msg" id="msg-signup"></div>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="form-login" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input type="email" class="form-input" id="login-email" placeholder="you@email.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="login-password" placeholder="Your password" />
+        </div>
+        <span class="forgot-link" onclick="showForgotForm()">Forgot password?</span>
+        <button class="btn-auth" id="btn-login" onclick="doLogIn()">Log in →</button>
+        <div class="auth-msg" id="msg-login"></div>
+      </div>
     </div>
 
-    <div id="form-signup">
-      <div class="benefits">
-        <div class="benefit"><div class="benefit-dot"></div>Save your personalised training plan</div>
-        <div class="benefit"><div class="benefit-dot"></div>Access your calendar anytime</div>
-        <div class="benefit"><div class="benefit-dot"></div>Track your progress week by week</div>
-        <div class="benefit"><div class="benefit-dot"></div>Free forever for founding members</div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">First name</label>
-        <input type="text" class="form-input" id="signup-name" placeholder="Your name" />
-      </div>
+    <!-- FORGOT PASSWORD FORM -->
+    <div id="forgot-form" style="display:none;">
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px;">Reset password</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:24px;">Enter your email and we'll send you a reset link.</div>
       <div class="form-group">
         <label class="form-label">Email address</label>
-        <input type="email" class="form-input" id="signup-email" placeholder="you@email.com" />
+        <input type="email" class="form-input" id="forgot-email" placeholder="you@email.com" />
       </div>
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" class="form-input" id="signup-password" placeholder="At least 6 characters" />
-      </div>
-      <button class="btn-auth" id="btn-signup" onclick="doSignUp()">Create my free account →</button>
-      <div class="auth-msg" id="msg-signup"></div>
+      <button class="btn-auth" id="btn-forgot" onclick="doForgotPassword()">Send reset link →</button>
+      <div class="auth-msg" id="msg-forgot"></div>
+      <span class="back-link" onclick="showMainAuth()">← Back to log in</span>
     </div>
 
-    <div id="form-login" style="display:none;">
-      <div class="form-group">
-        <label class="form-label">Email address</label>
-        <input type="email" class="form-input" id="login-email" placeholder="you@email.com" />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" class="form-input" id="login-password" placeholder="Your password" />
-      </div>
-      <button class="btn-auth" id="btn-login" onclick="doLogIn()">Log in →</button>
-      <div class="auth-msg" id="msg-login"></div>
-    </div>
   </div>
 </div>
-
 <script>
 const _url = 'https://aezfxagplaxlmovqbmfd.supabase.co';
 const _key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
@@ -123,6 +140,17 @@ function switchTab(tab) {
   document.getElementById('form-login').style.display = tab==='login' ? 'block' : 'none';
 }
 
+function showForgotForm() {
+  document.getElementById('main-auth').style.display = 'none';
+  document.getElementById('forgot-form').style.display = 'block';
+}
+
+function showMainAuth() {
+  document.getElementById('forgot-form').style.display = 'none';
+  document.getElementById('main-auth').style.display = 'block';
+  switchTab('login');
+}
+
 function showMsg(id, msg, type) {
   const el = document.getElementById(id);
   el.textContent = msg;
@@ -140,13 +168,23 @@ async function doSignUp() {
   btn.disabled = true;
   btn.textContent = 'Creating account...';
   const { data, error } = await _sb.auth.signUp({ email, password, options: { data: { full_name: name } } });
-  if (error) { showMsg('msg-signup', error.message, 'error'); btn.disabled = false; btn.textContent = 'Create my free account →'; return; }
+  if (error) {
+    showMsg('msg-signup', error.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Create my free account →';
+    return;
+  }
   localStorage.setItem('irontri_user_name', name);
-  showMsg('msg-signup', '🎉 Account created! Saving your plan...', 'success');
-  await new Promise(r => setTimeout(r, 1500));
+  // Check if email confirmation is required
+  if (data.user && !data.session) {
+    btn.style.display = 'none';
+    showMsg('msg-signup', '📧 Check your email to confirm your account, then log in.', 'info');
+    return;
+  }
+  showMsg('msg-signup', '🎉 Account created! Redirecting...', 'success');
   await savePendingPlan(data.user && data.user.id);
   const redirectTo = new URLSearchParams(window.location.search).get('redirect');
-  setTimeout(() => window.location.href = redirectTo === 'plan' ? '/plan.html' : '/dashboard.html', 500);
+  setTimeout(() => window.location.href = redirectTo === 'plan' ? '/plan.html' : '/dashboard.html', 1000);
 }
 
 async function doLogIn() {
@@ -157,13 +195,37 @@ async function doLogIn() {
   btn.disabled = true;
   btn.textContent = 'Logging in...';
   const { data, error } = await _sb.auth.signInWithPassword({ email, password });
-  if (error) { showMsg('msg-login', error.message, 'error'); btn.disabled = false; btn.textContent = 'Log in →'; return; }
+  if (error) {
+    showMsg('msg-login', error.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Log in →';
+    return;
+  }
   const loginName = (data.user && data.user.user_metadata && data.user.user_metadata.full_name) || email.split('@')[0];
   localStorage.setItem('irontri_user_name', loginName);
   showMsg('msg-login', '✅ Logged in! Redirecting...', 'success');
   await savePendingPlan(data.user && data.user.id);
   const loginRedirect = new URLSearchParams(window.location.search).get('redirect');
   setTimeout(() => window.location.href = loginRedirect === 'plan' ? '/plan.html' : '/dashboard.html', 1000);
+}
+
+async function doForgotPassword() {
+  const email = document.getElementById('forgot-email').value.trim();
+  const btn = document.getElementById('btn-forgot');
+  if (!email) return showMsg('msg-forgot', 'Please enter your email address', 'error');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  const { error } = await _sb.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://www.irontriapp.com/reset-password.html'
+  });
+  if (error) {
+    showMsg('msg-forgot', error.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Send reset link →';
+    return;
+  }
+  btn.style.display = 'none';
+  showMsg('msg-forgot', '📧 Reset link sent! Check your email.', 'success');
 }
 
 async function savePendingPlan(userId) {
