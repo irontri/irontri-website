@@ -1203,15 +1203,25 @@ async function loadNextWeeks() {
     const r = await fetch('/api/generate-plan', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
     const d = await r.json();
     let txt = d.plan || '';
+    txt = txt.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
     txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
-    const newData = JSON.parse(txt.replace(/^```[a-z]*\n/,'').replace(/\n```$/,'').trim());
+    const newData = JSON.parse(txt);
+    if (!newData.weeks || !newData.weeks.length) throw new Error('No weeks in response');
     const savedStartDate = planData.startDate;
     planData.weeks = [...planData.weeks, ...newData.weeks];
     planData.startDate = savedStartDate;
+    // Fire-and-forget save to Supabase — no await so it never blocks
+    const pid = new URLSearchParams(location.search).get('load');
+    if (pid) sb2.auth.getSession().then(({data:{session:sess}})=>{
+      if(sess) sb2.from('plans').update({plan_data:JSON.stringify(planData)}).eq('id',pid).then(()=>console.log('Saved '+planData.weeks.length+' weeks')).catch(e=>console.log('Save err',e));
+    });
     curWeek = currentWeekCount;
     renderWeek();
     try { renderGraph(); } catch(e) {}
+    btn.disabled = false;
+    btn.textContent = 'Load weeks ' + (planData.weeks.length+1) + '–' + (planData.weeks.length+4) + ' →';
   } catch(e) {
+    console.error('loadNextWeeks error:', e);
     btn.textContent = 'Error — try again';
     btn.disabled = false;
   }
