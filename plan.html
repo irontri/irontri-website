@@ -1204,26 +1204,13 @@ async function loadNextWeeks() {
     const d = await r.json();
     let txt = d.plan || '';
     txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
-    txt = txt.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
-    const newData = JSON.parse(txt);
-    if (!newData.weeks || !newData.weeks.length) throw new Error('No weeks returned');
+    const newData = JSON.parse(txt.replace(/^```[a-z]*\n/,'').replace(/\n```$/,'').trim());
     const savedStartDate = planData.startDate;
     planData.weeks = [...planData.weeks, ...newData.weeks];
     planData.startDate = savedStartDate;
-    // Save to Supabase now that RLS UPDATE policy exists
-    try {
-      const sess = (await sb2.auth.getSession()).data.session;
-      const pid = new URLSearchParams(location.search).get('load');
-      if (sess && pid) {
-        await sb2.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', pid);
-      }
-    } catch(se) { console.log('Save error:', se); }
     curWeek = currentWeekCount;
     renderWeek();
-    renderGraph();
-    // Update the load-more button text
-    const nb = document.getElementById('load-more-btn');
-    if (nb) nb.textContent = 'Load weeks ' + (planData.weeks.length+1) + '–' + (planData.weeks.length+4) + ' →';
+    try { renderGraph(); } catch(e) {}
   } catch(e) {
     btn.textContent = 'Error — try again';
     btn.disabled = false;
