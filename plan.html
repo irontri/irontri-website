@@ -1083,6 +1083,7 @@ async function buildPlan(){
     loadCompletions().then(() => { renderWeek(); syncStravaActivities(); });
     if(A.date){planData.raceDate=A.date;} checkAndSavePlan(JSON.stringify(planData));
     window.scrollTo({top:0,behavior:'smooth'});
+    renderExtendButton(planData, loadId);
     setTimeout(() => window.dispatchEvent(new Event('plan-loaded')), 100);
 
   }catch(e){
