@@ -1683,6 +1683,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const urlParams = new URLSearchParams(window.location.search);
   const loadId = urlParams.get('load');
+      if (loadId) window.currentPlanId = loadId;
   if (loadId) {
     try {
       document.getElementById('quiz-wrap').style.display = 'none';
