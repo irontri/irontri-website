@@ -1683,7 +1683,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const urlParams = new URLSearchParams(window.location.search);
   const loadId = urlParams.get('load');
-      if (loadId) window.currentPlanId = loadId;
   if (loadId) {
     try {
       document.getElementById('quiz-wrap').style.display = 'none';
@@ -2243,33 +2242,40 @@ async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
 }
 
 function renderExtendButton(pd,pid){var e=document.getElementById("extend-btn-wrap");if(e)e.remove();var w=pd&&pd.weeks;if(!w||!w.length)return;var n=w.length+1;var d=document.createElement("div");d.id="extend-btn-wrap";d.style.cssText="text-align:center;padding:32px 0 16px;";d.innerHTML='<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:32px;"><div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:12px;">Your plan covers '+w.length+' weeks</div><button id="extend-plan-btn" onclick="extendPlan()" style="background:rgba(30,144,255,0.12);border:1.5px solid #1E90FF;color:#1E90FF;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">Generate weeks '+n+' to '+(n+3)+'</button><div id="extend-status" style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:10px;display:none;"></div></div>';var c=document.getElementById("plan");if(c)c.after(d);}
-async function extendPlan(){var btn=document.getElementById("extend-plan-btn");var st=document.getElementById("extend-status");if(!btn||!planData)return;btn.disabled=true;btn.textContent="Generating...";if(st){st.style.display="block";st.textContent="Building your next 4 weeks...";}try{var sd=await sb2.auth.getSession();var sess=sd.data.session;var sw=planData.weeks.length+1;var ctx={race:planData.race||planData.planName,raceDate:planData.raceDate,startDate:planData.startDate,totalWeeksPlanned:planData.weeks.length,recentWeeks:planData.weeks.slice(-2).map(function(w){return{weekNum:w.weekNum,phase:w.phase,totalVolume:w.totalVolume};}),athleteProfile:planData.athleteProfile||{}};var res=await fetch("/api/extend-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({planContext:ctx,startWeek:sw,numWeeks:4,race:planData.race,userId:sess&&sess.user&&sess.user.id,planId:currentPlanId})});if(!res.ok)throw new Error("failed");var data=await res.json();var txt=data.plan;txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);var np=JSON.parse(txt);if(!np.weeks||!np.weeks.length)throw new Error("no weeks");planData.weeks=planData.weeks.concat(np.weeks);if(sess&&sess.user&&currentPlanId)await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",currentPlanId);buildPlan(JSON.stringify(planData));if(st)st.textContent="Done! Weeks added.";}catch(e){console.error(e);btn.disabled=false;btn.textContent="Generate weeks "+(planData.weeks.length+1)+" to "+(planData.weeks.length+4);if(st)st.textContent="Something went wrong. Try again.";}}
-
-
-function renderStartDateEditor(startDate, planId) {
-  var ex = document.getElementById("start-date-editor");
-  if (ex) ex.remove();
-  if (!startDate) return;
-  var w = document.createElement("div");
-  w.id = "start-date-editor";
-  w.style.cssText = "display:flex;align-items:center;gap:10px;margin:12px 0 0 0;flex-wrap:wrap;";
-  var lb = document.createElement("span");
-  lb.style.cssText = "font-size:12px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;";
-  lb.textContent = "Start date";
-  var ip = document.createElement("input");
-  ip.type = "date"; ip.id = "start-date-input"; ip.value = startDate;
-  ip.style.cssText = "background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;padding:6px 10px;font-size:13px;font-family:DM Sans,sans-serif;cursor:pointer;";
-  var bt = document.createElement("button");
-  bt.id = "start-date-save-btn"; bt.textContent = "Save";
-  bt.setAttribute("onclick", "saveStartDate(" + JSON.stringify(planId) + ")");
-  bt.style.cssText = "background:#1E90FF;border:none;border-radius:8px;color:#fff;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;";
-  var mg = document.createElement("span");
-  mg.id = "start-date-msg"; mg.textContent = "Saved!";
-  mg.style.cssText = "font-size:12px;color:#4ade80;display:none;";
-  w.appendChild(lb); w.appendChild(ip); w.appendChild(bt); w.appendChild(mg);
-  var ps = document.getElementById("pstats");
-  if (ps) ps.after(w);
+async function extendPlan(){
+  var btn=document.getElementById("extend-plan-btn");
+  var st=document.getElementById("extend-status");
+  if(!btn||!planData)return;
+  btn.disabled=true;
+  btn.textContent="Generating...";
+  if(st){st.style.display="block";st.textContent="Building your next 4 weeks...";}
+  try {
+    var sd=await sb2.auth.getSession();
+    var sess=sd.data.session;
+    var sw=planData.weeks.length+1;
+    var lastWeeks=planData.weeks.slice(-2);
+    var prompt="You are a triathlon coach. A "+planData.race+" athlete needs weeks "+sw+" to "+(sw+3)+" of their training plan.\n\nExisting plan summary:\n- Race: "+planData.race+"\n- Race date: "+(planData.raceDate||'TBD')+"\n- Total weeks so far: "+planData.weeks.length+"\n- Recent weeks: "+JSON.stringify(lastWeeks.map(function(w){return{weekNum:w.weekNum,phase:w.phase,totalVolume:w.totalVolume};}))+"\n\nGenerate ONLY weeks "+sw+" to "+(sw+3)+". Return a JSON object with a \"weeks\" array containing exactly 4 week objects. Each week must have: weekNumber, phase, focus, weeklyNarrative, totalVolume, days (array of 7 days). Each day must have: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone.\nReturn ONLY valid JSON, no other text.";
+    var res=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:prompt,userId:sess&&sess.user&&sess.user.id,race:planData.race})});
+    if(!res.ok)throw new Error("API error "+res.status);
+    var data=await res.json();
+    var txt=data.content&&data.content[0]&&data.content[0].text||'';
+    txt=txt.substring(txt.indexOf('{'),txt.lastIndexOf('}')+1);
+    var newData=JSON.parse(txt);
+    if(!newData.weeks||!newData.weeks.length)throw new Error("No weeks in response");
+    var savedStartDate=planData.startDate;
+    planData.weeks=[...planData.weeks,...newData.weeks];
+    planData.startDate=savedStartDate;
+    if(sess&&sess.user&&currentPlanId)await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",currentPlanId);
+    buildPlan(JSON.stringify(planData));
+    if(st)st.textContent="Done! Weeks added.";
+  } catch(e) {
+    console.error(e);
+    btn.disabled=false;
+    btn.textContent="Generate weeks "+(planData.weeks.length+1)+" to "+(planData.weeks.length+4);
+    if(st)st.textContent="Something went wrong: "+e.message;
+  }
 }
+
 async function saveStartDate(planId) {
   var ip = document.getElementById("start-date-input");
   var mg = document.getElementById("start-date-msg");
@@ -2326,3 +2332,17 @@ async function saveStartDate(planId) {
 
 
 <!-- BOTTOM TAB BAR -->
+<nav style="position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,0.08);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);">
+  <a href="/dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">📅</span>Today
+  </a>
+  <a href="#" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:#1E90FF;font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">🗓️</span>My Plan
+  </a>
+  <a href="/feedback.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">💬</span>Feedback
+  </a>
+</nav>
+<!-- END BOTTOM TAB BAR -->
+</body>
+</html>
