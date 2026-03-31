@@ -1684,6 +1684,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const loadId = urlParams.get('load');
       if (loadId) window.currentPlanId = loadId;
+      if (loadId) window.currentPlanId = loadId;
   if (loadId) {
     try {
       document.getElementById('quiz-wrap').style.display = 'none';
@@ -2267,7 +2268,19 @@ async function extendPlan(){
     planData.weeks=[...planData.weeks,...newData.weeks];
     planData.startDate=savedStartDate;
     if(sess&&sess.user&&currentPlanId)await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",currentPlanId);
-    buildPlan(JSON.stringify(planData));
+    // Re-render the plan with new weeks without re-generating
+    document.getElementById('ptitle').textContent = (A.name ? A.name+"'s " : '') + (planData.race || A.race) + ' Plan';
+    document.getElementById('pstats').innerHTML=[
+      {v:planData.weeks.length,l:'Total weeks'},{v:A.hours+'h',l:'Per week'},
+      {v:A.days.length||'—',l:'Sessions/week'},{v:(planData.race||A.race||'').split(' ')[0],l:'Race type'}
+    ].map(function(s){return '<div class="ps"><div class="psv">'+s.v+'</div><div class="psl">'+s.l+'</div></div>';}).join('');
+    const phases=[...new Set(planData.weeks.map(function(w){return w.phase;}))];
+    document.getElementById('phases').innerHTML=phases.map(function(ph,i){
+      return '<button class="phase-pill'+(i===0?' active':'')+'" data-phase="'+ph+'" onclick="jumpToPhase(''+ph+'')">'+ph+' Phase</button>';
+    }).join('');
+    curWeek=planData.weeks.length-4; curDay=null;
+    renderWeek(); renderGraph();
+    renderExtendButton(planData, window.currentPlanId);
     if(st)st.textContent="Done! Weeks added.";
   } catch(e) {
     console.error(e);
