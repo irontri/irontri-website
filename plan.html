@@ -2258,7 +2258,7 @@ async function extendPlan(){
     var res=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:prompt,userId:sess&&sess.user&&sess.user.id,race:planData.race})});
     if(!res.ok)throw new Error("API error "+res.status);
     var data=await res.json();
-    var txt=data.content&&data.content[0]&&data.content[0].text||'';
+    var txt=data.plan||data.content&&data.content[0]&&data.content[0].text||'';txt=txt.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
     txt=txt.substring(txt.indexOf('{'),txt.lastIndexOf('}')+1);
     var newData=JSON.parse(txt);
     if(!newData.weeks||!newData.weeks.length)throw new Error("No weeks in response");
