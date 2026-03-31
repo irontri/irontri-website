@@ -1000,7 +1000,15 @@ async function buildPlan(){
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
   const prompt = 'You are an elite triathlon coach. Return ONLY valid JSON, no other text.\n\n' +
-    'ATHLETE: Name: ' + A.name + ', Race: ' + A.race + ', Goal: ' + (A.goaltimeText||'Complete') + ', Experience: ' + A.exp + ', Fitness: ' + A.fitness + ', Weakness: ' + A.weak + ', Hours/week: ' + A.hours + ', FTP: ' + (A.ftp ? A.ftp+'w' : 'unknown') + ', CSS: ' + (A.css||'unknown') + ', Run threshold: ' + (A.runThreshold||'unknown') + ', Days: ' + A.days.join(', ') + ', Pool: ' + A.pool + ', Injury: ' + (A.injury||'None') + ', Age: ' + A.age + ', Weeks: ' + w + '\n\n' +
+    'ATHLETE: Name: ' + A.name + ', Race: ' + A.race + ', Goal: ' + (A.goaltimeText||'Complete') + ', Experience: ' + A.exp + ', Fitness: ' + A.fitness + ', Weakness: ' + A.weak + ', Hours/week: ' + A.hours + ', FTP: ' + (A.ftp ? A.ftp+'w' : 'unknown') + ', CSS: ' + (A.css||'unknown') + ', Run threshold: ' + (A.runThreshold||'unknown') + ', Days: ' + A.days.join(', ') + ', Pool: ' + A.pool + ', Injury: ' + (A.injury||'None') + ', Age: ' + A.age + ', Weeks: ' + w + ', Start date: ' + (A.startDate||'TBD') + ', Race date: ' + (A.date||'TBD') + '\n\n' +
+    'RACE DATE TAPER STRUCTURE — FOLLOW EXACTLY:\n' +
+    '- Total plan: ' + w + ' weeks. Starts ' + (A.startDate||'soon') + '. Race: ' + (A.date||'TBD') + '.\n' +
+    '- Week ' + w + ' = RACE WEEK. Max 30-45 min per session, easy pace only. Last session 2 days before race. coachNote counts down days to race.\n' +
+    '- Week ' + (w-1) + ' = TAPER 2 — volume -50% vs peak week. Short sharp sessions only. No long ride or run. coachNote counts down days to race.\n' +
+    '- Week ' + (w-2) + ' = TAPER 1 — volume -30% vs peak. Last medium sessions. coachNote references race week approaching.\n' +
+    '- Week ' + (w-3) + ' = PEAK WEEK — highest intensity of entire plan. Last big training push before taper.\n' +
+    '- Weeks 1 to ' + (w-4) + ' = progressive build: Base (aerobic) → Build (threshold) → Peak (race-specific intensity).\n' +
+    '- RULE: Never put long ride (>90 min) or long run (>75 min) in weeks ' + (w-1) + ' or ' + w + '.\n\n' +
     'MANDATORY SESSION QUALITY RULES:\n' +
     '1. MAINSET: Exact intervals, exact rest, exact pace, one technique cue. Never vague. E.g. "8x100m descending 1:55 to 1:45, 15sec rest, high elbow on catch."\n' +
     '2. COACH NOTE: Reference why this session exists in the week. "Hard bike tomorrow — keep this controlled, move blood not create fatigue."\n' +
