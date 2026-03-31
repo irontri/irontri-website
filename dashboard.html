@@ -521,7 +521,7 @@ async function saveNewStartDate(planId) {
     planData.startDate = newStart;
     const { error: updateError } = await sb.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', planId);
     if (updateError) throw new Error(updateError.message);
-    try { const stored = JSON.parse(localStorage.getItem('irontri_pending_answers') || '{}'); stored.startDate = newStart; localStorage.setItem('irontri_pending_answers', JSON.stringify(stored)); } catch(e) {}
+    try { const overrides = JSON.parse(localStorage.getItem('irontri_start_override') || '{}'); overrides[planId] = newStart; localStorage.setItem('irontri_start_override', JSON.stringify(overrides)); const stored = JSON.parse(localStorage.getItem('irontri_pending_answers') || '{}'); stored.startDate = newStart; localStorage.setItem('irontri_pending_answers', JSON.stringify(stored)); } catch(e) {}
     document.getElementById('start-date-editor-' + planId).style.display = 'none';
     await loadPlans();
   } catch(e) { saveBtn.textContent = 'Save'; saveBtn.disabled = false; alert('Could not update start date: ' + e.message); }
