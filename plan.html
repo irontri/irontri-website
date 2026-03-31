@@ -1702,7 +1702,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         planData = JSON.parse(txt);
         A.race = plan.race || planData.race || 'Triathlon';
         A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
-        A.startDate = planData.startDate || '';
+        A.startDate = (()=>{ try { const ov=JSON.parse(localStorage.getItem('irontri_start_override')||'{}'); return ov[loadId] || planData.startDate || ''; } catch(e){ return planData.startDate || ''; } })();
         A.date = planData.raceDate || A.date || '';
 
         document.getElementById('gen').style.display = 'none';
