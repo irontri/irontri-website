@@ -79,6 +79,7 @@
     #gen{display:none;text-align:center;padding:80px 24px;}
     .spinner{width:48px;height:48px;border:3px solid rgba(30,144,255,0.15);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 24px;}
     @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
     .gt{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;}
     .gs{font-size:14px;color:var(--muted);margin-bottom:32px;}
     .gsteps{display:flex;flex-direction:column;gap:10px;max-width:300px;margin:0 auto;text-align:left;}
@@ -850,6 +851,24 @@ function renderRoadmap() {
     } else {
       pt.textContent = 'Week ' + totalWeeks + ' of ' + targetWeeks + ' built';
     }
+  }
+
+  // Show building vs complete status
+  const buildingEl = document.getElementById('roadmap-building-status');
+  const completeEl = document.getElementById('roadmap-complete-status');
+  const staticEl = document.getElementById('roadmap-static-notice');
+  const buildingText = document.getElementById('roadmap-building-text');
+  if (totalWeeks >= targetWeeks) {
+    if (buildingEl) buildingEl.style.display = 'none';
+    if (staticEl) staticEl.style.display = 'none';
+    if (completeEl) { completeEl.style.display = 'block'; }
+    const cw = document.getElementById('roadmap-complete-weeks');
+    if (cw) cw.textContent = totalWeeks;
+  } else {
+    if (buildingEl) { buildingEl.style.display = 'flex'; }
+    if (completeEl) completeEl.style.display = 'none';
+    if (staticEl) staticEl.style.display = 'none';
+    if (buildingText) buildingText.textContent = 'Building your plan to race day — ' + totalWeeks + ' of ' + targetWeeks + ' weeks ready';
   }
 }
 
