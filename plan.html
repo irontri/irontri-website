@@ -8,7 +8,7 @@
   <style>
     :root{--blue:#1E90FF;--blue-dark:#1478d4;--bg:#0d0d0d;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--text:#fff;--muted:rgba(255,255,255,0.5);--faint:rgba(255,255,255,0.25);}
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:70px;}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:70px;}
     nav{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:68px;background:#1E90FF;}
     .nav-logo{display:flex;align-items:center;text-decoration:none;}
     .nav-logo img{height:120px;width:auto;mix-blend-mode:screen;filter:brightness(10);}
@@ -44,7 +44,7 @@
     .ogt{font-size:15px;font-weight:500;margin-bottom:3px;}
     .ogs{font-size:11px;color:var(--muted);line-height:1.4;}
     .days-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;}
-    .db{width:54px;height:54px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
+    .db{width:54px;height:54px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
     .db.sel{background:var(--blue);border-color:var(--blue);color:#fff;}
     .sl-sec{margin-bottom:28px;}
     .sl-num{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;letter-spacing:-2px;color:var(--blue);line-height:1;margin-bottom:4px;}
@@ -53,14 +53,14 @@
     input[type=range]{width:100%;height:5px;-webkit-appearance:none;background:rgba(255,255,255,0.1);border-radius:100px;outline:none;}
     input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--blue);cursor:pointer;}
     .is{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
-    .is input{width:100%;padding:15px 18px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;}
+    .is input{width:100%;padding:15px 18px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;}
     .is input:focus{border-color:var(--blue);}
     .is input::placeholder{color:var(--faint);}
     .qnav{display:flex;gap:10px;align-items:center;}
-    .bn{background:var(--blue);color:#fff;border:none;padding:15px 32px;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s;}
+    .bn{background:var(--blue);color:#fff;border:none;padding:15px 32px;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:background 0.2s;}
     .bn:hover{background:var(--blue-dark);}
     .bn:disabled{opacity:0.35;cursor:not-allowed;}
-    .bb{background:transparent;color:var(--muted);border:1px solid var(--border);padding:15px 20px;border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+    .bb{background:transparent;color:var(--muted);border:1px solid var(--border);padding:15px 20px;border-radius:10px;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;}
     .bb:hover{color:#fff;border-color:rgba(255,255,255,0.3);}
 
     /* SUMMARY */
@@ -72,7 +72,7 @@
     .sc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;}
     .sl{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--faint);margin-bottom:6px;}
     .sv{font-size:15px;font-weight:500;line-height:1.4;}
-    .scta{width:100%;padding:16px;background:var(--blue);border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;}
+    .scta{width:100%;padding:16px;background:var(--blue);border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:10px;}
     .snote{text-align:center;font-size:13px;color:var(--faint);}
 
     /* GENERATING */
@@ -111,7 +111,7 @@
     /* WEEK SELECTOR */
     .week-nav{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
     .week-label{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;flex:1;}
-    .week-sub{font-size:12px;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400;margin-left:8px;}
+    .week-sub{font-size:12px;color:var(--muted);font-family:'Inter',sans-serif;font-weight:400;margin-left:8px;}
     .wbtn{background:var(--surface);border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
     .wbtn:hover{border-color:rgba(30,144,255,0.4);color:#fff;}
     .wbtn:disabled{opacity:0.3;cursor:not-allowed;}
@@ -186,7 +186,7 @@
     .modal-body p{margin-bottom:12px;}
     .modal-body p:last-child{margin-bottom:0;}
     .modal-tag{display:inline-block;font-size:11px;padding:3px 10px;border-radius:100px;margin-bottom:14px;font-weight:500;}
-    .info-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--faint);font-size:11px;padding:3px 8px;border-radius:100px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;margin-left:8px;}
+    .info-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--faint);font-size:11px;padding:3px 8px;border-radius:100px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;margin-left:8px;}
     .info-btn:hover{background:rgba(30,144,255,0.12);border-color:rgba(30,144,255,0.3);color:var(--blue);}
 
     /* RPE EXPLAINER */
@@ -206,7 +206,7 @@
 
 
     /* ── STRAVA SHARE ── */
-    .strava-share-btn{width:100%;background:rgba(252,76,2,0.1);border:1px solid rgba(252,76,2,0.3);color:#FC4C02;padding:13px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;}
+    .strava-share-btn{width:100%;background:rgba(252,76,2,0.1);border:1px solid rgba(252,76,2,0.3);color:#FC4C02;padding:13px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;}
     .strava-share-btn:hover{background:rgba(252,76,2,0.2);border-color:rgba(252,76,2,0.5);}
     .strava-share-btn.shared{background:rgba(74,222,128,0.08);border-color:rgba(74,222,128,0.3);color:#4ade80;cursor:default;}
 
@@ -214,7 +214,7 @@
     .rpe-prompt{margin-top:12px;background:rgba(30,144,255,0.06);border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:16px;animation:fu 0.3s ease both;}
     .rpe-prompt-title{font-size:13px;color:var(--muted);margin-bottom:12px;text-align:center;}
     .rpe-options{display:flex;gap:8px;justify-content:center;}
-    .rpe-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
+    .rpe-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
     .rpe-btn:hover{transform:scale(1.1);}
     .rpe-btn.r1,.rpe-btn.r2{border-color:#4ade80;color:#4ade80;}
     .rpe-btn.r3{border-color:#fbbf24;color:#fbbf24;}
@@ -237,7 +237,7 @@
 
     /* ACTIONS */
     .plan-actions{display:flex;gap:10px;flex-wrap:wrap;}
-    .pa-btn{flex:1;min-width:140px;padding:14px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:center;border:none;}
+    .pa-btn{flex:1;min-width:140px;padding:14px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;text-align:center;border:none;}
     .pa-primary{background:var(--blue);color:#fff;}
     .pa-secondary{background:var(--surface);border:1px solid var(--border);color:var(--muted);}
 
@@ -258,7 +258,7 @@
     .thresh-card-bike{background:rgba(251,146,60,0.06);border:1px solid rgba(251,146,60,0.15);}
     .thresh-card-run{background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);}
     .thresh-title{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
-    .thresh-input{width:58px;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;}
+    .thresh-input{width:58px;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;text-align:center;}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
 <!-- Google Analytics -->
@@ -391,8 +391,8 @@
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
       <div style="font-size:12px;font-weight:500;color:var(--blue);letter-spacing:1px;text-transform:uppercase;">🎯 Your threshold data — optional</div>
       <div style="display:flex;align-items:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:3px;gap:2px;">
-        <button id="btn-metric" onclick="setUnits('metric')" style="padding:5px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:#1E90FF;color:#fff;transition:all 0.15s;">km / m</button>
-        <button id="btn-imperial" onclick="setUnits('imperial')" style="padding:5px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;">mi / yd</button>
+        <button id="btn-metric" onclick="setUnits('metric')" style="padding:5px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;background:#1E90FF;color:#fff;transition:all 0.15s;">km / m</button>
+        <button id="btn-imperial" onclick="setUnits('imperial')" style="padding:5px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;">mi / yd</button>
       </div>
     </div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:18px;">Enter what you know — leave blank if unsure and we'll estimate from your goal time and experience.</div>
@@ -408,9 +408,9 @@
         <div id="swim-threshold-desc" style="font-size:12px;color:var(--muted);margin-bottom:10px;">Your threshold swim pace per 100m. Find it with a 400m TT minus your 200m TT.</div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:6px;">
-            <input type="number" id="icss-min" min="0" max="5" placeholder="1" oninput="updateCSS()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            <input type="number" id="icss-min" min="0" max="5" placeholder="1" oninput="updateCSS()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
             <span style="color:var(--muted);font-size:16px;font-weight:600;">:</span>
-            <input type="number" id="icss-sec" min="0" max="59" placeholder="45" oninput="updateCSS()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            <input type="number" id="icss-sec" min="0" max="59" placeholder="45" oninput="updateCSS()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
             <span id="swim-unit-label" style="font-size:13px;color:var(--muted);">/ 100m</span>
           </div>
           <div id="css-hint" style="font-size:12px;color:rgba(56,189,248,0.7);display:none;"></div>
@@ -425,7 +425,7 @@
         </div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Your 1-hour max power in watts. From a 20-min test × 0.95, or check your Garmin/Wahoo.</div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <input type="number" id="iftp" min="50" max="500" placeholder="e.g. 220" oninput="A.ftp=this.value" style="width:100px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#fb923c'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+          <input type="number" id="iftp" min="50" max="500" placeholder="e.g. 220" oninput="A.ftp=this.value" style="width:100px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#fb923c'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
           <span style="font-size:13px;color:var(--muted);">watts</span>
           <div id="ftp-hint" style="font-size:12px;color:rgba(251,146,60,0.7);display:none;"></div>
         </div>
@@ -440,9 +440,9 @@
         <div id="run-threshold-desc" style="font-size:12px;color:var(--muted);margin-bottom:10px;">Your 1-hour race pace per km, or roughly your 10km race pace. RPE 7-8/10.</div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:6px;">
-            <input type="number" id="irtp-min" min="2" max="9" placeholder="4" oninput="updateRTP()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#4ade80'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            <input type="number" id="irtp-min" min="2" max="9" placeholder="4" oninput="updateRTP()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#4ade80'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
             <span style="color:var(--muted);font-size:16px;font-weight:600;">:</span>
-            <input type="number" id="irtp-sec" min="0" max="59" placeholder="30" oninput="updateRTP()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#4ade80'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            <input type="number" id="irtp-sec" min="0" max="59" placeholder="30" oninput="updateRTP()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#4ade80'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
             <span id="run-unit-label" style="font-size:13px;color:var(--muted);">/ km</span>
           </div>
           <div id="rtp-hint" style="font-size:12px;color:rgba(74,222,128,0.7);display:none;"></div>
@@ -563,7 +563,7 @@
         <div class="plan-title" id="ptitle">Your Training Plan</div>
         <div class="plan-subtitle" id="psub">Personalised for you</div>
       </div>
-      <button onclick="openPauseModal()" id="pause-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);padding:8px 16px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s;">
+      <button onclick="openPauseModal()" id="pause-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);padding:8px 16px;border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s;">
         ⏸️ Pause plan
       </button>
     </div>
@@ -576,7 +576,7 @@
           <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;" id="pause-resume-date">Resuming soon</div>
         </div>
       </div>
-      <button onclick="resumePlan()" style="background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.3);color:#fb923c;padding:7px 14px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">
+      <button onclick="resumePlan()" style="background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.3);color:#fb923c;padding:7px 14px;border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;cursor:pointer;">
         Resume now
       </button>
     </div>
@@ -606,7 +606,7 @@
   <div id="plan-roadmap" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:16px 20px;margin-bottom:20px;">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
       <div id="roadmap-title" style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;"></div>
-      <button id="pdf-download-btn" onclick="downloadPDF()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">📄 Download PDF</button>
+      <button id="pdf-download-btn" onclick="downloadPDF()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;">📄 Download PDF</button>
     </div>
     <div style="margin-bottom:10px;"><div style="display:flex;border-radius:6px;overflow:hidden;height:10px;background:rgba(255,255,255,0.06);">
       <div id="roadmap-base" style="height:100%;background:#38bdf8;width:0%;transition:width 0.5s;"></div>
@@ -645,7 +645,7 @@
       <div style="font-size:28px;margin-bottom:10px;">🗓️</div>
       <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">Your plan continues beyond week 4</div>
       <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:20px;max-width:420px;margin-left:auto;margin-right:auto;">Generate your next training block — picks up exactly where week 4 left off with progressive overload built in.</div>
-      <button id="load-more-btn" onclick="loadNextWeeks()" style="background:#1E90FF;border:none;color:#fff;padding:16px 40px;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;max-width:380px;display:block;margin:0 auto;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+      <button id="load-more-btn" onclick="loadNextWeeks()" style="background:#1E90FF;border:none;color:#fff;padding:16px 40px;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;width:100%;max-width:380px;display:block;margin:0 auto;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
         Load weeks 5–8 →
       </button>
       <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:12px;">Free · Takes about 30 seconds</p>
@@ -959,17 +959,17 @@ function selectDay(i){
       ${d.coachNote?`<div class="sd-section"><div class="sd-sec-title">💬 Coach note</div><div class="sd-sec-content" style="font-style:italic;color:var(--muted);">"${d.coachNote}"</div></div>`:''}
       ${strengthHTML}
       <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;">
-        <button id="complete-btn-${i}" onclick="toggleComplete(${i})" style="width:100%;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);color:#4ade80;padding:14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;">
+        <button id="complete-btn-${i}" onclick="toggleComplete(${i})" style="width:100%;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);color:#4ade80;padding:14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;">
           ${completions.has(`${curWeek}-${i}`) ? '✅ Session completed!' : '✓ Mark as complete'}
         </button>
-        <button onclick="swapSession(${i})" style="width:100%;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">
+        <button onclick="swapSession(${i})" style="width:100%;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;">
           😓 Not feeling 100%? Swap for an easier session
         </button>
         <div style="display:flex;gap:8px;">
-          <button onclick="openMovePicker(${curWeek},${i})" style="flex:1;background:transparent;border:1px solid rgba(30,144,255,0.35);color:#1E90FF;padding:11px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='rgba(30,144,255,0.1)'" onmouseout="this.style.background='transparent'">
+          <button onclick="openMovePicker(${curWeek},${i})" style="flex:1;background:transparent;border:1px solid rgba(30,144,255,0.35);color:#1E90FF;padding:11px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='rgba(30,144,255,0.1)'" onmouseout="this.style.background='transparent'">
             📅 Move to another day
           </button>
-          <button onclick="skipSession(${curWeek},${i})" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:11px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)';this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.4)'">
+          <button onclick="skipSession(${curWeek},${i})" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:11px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)';this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.4)'">
             ✕ Skip session
           </button>
         </div>
@@ -1081,7 +1081,7 @@ async function buildPlan(){
     loadCompletions().then(() => { renderWeek(); syncStravaActivities(); });
     if(A.date){planData.raceDate=A.date;}
     checkAndSavePlan(JSON.stringify(planData));
-    if(A.date&&planData.weeks.length<w){const _bt=document.createElement('div');_bt.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1E90FF;color:#fff;padding:14px 20px;border-radius:12px;font-size:13px;font-family:DM Sans,sans-serif;text-align:center;z-index:9999;max-width:340px;line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.4);';_bt.innerHTML='<strong>Your first 4 weeks are ready!</strong><br>Building your full '+w+'-week plan to race day in the background.';document.body.appendChild(_bt);setTimeout(()=>{if(_bt.parentNode)_bt.remove();},8000);setTimeout(()=>autoGenerateRemainingWeeks(w),5000);}
+    if(A.date&&planData.weeks.length<w){const _bt=document.createElement('div');_bt.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1E90FF;color:#fff;padding:14px 20px;border-radius:12px;font-size:13px;font-family:Inter,sans-serif;text-align:center;z-index:9999;max-width:340px;line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.4);';_bt.innerHTML='<strong>Your first 4 weeks are ready!</strong><br>Building your full '+w+'-week plan to race day in the background.';document.body.appendChild(_bt);setTimeout(()=>{if(_bt.parentNode)_bt.remove();},8000);setTimeout(()=>autoGenerateRemainingWeeks(w),5000);}
     window.scrollTo({top:0,behavior:'smooth'});
     setTimeout(() => window.dispatchEvent(new Event('plan-loaded')), 100);
 
@@ -1862,8 +1862,8 @@ function swapSession(dayIndex) {
           <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:8px;line-height:1.5;" id="swap-mainset"></div>
         </div>
         <div style="display:flex;gap:10px;">
-          <button onclick="document.getElementById('swap-confirm-modal').style.display='none'" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);padding:12px;border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">Cancel</button>
-          <button id="swap-confirm-btn" style="flex:2;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">Swap session</button>
+          <button onclick="document.getElementById('swap-confirm-modal').style.display='none'" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);padding:12px;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">Cancel</button>
+          <button id="swap-confirm-btn" style="flex:2;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;">Swap session</button>
         </div>
       </div>`;
     document.body.appendChild(modal);
@@ -2025,7 +2025,7 @@ function openMovePicker(weekIdx, dayIdx) {
   if (existing) existing.remove();
 
   const dayListHTML = available.map(function(x) {
-    return '<button onclick="confirmMove(' + weekIdx + ',' + dayIdx + ',' + x.i + ')" style="width:100%;text-align:left;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:13px 16px;color:#fff;font-size:14px;cursor:pointer;font-family:\'DM Sans\',sans-serif;display:flex;justify-content:space-between;align-items:center;transition:all 0.15s;margin-bottom:8px;" onmouseover="this.style.borderColor=\'rgba(30,144,255,0.5)\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\'">' +
+    return '<button onclick="confirmMove(' + weekIdx + ',' + dayIdx + ',' + x.i + ')" style="width:100%;text-align:left;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:13px 16px;color:#fff;font-size:14px;cursor:pointer;font-family:\'Inter\',sans-serif;display:flex;justify-content:space-between;align-items:center;transition:all 0.15s;margin-bottom:8px;" onmouseover="this.style.borderColor=\'rgba(30,144,255,0.5)\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\'">' +
       '<span>' + dayNames[x.i] + '</span>' +
       '<span style="font-size:11px;color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:20px;">Rest day</span>' +
     '</button>';
@@ -2038,7 +2038,7 @@ function openMovePicker(weekIdx, dayIdx) {
     '<div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Move session</div>' +
     '<div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Move "' + (movingDay.name || movingDay.type) + '" to a rest day this week</div>' +
     dayListHTML +
-    '<button onclick="document.getElementById(\'iron-move-modal\').remove()" style="width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-size:14px;cursor:pointer;font-family:\'DM Sans\',sans-serif;margin-top:4px;">Cancel</button>' +
+    '<button onclick="document.getElementById(\'iron-move-modal\').remove()" style="width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-size:14px;cursor:pointer;font-family:\'Inter\',sans-serif;margin-top:4px;">Cancel</button>' +
   '</div>';
   document.body.appendChild(modal);
   modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
@@ -2073,7 +2073,7 @@ function showIronToast(msg, color) {
   const t = document.createElement('div');
   t.id = 'iron-toast';
   t.textContent = msg;
-  t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:' + color + ';color:#fff;padding:11px 22px;border-radius:30px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4);font-family:\'DM Sans\',sans-serif;animation:fu 0.3s ease;pointer-events:none;';
+  t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:' + color + ';color:#fff;padding:11px 22px;border-radius:30px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4);font-family:\'Inter\',sans-serif;animation:fu 0.3s ease;pointer-events:none;';
   document.body.appendChild(t);
   setTimeout(function() { if (t.parentNode) t.remove(); }, 3000);
 }
@@ -2290,8 +2290,8 @@ async function saveStartDate(planId) {
   if (bt) { bt.disabled = false; bt.textContent = "Save"; }
 }
 function renderRoadmap(){if(!planData||!planData.weeks)return;const el=document.getElementById("plan-roadmap");if(!el)return;el.style.display="block";const weeks=planData.weeks,total=weeks.length,tw=window._targetWeeks||total;const pc={Base:0,Build:0,Peak:0,Taper:0};weeks.forEach(w=>{const ph=w.phase||"Base";if(pc[ph]!==undefined)pc[ph]++;else pc.Base++;});const rem=Math.max(0,tw-total),tot=tw||1;document.getElementById("roadmap-base").style.width=(pc.Base/tot*100)+"%";document.getElementById("roadmap-build").style.width=(pc.Build/tot*100)+"%";document.getElementById("roadmap-peak").style.width=(pc.Peak/tot*100)+"%";document.getElementById("roadmap-taper").style.width=(pc.Taper/tot*100)+"%";document.getElementById("roadmap-remaining").style.width=(rem/tot*100)+"%";const race=planData.raceDate||A.date||"";const rt=document.getElementById("roadmap-title");if(rt)rt.textContent=(A.race||planData.race||"Plan")+(race?" · Race "+new Date(race+"T00:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"}):"");const pt=document.getElementById("roadmap-progress-text");if(pt)pt.textContent="Week "+total+" of "+tw+" built";const bEl=document.getElementById("roadmap-building-status"),cEl=document.getElementById("roadmap-complete-status"),bT=document.getElementById("roadmap-building-text");if(total>=tw){if(bEl)bEl.style.display="none";if(cEl){cEl.style.display="block";const cw=document.getElementById("roadmap-complete-weeks");if(cw)cw.textContent=total;}}else{if(bEl)bEl.style.display="flex";if(cEl)cEl.style.display="none";if(bT)bT.textContent="Building to race day — "+total+" of "+tw+" weeks ready";
-    var pb=document.getElementById("pdf-download-btn");if(pb){pb.disabled=true;pb.textContent="⏳ Still building — wait before downloading";pb.style.cssText="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.3);padding:8px 16px;border-radius:8px;font-size:12px;cursor:not-allowed;font-family:DM Sans,sans-serif;";}}
-  var pbc=document.getElementById("pdf-download-btn");if(total>=tw&&pbc){pbc.disabled=false;pbc.textContent="✅ Download Full Plan PDF";pbc.style.cssText="background:rgba(74,222,128,0.15);border:2px solid #4ade80;color:#4ade80;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;";}
+    var pb=document.getElementById("pdf-download-btn");if(pb){pb.disabled=true;pb.textContent="⏳ Still building — wait before downloading";pb.style.cssText="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.3);padding:8px 16px;border-radius:8px;font-size:12px;cursor:not-allowed;font-family:Inter,sans-serif;";}}
+  var pbc=document.getElementById("pdf-download-btn");if(total>=tw&&pbc){pbc.disabled=false;pbc.textContent="✅ Download Full Plan PDF";pbc.style.cssText="background:rgba(74,222,128,0.15);border:2px solid #4ade80;color:#4ade80;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;";}
 }
 function downloadPDF(){if(!planData||!planData.weeks)return;const race=planData.raceDate||A.date||"",name=A.name||localStorage.getItem("irontri_user_name")||"Athlete";let html="<html><head><meta charset=\"UTF-8\"><style>body{font-family:Arial,sans-serif;font-size:12px;color:#111;max-width:800px;margin:0 auto;padding:20px;}h2{font-size:15px;color:#1E90FF;border-bottom:2px solid #1E90FF;padding-bottom:4px;margin:18px 0 6px;}.s{margin-bottom:8px;padding:8px 10px;border-left:3px solid #ccc;background:#f9f9f9;}.swim{border-color:#38bdf8;}.bike{border-color:#fb923c;}.run{border-color:#4ade80;}.brick{border-color:#a78bfa;}</style></head><body>";html+="<h1>"+name+"'s "+(A.race||planData.race||"Training Plan")+"</h1><p>"+planData.weeks.length+" weeks"+(race?" · Race: "+new Date(race+"T00:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"long",year:"numeric"}):"")+"</p>";planData.weeks.forEach((wk,wi)=>{const tm=wk.days.reduce((a,d)=>a+(d.duration||0),0);html+="<h2>Week "+(wi+1)+" — "+(wk.phase||"")+" · "+fmtDur(tm)+"</h2>";if(wk.weeklyNarrative)html+="<p style=\"font-style:italic;font-size:11px;color:#555;\">"+ wk.weeklyNarrative+"</p>";wk.days.forEach(d=>{const t=(d.type||"Rest").toLowerCase();if(t==="rest")return;html+="<div class=\"s "+t+"\"><strong>"+(d.name||d.type)+"</strong> · "+fmtDur(d.duration||0)+(d.effort?" · RPE "+d.effort+"/10":"")+"<br>"+(d.mainset?"<span style=\"font-size:11px;\">"+ d.mainset+"</span><br>":"")+(d.coachNote?"<em style=\"font-size:10px;color:#666;\">"+ d.coachNote+"</em>":"")+"</div>";});});html+="</body></html>";const blob=new Blob([html],{type:"text/html"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name.replace(/[^a-z0-9]/gi,"_")+"_Training_Plan.html";a.click();}
 async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadmap();const pid=new URLSearchParams(location.search).get("load")||window.currentPlanId;let fails=0;while(planData.weeks.length<tw&&fails<3){const built=planData.weeks.length,bs=built+1,be=Math.min(built+2,tw),near=be>=tw-3;const bT=document.getElementById("roadmap-building-text");const ph=near?"Taper":built<tw*0.3?"Base":built<tw*0.65?"Build":"Peak";if(bT)bT.textContent="Building weeks "+bs+"-"+be+" of "+tw+" ("+ph+")...";const lw=planData.weeks.slice(-2).map(w=>({phase:w.phase,focus:w.focus}));const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(planData.raceDate||A.date||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". "+(near?"TAPER: reduce volume, race week=30-45min easy.":"Progressive overload.")+" JSON only: {\"weeks\":[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}}
@@ -2304,22 +2304,22 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
     <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px;">⏸️ Pause your plan</div>
     <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Your sessions shift forward — nothing gets lost.</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-      <button class="pause-opt" onclick="selectPauseDays(3,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">3 days</button>
-      <button class="pause-opt" onclick="selectPauseDays(7,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">1 week</button>
-      <button class="pause-opt" onclick="selectPauseDays(14,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">2 weeks</button>
+      <button class="pause-opt" onclick="selectPauseDays(3,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">3 days</button>
+      <button class="pause-opt" onclick="selectPauseDays(7,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">1 week</button>
+      <button class="pause-opt" onclick="selectPauseDays(14,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">2 weeks</button>
     </div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
       <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
       <span style="font-size:12px;color:rgba(255,255,255,0.3);">or enter days</span>
       <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
     </div>
-    <input type="number" id="pause-days-input" min="1" max="90" placeholder="e.g. 10" style="width:100%;padding:13px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:12px;">
+    <input type="number" id="pause-days-input" min="1" max="90" placeholder="e.g. 10" style="width:100%;padding:13px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;margin-bottom:12px;">
     <div id="pause-preview" style="display:none;background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;">
       <span id="pause-preview-text"></span>
     </div>
     <div style="display:flex;gap:10px;">
-      <button onclick="closePauseModal()" style="flex:1;padding:13px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.6);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">Cancel</button>
-      <button onclick="confirmPause()" style="flex:2;padding:13px;background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.3);border-radius:10px;color:#fb923c;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">⏸️ Pause plan</button>
+      <button onclick="closePauseModal()" style="flex:1;padding:13px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.6);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">Cancel</button>
+      <button onclick="confirmPause()" style="flex:2;padding:13px;background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.3);border-radius:10px;color:#fb923c;font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;">⏸️ Pause plan</button>
     </div>
   </div>
 </div>
@@ -2327,13 +2327,13 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
 
 <!-- BOTTOM TAB BAR -->
 <nav style="position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,0.08);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);">
-  <a href="/dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+  <a href="/dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
     <span style="font-size:20px;">📅</span>Today
   </a>
-  <a href="#" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:#1E90FF;font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+  <a href="#" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:#1E90FF;font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
     <span style="font-size:20px;">🗓️</span>My Plan
   </a>
-  <a href="/feedback.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+  <a href="/feedback.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
     <span style="font-size:20px;">💬</span>Feedback
   </a>
 </nav>
