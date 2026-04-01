@@ -1,32 +1,2379 @@
-#gen{display:none;text-align:center;padding:80px 24px;}
-.spinner{width:48px;height:48px;border:3px solid rgba(30,144,255,0.15);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 24px;}
-@keyframes spin{to{transform:rotate(360deg)}}
-    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
-.gt{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;}
-.gs{font-size:14px;color:var(--muted);margin-bottom:32px;}
-.gsteps{display:flex;flex-direction:column;gap:10px;max-width:300px;margin:0 auto;text-align:left;}
-@@ -851,6 +852,24 @@
-pt.textContent = 'Week ' + totalWeeks + ' of ' + targetWeeks + ' built';
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>irontri — Get Your Training Plan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&amp;family=DM+Sans:wght@300;400;500&amp;display=swap" rel="stylesheet">
+  <style>
+    :root{--blue:#1E90FF;--blue-dark:#1478d4;--bg:#0d0d0d;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--text:#fff;--muted:rgba(255,255,255,0.5);--faint:rgba(255,255,255,0.25);}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:70px;}
+    nav{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:68px;background:#1E90FF;}
+    .nav-logo{display:flex;align-items:center;text-decoration:none;}
+    .nav-logo img{height:120px;width:auto;mix-blend-mode:screen;filter:brightness(10);}
+    .nav-back{color:rgba(255,255,255,0.85);text-decoration:none;font-size:14px;}
+    .prog-wrap{padding:20px 32px 0;max-width:560px;margin:0 auto;}
+    .prog-top{display:flex;justify-content:space-between;margin-bottom:8px;}
+    .prog-lbl{font-size:12px;color:var(--faint);}
+    .prog-track{height:3px;background:rgba(255,255,255,0.08);border-radius:100px;}
+    .prog-fill{height:100%;background:var(--blue);border-radius:100px;transition:width 0.4s;}
+    .quiz{max-width:560px;margin:0 auto;padding:36px 32px 80px;}
+    .q{display:none;animation:fu 0.35s ease both;}
+    .q.active{display:block;}
+    @keyframes fu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    .qlbl{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:10px;font-weight:500;}
+    .qtitle{font-family:'Syne',sans-serif;font-size:clamp(22px,4vw,30px);font-weight:800;letter-spacing:-0.5px;line-height:1.15;margin-bottom:8px;}
+    .qsub{font-size:15px;color:var(--muted);line-height:1.6;margin-bottom:28px;font-weight:300;}
+    .opts{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+    .opt{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;cursor:pointer;transition:all 0.15s;}
+    .opt:hover{background:rgba(30,144,255,0.07);border-color:rgba(30,144,255,0.3);}
+    .opt.sel{background:rgba(30,144,255,0.12);border-color:var(--blue);}
+    .oi{font-size:22px;flex-shrink:0;width:32px;text-align:center;}
+    .ob{flex:1;}
+    .ot{font-size:15px;font-weight:500;}
+    .od{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4;}
+    .or{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+    .opt.sel .or{background:var(--blue);border-color:var(--blue);}
+    .opt.sel .or::after{content:'';width:6px;height:4px;border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(-45deg) translateY(-1px);display:block;}
+    .ogrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px;} #q2 .ogrid{grid-template-columns:1fr 1fr 1fr;}
+    .og{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 16px;cursor:pointer;transition:all 0.15s;text-align:center;}
+    .og:hover{background:rgba(30,144,255,0.07);border-color:rgba(30,144,255,0.3);}
+    .og.sel{background:rgba(30,144,255,0.12);border-color:var(--blue);}
+    .ogi{font-size:28px;margin-bottom:10px;display:block;}
+    .ogt{font-size:15px;font-weight:500;margin-bottom:3px;}
+    .ogs{font-size:11px;color:var(--muted);line-height:1.4;}
+    .days-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;}
+    .db{width:54px;height:54px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
+    .db.sel{background:var(--blue);border-color:var(--blue);color:#fff;}
+    .sl-sec{margin-bottom:28px;}
+    .sl-num{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;letter-spacing:-2px;color:var(--blue);line-height:1;margin-bottom:4px;}
+    .sl-num span{font-size:18px;color:var(--muted);font-weight:300;letter-spacing:0;}
+    .sl-hint{font-size:13px;color:var(--faint);margin-bottom:16px;}
+    input[type=range]{width:100%;height:5px;-webkit-appearance:none;background:rgba(255,255,255,0.1);border-radius:100px;outline:none;}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--blue);cursor:pointer;}
+    .is{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+    .is input{width:100%;padding:15px 18px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;}
+    .is input:focus{border-color:var(--blue);}
+    .is input::placeholder{color:var(--faint);}
+    .qnav{display:flex;gap:10px;align-items:center;}
+    .bn{background:var(--blue);color:#fff;border:none;padding:15px 32px;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s;}
+    .bn:hover{background:var(--blue-dark);}
+    .bn:disabled{opacity:0.35;cursor:not-allowed;}
+    .bb{background:transparent;color:var(--muted);border:1px solid var(--border);padding:15px 20px;border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+    .bb:hover{color:#fff;border-color:rgba(255,255,255,0.3);}
+
+    /* SUMMARY */
+    #summary{display:none;animation:fu 0.4s ease both;}
+    .sh{text-align:center;margin-bottom:28px;}
+    .sh h2{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;}
+    .sh p{font-size:15px;color:var(--muted);}
+    .sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px;}
+    .sc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;}
+    .sl{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--faint);margin-bottom:6px;}
+    .sv{font-size:15px;font-weight:500;line-height:1.4;}
+    .scta{width:100%;padding:16px;background:var(--blue);border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;}
+    .snote{text-align:center;font-size:13px;color:var(--faint);}
+
+    /* GENERATING */
+    #gen{display:none;text-align:center;padding:80px 24px;}
+    .spinner{width:48px;height:48px;border:3px solid rgba(30,144,255,0.15);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 24px;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .gt{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;}
+    .gs{font-size:14px;color:var(--muted);margin-bottom:32px;}
+    .gsteps{display:flex;flex-direction:column;gap:10px;max-width:300px;margin:0 auto;text-align:left;}
+    .gst{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--faint);transition:color 0.3s;}
+    .gst.done{color:rgba(255,255,255,0.8);}
+    .gd{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.12);flex-shrink:0;transition:background 0.3s;}
+    .gst.done .gd{background:var(--blue);}
+
+    /* ── PLAN OUTPUT ── */
+    #plan{display:none;animation:fu 0.5s ease both;max-width:900px;margin:0 auto;padding:32px;}
+
+    .plan-header{background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.2);border-radius:16px;padding:28px;margin-bottom:24px;}
+    .plan-header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+    .plan-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:-0.5px;}
+    .plan-subtitle{font-size:14px;color:var(--muted);margin-top:4px;}
+    .plan-intro{font-size:14px;color:rgba(255,255,255,0.75);line-height:1.7;border-top:1px solid rgba(255,255,255,0.08);padding-top:16px;}
+    .plan-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px;}
+    .ps{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+    .psv{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--blue);}
+    .psl{font-size:11px;color:var(--muted);margin-top:3px;}
+
+    /* PHASE PILLS */
+    .phases{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+    .phase-pill{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:500;border:1px solid;cursor:pointer;transition:all 0.2s;}
+    .phase-pill.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+    .phase-pill:not(.active){background:transparent;border-color:var(--border);color:var(--muted);}
+    .phase-pill:not(.active):hover{border-color:rgba(30,144,255,0.4);color:#fff;}
+
+    /* WEEK SELECTOR */
+    .week-nav{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+    .week-label{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;flex:1;}
+    .week-sub{font-size:12px;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400;margin-left:8px;}
+    .wbtn{background:var(--surface);border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+    .wbtn:hover{border-color:rgba(30,144,255,0.4);color:#fff;}
+    .wbtn:disabled{opacity:0.3;cursor:not-allowed;}
+
+    /* CALENDAR STRIP */
+    .cal-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:24px;}
+    .cal-day{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;}
+    .cal-day:hover{border-color:rgba(30,144,255,0.3);}
+    .cal-day.active{border-color:var(--blue);background:rgba(30,144,255,0.1);}
+    .cal-day.rest{opacity:0.5;}
+    .cal-day-name{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+    .cal-day-icon{font-size:20px;margin-bottom:4px;}
+    .cal-day-type{font-size:9px;font-weight:600;padding:2px 6px;border-radius:100px;display:inline-block;letter-spacing:0.3px;}
+    .cal-day-dur{font-size:10px;color:var(--faint);margin-top:4px;}
+
+    /* ── SESSION TYPE COLOURS (calendar + pills + borders) ── */
+    .type-swim    {background:rgba(56,189,248,0.18);color:#38bdf8;}
+    .type-bike    {background:rgba(251,146,60,0.18);color:#fb923c;}
+    .type-run     {background:rgba(74,222,128,0.18);color:#4ade80;}
+    .type-brick   {background:rgba(167,139,250,0.18);color:#a78bfa;}
+    .type-strength{background:rgba(251,191,36,0.18);color:#fbbf24;}
+    .type-rest    {background:rgba(255,255,255,0.08);color:var(--faint);}
+    .type-race    {background:rgba(248,113,113,0.18);color:#f87171;}
+
+    /* Session card coloured left border */
+    .session-detail[data-type="Swim"]     {border-left:4px solid #38bdf8;}
+    .session-detail[data-type="Bike"]     {border-left:4px solid #fb923c;}
+    .session-detail[data-type="Run"]      {border-left:4px solid #4ade80;}
+    .session-detail[data-type="Brick"]    {border-left:4px solid #a78bfa;}
+    .session-detail[data-type="Strength"] {border-left:4px solid #fbbf24;}
+    .session-detail[data-type="Rest"]     {border-left:4px solid rgba(255,255,255,0.15);}
+    .session-detail[data-type="Race"]     {border-left:4px solid #f87171;}
+
+    /* Calendar day coloured top accent when active */
+    .cal-day.active[data-type="Swim"]     {border-color:#38bdf8;background:rgba(56,189,248,0.08);}
+    .cal-day.active[data-type="Bike"]     {border-color:#fb923c;background:rgba(251,146,60,0.08);}
+    .cal-day.active[data-type="Run"]      {border-color:#4ade80;background:rgba(74,222,128,0.08);}
+    .cal-day.active[data-type="Brick"]    {border-color:#a78bfa;background:rgba(167,139,250,0.08);}
+    .cal-day.active[data-type="Strength"] {border-color:#fbbf24;background:rgba(251,191,36,0.08);}
+    .cal-day.active[data-type="Race"]     {border-color:#f87171;background:rgba(248,113,113,0.08);}
+
+    /* SESSION DETAIL */
+    .session-detail{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:24px;transition:border-left-color 0.3s;}
+    .sd-header{padding:20px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border);}
+    .sd-icon{font-size:32px;}
+    .sd-info{flex:1;}
+    .sd-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;}
+    .sd-meta{font-size:13px;color:var(--muted);margin-top:4px;}
+    .sd-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+    .sd-badge{font-size:11px;padding:3px 10px;border-radius:100px;border:1px solid;}
+    .sd-body{padding:20px 24px;}
+    .sd-section{margin-bottom:20px;}
+    .sd-section:last-child{margin-bottom:0;}
+    .sd-sec-title{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--faint);margin-bottom:8px;font-weight:500;}
+    .sd-sec-content{font-size:14px;color:rgba(255,255,255,0.8);line-height:1.7;}
+    .sd-purpose{background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.15);border-radius:10px;padding:14px;font-size:14px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:20px;}
+    .effort-bar{display:flex;gap:4px;margin-top:8px;}
+    .eb{height:8px;border-radius:100px;flex:1;}
+    .eb.filled{background:var(--blue);}
+    .eb.empty{background:rgba(255,255,255,0.08);}
+
+    /* EXPLAINER MODAL */
+    .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;}
+    .modal-overlay.open{display:flex;}
+    .modal{background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:28px;max-width:480px;width:100%;animation:fu 0.3s ease both;}
+    .modal-header{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+    .modal-icon{font-size:32px;}
+    .modal-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;}
+    .modal-close{margin-left:auto;background:rgba(255,255,255,0.08);border:none;color:var(--muted);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+    .modal-close:hover{background:rgba(255,255,255,0.15);color:#fff;}
+    .modal-body{font-size:14px;color:rgba(255,255,255,0.75);line-height:1.8;}
+    .modal-body p{margin-bottom:12px;}
+    .modal-body p:last-child{margin-bottom:0;}
+    .modal-tag{display:inline-block;font-size:11px;padding:3px 10px;border-radius:100px;margin-bottom:14px;font-weight:500;}
+    .info-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--faint);font-size:11px;padding:3px 8px;border-radius:100px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;margin-left:8px;}
+    .info-btn:hover{background:rgba(30,144,255,0.12);border-color:rgba(30,144,255,0.3);color:var(--blue);}
+
+    /* RPE EXPLAINER */
+    .rpe-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin-top:12px;align-items:center;}
+    .rpe-num{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--blue);}
+    .rpe-desc{font-size:13px;color:rgba(255,255,255,0.65);}
+
+    /* VOLUME BREAKDOWN */
+    .vol-breakdown{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;}
+
+    /* WEEK SUMMARY */
+    .week-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
+    .ws-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+    .wsv{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--blue);}
+    .wsl{font-size:11px;color:var(--muted);margin-top:3px;}
+
+
+
+    /* ── STRAVA SHARE ── */
+    .strava-share-btn{width:100%;background:rgba(252,76,2,0.1);border:1px solid rgba(252,76,2,0.3);color:#FC4C02;padding:13px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;}
+    .strava-share-btn:hover{background:rgba(252,76,2,0.2);border-color:rgba(252,76,2,0.5);}
+    .strava-share-btn.shared{background:rgba(74,222,128,0.08);border-color:rgba(74,222,128,0.3);color:#4ade80;cursor:default;}
+
+    /* ── RPE RATING ── */
+    .rpe-prompt{margin-top:12px;background:rgba(30,144,255,0.06);border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:16px;animation:fu 0.3s ease both;}
+    .rpe-prompt-title{font-size:13px;color:var(--muted);margin-bottom:12px;text-align:center;}
+    .rpe-options{display:flex;gap:8px;justify-content:center;}
+    .rpe-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
+    .rpe-btn:hover{transform:scale(1.1);}
+    .rpe-btn.r1,.rpe-btn.r2{border-color:#4ade80;color:#4ade80;}
+    .rpe-btn.r3{border-color:#fbbf24;color:#fbbf24;}
+    .rpe-btn.r4{border-color:#fb923c;color:#fb923c;}
+    .rpe-btn.r5{border-color:#f87171;color:#f87171;}
+    .rpe-btn.selected{transform:scale(1.15);}
+    .rpe-btn.r1.selected,.rpe-btn.r2.selected{background:#4ade8020;}
+    .rpe-btn.r3.selected{background:#fbbf2420;}
+    .rpe-btn.r4.selected{background:#fb923c20;}
+    .rpe-btn.r5.selected{background:#f8717120;}
+    .rpe-label{font-size:11px;color:var(--faint);text-align:center;margin-top:8px;}
+    .rpe-saved{font-size:13px;color:#4ade80;text-align:center;margin-top:10px;display:none;}
+
+    /* TARGETS BLOCK */
+    .targets-block{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:20px;}
+    .target-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;}
+    .target-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--faint);margin-bottom:6px;font-weight:500;}
+    .target-value{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:4px;}
+    .target-desc{font-size:12px;color:var(--muted);}
+
+    /* ACTIONS */
+    .plan-actions{display:flex;gap:10px;flex-wrap:wrap;}
+    .pa-btn{flex:1;min-width:140px;padding:14px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:center;border:none;}
+    .pa-primary{background:var(--blue);color:#fff;}
+    .pa-secondary{background:var(--surface);border:1px solid var(--border);color:var(--muted);}
+
+    @media(max-width:600px){
+      #plan{padding:20px 16px;}
+      .cal-strip{grid-template-columns:repeat(7,1fr);gap:3px;}
+      .cal-day{padding:8px 3px;}
+      .cal-day-type{display:none;}
+      .plan-stats{grid-template-columns:repeat(2,1fr);}
+      .week-summary{grid-template-columns:repeat(3,1fr);}
+      .ogrid{grid-template-columns:1fr;}
+      .sg{grid-template-columns:1fr;}
+    }
+  
+    /* ── THRESHOLD INPUTS ── */
+    .thresh-card{border-radius:12px;padding:14px 16px;margin-bottom:0;}
+    .thresh-card-swim{background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.15);}
+    .thresh-card-bike{background:rgba(251,146,60,0.06);border:1px solid rgba(251,146,60,0.15);}
+    .thresh-card-run{background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);}
+    .thresh-title{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+    .thresh-input{width:58px;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+<!-- Google Analytics -->
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-BDZ8K3RR10');
+</script>
+</head>
+<body>
+<script>(function(){if(new URLSearchParams(location.search).get('load')){document.write('<style>#quiz-wrap,.prog-wrap{display:none!important}<\/style>');}})()</script>
+<nav>
+  <a href="index.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri"></a>
+  <a href="javascript:history.back()" class="nav-back">← Back</a>
+</nav>
+<div class="prog-wrap" id="prog-wrap">
+  <div class="prog-top"><span class="prog-lbl" id="pt">Question 1 of 12</span><span class="prog-lbl" id="pp">8%</span></div>
+  <div class="prog-track"><div class="prog-fill" id="pf" style="width:8%"></div></div>
+</div>
+<div class="quiz" id="quiz-wrap">
+
+<!-- Q1 -->
+<div class="q active" id="q1">
+  <div class="qlbl">Your goal</div><div class="qtitle">What do you want to achieve?</div>
+  <p class="qsub">This shapes everything — your plan intensity, structure and sessions.</p>
+  <div class="opts">
+    <div class="opt" onclick="pick(this,'goal','Train for a specific triathlon race')"><span class="oi">🏁</span><div class="ob"><div class="ot">Train for a specific race</div><div class="od">I have a race booked and need a structured plan</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'goal','Complete my first triathlon')"><span class="oi">🌱</span><div class="ob"><div class="ot">Complete my first triathlon</div><div class="od">I'm new to triathlon and want to cross that finish line</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'goal','Improve my triathlon performance and go faster')"><span class="oi">📈</span><div class="ob"><div class="ot">Improve my performance</div><div class="od">I've done triathlons and want to get faster</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'goal','Build triathlon fitness and consistency')"><span class="oi">💪</span><div class="ob"><div class="ot">Build fitness and consistency</div><div class="od">No race yet — just want to get fitter across all three</div></div><div class="or"></div></div>
+  </div>
+  <div class="qnav"><button class="bn" id="n1" onclick="go(2)" disabled="">Continue →</button></div>
+</div>
+
+<!-- Q2 -->
+<div class="q" id="q2">
+  <div class="qlbl">Your race</div><div class="qtitle">What distance are you training for?</div>
+  <p class="qsub">Each distance needs a completely different training approach.</p>
+  <div class="ogrid">
+    <div class="og" onclick="pg(this,'race','Sprint Triathlon')"><span class="ogi">⚡</span><div class="ogt">Sprint</div><div class="ogs">750m · 20km · 5km</div></div>
+    <div class="og" onclick="pg(this,'race','Olympic Triathlon')"><span class="ogi">🏅</span><div class="ogt">Olympic</div><div class="ogs">1.5km · 40km · 10km</div></div>
+    <div class="og" onclick="pg(this,'race','T100 Triathlon')"><span class="ogi">💯</span><div class="ogt">T100</div><div class="ogs">2km · 80km · 18km</div></div>
+    <div class="og" onclick="pg(this,'race','Half Ironman 70.3')"><span class="ogi">🔥</span><div class="ogt">Half Ironman</div><div class="ogs">1.9km · 90km · 21km</div></div>
+    <div class="og" onclick="pg(this,'race','Full Ironman')"><span class="ogi">🦾</span><div class="ogt">Full Ironman</div><div class="ogs">3.8km · 180km · 42km</div></div>
+  </div>
+  <div class="qnav"><button class="bb" onclick="go(1)">← Back</button><button class="bn" id="n2" onclick="go(3)" disabled="">Continue →</button></div>
+</div>
+
+<!-- Q3 GOAL TIME -->
+<div class="q" id="q3">
+  <div class="qlbl">Your goal time</div><div class="qtitle">Do you have a goal finish time?</div>
+  <p class="qsub">This helps us set specific pace targets for every swim, bike and run session.</p>
+  <div class="opts">
+    <div class="opt" onclick="pick(this,'goaltime','Just finish — I want to complete the race')"><span class="oi">🏁</span><div class="ob"><div class="ot">Just finish</div><div class="od">Completing the race is the goal — no time target</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'goaltime','I have a goal time in mind')"><span class="oi">⏱️</span><div class="ob"><div class="ot">I have a goal time</div><div class="od">I want to target a specific finish time</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'goaltime','Personal best — I want to beat my previous time')"><span class="oi">🏆</span><div class="ob"><div class="ot">Personal best</div><div class="od">I've done this distance before and want to go faster</div></div><div class="or"></div></div>
+  </div>
+
+  <div id="goaltime-input" style="display:none;margin-bottom:28px;">
+    <div style="font-size:13px;color:var(--faint);margin-bottom:12px;">Enter your goal finish time:</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:80px;">
+        <label style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:1px;">Hours</label>
+        <input type="number" id="gt-hours" min="0" max="17" placeholder="9" class="time-input" oninput="updateGoalTime()">
+      </div>
+      <div style="font-size:24px;color:var(--faint);margin-top:20px;">:</div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:80px;">
+        <label style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:1px;">Minutes</label>
+        <input type="number" id="gt-mins" min="0" max="59" placeholder="00" class="time-input" oninput="updateGoalTime()">
+      </div>
+    </div>
+    <div id="gt-breakdown" style="margin-top:16px;padding:14px;background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:10px;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.8;display:none;"></div>
+  </div>
+
+  <div class="qnav"><button class="bb" onclick="go(2)">← Back</button><button class="bn" id="n3" onclick="go(4)" disabled="">Continue →</button></div>
+</div>
+
+<!-- Q4 -->
+<div class="q" id="q4">
+  <div class="qlbl">Your experience</div><div class="qtitle">How experienced are you in triathlon?</div>
+  <p class="qsub">Be honest — this sets the right load from day one.</p>
+  <div class="opts">
+    <div class="opt" onclick="pick(this,'exp','Complete beginner — never done a triathlon')"><span class="oi">🌱</span><div class="ob"><div class="ot">Complete beginner</div><div class="od">Never done a triathlon before</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'exp','Some experience — completed 1 to 3 triathlons')"><span class="oi">🏊</span><div class="ob"><div class="ot">Some experience</div><div class="od">Done 1–3 triathlons, comfortable in all three</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'exp','Intermediate — race regularly and want to improve')"><span class="oi">🚴</span><div class="ob"><div class="ot">Intermediate</div><div class="od">Race regularly and want structured training</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'exp','Advanced — competitive triathlete chasing a personal best')"><span class="oi">🏆</span><div class="ob"><div class="ot">Advanced / Competitive</div><div class="od">Serious racer optimising for a PB</div></div><div class="or"></div></div>
+  </div>
+  <div class="qnav"><button class="bb" onclick="go(3)">← Back</button><button class="bn" id="n4" onclick="go(5)" disabled="">Continue →</button></div>
+</div>
+
+<!-- Q5 -->
+<div class="q" id="q5">
+  <div class="qlbl">Your fitness</div><div class="qtitle">How would you describe your general fitness right now?</div>
+  <p class="qsub">Your overall activity level today — not just triathlon.</p>
+  <div class="opts">
+    <div class="opt" onclick="pick(this,'fitness','Low — mostly inactive, just starting to exercise')"><span class="oi">🛋️</span><div class="ob"><div class="ot">Just getting started</div><div class="od">Mostly inactive — building from scratch</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'fitness','Moderate — active a few times a week')"><span class="oi">🚶</span><div class="ob"><div class="ot">Moderately active</div><div class="od">Exercise a few times a week but not structured</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'fitness','Good — training consistently 4 or more times a week')"><span class="oi">🏃</span><div class="ob"><div class="ot">Good fitness</div><div class="od">Training consistently 4+ times a week</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'fitness','Very fit — high training volume and strong aerobic base')"><span class="oi">⚡</span><div class="ob"><div class="ot">Very fit</div><div class="od">High volume, strong aerobic base across sports</div></div><div class="or"></div></div>
+  </div>
+  <div class="qnav"><button class="bb" onclick="go(4)">← Back</button><button class="bn" id="n5" onclick="go(6)" disabled="">Continue →</button></div>
+</div>
+
+<!-- Q5 -->
+<div class="q" id="q6">
+  <div class="qlbl">Your strengths</div><div class="qtitle">Which discipline needs the most work?</div>
+  <p class="qsub">We'll give it extra focus while keeping the others moving.</p>
+  <div class="opts">
+    <div class="opt" onclick="pick(this,'weak','Swim — water confidence and technique need work')"><span class="oi">🏊</span><div class="ob"><div class="ot">Swim</div><div class="od">Technique, breathing or open water confidence</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'weak','Bike — need to build power and endurance on the bike')"><span class="oi">🚴</span><div class="ob"><div class="ot">Bike</div><div class="od">Need more power and endurance on the bike</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'weak','Run — especially running off the bike in brick sessions')"><span class="oi">🏃</span><div class="ob"><div class="ot">Run</div><div class="od">Legs fall apart on the run, especially off the bike</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'weak','All three equally — need balanced improvement')"><span class="oi">⚖️</span><div class="ob"><div class="ot">All three equally</div><div class="od">Balanced improvement needed across all disciplines</div></div><div class="or"></div></div>
+  </div>
+  <div class="qnav"><button class="bb" onclick="go(5)">← Back</button><button class="bn" id="n6" onclick="go(7)" disabled="">Continue →</button></div>
+</div>
+
+<!-- Q6 -->
+<div class="q" id="q7">
+  <div class="qlbl">Your schedule</div><div class="qtitle">How many hours can you train each week?</div>
+  <p class="qsub">Be realistic. A plan you stick to beats an ambitious one you abandon.</p>
+  <div class="sl-sec">
+    <div class="sl-num" id="hv">8 <span>hours/week</span></div>
+    <div class="sl-hint" id="hh">Good balance for most athletes</div>
+    <input type="range" min="3" max="20" value="8" step="1" oninput="setH(this.value)">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:6px;"><span>3 hrs</span><span>20 hrs</span></div>
+  </div>
+  <div style="margin-top:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+      <div style="font-size:12px;font-weight:500;color:var(--blue);letter-spacing:1px;text-transform:uppercase;">🎯 Your threshold data — optional</div>
+      <div style="display:flex;align-items:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:3px;gap:2px;">
+        <button id="btn-metric" onclick="setUnits('metric')" style="padding:5px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:#1E90FF;color:#fff;transition:all 0.15s;">km / m</button>
+        <button id="btn-imperial" onclick="setUnits('imperial')" style="padding:5px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;">mi / yd</button>
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:18px;">Enter what you know — leave blank if unsure and we'll estimate from your goal time and experience.</div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- SWIM CSS -->
+      <div style="background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.15);border-radius:12px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="font-size:16px;">🏊</span>
+          <span style="font-size:13px;font-weight:600;color:#38bdf8;">CSS Pace — Critical Swim Speed</span>
+        </div>
+        <div id="swim-threshold-desc" style="font-size:12px;color:var(--muted);margin-bottom:10px;">Your threshold swim pace per 100m. Find it with a 400m TT minus your 200m TT.</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="number" id="icss-min" min="0" max="5" placeholder="1" oninput="updateCSS()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            <span style="color:var(--muted);font-size:16px;font-weight:600;">:</span>
+            <input type="number" id="icss-sec" min="0" max="59" placeholder="45" oninput="updateCSS()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#38bdf8'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            <span id="swim-unit-label" style="font-size:13px;color:var(--muted);">/ 100m</span>
+          </div>
+          <div id="css-hint" style="font-size:12px;color:rgba(56,189,248,0.7);display:none;"></div>
+        </div>
+      </div>
+
+      <!-- BIKE FTP -->
+      <div style="background:rgba(251,146,60,0.06);border:1px solid rgba(251,146,60,0.15);border-radius:12px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="font-size:16px;">🚴</span>
+          <span style="font-size:13px;font-weight:600;color:#fb923c;">FTP — Functional Threshold Power</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Your 1-hour max power in watts. From a 20-min test × 0.95, or check your Garmin/Wahoo.</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="number" id="iftp" min="50" max="500" placeholder="e.g. 220" oninput="A.ftp=this.value" style="width:100px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#fb923c'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+          <span style="font-size:13px;color:var(--muted);">watts</span>
+          <div id="ftp-hint" style="font-size:12px;color:rgba(251,146,60,0.7);display:none;"></div>
+        </div>
+      </div>
+
+      <!-- RUN THRESHOLD PACE -->
+      <div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);border-radius:12px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="font-size:16px;">🏃</span>
+          <span style="font-size:13px;font-weight:600;color:#4ade80;">Run Threshold Pace</span>
+        </div>
+        <div id="run-threshold-desc" style="font-size:12px;color:var(--muted);margin-bottom:10px;">Your 1-hour race pace per km, or roughly your 10km race pace. RPE 7-8/10.</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="number" id="irtp-min" min="2" max="9" placeholder="4" oninput="updateRTP()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#4ade80'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            <span style="color:var(--muted);font-size:16px;font-weight:600;">:</span>
+            <input type="number" id="irtp-sec" min="0" max="59" placeholder="30" oninput="updateRTP()" style="width:60px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;" onfocus="this.style.borderColor='#4ade80'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            <span id="run-unit-label" style="font-size:13px;color:var(--muted);">/ km</span>
+          </div>
+          <div id="rtp-hint" style="font-size:12px;color:rgba(74,222,128,0.7);display:none;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="qnav" style="margin-top:28px;"><button class="bb" onclick="go(6)">← Back</button><button class="bn" onclick="go(8)">Continue →</button></div>
+</div>
+
+<!-- Q7 -->
+<div class="q" id="q8">
+  <div class="qlbl">Your schedule</div><div class="qtitle">Which days can you train?</div>
+  <p class="qsub">Select every available day. We'll space sessions for maximum recovery.</p>
+  <div class="days-row">
+    <button class="db" onclick="td(this,'Monday')">Mon</button>
+    <button class="db" onclick="td(this,'Tuesday')">Tue</button>
+    <button class="db" onclick="td(this,'Wednesday')">Wed</button>
+    <button class="db" onclick="td(this,'Thursday')">Thu</button>
+    <button class="db" onclick="td(this,'Friday')">Fri</button>
+    <button class="db" onclick="td(this,'Saturday')">Sat</button>
+    <button class="db" onclick="td(this,'Sunday')">Sun</button>
+  </div>
+  <div class="qnav"><button class="bb" onclick="go(7)">← Back</button><button class="bn" id="n8" onclick="go(9)">Continue →</button></div>
+</div>
+
+<!-- Q8 -->
+<div class="q" id="q9">
+  <div class="qlbl">Your equipment</div><div class="qtitle">Do you have access to a swimming pool?</div>
+  <p class="qsub">This affects how we structure your weekly swim sessions.</p>
+  <div class="opts">
+    <div class="opt" onclick="pick(this,'pool','Yes — regular pool access at a gym or public pool')"><span class="oi">🏊</span><div class="ob"><div class="ot">Yes — regular pool access</div><div class="od">I can get to a pool most weeks</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'pool','Limited — occasional pool access only')"><span class="oi">📅</span><div class="ob"><div class="ot">Limited — occasional access</div><div class="od">I can get to a pool sometimes but not every week</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'pool','No — open water only (lake, river or sea)')"><span class="oi">🌊</span><div class="ob"><div class="ot">No — open water only</div><div class="od">All swim training done in open water</div></div><div class="or"></div></div>
+  </div>
+  <div class="qnav"><button class="bb" onclick="go(8)">← Back</button><button class="bn" id="n9" onclick="go(10)" disabled="">Continue →</button></div>
+</div>
+
+<!-- Q9 -->
+<div class="q" id="q10">
+  <div class="qlbl">Your health</div><div class="qtitle">Any injuries we should know about?</div>
+  <p class="qsub">Your safety comes first. We'll adjust the plan to keep you training.</p>
+  <div class="opts">
+    <div class="opt" onclick="pick(this,'injury','No injuries — fully fit and ready to train hard')"><span class="oi">✅</span><div class="ob"><div class="ot">Fully fit — no issues</div><div class="od">No injuries or physical limitations right now</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'injury','Recovering from a recent injury — easing back in')"><span class="oi">🩹</span><div class="ob"><div class="ot">Recovering from injury</div><div class="od">Need a careful gradual return to training</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'injury','Managing a niggle — training but being cautious')"><span class="oi">⚠️</span><div class="ob"><div class="ot">Managing a niggle</div><div class="od">Minor ache — training through it carefully</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pick(this,'injury','Long-term condition requiring a modified approach')"><span class="oi">💊</span><div class="ob"><div class="ot">Long-term condition</div><div class="od">A permanent condition that affects how I train</div></div><div class="or"></div></div>
+  </div>
+  <div class="qnav"><button class="bb" onclick="go(9)">← Back</button><button class="bn" id="n10" onclick="go(11)" disabled="">Continue →</button></div>
+</div>
+
+<!-- Q10 -->
+<div class="q" id="q11">
+  <div class="qlbl">Your age group</div><div class="qtitle">What's your age category?</div>
+  <p class="qsub">Age affects recovery time, training load and your race category.</p>
+  <div class="ogrid">
+    <div class="og" onclick="pg(this,'age','18-24')"><span class="ogi">🔥</span><div class="ogt">18–24</div></div>
+    <div class="og" onclick="pg(this,'age','25-29')"><span class="ogi">⚡</span><div class="ogt">25–29</div></div>
+    <div class="og" onclick="pg(this,'age','30-34')"><span class="ogi">💪</span><div class="ogt">30–34</div></div>
+    <div class="og" onclick="pg(this,'age','35-39')"><span class="ogi">🏅</span><div class="ogt">35–39</div></div>
+    <div class="og" onclick="pg(this,'age','40-44')"><span class="ogi">🎯</span><div class="ogt">40–44</div></div>
+    <div class="og" onclick="pg(this,'age','45-49')"><span class="ogi">🏆</span><div class="ogt">45–49</div></div>
+    <div class="og" onclick="pg(this,'age','50-54')"><span class="ogi">⭐</span><div class="ogt">50–54</div></div>
+    <div class="og" onclick="pg(this,'age','55+')"><span class="ogi">🌟</span><div class="ogt">55+</div></div>
+  </div>
+  <div class="qnav"><button class="bb" onclick="go(10)">← Back</button><button class="bn" id="n11" onclick="go(12)" disabled="">Continue →</button></div>
+</div>
+
+<!-- Q11 -->
+<div class="q" id="q12">
+  <div class="qlbl">Almost there!</div><div class="qtitle">When do you want to start?</div>
+  <p class="qsub">We'll build your plan around your start date and count down to race day.</p>
+  <div class="is">
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <label style="font-size:12px;font-weight:500;color:var(--blue);letter-spacing:1px;text-transform:uppercase;">📅 When do you want to start training?</label>
+      <input type="date" id="istart" oninput="cf()">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <label style="font-size:12px;font-weight:500;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">🏁 What is your race date? (optional)</label>
+      <input type="date" id="idate" oninput="cf()">
+    </div>
+  </div>
+  <div class="qnav"><button class="bb" onclick="go(11)">← Back</button><button class="bn" id="n12" onclick="showSum()" disabled="">See my plan summary →</button></div>
+</div>
+
+<!-- SUMMARY -->
+<div id="summary" style="display:none;">
+  <div class="sh"><h2 id="sh2">Your plan is ready</h2><p id="sp">Here's what we're working with</p></div>
+  <div class="sg" id="sg"></div>
+  <button class="scta" onclick="buildPlan()">Build my training plan →</button>
+  <p class="snote">Free for founding members · No credit card needed</p>
+</div>
+
+</div><!-- /quiz -->
+
+<!-- GENERATING -->
+<div id="gen" style="display:none;text-align:center;padding:80px 32px;">
+  <div class="spinner"></div>
+  <div class="gt">Building your plan...</div>
+  <p class="gs" id="gen-time-msg">Around 20-40 seconds — please wait</p>
+  <div class="gsteps" id="gsteps">
+    <div class="gst" id="gs1"><div class="gd"></div><span id="gs1-text">Analysing your race &amp; goal</span></div>
+    <div class="gst" id="gs2"><div class="gd"></div><span id="gs2-text">Calculating weekly training load</span></div>
+    <div class="gst" id="gs3"><div class="gd"></div><span id="gs3-text">Building your swim sessions</span></div>
+    <div class="gst" id="gs4"><div class="gd"></div><span id="gs4-text">Planning your bike intervals</span></div>
+    <div class="gst" id="gs5"><div class="gd"></div><span id="gs5-text">Writing your run workouts</span></div>
+    <div class="gst" id="gs6"><div class="gd"></div><span id="gs6-text">Adding coaching notes &amp; race strategy</span></div>
+  </div>
+</div>
+
+<!-- PLAN OUTPUT (outside quiz wrap, full width) -->
+<div id="plan" style="display:none;">
+
+  <div class="plan-header">
+    <div class="plan-header-top">
+      <div>
+        <div class="plan-title" id="ptitle">Your Training Plan</div>
+        <div class="plan-subtitle" id="psub">Personalised for you</div>
+      </div>
+      <button onclick="openPauseModal()" id="pause-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);padding:8px 16px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s;">
+        ⏸️ Pause plan
+      </button>
+    </div>
+    <!-- PAUSE BANNER -->
+    <div id="pause-banner" style="display:none;background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.3);border-radius:12px;padding:14px 18px;margin-bottom:12px;display:none;align-items:center;justify-content:space-between;gap:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">⏸️</span>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:#fb923c;">Plan paused</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;" id="pause-resume-date">Resuming soon</div>
+        </div>
+      </div>
+      <button onclick="resumePlan()" style="background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.3);color:#fb923c;padding:7px 14px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">
+        Resume now
+      </button>
+    </div>
+    <div class="plan-intro" id="pintro"></div>
+  </div>
+
+  <div class="plan-stats" id="pstats"></div>
+
+  <!-- PROGRESSIVE OVERLOAD GRAPH -->
+  <div id="progress-graph" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;">Training load — week by week</div>
+      <button class="info-btn" onclick="showExplainer('overload')" style="font-size:12px;">What is this? ℹ️</button>
+    </div>
+    <div style="font-size:12px;color:var(--faint);margin-bottom:16px;">Volume builds progressively then drops in taper week before race day</div>
+    <div id="graph-bars" style="display:flex;align-items:flex-end;gap:6px;height:80px;"></div>
+    <div id="graph-labels" style="display:flex;gap:6px;margin-top:8px;"></div>
+    <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#4ade80;"></div><span style="font-size:11px;color:var(--faint);">Base</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#fb923c;"></div><span style="font-size:11px;color:var(--faint);">Build</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#f87171;"></div><span style="font-size:11px;color:var(--faint);">Peak</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#38bdf8;"></div><span style="font-size:11px;color:var(--faint);">Taper</span></div>
+    </div>
+  </div>
+
+  <!-- PHASE SELECTOR -->
+  <div class="phases" id="phases"></div>
+
+  <!-- WEEK NAVIGATOR -->
+  <div class="week-nav">
+    <button class="wbtn" id="wprev" onclick="changeWeek(-1)">←</button>
+    <div>
+      <span class="week-label" id="wlabel">Week 1</span>
+      <span class="week-sub" id="wsub"></span>
+    </div>
+    <button class="wbtn" id="wnext" onclick="changeWeek(1)">→</button>
+  </div>
+
+  <!-- LOAD MORE WEEKS -->
+  <div id="load-more-wrap" style="display:none;margin:32px 0;">
+    <div style="background:rgba(30,144,255,0.06);border:1px solid rgba(30,144,255,0.25);border-radius:16px;padding:28px;text-align:center;">
+      <div style="font-size:28px;margin-bottom:10px;">🗓️</div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">Your plan continues beyond week 4</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:20px;max-width:420px;margin-left:auto;margin-right:auto;">Generate your next training block — picks up exactly where week 4 left off with progressive overload built in.</div>
+      <button id="load-more-btn" onclick="loadNextWeeks()" style="background:#1E90FF;border:none;color:#fff;padding:16px 40px;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;max-width:380px;display:block;margin:0 auto;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+        Load weeks 5–8 →
+      </button>
+      <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:12px;">Free · Takes about 30 seconds</p>
+    </div>
+  </div>
+
+  <!-- WEEK SUMMARY STATS -->
+  <div class="week-summary" id="wsummary"></div>
+
+  <!-- VOLUME BREAKDOWN -->
+  <div class="vol-breakdown" id="vol-breakdown"></div>
+
+  <!-- CALENDAR STRIP -->
+  <div class="cal-strip" id="cal"></div>
+
+  <!-- SESSION DETAIL -->
+  <div class="session-detail" id="sd" style="display:none"></div>
+
+  <!-- SAVE PLAN BANNER -->
+  <div id="save-banner" style="display:none;background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.25);border-radius:16px;padding:24px;margin-bottom:16px;text-align:center;">
+    <div style="font-size:22px;margin-bottom:8px;">💾</div>
+    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;">Save your training plan</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:16px;">Your plan is ready! Create a free account and it will be automatically saved to your profile.</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <a href="/auth.html" style="display:inline-block;background:var(--blue);color:#fff;padding:12px 28px;border-radius:10px;font-size:15px;font-weight:500;text-decoration:none;">Create free account &amp; save plan →</a>
+      <a href="/auth.html" style="display:inline-block;background:transparent;border:1px solid var(--border);color:var(--muted);padding:12px 20px;border-radius:10px;font-size:14px;text-decoration:none;">Already have an account? Log in</a>
+    </div>
+  </div>
+
+  <div id="saved-banner" style="display:none;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);border-radius:16px;padding:20px;margin-bottom:16px;text-align:center;">
+    <div style="font-size:14px;font-weight:500;color:#4ade80;">✅ Plan saved to your account! <a href="/dashboard.html" style="color:#4ade80;text-decoration:underline;">View dashboard →</a></div>
+  </div>
+
+  <div class="plan-actions" style="margin-top:8px;">
+    <button class="pa-btn pa-secondary" onclick="window.location.href='/dashboard.html'">← Dashboard</button>
+    <a href="/dashboard.html" class="pa-btn pa-primary" style="text-decoration:none;text-align:center;">View my dashboard →</a>
+  </div>
+
+</div>
+
+<script>
+const A={goal:'',race:'',goaltime:'',goaltimeText:'',exp:'',fitness:'',weak:'',hours:8,days:[],pool:'',injury:'',age:'',name:'',email:'',startDate:'',date:'',ftp:'',css:'',runThreshold:''};
+const T=12;
+let planData=null;
+let curWeek=0;
+let curDay=null;
+let completions = new Set();
+
+function prog(n){const p=Math.round(n/T*100);document.getElementById('pf').style.width=p+'%';document.getElementById('pt').textContent='Question '+n+' of '+T;document.getElementById('pp').textContent=p+'%';}
+function go(n){document.querySelectorAll('.q').forEach(q=>q.classList.remove('active'));const t=document.getElementById('q'+n);if(t){t.classList.add('active');prog(n);}window.scrollTo({top:0,behavior:'smooth'});}
+function pick(el,key,val){el.closest('.opts').querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={goal:'n1',exp:'n4',fitness:'n5',weak:'n6',pool:'n9',injury:'n10'};if(m[key])document.getElementById(m[key]).disabled=false;
+  if(key==='goaltime'){
+    const box=document.getElementById('goaltime-input');
+    if(val.includes('goal time in mind')){box.style.display='block';}
+    else{box.style.display='none';A.goaltimeText=val.includes('finish')?'No time target — just finish':val.includes('best')?'Personal best — faster than before':'';document.getElementById('n3').disabled=false;}
+  }
 }
+function updateGoalTime(){
+  const h=parseInt(document.getElementById('gt-hours').value)||0;
+  const m=parseInt(document.getElementById('gt-mins').value)||0;
+  if(h===0&&m===0)return;
+  const totalMins=h*60+m;
+  A.goaltimeText=`${h}:${String(m).padStart(2,'0')} (${totalMins} minutes)`;
+  const splits={'Sprint Triathlon':{swim:750,bike:20,run:5,t1:2.5,t2:1.5},'Olympic Triathlon':{swim:1500,bike:40,run:10,t1:3,t2:2},'T100 Triathlon':{swim:2000,bike:80,run:18,t1:4,t2:3},'Half Ironman 70.3':{swim:1900,bike:90,run:21.1,t1:5,t2:4},'Full Ironman':{swim:3800,bike:180,run:42.2,t1:8,t2:6}};
+  const d=splits[A.race];
+  if(!d){document.getElementById('n3').disabled=false;return;}
+  const swimMins=Math.round(totalMins*0.12);
+  const bikeMins=Math.round(totalMins*0.53);
+  const runMins=Math.round(totalMins*0.30);
+  const transMins=Math.round(totalMins*0.05);
+  const swimPace=swimMins/d.swim*100;
+  const bikeSpeed=(d.bike/(bikeMins/60)).toFixed(1);
+  const runPace=runMins/d.run;
+  const runPaceMin=Math.floor(runPace);
+  const runPaceSec=Math.round((runPace-runPaceMin)*60);
+  const breakdown=document.getElementById('gt-breakdown');
+  breakdown.style.display='block';
+  breakdown.innerHTML=`<div style="font-weight:500;margin-bottom:8px;color:#fff;">Target split breakdown:</div>🏊 Swim: ${swimMins} min (${Math.floor(swimPace)}:${String(Math.round((swimPace%1)*60)).padStart(2,'0')}/100m) &nbsp;·&nbsp; 🚴 Bike: ${bikeMins} min (${bikeSpeed}km/h) &nbsp;·&nbsp; 🏃 Run: ${runMins} min (${runPaceMin}:${String(runPaceSec).padStart(2,'0')}/km)<br><span style="color:var(--faint);font-size:12px;">Transitions: ~${transMins} min · Total: ${h}h ${m}m</span>`;
+  document.getElementById('n3').disabled=false;
+}
+function pg(el,key,val){el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
+function setH(v){A.hours=parseInt(v);document.getElementById('hv').innerHTML=v+' <span>hours/week</span>';const h={3:'Light — great for beginners',5:'Good starting point',7:'Solid volume',8:'Good balance for most',10:'Strong commitment',12:'Serious training load',15:'High performance',18:'Elite volume',20:'Maximum load'};const k=Object.keys(h).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);document.getElementById('hh').textContent=h[k]||'';}
+function td(btn,day){btn.classList.toggle('sel');if(btn.classList.contains('sel'))A.days.push(day);else A.days=A.days.filter(d=>d!==day);document.getElementById('n8').disabled=A.days.length===0;}
+function cf(){
+  A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
+  A.email = '';
+  A.startDate=document.getElementById('istart').value;
+  A.date=document.getElementById('idate').value;
+  document.getElementById('n12').disabled=!A.startDate;
+}
+function wks(d){if(!d)return 16;const w=Math.round((new Date(d)-new Date())/(7*24*60*60*1000));return Math.min(Math.max(w,8),24);}
+
+function showSum(){
+  const w=wks(A.date);
+  document.querySelectorAll('.q').forEach(q=>q.classList.remove('active'));
+  document.getElementById('summary').style.display='block';
+  document.getElementById('pf').style.width='100%';
+  document.getElementById('pt').textContent='Plan ready';
+  document.getElementById('pp').textContent='100%';
+  document.getElementById('sh2').textContent=A.name+"'s "+A.race+" Plan";
+  document.getElementById('sp').textContent=w+' weeks of personalised triathlon coaching';
+  const items=[
+    {l:'Race',v:A.race},{l:'Goal',v:A.goal.split(' — ')[0]||A.goal},
+    {l:'Goal time',v:A.goaltimeText||'Just finish'},
+    {l:'Experience',v:A.exp.split(' — ')[0]||A.exp},{l:'Age group',v:A.age},
+    {l:'Plan starts',v:A.startDate ? new Date(A.startDate).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : 'ASAP'},
+    {l:'Weekly training',v:A.hours+' hours'},{l:'Training days',v:A.days.join(', ')},
+    {l:'Focus',v:A.weak.split(' — ')[0]||A.weak}
+  ];
+  document.getElementById('sg').innerHTML=items.map(i=>`<div class="sc"><div class="sl">${i.l}</div><div class="sv">${i.v}</div></div>`).join('');
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
-  // Show building vs complete status
-  const buildingEl = document.getElementById('roadmap-building-status');
-  const completeEl = document.getElementById('roadmap-complete-status');
-  const staticEl = document.getElementById('roadmap-static-notice');
-  const buildingText = document.getElementById('roadmap-building-text');
-  if (totalWeeks >= targetWeeks) {
-    if (buildingEl) buildingEl.style.display = 'none';
-    if (staticEl) staticEl.style.display = 'none';
-    if (completeEl) { completeEl.style.display = 'block'; }
-    const cw = document.getElementById('roadmap-complete-weeks');
-    if (cw) cw.textContent = totalWeeks;
+// ── HR ZONE DESCRIPTIONS ──
+const HR_ZONES = {
+  1: { label:'Zone 1', desc:'Very easy — active recovery', color:'#4ade80', pct:'50-60% max HR' },
+  2: { label:'Zone 2', desc:'Easy aerobic — fat burning base', color:'#38bdf8', pct:'60-70% max HR' },
+  3: { label:'Zone 3', desc:'Tempo — aerobic development', color:'#fbbf24', pct:'70-80% max HR' },
+  4: { label:'Zone 4', desc:'Threshold — lactate clearance', color:'#fb923c', pct:'80-90% max HR' },
+  5: { label:'Zone 5', desc:'VO2 max — maximum effort', color:'#f87171', pct:'90-100% max HR' },
+};
+
+// ── TYPE INFO — single source of truth for colours, icons, labels ──
+const typeInfo={
+  'Swim':    {icon:'🏊', cls:'type-swim',     color:'#38bdf8', label:'Swim'},
+  'Bike':    {icon:'🚴', cls:'type-bike',     color:'#fb923c', label:'Bike'},
+  'Run':     {icon:'🏃', cls:'type-run',      color:'#4ade80', label:'Run'},
+  'Brick':   {icon:'🔥', cls:'type-brick',    color:'#a78bfa', label:'Brick'},
+  'Strength':{icon:'💪', cls:'type-strength', color:'#fbbf24', label:'Strength'},
+  'Rest':    {icon:'😴', cls:'type-rest',     color:'rgba(255,255,255,0.3)', label:'Rest'},
+  'Race':    {icon:'🏁', cls:'type-race',     color:'#f87171', label:'Race'}
+};
+
+
+function fmtDur(mins) {
+  if (!mins) return '';
+  if (mins < 60) return mins + 'm';
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m > 0 ? h + 'h ' + m + 'm' : h + 'h';
+}
+
+function renderWeek(){
+  const w=planData.weeks[curWeek];
+  if(!w)return;
+
+  const planStartDate = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
+  planStartDate.setDate(planStartDate.getDate() + (curWeek * 7));
+
+  const planStartDate2 = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
+  planStartDate2.setDate(planStartDate2.getDate() + (curWeek * 7));
+  const endDate = new Date(planStartDate2);
+  endDate.setDate(planStartDate2.getDate() + 6);
+  const months2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dateRange = planStartDate2.getDate()+' '+months2[planStartDate2.getMonth()]+' – '+endDate.getDate()+' '+months2[endDate.getMonth()];
+  document.getElementById('wlabel').textContent='Week '+(curWeek+1);
+  document.getElementById('wsub').textContent=(w.phase||'')+' · '+dateRange;
+  document.getElementById('wprev').disabled=curWeek===0;
+  document.getElementById('wnext').disabled=curWeek===planData.weeks.length-1;
+
+  const isLastWeek = curWeek === planData.weeks.length - 1;
+  const loadWrap = document.getElementById('load-more-wrap');
+  if (isLastWeek) {
+    const nextStart = planData.weeks.length + 1;
+    const nextEnd = planData.weeks.length + 4;
+    document.getElementById('load-more-btn').textContent = `Load weeks ${nextStart}–${nextEnd} →`;
+    loadWrap.style.display = 'block';
   } else {
-    if (buildingEl) { buildingEl.style.display = 'flex'; }
-    if (completeEl) completeEl.style.display = 'none';
-    if (staticEl) staticEl.style.display = 'none';
-    if (buildingText) buildingText.textContent = 'Building your plan to race day — ' + totalWeeks + ' of ' + targetWeeks + ' weeks ready';
+    loadWrap.style.display = 'none';
+  }
+
+  const sessions=w.days.filter(d=>d.type!=='Rest').length;
+  const totalMin=w.days.reduce((a,d)=>a+(d.duration||0),0);
+  const hrs=Math.floor(totalMin/60);
+  const mins=totalMin%60;
+  document.getElementById('wsummary').innerHTML=`
+    <div class="ws-card"><div class="wsv">${sessions}</div><div class="wsl">Sessions</div></div>
+    <div class="ws-card"><div class="wsv">${hrs}h${mins>0?mins+'m':''}</div><div class="wsl">Total time</div></div>
+    <div class="ws-card"><div class="wsv">${w.focus||'Base'}</div><div class="wsl">Focus</div></div>`;
+
+  let easyMin=0, modMin=0, hardMin=0;
+  w.days.forEach(d=>{
+    if(d.type==='Rest'||!d.duration)return;
+    const e=d.effort||5;
+    if(e<=6) easyMin+=d.duration;
+    else if(e<=7) modMin+=d.duration;
+    else hardMin+=d.duration;
+  });
+  const totalIntMin=easyMin+modMin+hardMin||1;
+  const easyPct=Math.round(easyMin/totalIntMin*100);
+  const modPct=Math.round(modMin/totalIntMin*100);
+  const hardPct=Math.round(hardMin/totalIntMin*100);
+  document.getElementById('vol-breakdown').innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <span style="font-size:13px;font-weight:500;">Weekly intensity split</span>
+      <span style="font-size:11px;color:var(--faint);">80/20 principle</span>
+    </div>
+    <div style="display:flex;height:8px;border-radius:100px;overflow:hidden;gap:2px;margin-bottom:12px;">
+      <div style="width:${easyPct}%;background:#4ade80;border-radius:100px;transition:width 0.5s;"></div>
+      <div style="width:${modPct}%;background:#fbbf24;border-radius:100px;transition:width 0.5s;"></div>
+      <div style="width:${hardPct}%;background:#f87171;border-radius:100px;transition:width 0.5s;"></div>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;"></div><span style="font-size:12px;color:var(--muted);">Easy <strong style="color:#fff;">${easyPct}%</strong></span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#fbbf24;flex-shrink:0;"></div><span style="font-size:12px;color:var(--muted);">Moderate <strong style="color:#fff;">${modPct}%</strong></span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#f87171;flex-shrink:0;"></div><span style="font-size:12px;color:var(--muted);">Hard <strong style="color:#fff;">${hardPct}%</strong></span></div>
+      <div style="margin-left:auto;font-size:11px;color:var(--faint);">${Math.round(easyMin/60*10)/10}h easy · ${Math.round(modMin/60*10)/10}h mod · ${Math.round(hardMin/60*10)/10}h hard</div>
+    </div>`;
+
+  const allDays=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('cal').innerHTML=w.days.map((d,i)=>{
+    const t=typeInfo[d.type]||typeInfo['Rest'];
+    const isActive=curDay===i;
+    const isComplete=completions.has(`${curWeek}-${i}`);
+    const dayDate = new Date(planStartDate);
+    dayDate.setDate(planStartDate.getDate() + i);
+    const dateStr = dayDate.getDate()+' '+months[dayDate.getMonth()];
+    return `<div class="cal-day${d.type==='Rest'?' rest':''}${isActive?' active':''}" data-type="${d.swapped?'Run':d.type}" onclick="selectDay(${i})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
+      <div class="cal-day-name">${allDays[i]}</div>
+      <div style="font-size:10px;color:var(--faint);margin-bottom:4px;">${dateStr}</div>
+      <div class="cal-day-icon">${isComplete ? '✅' : d.swapped ? '😓' : t.icon}</div>
+      <div class="cal-day-type ${t.cls}">${d.swapped ? 'Easy' : t.label}</div>
+      <div class="cal-day-dur">${d.duration?fmtDur(d.duration):''}</div>
+    </div>`;
+  }).join('');
+
+  if(curDay===null){
+    const firstActive=w.days.findIndex(d=>d.type!=='Rest');
+    selectDay(firstActive>=0?firstActive:0);
+  } else {
+    selectDay(curDay);
   }
 }
 
-async function downloadPDF() {
+function selectDay(i){
+  curDay=i;
+  const w=planData.weeks[curWeek];
+  const d=w.days[i];
+  const t=typeInfo[d.type]||typeInfo['Rest'];
+  const sd=document.getElementById('sd');
+
+  document.querySelectorAll('.cal-day').forEach((el,idx)=>{
+    el.classList.toggle('active',idx===i);
+  });
+
+  // Set the coloured left border on the session card
+  sd.setAttribute('data-type', d.type||'Rest');
+
+  const dayDate2 = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
+  dayDate2.setDate(dayDate2.getDate() + (curWeek * 7) + i);
+  const months3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const fullDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const fullDateStr = fullDays[i]+' '+dayDate2.getDate()+' '+months3[dayDate2.getMonth()];
+
+  if(d.type==='Rest'){
+    sd.style.display='block';
+    sd.innerHTML=`
+      <div class="sd-header">
+        <div class="sd-icon">😴</div>
+        <div class="sd-info">
+          <div class="sd-title">Rest Day</div>
+          <div class="sd-meta">${fullDays[i]}</div>
+        </div>
+      </div>
+      <div class="sd-body">
+        <div class="sd-purpose">Recovery is where fitness is built. Your body adapts to training during rest — protect this day and use it to refuel, stretch lightly, and prepare for tomorrow's session.</div>
+        <div class="sd-section"><div class="sd-sec-title">Today's focus</div><div class="sd-sec-content">${d.notes||'Complete rest or a 20 minute easy walk. Light stretching or foam rolling is encouraged. Prioritise sleep and nutrition today.'}</div></div>
+      </div>`;
+    return;
+  }
+
+  const effortLevel=d.effort||6;
+  const effortBars=Array.from({length:10},(_,j)=>`<div class="eb ${j<effortLevel?'filled':'empty'}"></div>`).join('');
+  const strengthHTML = d.type === 'Strength' ? buildStrengthSession(curWeek) : '';
+
+  sd.style.display='block';
+  sd.innerHTML=`
+    <div class="sd-header">
+      <div class="sd-icon">${t.icon}</div>
+      <div class="sd-info">
+        <div class="sd-title">${d.name||d.type+' Session'} <button class="info-btn" onclick="showExplainer('${d.type}')">What is this? ℹ️</button></div>
+        <div class="sd-meta">${fullDateStr} · ${fmtDur(d.duration||60)}</div>
+        <div class="sd-badges">
+          <span class="sd-badge ${t.cls}" style="border-color:${t.color}40;font-size:12px;font-weight:600;">${t.icon} ${t.label}</span>
+          ${d.effort?`<span class="sd-badge" style="border-color:rgba(255,255,255,0.1);color:var(--muted);">RPE ${d.effort}/10</span>`:''}
+          ${d.zone?`<span class="sd-badge" style="border-color:rgba(255,255,255,0.1);color:var(--muted);">Zone ${d.zone}</span>`:''}
+        </div>
+      </div>
+    </div>
+    <div class="sd-body">
+      ${d.purpose?`<div class="sd-purpose">🎯 <strong>Purpose:</strong> ${d.purpose}</div>`:''}
+      ${(d.paceTarget && d.paceTarget !== 'N/A') || d.heartRateZone ? (() => {
+        const z = HR_ZONES[d.heartRateZone] || HR_ZONES[2];
+        return `<div class="targets-block">
+          ${d.paceTarget && d.paceTarget !== 'N/A' ? `<div class="target-item">
+            <div class="target-label">🎯 Pace target</div>
+            <div class="target-value">${d.paceTarget}</div>
+          </div>` : ''}
+          ${d.heartRateZone ? `<div class="target-item">
+            <div class="target-label">❤️ Heart rate zone</div>
+            <div class="target-value" style="color:${z.color}">${z.label} · ${z.pct}</div>
+            <div class="target-desc">${z.desc}</div>
+          </div>` : ''}
+        </div>`;
+      })() : ''}
+      ${d.warmup?`<div class="sd-section"><div class="sd-sec-title">🔥 Warm up</div><div class="sd-sec-content">${d.warmup}</div></div>`:''}
+      ${d.mainset?`<div class="sd-section"><div class="sd-sec-title">💪 Main set</div><div class="sd-sec-content">${d.mainset}</div></div>`:''}
+      ${d.cooldown?`<div class="sd-section"><div class="sd-sec-title">❄️ Cool down</div><div class="sd-sec-content">${d.cooldown}</div></div>`:''}
+      ${d.effort?`<div class="sd-section"><div class="sd-sec-title">📊 Effort level — RPE ${d.effort}/10 <button class="info-btn" onclick="showExplainer('RPE')">What is RPE? ℹ️</button></div><div class="effort-bar">${effortBars}</div></div>`:''}
+      ${d.coachNote?`<div class="sd-section"><div class="sd-sec-title">💬 Coach note</div><div class="sd-sec-content" style="font-style:italic;color:var(--muted);">"${d.coachNote}"</div></div>`:''}
+      ${strengthHTML}
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;">
+        <button id="complete-btn-${i}" onclick="toggleComplete(${i})" style="width:100%;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);color:#4ade80;padding:14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;">
+          ${completions.has(`${curWeek}-${i}`) ? '✅ Session completed!' : '✓ Mark as complete'}
+        </button>
+        <button onclick="swapSession(${i})" style="width:100%;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">
+          😓 Not feeling 100%? Swap for an easier session
+        </button>
+        <div style="display:flex;gap:8px;">
+          <button onclick="openMovePicker(${curWeek},${i})" style="flex:1;background:transparent;border:1px solid rgba(30,144,255,0.35);color:#1E90FF;padding:11px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='rgba(30,144,255,0.1)'" onmouseout="this.style.background='transparent'">
+            📅 Move to another day
+          </button>
+          <button onclick="skipSession(${curWeek},${i})" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:11px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)';this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.4)'">
+            ✕ Skip session
+          </button>
+        </div>
+        ${completions.has(curWeek+'-'+i) && d.type !== 'Rest' ? '<button id="strava-share-btn-'+i+'" onclick="shareToStrava('+i+', this)" class="strava-share-btn">🟠 Share this session to Strava</button>' : ''}
+      </div>
+    </div>`;
+}
+
+function changeWeek(dir){
+  curWeek+=dir;
+  curDay=null;
+  renderWeek();
+  renderGraph();
+  window.scrollTo({top:document.getElementById('plan').offsetTop-20,behavior:'smooth'});
+  document.querySelectorAll('.phase-pill').forEach(p=>{
+    p.classList.toggle('active',p.dataset.phase===planData.weeks[curWeek].phase);
+  });
+}
+
+async function buildPlan(){
+  const userName = localStorage.getItem('irontri_user_name');
+  if (!userName) {
+    localStorage.setItem('irontri_pending_answers', JSON.stringify(A));
+    window.location.href = '/auth.html?redirect=plan';
+    return;
+  }
+
+  const w=wks(A.date);
+  document.getElementById('summary').style.display='none';
+  document.getElementById('gen').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+  const timeMsg = document.getElementById('gen-time-msg');
+  if (timeMsg) {
+    if (A.race === 'Full Ironman') timeMsg.textContent = 'Building your Ironman plan — up to 45 seconds';
+    else if (A.race === 'T100 Triathlon') timeMsg.textContent = 'Building your T100 plan — up to 45 seconds';
+    else if (A.race === 'Half Ironman 70.3') timeMsg.textContent = 'Building your 70.3 plan — up to 60 seconds';
+    else timeMsg.textContent = 'Up to 60 seconds — worth the wait';
+  }
+  const goalTimeMsg = A.goaltimeText && !A.goaltimeText.includes('finish') && !A.goaltimeText.includes('best') 
+    ? `Setting pace targets for ${A.goaltimeText}` 
+    : 'Calculating your training zones';
+  const steps = [
+    `Analysing your ${A.race} goal`,
+    goalTimeMsg,
+    `Building your swim sessions`,
+    `Planning your bike intervals`,
+    `Writing your ${A.race.includes('Full') ? 'marathon' : A.race.includes('Half') ? 'half marathon' : 'run'} workouts`,
+    'Adding coaching notes & race strategy'
+  ];
+  steps.forEach((text, i) => {
+    document.getElementById('gs'+(i+1)+'-text').textContent = text;
+  });
+  ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
+
+  const prompt = 'You are an elite triathlon coach. Return ONLY valid JSON, no other text.\n\n' +
+    'ATHLETE: Name: ' + A.name + ', Race: ' + A.race + ', Goal: ' + (A.goaltimeText||'Complete') + ', Experience: ' + A.exp + ', Fitness: ' + A.fitness + ', Weakness: ' + A.weak + ', Hours/week: ' + A.hours + ', FTP: ' + (A.ftp ? A.ftp+'w' : 'unknown') + ', CSS: ' + (A.css||'unknown') + ', Run threshold: ' + (A.runThreshold||'unknown') + ', Days: ' + A.days.join(', ') + ', Pool: ' + A.pool + ', Injury: ' + (A.injury||'None') + ', Age: ' + A.age + ', Weeks: ' + w + ', Start date: ' + (A.startDate||'TBD') + ', Race date: ' + (A.date||'TBD') + '\n\n' +
+    'RACE DATE TAPER STRUCTURE — FOLLOW EXACTLY:\n' +
+    '- Total plan: ' + w + ' weeks. Starts ' + (A.startDate||'soon') + '. Race: ' + (A.date||'TBD') + '.\n' +
+    '- Week ' + w + ' = RACE WEEK. Max 30-45 min per session, easy pace only. Last session 2 days before race. coachNote counts down days to race.\n' +
+    '- Week ' + (w-1) + ' = TAPER 2 — volume -50% vs peak week. Short sharp sessions only. No long ride or run. coachNote counts down days to race.\n' +
+    '- Week ' + (w-2) + ' = TAPER 1 — volume -30% vs peak. Last medium sessions. coachNote references race week approaching.\n' +
+    '- Week ' + (w-3) + ' = PEAK WEEK — highest intensity of entire plan. Last big training push before taper.\n' +
+    '- Weeks 1 to ' + (w-4) + ' = progressive build: Base (aerobic) → Build (threshold) → Peak (race-specific intensity).\n' +
+    '- RULE: Never put long ride (>90 min) or long run (>75 min) in weeks ' + (w-1) + ' or ' + w + '.\n\n' +
+    'MANDATORY SESSION QUALITY RULES:\n' +
+    '1. MAINSET: Exact intervals, exact rest, exact pace, one technique cue. Never vague. E.g. "8x100m descending 1:55 to 1:45, 15sec rest, high elbow on catch."\n' +
+    '2. COACH NOTE: Reference why this session exists in the week. "Hard bike tomorrow — keep this controlled, move blood not create fatigue."\n' +
+    '3. SWIM mainsets: exact intervals + rest + technique cue.\n' +
+    '4. BIKE mainsets: always include cadence, speed AND power. Format: "85-90rpm, 30-32km/h at 75-80% FTP (e.g. 150-165w — scale to your FTP)". Every bike session must include cadence, km/h and watts.\n' +
+    '5. RUN mainsets: always include technique cue. "175-180spm, land under hips not in front."\n' +
+    '6. SESSION NAMES: Evocative and specific. "Descending 100s — Find Your Pace" not "Swim Intervals."\n' +
+    '7. weeklyNarrative field: 2 sentences on why this week is structured this way.\n' +
+    '8. PHASE CHARACTER: Base=conversational RPE4-6 technique. Build=threshold RPE6-8. Peak=race pace RPE7-9.\n' +
+    '9. Never repeat the same mainset structure twice across the plan.\n' +
+    '10. ADDRESS WEAKNESS: ' + A.weak + ' — extra cues in relevant sessions, reference it in intro.\n\n' +
+    'STRUCTURE:\n' +
+    '- Training days (' + A.days.join(', ') + ') get sessions. Others = Rest.\n' +
+    '- Never two hard sessions (RPE7+) back to back. Follow hard with easy.\n' +
+    '- Week 1-2: Base. Week 3: Build. Week 4: Peak/Build.\n' +
+    '- Types: Swim/Bike/Run/Brick/Strength/Rest. Brick name: "Brick — Bike + Run"\n' +
+    '- duration: int minutes. effort: RPE 1-10. zone: HR 1-5.\n' +
+    '- paceTarget: Swim="/100m", Bike="km/h", Run="/km", else "N/A". Always a specific range.\n\n' +
+    (A.race === 'Full Ironman' ? 'IRONMAN: Long ride 180-240min TT position aerobic only (coachNote must say NOT FAST, Aerobic, 85+ cadence). Long run 90-120min with race-pace km in middle. Threshold bike 90min (30WU+45FTP+15CD). Week 4 = recovery (coachNote must say SLEEP EAT HYDRATE, fitness is made in recovery).\n\n' :
+     A.race === 'T100 Triathlon' ? 'T100: Intensity between Olympic and 70.3. Swim 2000-2500m with race-pace sets. Bike 80-100min threshold at high cadence, slightly faster than 70.3 effort. Run 60-75min with race pace in final third. Bricks 20-25min at race pace. Week 4 = recovery -40% volume.\n\n' :
+     A.race === 'Half Ironman 70.3' ? '70.3: Long ride 150-180min with race-pace intervals + 20-30min brick. Long run 90-105min, race pace in final third. Swim 2000-3000m with race-pace sets. Week 4 = recovery -40% volume.\n\n' :
+     A.race === 'Olympic Triathlon' ? 'OLYMPIC: High intensity. Ride 75-90min threshold. Run 50-65min tempo. Swim 1500-2500m race-pace 200/400s. Bricks 15-20min at race pace.\n\n' :
+     A.race === 'Sprint Triathlon' ? 'SPRINT: Max intensity. Bike 45-60min VO2max intervals. Run 30-45min speed work. Swim 800-1500m fast 50s/100s. Brick 10-15min full gas.\n\n' : '') +
+    'OUTPUT FORMAT: Valid JSON with keys: intro, weeks (array). Each week: weekNumber, phase, focus, weeklyNarrative, days (array). Each day: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone.\n\n' +
+    'Return ONLY the JSON object. No markdown, no explanation.';
+
+  try{
+    // Split into 2 API calls (weeks 1-2, then weeks 3-4) to avoid Vercel timeout
+    const prompt1 = prompt + '\n\nGenerate ONLY weeks 1 and 2. Return JSON with keys: intro, weeks (array of 2 weeks only).';
+    const prompt2 = prompt + '\n\nGenerate ONLY weeks 3 and 4 (Build and Peak phases). Return JSON with keys: weeks (array of 2 weeks only, weekNumber starting at 3). No intro needed.';
+
+    const [r1, r2] = await Promise.all([
+      fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt1})}),
+      fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt2})})
+    ]);
+
+    const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
+
+    // Parse both responses
+    function parsePlan(txt) {
+      txt = (txt||'').replace(/```json/g,'').replace(/```/g,'').trim();
+      const s = txt.indexOf('{'); const e = txt.lastIndexOf('}');
+      if(s===-1||e===-1) throw new Error('No JSON found');
+      return JSON.parse(txt.slice(s,e+1));
+    }
+
+    const p1 = parsePlan(d1.plan);
+    const p2 = parsePlan(d2.plan);
+
+    // Merge: take intro from p1, combine weeks
+    planData = p1;
+    planData.weeks = [...(p1.weeks||[]), ...(p2.weeks||[])];
+
+    // Fix week numbers in case AI got them wrong
+    planData.weeks.forEach((wk,i) => { wk.weekNumber = i+1; });
+
+    if(!planData.weeks || planData.weeks.length === 0) throw new Error('No weeks in plan');
+
+    document.getElementById('gen').style.display='none';
+    document.getElementById('plan').style.display='block';
+    document.querySelector('.prog-wrap').style.display='none';
+
+    document.getElementById('ptitle').textContent = (A.name ? A.name+"'s " : '') + A.race + ' Plan';
+    document.getElementById('psub').textContent = 'Personalised for you';
+    document.getElementById('pintro').textContent = planData.intro||'';
+
+    document.getElementById('pstats').innerHTML=[
+      {v:planData.weeks.length,l:'Total weeks'},{v:A.hours+'h',l:'Per week'},
+      {v:A.days.length,l:'Sessions/week'},{v:A.race.split(' ')[0],l:'Race type'}
+    ].map(s=>`<div class="ps"><div class="psv">${s.v}</div><div class="psl">${s.l}</div></div>`).join('');
+
+    const phases=[...new Set(planData.weeks.map(w=>w.phase))];
+    document.getElementById('phases').innerHTML=phases.map((p,i)=>
+      `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="jumpToPhase('${p}')">${p} Phase</button>`
+    ).join('');
+
+    curWeek=0;curDay=null;
+    renderWeek();
+    try { renderGraph(); } catch(eg) {}
+    loadCompletions().then(() => { renderWeek(); syncStravaActivities(); });
+    if(A.date){planData.raceDate=A.date;} checkAndSavePlan(JSON.stringify(planData));
+    window.scrollTo({top:0,behavior:'smooth'});
+    renderExtendButton(planData, loadId);
+    setTimeout(() => window.dispatchEvent(new Event('plan-loaded')), 100);
+
+  }catch(e){
+    console.error('Plan error:',e);
+    setTimeout(()=>{
+      document.getElementById('gen').style.display='none';
+      document.getElementById('quiz-wrap').style.display='none';
+      document.querySelector('.prog-wrap').style.display='none';
+      document.getElementById('plan').style.display='block';
+      document.getElementById('ptitle').textContent='Something went wrong';
+      document.getElementById('pintro').textContent='Error: '+e.message+'. Please go back and try again.';
+      document.getElementById('pstats').innerHTML='';
+      document.getElementById('cal').innerHTML='';
+    },17000);
+  }
+}
+
+function jumpToPhase(phase){
+  const idx=planData.weeks.findIndex(w=>w.phase===phase);
+  if(idx>=0){curWeek=idx;curDay=null;renderWeek();}
+  document.querySelectorAll('.phase-pill').forEach(p=>p.classList.toggle('active',p.dataset.phase===phase));
+}
+
+
+function updateCSS(){
+  const m=parseInt(document.getElementById('icss-min').value)||0;
+  const s=parseInt(document.getElementById('icss-sec').value)||0;
+  if(m===0&&s===0)return;
+  A.css=m+':'+String(s).padStart(2,'0')+'/100m';
+  const hint=document.getElementById('css-hint');
+  hint.style.display='block';
+  hint.textContent='✓ CSS set to '+A.css+' — zones calculated from this';
+}
+function updateRTP(){
+  const m=parseInt(document.getElementById('irtp-min').value)||0;
+  const s=parseInt(document.getElementById('irtp-sec').value)||0;
+  if(m===0&&s===0)return;
+  A.runThreshold=m+':'+String(s).padStart(2,'0')+'/km';
+  const hint=document.getElementById('rtp-hint');
+  hint.style.display='block';
+  hint.textContent='✓ Threshold set to '+A.runThreshold+' — zones calculated from this';
+  // Also show FTP hint if set
+  const ftp=document.getElementById('iftp').value;
+  if(ftp){
+    const ftpHint=document.getElementById('ftp-hint');
+    ftpHint.style.display='block';
+    ftpHint.textContent='✓ FTP '+ftp+'w — zones Z1-Z5 calculated';
+  }
+}
+
+let currentUnits = localStorage.getItem('irontri_units') || 'metric';
+
+function setUnits(units) {
+  currentUnits = units;
+  A.units = units;
+  localStorage.setItem('irontri_units', units);
+  const m = document.getElementById('btn-metric');
+  const i = document.getElementById('btn-imperial');
+  if(m){ m.style.background=units==='metric'?'#1E90FF':'transparent'; m.style.color=units==='metric'?'#fff':'rgba(255,255,255,0.4)'; }
+  if(i){ i.style.background=units==='imperial'?'#1E90FF':'transparent'; i.style.color=units==='imperial'?'#fff':'rgba(255,255,255,0.4)'; }
+  const sl = document.getElementById('swim-unit-label');
+  const rl = document.getElementById('run-unit-label');
+  if(sl) sl.textContent = units==='metric' ? '/ 100m' : '/ 100yd';
+  if(rl) rl.textContent = units==='metric' ? '/ km' : '/ mile';
+  const sd = document.getElementById('swim-thresh-desc');
+  const rd = document.getElementById('run-thresh-desc');
+  if(sd) sd.textContent = units==='metric' ? 'Threshold pace per 100m. 400m TT minus 200m TT = your CSS.' : 'Threshold pace per 100yd. 400yd TT minus 200yd TT = your CSS.';
+  if(rd) rd.textContent = units==='metric' ? '1-hour race pace per km. Roughly your 10km race pace. RPE 7-8.' : '1-hour race pace per mile. Roughly your 10km race pace. RPE 7-8.';
+  // Convert existing values
+  const cm=parseInt(document.getElementById('icss-min')?.value)||0, cs=parseInt(document.getElementById('icss-sec')?.value)||0;
+  if(cm||cs){ const t=cm*60+cs; const c=units==='imperial'?Math.round(t*(100/109.361)):Math.round(t*(109.361/100)); if(document.getElementById('icss-min')) document.getElementById('icss-min').value=Math.floor(c/60)||''; if(document.getElementById('icss-sec')) document.getElementById('icss-sec').value=String(c%60).padStart(2,'0'); updateCSS(); }
+  const rm=parseInt(document.getElementById('irtp-min')?.value)||0, rs=parseInt(document.getElementById('irtp-sec')?.value)||0;
+  if(rm||rs){ const t=rm*60+rs; const c=units==='imperial'?Math.round(t*1.60934):Math.round(t/1.60934); if(document.getElementById('irtp-min')) document.getElementById('irtp-min').value=Math.floor(c/60)||''; if(document.getElementById('irtp-sec')) document.getElementById('irtp-sec').value=String(c%60).padStart(2,'0'); updateRTP(); }
+}
+
+function updateCSS(){
+  const m=parseInt(document.getElementById('icss-min').value)||0;
+  const s=parseInt(document.getElementById('icss-sec').value)||0;
+  if(!m&&!s)return;
+  const unit = currentUnits==='imperial' ? '/100yd' : '/100m';
+  A.css=m+':'+String(s).padStart(2,'0')+unit;
+  const h=document.getElementById('css-hint');
+  if(h){h.style.display='block';h.textContent='✓ '+A.css;}
+}
+
+function updateRTP(){
+  const m=parseInt(document.getElementById('irtp-min').value)||0;
+  const s=parseInt(document.getElementById('irtp-sec').value)||0;
+  if(!m&&!s)return;
+  const unit = currentUnits==='imperial' ? '/mile' : '/km';
+  A.runThreshold=m+':'+String(s).padStart(2,'0')+unit;
+  const h=document.getElementById('rtp-hint');
+  if(h){h.style.display='block';h.textContent='✓ '+A.runThreshold;}
+}
+prog(1);
+setTimeout(()=>{ if(currentUnits==='imperial') setUnits('imperial'); },50);
+  // Apply saved unit preference
+  setTimeout(()=>{ if(currentUnits==='imperial') setUnits('imperial'); }, 100);
+
+let sb2 = null;
+try {
+  sb2 = window.supabase.createClient(
+    'https://aezfxagplaxlmovqbmfd.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU',
+    { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } }
+  );
+} catch(e) { console.log('Supabase init error:', e); }
+
+async function loadNextWeeks() {
+  const btn = document.getElementById('load-more-btn');
+  btn.textContent = 'Generating next 4 weeks...';
+  btn.disabled = true;
+  const currentWeekCount = planData.weeks.length;
+  const nextWeekStart = currentWeekCount + 1;
+  const prompt = `You are an expert triathlon coach. Generate the NEXT 4 weeks of a training plan continuing from week ${currentWeekCount}.\n\nAthlete:\nName: ${A.name}, Race: ${A.race}, Goal time: ${A.goaltimeText||'No specific time target'}, Experience: ${A.exp}, Fitness: ${A.fitness}\nHours/week: ${A.hours}, Training days: ${A.days.join(', ')}, Weakest: ${A.weak}\n\nContinue with progressive overload. Week ${nextWeekStart} = build, Week ${nextWeekStart+1} = peak, Week ${nextWeekStart+2} = peak race specific, Week ${nextWeekStart+3} = taper.\n\nReturn ONLY JSON: {"weeks":[{"week":${nextWeekStart},"phase":"Build","focus":"string","totalTime":0,"sessions":0,"days":[{"day":"Monday","type":"Rest","name":"Rest","duration":0,"effort":0,"zone":0,"focus":"Rest","warmup":"","mainset":"","cooldown":"","coachNote":""}]}]}\n\nRules: Each week has exactly 7 days Monday-Sunday. Training days (${A.days.join(', ')}) get sessions, others are Rest. Return ONLY the JSON.`;
+  try {
+    const r = await fetch('/api/generate-plan', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+    const d = await r.json();
+    let txt = d.plan || '';
+    txt = txt.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
+    const newData = JSON.parse(txt);
+    if (!newData.weeks || !newData.weeks.length) throw new Error('No weeks in response');
+    const savedStartDate = planData.startDate;
+    planData.weeks = [...planData.weeks, ...newData.weeks];
+    planData.startDate = savedStartDate;
+    // Fire-and-forget save to Supabase — no await so it never blocks
+    const pid = new URLSearchParams(location.search).get('load');
+    if (pid) sb2.auth.getSession().then(({data:{session:sess}})=>{
+      if(sess) sb2.from('plans').update({plan_data:JSON.stringify(planData)}).eq('id',pid).then(()=>console.log('Saved '+planData.weeks.length+' weeks')).catch(e=>console.log('Save err',e));
+    });
+    curWeek = currentWeekCount;
+    renderWeek();
+    try { renderGraph(); } catch(e) {}
+    btn.disabled = false;
+    btn.textContent = 'Load weeks ' + (planData.weeks.length+1) + '–' + (planData.weeks.length+4) + ' →';
+  } catch(e) {
+    console.error('loadNextWeeks error:', e);
+    btn.textContent = 'Error — try again';
+    btn.disabled = false;
+  }
+}
+
+async function loadCompletions() {
+  if (!sb2) return;
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (!session) return;
+    const { data } = await sb2.from('completions').select('week_num,day').eq('user_id', session.user.id);
+    if (data) data.forEach(c => completions.add(`${c.week_num}-${c.day}`));
+  } catch(e) {}
+}
+
+
+// ── STRAVA AUTO-MATCH ──────────────────────────────────────────────────────
+// Maps Strava sport types to plan session types
+const STRAVA_TO_PLAN = {
+  'Swim': 'Swim',
+  'Ride': 'Bike',
+  'VirtualRide': 'Bike',
+  'Run': 'Run',
+  'VirtualRun': 'Run',
+};
+
+async function syncStravaActivities() {
+
+  renderExtendButton(planData, currentPlanId);
+  if (!sb2 || !planData || !A.startDate) return;
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (!session) return;
+
+    // Get Strava tokens
+    const { data: userData } = await sb2.from('users')
+      .select('strava_access_token, strava_refresh_token, strava_token_expires_at')
+      .eq('id', session.user.id).single();
+    if (!userData?.strava_access_token) return;
+
+    // Refresh token if needed
+    let token = userData.strava_access_token;
+    if (Date.now() / 1000 > userData.strava_token_expires_at - 300) {
+      const r = await fetch('/api/strava-exchange', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({action:'refresh', refresh_token: userData.strava_refresh_token})
+      });
+      const d = await r.json();
+      if (d.access_token) {
+        token = d.access_token;
+        await sb2.from('users').update({
+          strava_access_token: d.access_token,
+          strava_refresh_token: d.refresh_token,
+          strava_token_expires_at: d.expires_at
+        }).eq('id', session.user.id);
+      } else return;
+    }
+
+    // Fetch recent Strava activities (last 60 days)
+    const after = Math.floor(Date.now()/1000) - (60 * 24 * 3600);
+    const r = await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=60&after=${after}`, {
+      headers: {Authorization: `Bearer ${token}`}
+    });
+    const activities = await r.json();
+    if (!Array.isArray(activities) || !activities.length) return;
+
+    const planStart = new Date(A.startDate + 'T00:00:00');
+    let newMatches = 0;
+
+    for (const act of activities) {
+      const planType = STRAVA_TO_PLAN[act.sport_type] || STRAVA_TO_PLAN[act.type];
+      if (!planType) continue;
+
+      const actDate = new Date(act.start_date_local.split('T')[0] + 'T00:00:00');
+      const diffDays = Math.round((actDate - planStart) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) continue;
+
+      const weekNum = Math.floor(diffDays / 7);
+      const dayOfWeek = diffDays % 7; // 0=Mon, 6=Sun
+
+      if (weekNum >= planData.weeks.length) continue;
+      const week = planData.weeks[weekNum];
+      if (!week) continue;
+
+      const planDay = week.days[dayOfWeek];
+      if (!planDay) continue;
+
+      // Match: sport type must align (Brick counts if Run or Bike)
+      const typeMatch =
+        planDay.type === planType ||
+        (planDay.type === 'Brick' && (planType === 'Bike' || planType === 'Run'));
+
+      if (!typeMatch) continue;
+
+      const key = `${weekNum}-${dayOfWeek}`;
+      if (completions.has(key)) continue; // already marked
+
+      // Auto-tick it
+      const { error } = await sb2.from('completions').insert({
+        user_id: session.user.id,
+        plan_id: 'current',
+        week_num: weekNum,
+        day: String(dayOfWeek)
+      });
+      if (!error) {
+        completions.add(key);
+        newMatches++;
+      }
+    }
+
+    if (newMatches > 0) {
+      renderWeek();
+      showStravaMatchBanner(newMatches);
+    }
+  } catch(e) {
+    console.log('Strava sync error:', e);
+  }
+}
+
+function showStravaMatchBanner(count) {
+  const existing = document.getElementById('strava-match-banner');
+  if (existing) existing.remove();
+  const banner = document.createElement('div');
+  banner.id = 'strava-match-banner';
+  banner.style.cssText = 'background:rgba(252,76,2,0.12);border:1px solid rgba(252,76,2,0.3);border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;animation:fu 0.4s ease both;';
+  banner.innerHTML = `<span style="font-size:20px;">🟠</span><div style="flex:1;font-size:14px;"><strong>${count} session${count>1?'s':''} auto-ticked from Strava!</strong><span style="color:rgba(255,255,255,0.5);margin-left:8px;font-size:13px;">Your activities matched your plan.</span></div><button onclick="this.parentElement.remove()" style="background:transparent;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:18px;padding:0 4px;">×</button>`;
+  const planEl = document.getElementById('plan');
+  planEl.insertBefore(banner, planEl.firstChild);
+  setTimeout(() => banner?.remove(), 8000);
+}
+// ── END STRAVA AUTO-MATCH ──────────────────────────────────────────────────
+
+
+
+// ── STRAVA SHARE ─────────────────────────────────────────────────────────────
+async function shareToStrava(dayIndex, btnEl) {
+  const btn = btnEl || document.getElementById('strava-share-btn-'+dayIndex);
+  if (!btn || btn.classList.contains('shared')) return;
+  const day = planData.weeks[curWeek].days[dayIndex];
+  const sessionName = day.name || 'Training session';
+  const sessionType = day.type;
+
+  btn.textContent = '⏳ Sharing to Strava...';
+  btn.disabled = true;
+
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (!session) return;
+
+    // Get Strava access token
+    const { data: userData } = await sb2.from('users')
+      .select('strava_access_token, strava_refresh_token, strava_token_expires_at')
+      .eq('id', session.user.id).single();
+
+    if (!userData?.strava_access_token) {
+      btn.textContent = '⚠️ Connect Strava first';
+      return;
+    }
+
+    // Refresh token if needed
+    let token = userData.strava_access_token;
+    if (Date.now() / 1000 > userData.strava_token_expires_at - 300) {
+      const r = await fetch('/api/strava-exchange', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({action:'refresh', refresh_token: userData.strava_refresh_token})
+      });
+      const d = await r.json();
+      if (d.access_token) {
+        token = d.access_token;
+        await sb2.from('users').update({
+          strava_access_token: d.access_token,
+          strava_refresh_token: d.refresh_token,
+          strava_token_expires_at: d.expires_at
+        }).eq('id', session.user.id);
+      }
+    }
+
+    // Find the matching Strava activity from last 7 days
+    const after = Math.floor(Date.now()/1000) - (7 * 24 * 3600);
+    const r = await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=20&after=${after}`, {
+      headers: {Authorization: `Bearer ${token}`}
+    });
+    const activities = await r.json();
+
+    const STRAVA_TO_PLAN = { Swim:'Swim', Ride:'Bike', VirtualRide:'Bike', Run:'Run', VirtualRun:'Run' };
+    const matchingActivity = activities?.find(a => {
+      const planType = STRAVA_TO_PLAN[a.sport_type] || STRAVA_TO_PLAN[a.type];
+      return planType === sessionType || (sessionType === 'Brick' && (planType === 'Bike' || planType === 'Run'));
+    });
+
+    if (!matchingActivity) {
+      // No matching activity — share a generic message
+      btn.innerHTML = '⚠️ No recent Strava activity found — record one first!';
+      btn.disabled = false;
+      return;
+    }
+
+    // Build the description
+    const weekLabel = `Week ${curWeek + 1}`;
+    const typeEmoji = {Swim:'🏊',Bike:'🚴',Run:'🏃',Brick:'🏃🚴',Strength:'💪',Rest:'😴'}[sessionType] || '🏋️';
+    const separator = matchingActivity.description ? '\n' + matchingActivity.description : '';
+    const newDesc = `${typeEmoji} ${weekLabel} · ${sessionName} — Trained with irontriapp.com 🔥${separator}`;
+
+    // Update via serverless (keeps token server-side safe — but we use the client token here)
+    const updateR = await fetch('/api/strava-exchange', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        action: 'update_activity',
+        access_token: token,
+        activity_id: matchingActivity.id,
+        description: newDesc,
+      })
+    });
+
+    const result = await updateR.json();
+    if (result.success) {
+      btn.className = 'strava-share-btn shared';
+      btn.innerHTML = '✅ Shared to Strava!';
+      // Store so we don't share again
+      sessionStorage.setItem(`strava-shared-${curWeek}-${dayIndex}`, '1');
+    } else {
+      btn.textContent = '⚠️ Share failed — try reconnecting Strava';
+      btn.disabled = false;
+    }
+  } catch(e) {
+    btn.textContent = '⚠️ Something went wrong';
+    btn.disabled = false;
+    console.log('Strava share error:', e);
+  }
+}
+// ── END STRAVA SHARE ──────────────────────────────────────────────────────────
+
+// ── RPE RATING ──────────────────────────────────────────────────────────────
+const RPE_LABELS = {
+  1: 'Very easy 😌',
+  2: 'Easy 🙂',
+  3: 'Moderate 😤',
+  4: 'Hard 😰',
+  5: 'All out 🔥'
+};
+
+function showRpePrompt(dayIndex) {
+  // Remove any existing RPE prompt
+  const existing = document.getElementById('rpe-prompt');
+  if (existing) existing.remove();
+
+  const prompt = document.createElement('div');
+  prompt.className = 'rpe-prompt';
+  prompt.id = 'rpe-prompt';
+  prompt.innerHTML = `
+    <div class="rpe-prompt-title">How did that session feel?</div>
+    <div class="rpe-options">
+      ${[1,2,3,4,5].map(n => `
+        <button class="rpe-btn r${n}" onclick="saveRpe(${dayIndex}, ${n}, this)" title="${RPE_LABELS[n]}">
+          ${n}
+        </button>`).join('')}
+    </div>
+    <div class="rpe-label">1 = Very easy &nbsp;·&nbsp; 5 = All out</div>
+    <div class="rpe-saved" id="rpe-saved">✅ Saved! Thanks for the feedback.</div>
+  `;
+
+  // Insert after the complete button
+  const btn = document.getElementById(`complete-btn-${dayIndex}`);
+  if (btn) btn.parentElement.insertBefore(prompt, btn.nextSibling);
+}
+
+async function saveRpe(dayIndex, rating, btnEl) {
+  // Highlight selected
+  document.querySelectorAll('.rpe-btn').forEach(b => b.classList.remove('selected'));
+  btnEl.classList.add('selected');
+
+  // Save to Supabase completions — update the row with rpe rating
+  if (!sb2) return;
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (!session) return;
+
+    // Get the completion id first, then update by id
+    const { data: rows } = await sb2.from('completions')
+      .select('id')
+      .eq('user_id', session.user.id)
+      .eq('week_num', curWeek)
+      .eq('day', String(dayIndex))
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (rows?.[0]?.id) {
+      await sb2.from('completions').update({ rpe: rating }).eq('id', rows[0].id);
+    }
+
+    // Show saved confirmation
+    const saved = document.getElementById('rpe-saved');
+    if (saved) {
+      saved.style.display = 'block';
+      setTimeout(() => {
+        const prompt = document.getElementById('rpe-prompt');
+        if (prompt) prompt.style.opacity = '0';
+        setTimeout(() => prompt?.remove(), 400);
+      }, 1800);
+    }
+
+    // ── RPE ADAPTATION ──────────────────────────────────────────────────────
+    // If too easy (1-2) or too hard (4-5), adapt remaining sessions of same type
+    if (rating === 1 || rating === 2 || rating === 4 || rating === 5) {
+      const sessionType = planData.weeks[curWeek]?.days[dayIndex]?.type;
+      if (sessionType && sessionType !== 'Rest' && sessionType !== 'Brick' && sessionType !== 'Strength') {
+        await adaptFutureSessions(sessionType, rating, curWeek, dayIndex);
+      }
+    }
+    // ── END RPE ADAPTATION ──────────────────────────────────────────────────
+
+  } catch(e) {
+    console.log('RPE save error:', e);
+  }
+}
+// ── END RPE ──────────────────────────────────────────────────────────────────
+
+async function toggleComplete(dayIndex) {
+  const key = `${curWeek}-${dayIndex}`;
+  const btn = document.getElementById(`complete-btn-${dayIndex}`);
+  if (!sb2) return;
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (!session) { window.location.href = '/auth.html'; return; }
+    if (completions.has(key)) {
+      await sb2.from('completions').delete().eq('user_id', session.user.id).eq('week_num', curWeek).eq('day', String(dayIndex));
+      completions.delete(key);
+      btn.textContent = '✓ Mark as complete';
+      btn.style.background = 'rgba(74,222,128,0.08)';
+    } else {
+      await sb2.from('completions').insert({user_id: session.user.id, plan_id: 'current', week_num: curWeek, day: String(dayIndex)});
+      completions.add(key);
+      btn.textContent = '✅ Session completed!';
+      btn.style.background = 'rgba(74,222,128,0.2)';
+    }
+    renderWeek();
+    selectDay(dayIndex);
+    if (completions.has(key)) {
+      showRpePrompt(dayIndex);
+      showCoachInsight(dayIndex);
+    }
+  } catch(e) { console.error('Complete error:', e); }
+}
+
+// ── COACH INSIGHT ─────────────────────────────────────────────────────────────
+async function showCoachInsight(dayIndex) {
+  // Remove any existing insight
+  const existing = document.getElementById('coach-insight');
+  if (existing) existing.remove();
+
+  const day = planData.weeks[curWeek].days[dayIndex];
+  if (!day || day.type === 'Rest') return;
+
+  const week = planData.weeks[curWeek];
+  const sessionsCompleted = [...completions].filter(k => k.startsWith(curWeek + '-')).length;
+  const totalSessions = week.days.filter(d => d.type !== 'Rest').length;
+  const weekNum = curWeek + 1;
+  const totalWeeks = planData.weeks.length;
+  const athleteName = A.name || localStorage.getItem('irontri_user_name') || 'Athlete';
+
+  // Build the insight card immediately (loading state)
+  const card = document.createElement('div');
+  card.id = 'coach-insight';
+  card.style.cssText = 'margin-top:12px;background:linear-gradient(135deg,rgba(30,144,255,0.08),rgba(30,144,255,0.04));border:1px solid rgba(30,144,255,0.25);border-radius:12px;padding:16px;animation:fu 0.4s ease both;';
+  card.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <span style="font-size:20px;">💬</span>
+      <span style="font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(30,144,255,0.8);font-weight:600;">Coach insight</span>
+    </div>
+    <div id="coach-insight-text" style="font-size:14px;color:rgba(255,255,255,0.75);line-height:1.7;min-height:20px;">
+      <span style="color:rgba(255,255,255,0.3);">Analysing your session...</span>
+    </div>`;
+
+  // Insert after the RPE prompt or complete button
+  const rpeEl = document.getElementById('rpe-prompt');
+  const completeBtn = document.getElementById('complete-btn-' + dayIndex);
+  const insertAfter = rpeEl || completeBtn;
+  if (insertAfter && insertAfter.parentNode) {
+    insertAfter.parentNode.insertBefore(card, insertAfter.nextSibling);
+  }
+
+  // Build prompt for Claude
+  const prompt = `You are a world-class triathlon coach. Give a short, specific, encouraging post-session insight (2-3 sentences max) to ${athleteName} who just completed this session.
+
+SESSION JUST COMPLETED:
+- Type: ${day.type}
+- Name: ${day.name}
+- Duration: ${fmtDur(day.duration)}
+- Effort: RPE ${day.effort}/10
+- Pace target: ${day.paceTarget || 'N/A'}
+- Main set: ${day.mainset || 'N/A'}
+
+PLAN CONTEXT:
+- Race: ${A.race || planData.race}
+- Week ${weekNum} of ${totalWeeks} (${week.phase} phase)
+- Sessions done this week: ${sessionsCompleted} of ${totalSessions}
+
+Rules:
+- Address them by first name (${athleteName.split(' ')[0]})
+- Be specific about what they just did, not generic
+- Reference the phase or race if relevant
+- Mention one thing to focus on or look forward to next
+- Sound like a real coach texting after a session, not an AI
+- NO emojis, no bullet points, just 2-3 warm direct sentences`;
+
+  try {
+    const response = await fetch('/api/generate-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+
+    const data = await response.json();
+    const text = data.plan || (data.content && data.content[0] && data.content[0].text);
+    const insightEl = document.getElementById('coach-insight-text');
+    if (insightEl && text) {
+      // Typewriter effect — feels alive
+      insightEl.textContent = '';
+      let i = 0;
+      const type = () => {
+        if (i < text.length) {
+          insightEl.textContent += text[i++];
+          setTimeout(type, 18);
+        }
+      };
+      type();
+    }
+  } catch(e) {
+    const insightEl = document.getElementById('coach-insight-text');
+    if (insightEl) insightEl.style.display = 'none';
+    console.log('Coach insight error:', e);
+  }
+}
+// ── END COACH INSIGHT ─────────────────────────────────────────────────────────
+
+async function checkAndSavePlan(planText) {
+  try {
+    if (!sb2) { localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race})); document.getElementById('save-banner').style.display='block'; return; }
+    let session = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data: da } = await sb2.auth.getSession();
+      session = da?.session;
+      if (session) break;
+      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    }
+    if (session) {
+      const { error } = await sb2.from('plans').insert({user_id: session.user.id, plan_data: planText, race: A.race || 'Triathlon'});
+      if (!error) { document.getElementById('saved-banner').style.display='block'; }
+      else { localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race})); document.getElementById('save-banner').style.display='block'; }
+    } else {
+      localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race}));
+      document.getElementById('save-banner').style.display='block';
+    }
+  } catch(e) {
+    localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race}));
+    document.getElementById('save-banner').style.display='block';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // load-more-btn uses onclick directly
+
+  let attempts = 0;
+  while (!sb2 && attempts < 20) {
+    await new Promise(r => setTimeout(r, 100));
+    attempts++;
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const loadId = urlParams.get('load');
+      if (loadId) window.currentPlanId = loadId;
+      if (loadId) window.currentPlanId = loadId;
+  if (loadId) {
+    try {
+      document.getElementById('quiz-wrap').style.display = 'none';
+      document.querySelector('.prog-wrap').style.display = 'none';
+      document.getElementById('gen').style.display = 'block';
+
+      let attempts = 0;
+      while (!sb2 && attempts < 30) {
+        await new Promise(r => setTimeout(r, 100));
+        attempts++;
+      }
+      if (!sb2) throw new Error('Supabase not loaded');
+
+      const { data: plan, error } = await sb2.from('plans').select('*').eq('id', loadId).single();
+      if (!error && plan) {
+        let txt = plan.plan_data || '';
+        txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
+        planData = JSON.parse(txt);
+        A.race = plan.race || planData.race || 'Triathlon';
+        A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
+        A.startDate = (()=>{ try { const ov=JSON.parse(localStorage.getItem('irontri_start_override')||'{}'); return ov[loadId] || planData.startDate || ''; } catch(e){ return planData.startDate || ''; } })();
+        A.date = planData.raceDate || A.date || '';
+
+        document.getElementById('gen').style.display = 'none';
+        document.getElementById('plan').style.display = 'block';
+        document.querySelector('.prog-wrap').style.display = 'none';
+        setTimeout(() => window.dispatchEvent(new Event('plan-loaded')), 100);
+
+        const w = planData.weeks?.length || 0;
+        document.getElementById('ptitle').textContent = A.name + "'s " + A.race + " Plan";
+        document.getElementById('pintro').textContent = w + ' weeks of personalised triathlon coaching';
+        document.getElementById('pstats').innerHTML = [
+          {v:w,l:'Total weeks'},{v:'—',l:'Per week'},
+          {v:'—',l:'Sessions/week'},{v:A.race.split(' ')[0],l:'Race type'}
+        ].map(s=>`<div class="ps"><div class="psv">${s.v}</div><div class="psl">${s.l}</div></div>`).join('');
+
+        const phases=[...new Set(planData.weeks.map(w=>w.phase))];
+        document.getElementById('phases').innerHTML=phases.map((p,i)=>
+          `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="jumpToPhase('${p}')">${p} Phase</button>`
+        ).join('');
+
+        curWeek=0; curDay=null;
+        renderWeek();
+        renderGraph();
+        await loadCompletions();
+        renderWeek();
+        syncStravaActivities();
+      } else {
+        document.getElementById('gen').style.display = 'none';
+        document.getElementById('quiz-wrap').style.display = 'block';
+        document.querySelector('.prog-wrap').style.display = 'block';
+      }
+    } catch(e) {
+      console.error('Load plan error:', e);
+      document.getElementById('gen').style.display = 'none';
+      document.getElementById('quiz-wrap').style.display = 'block';
+      document.querySelector('.prog-wrap').style.display = 'block';
+    }
+    return;
+  }
+
+  const pending = localStorage.getItem('irontri_pending_answers');
+  const userName = localStorage.getItem('irontri_user_name');
+  if (pending && userName) {
+    try {
+      const saved = JSON.parse(pending);
+      Object.assign(A, saved);
+      localStorage.removeItem('irontri_pending_answers');
+      document.getElementById('quiz-wrap').style.display = 'none';
+      document.querySelector('.prog-wrap').style.display = 'none';
+      document.getElementById('gen').style.display = 'block';
+      setTimeout(() => buildPlan(), 500);
+    } catch(e) {}
+  }
+});
+</script>
+
+<!-- EXPLAINER MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" id="modal-icon"></div>
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" onclick="document.getElementById('modal').classList.remove('open')">✕</button>
+    </div>
+    <div id="modal-body" class="modal-body"></div>
+  </div>
+</div>
+
+<script>
+function renderGraph() {
+  const phaseColors = { 'Base':'#4ade80', 'Build':'#fb923c', 'Peak':'#f87171', 'Taper':'#38bdf8' };
+  const weeks = planData.weeks;
+  const totals = weeks.map(w => w.days.reduce((a,d) => a+(d.duration||0), 0));
+  const maxTotal = Math.max(...totals) || 1;
+
+  document.getElementById('graph-bars').innerHTML = weeks.map((w,i) => {
+    const pct = Math.round(totals[i] / maxTotal * 100);
+    const color = phaseColors[w.phase] || '#4ade80';
+    const hrs = Math.floor(totals[i]/60);
+    const mins = totals[i]%60;
+    const isActive = i === curWeek;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;" onclick="jumpToWeek(${i})">
+      <div style="font-size:10px;color:${isActive?'#fff':'var(--faint)'};">${hrs}h${mins>0?mins+'m':''}</div>
+      <div style="width:100%;background:${color};border-radius:4px 4px 0 0;height:${pct}%;opacity:${isActive?1:0.5};transition:all 0.3s;border:${isActive?'2px solid #fff':'2px solid transparent'};" title="Week ${i+1}: ${hrs}h${mins}m"></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('graph-labels').innerHTML = weeks.map((w,i) => {
+    const isActive = i === curWeek;
+    return `<div style="flex:1;text-align:center;font-size:10px;color:${isActive?'#fff':'var(--faint)'};font-weight:${isActive?'500':'400'};">W${i+1}</div>`;
+  }).join('');
+}
+
+function jumpToWeek(i) {
+  curWeek = i;
+  curDay = null;
+  renderWeek();
+  renderGraph();
+  document.querySelectorAll('.phase-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.phase === planData.weeks[curWeek].phase);
+  });
+  document.getElementById('plan').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+const easySwaps = {
+  'Swim': {name:'Easy Recovery Swim',duration:20,effort:3,purpose:'Gentle movement to keep the body active without adding stress.',warmup:'200m very easy freestyle — no pressure, just move.',mainset:'4x50m easy backstroke or freestyle at RPE 3/10. Rest as long as you need between each.',cooldown:'100m easy, focus on long slow strokes.',coachNote:'This is about moving your body gently, not training. If you feel worse after the warm up, get out and rest.'},
+  'Bike': {name:'Easy Recovery Spin',duration:25,effort:3,purpose:'Light movement to flush the legs and keep blood flowing.',warmup:'5 min very easy spinning, cadence 90+rpm, no resistance.',mainset:'15 min easy riding at RPE 3/10. Keep cadence high and resistance very low.',cooldown:'5 min easy spin, gradually slow down.',coachNote:'Do not push. If you feel worse after 10 minutes, stop and rest.'},
+  'Run':  {name:'Easy Recovery Walk/Jog',duration:20,effort:3,purpose:'Gentle movement to keep the legs active. Walk if needed.',warmup:'5 min easy walk.',mainset:'10 min easy jog or walk at RPE 3/10. Go by feel — walk whenever you want.',cooldown:'5 min easy walk. Stretch calves and hip flexors.',coachNote:'Walking counts. Moving gently is always better than lying on the couch feeling guilty.'},
+  'Brick':{name:'Easy Swim Only',duration:25,effort:3,purpose:'On days you are not feeling great, drop the brick and do an easy swim only.',warmup:'200m easy freestyle.',mainset:'300m easy continuous swimming at RPE 3-4/10.',cooldown:'100m easy, focus on breathing.',coachNote:'Brick sessions are high demand. When not 100%, easy swimming keeps you moving without digging a deeper hole.'},
+  'Strength':{name:'Mobility & Stretching Only',duration:20,effort:2,purpose:'Skip the strength work and focus purely on mobility.',warmup:'None needed.',mainset:'Hip 90/90 stretch (90 sec each side) → Pigeon pose (90 sec each side) → Thoracic rotation (10 each side) → Downward dog to cobra (8 reps) → Foam roll quads (90 sec each leg).',cooldown:'5 min legs elevated against a wall.',coachNote:'Mobility work on tired days is one of the most underrated recovery tools in triathlon.'}
+};
+
+function swapSession(dayIndex) {
+  const w = planData.weeks[curWeek];
+  const d = w.days[dayIndex];
+  const swap = easySwaps[d.type];
+  if (!swap) return;
+
+  // Show styled confirmation modal
+  let modal = document.getElementById('swap-confirm-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'swap-confirm-modal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:20px;';
+    modal.innerHTML = `
+      <div style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:28px;max-width:380px;width:100%;">
+        <div style="font-size:22px;margin-bottom:8px;">😓</div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Not feeling 100%?</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">We'll swap today's session for something easier so you can keep moving without the stress.</div>
+        <div style="background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:12px;padding:14px;margin-bottom:20px;">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.35);margin-bottom:8px;">Swapping to</div>
+          <div style="font-size:14px;font-weight:600;" id="swap-name"></div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;" id="swap-meta"></div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:8px;line-height:1.5;" id="swap-mainset"></div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="document.getElementById('swap-confirm-modal').style.display='none'" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);padding:12px;border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">Cancel</button>
+          <button id="swap-confirm-btn" style="flex:2;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">Swap session</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+
+  document.getElementById('swap-name').textContent = swap.name;
+  document.getElementById('swap-meta').textContent = swap.duration + ' min · RPE ' + swap.effort + '/10';
+  document.getElementById('swap-mainset').textContent = swap.mainset;
+  modal.style.display = 'flex';
+
+  // Wire up confirm button
+  const btn = document.getElementById('swap-confirm-btn');
+  btn.onclick = async () => {
+    modal.style.display = 'none';
+    w.days[dayIndex] = {...d, name:swap.name, duration:swap.duration, effort:swap.effort, purpose:swap.purpose, warmup:swap.warmup, mainset:swap.mainset, cooldown:swap.cooldown, coachNote:swap.coachNote, swapped:true};
+    renderWeek();
+    selectDay(dayIndex);
+    showIronToast('Session swapped to easier version 😓', '#fbbf24');
+
+    // ── Save to Supabase ──
+    try {
+      const { data: d1 } = await sb2.auth.getSession();
+      if (d1?.session) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const loadId = urlParams.get('load');
+        if (loadId) {
+          await sb2.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', loadId);
+        }
+      }
+    } catch(e) { console.error('Swap save error', e); }
+  };
+}
+
+const strengthExercises = {
+  base: [
+    {name:'Glute Bridge',sets:'3',reps:'15',target:'Glutes & core',icon:'🍑',tip:'Drive through heels, hold 2 sec at top.'},
+    {name:'Single-Leg Squat',sets:'3',reps:'8 each leg',target:'Quads, glutes, balance',icon:'🦵',tip:'Use a chair for support if needed.'},
+    {name:'Dead Bug',sets:'3',reps:'10 each side',target:'Deep core',icon:'🐛',tip:'Press lower back into floor throughout.'},
+    {name:'Plank',sets:'3',reps:'45 seconds',target:'Full core',icon:'💪',tip:'Squeeze glutes and quads. Breathe normally.'},
+    {name:'Calf Raises',sets:'3',reps:'20 each leg',target:'Calves & Achilles',icon:'🦶',tip:'Do on a step for full range.'},
+    {name:'Hip Flexor Stretch',sets:'2',reps:'45 sec each side',target:'Hip flexors',icon:'🧘',tip:'Tight hip flexors from cycling cause lower back pain on the run.'},
+    {name:'Shoulder Press',sets:'3',reps:'12',target:'Shoulders & triceps',icon:'🏋️',tip:'Keep core braced.'},
+    {name:'Bent Over Row',sets:'3',reps:'12',target:'Back & biceps',icon:'↕️',tip:'Squeeze shoulder blades at top.'},
+  ],
+  build: [
+    {name:'Romanian Deadlift',sets:'4',reps:'10',target:'Hamstrings, glutes',icon:'🏋️',tip:'Hinge at hip not back.'},
+    {name:'Bulgarian Split Squat',sets:'3',reps:'10 each leg',target:'Quads, glutes, balance',icon:'🦵',tip:'Rear foot elevated. Front knee tracks over toes.'},
+    {name:'Lat Pulldown / Pull-Up',sets:'3',reps:'10',target:'Lats & back',icon:'💪',tip:'Pull elbows down to hips.'},
+    {name:'Copenhagen Plank',sets:'3',reps:'20 sec each side',target:'Adductors & core',icon:'🧱',tip:'Side plank with top leg elevated.'},
+    {name:'Box Jump',sets:'3',reps:'8',target:'Power & explosiveness',icon:'⚡',tip:'Land softly with bent knees.'},
+    {name:'TRX Row',sets:'3',reps:'12',target:'Upper back & biceps',icon:'🔄',tip:'Body parallel to floor for full challenge.'},
+    {name:'Nordic Hamstring Curl',sets:'3',reps:'6',target:'Hamstrings',icon:'🦵',tip:'Lower yourself as slowly as possible.'},
+    {name:'Pallof Press',sets:'3',reps:'12 each side',target:'Rotational core',icon:'↔️',tip:'Resist rotation throughout.'},
+  ]
+};
+const mobilityExercises = [
+  {name:'Hip 90/90 Stretch',sets:'2',reps:'60 sec each side',target:'Hip rotation',icon:'🧘',tip:'Sit with both knees at 90 degrees.'},
+  {name:'Thoracic Rotation',sets:'2',reps:'10 each side',target:'Upper back',icon:'🔄',tip:'Lie on side, knees bent, rotate top arm open.'},
+  {name:'Pigeon Pose',sets:'2',reps:'90 sec each side',target:'Glutes & hip flexors',icon:'🕊️',tip:'Most important stretch for cyclists.'},
+  {name:'Foam Roll — Quads & IT Band',sets:'1',reps:'90 sec each leg',target:'Quads, IT band',icon:'🎯',tip:'Roll slowly, pause on tight spots.'},
+];
+
+function buildStrengthSession(weekNum) {
+  const exercises = weekNum <= 1 ? strengthExercises.base : strengthExercises.build;
+  const sessionType = weekNum <= 1 ? 'Foundation Strength' : 'Performance Strength';
+  const exHTML = exercises.map((ex,i)=>`
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <span style="font-size:18px;">${ex.icon}</span>
+        <div style="flex:1;"><div style="font-size:14px;font-weight:500;">${i+1}. ${ex.name}</div><div style="font-size:11px;color:var(--faint);">${ex.target}</div></div>
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--blue);">${ex.sets} × ${ex.reps}</div>
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.5;padding-left:28px;">💡 ${ex.tip}</div>
+    </div>`).join('');
+  const mobHTML = mobilityExercises.map((ex,i)=>`
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <span style="font-size:18px;">${ex.icon}</span>
+        <div style="flex:1;"><div style="font-size:14px;font-weight:500;">${ex.name}</div><div style="font-size:11px;color:var(--faint);">${ex.target}</div></div>
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#a78bfa;">${ex.sets} × ${ex.reps}</div>
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.5;padding-left:28px;">💡 ${ex.tip}</div>
+    </div>`).join('');
+  return `
+    <div class="sd-section">
+      <div class="sd-sec-title">💪 ${sessionType} — Full Exercise List</div>
+      <div style="font-size:12px;color:var(--faint);margin-bottom:12px;">Rest 60-90 seconds between sets. Form over weight always.</div>
+      ${exHTML}
+    </div>
+    <div class="sd-section">
+      <div class="sd-sec-title">🧘 Mobility & Recovery (finish every session with this)</div>
+      <div style="font-size:12px;color:var(--faint);margin-bottom:12px;">10-15 minutes. Never skip — this is where injury prevention happens.</div>
+      ${mobHTML}
+    </div>`;
+}
+
+const explainers = {
+  'overload': {icon:'📈',title:'Progressive Overload',tag:{text:'Training principle',color:'#1E90FF'},body:`<p>Progressive overload is the foundation of all athletic training. It means gradually increasing the stress on your body over time so it adapts and gets stronger, faster and fitter.</p><p><strong>How it works in your plan:</strong> Each week your total training volume increases slightly. After 3-4 weeks of building, you get a slightly easier week to let your body absorb the training.</p><p><strong>Taper week:</strong> In the final week before your race, volume drops by 40-50%. This is when your body consolidates all the fitness you've built and you arrive fresh and ready to race your best.</p><p><strong>Click any bar</strong> to jump straight to that week in your calendar.</p>`},
+  'Swim': {icon:'🏊',title:'Swim Session',tag:{text:'Discipline',color:'#38bdf8'},body:`<p>Swim sessions are the first leg of every triathlon. Unlike pool swimming for fitness, triathlon swim training focuses on efficiency — getting from A to B using as little energy as possible so you have plenty left for the bike and run.</p><p><strong>Key focus areas:</strong> stroke technique, breathing rhythm, open water confidence and pacing.</p><p><strong>80/20 rule:</strong> Most of your swim sessions should feel comfortable and controlled (RPE 4-6). Save the hard efforts for interval sets.</p>`},
+  'Bike': {icon:'🚴',title:'Bike Session',tag:{text:'Discipline',color:'#fb923c'},body:`<p>The bike leg is where most of your race time is spent — up to 50% of your total finish time. It's also where smart pacing wins races. Going too hard on the bike destroys your run.</p><p><strong>Two types:</strong> Long endurance rides build your aerobic base. Interval sessions build power and speed.</p><p><strong>Key tip:</strong> Always ride at a cadence of 85-95rpm rather than grinding a big gear. High cadence saves your legs for the run.</p>`},
+  'Run': {icon:'🏃',title:'Run Session',tag:{text:'Discipline',color:'#4ade80'},body:`<p>The run is the final leg — and the hardest. You're already fatigued from the swim and bike, which is why triathlon running feels nothing like a standalone run.</p><p><strong>Types:</strong> Easy aerobic runs build your base. Tempo runs improve lactate threshold. Intervals develop speed. Long runs build endurance.</p><p><strong>Key tip:</strong> Most of your running should feel easy — conversational pace (RPE 4-6). Save the effort for specific hard sessions.</p>`},
+  'Brick': {icon:'🔥',title:'Brick Session',tag:{text:'Key session',color:'#a78bfa'},body:`<p>A Brick session combines two disciplines back to back — usually bike followed immediately by a run. The name comes from how your legs feel when you get off the bike: like bricks.</p><p><strong>Why they matter:</strong> Running after cycling uses your muscles differently. Your body needs to adapt to this transition.</p><p><strong>What to expect:</strong> The first 5-10 minutes of your run will feel terrible. This is completely normal — it gets better with practice over weeks of training.</p>`},
+  'Strength': {icon:'💪',title:'Strength Session',tag:{text:'Conditioning',color:'#fbbf24'},body:`<p>Strength training is one of the most overlooked parts of triathlon — but one of the highest returns on your time. Stronger muscles mean more power, better form under fatigue, and far fewer injuries.</p><p><strong>Triathlon focus:</strong> Core stability, glutes and hip flexors for cycling power, and single-leg exercises for balance and injury prevention.</p><p><strong>Key tip:</strong> 30-45 minutes of focused exercises is all you need. Save your energy for swim, bike and run.</p>`},
+  'Rest': {icon:'😴',title:'Rest Day',tag:{text:'Recovery',color:'rgba(255,255,255,0.3)'},body:`<p>Rest days are not wasted days — they are where your fitness is actually built. During training you create stress. During rest, your body adapts, repairs and comes back stronger.</p><p><strong>Active recovery is fine:</strong> A 20-30 minute easy walk, light stretching or foam rolling is perfectly fine.</p><p><strong>The biggest mistake:</strong> Most amateur triathletes overtrain and under-recover. Protecting your rest days is just as important as completing your hard sessions.</p>`},
+  'RPE': {icon:'📊',title:'RPE — Rate of Perceived Exertion',tag:{text:'Training concept',color:'#1E90FF'},body:`<p>RPE is a simple scale from 1 to 10 that describes how hard a session feels. It's the most practical way to measure effort across all three disciplines without needing a heart rate monitor or power meter.</p><div class="rpe-grid"><div class="rpe-num">1-2</div><div class="rpe-desc">Almost no effort. Gentle walk.</div><div class="rpe-num">3-4</div><div class="rpe-desc">Easy. Fully conversational. Could go for hours.</div><div class="rpe-num">5-6</div><div class="rpe-desc">Comfortable. Can speak in sentences. Aerobic zone.</div><div class="rpe-num">7</div><div class="rpe-desc">Moderate. Short sentences only. Starting to work.</div><div class="rpe-num">8</div><div class="rpe-desc">Hard. A few words only. Threshold effort.</div><div class="rpe-num">9</div><div class="rpe-desc">Very hard. Barely talking. Near maximum.</div><div class="rpe-num">10</div><div class="rpe-desc">Maximum effort. Unsustainable. All out sprint.</div></div>`}
+};
+
+function showExplainer(type) {
+  const e = explainers[type];
+  if (!e) return;
+  document.getElementById('modal-icon').textContent = e.icon;
+  document.getElementById('modal-title').textContent = e.title;
+  document.getElementById('modal-body').innerHTML = `<span class="modal-tag" style="background:${e.tag.color}20;color:${e.tag.color};border:1px solid ${e.tag.color}40;">${e.tag.text}</span>` + e.body;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('open');
+}
+
+// ── SKIP SESSION ──────────────────────────────────────────────────────────────
+function skipSession(weekIdx, dayIdx) {
+  const day = planData.weeks[weekIdx].days[dayIdx];
+  if (!day || day.type === 'Rest') return;
+  if (!confirm('Skip "' + (day.name || day.type) + '"?\n\nThis session will be removed from your week. You can always build a new plan.')) return;
+  // Replace with a Rest day, keeping the day name
+  planData.weeks[weekIdx].days[dayIdx] = {
+    day: day.day,
+    type: 'Rest',
+    name: 'Rest Day (skipped)',
+    duration: 0,
+    effort: 0
+  };
+  checkAndSavePlan(JSON.stringify(planData));
+  curDay = null;
+  renderWeek();
+  document.getElementById('sd').style.display = 'none';
+  showIronToast('Session skipped', '#555');
+}
+
+// ── MOVE TO ANOTHER DAY ───────────────────────────────────────────────────────
+function openMovePicker(weekIdx, dayIdx) {
+  const w = planData.weeks[weekIdx];
+  const movingDay = w.days[dayIdx];
+  const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const shortNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  // Available days = rest days in this week (not the current day)
+  const available = w.days
+    .map(function(d, i) { return {d: d, i: i}; })
+    .filter(function(x) { return x.i !== dayIdx && x.d.type === 'Rest'; });
+
+  if (available.length === 0) {
+    showIronToast('No rest days available this week to move to', '#e74c3c');
+    return;
+  }
+
+  const existing = document.getElementById('iron-move-modal');
+  if (existing) existing.remove();
+
+  const dayListHTML = available.map(function(x) {
+    return '<button onclick="confirmMove(' + weekIdx + ',' + dayIdx + ',' + x.i + ')" style="width:100%;text-align:left;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:13px 16px;color:#fff;font-size:14px;cursor:pointer;font-family:\'DM Sans\',sans-serif;display:flex;justify-content:space-between;align-items:center;transition:all 0.15s;margin-bottom:8px;" onmouseover="this.style.borderColor=\'rgba(30,144,255,0.5)\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.1)\'">' +
+      '<span>' + dayNames[x.i] + '</span>' +
+      '<span style="font-size:11px;color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:20px;">Rest day</span>' +
+    '</button>';
+  }).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'iron-move-modal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);';
+  modal.innerHTML = '<div style="background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:28px;max-width:380px;width:100%;animation:fu 0.3s ease both;">' +
+    '<div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Move session</div>' +
+    '<div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Move "' + (movingDay.name || movingDay.type) + '" to a rest day this week</div>' +
+    dayListHTML +
+    '<button onclick="document.getElementById(\'iron-move-modal\').remove()" style="width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-size:14px;cursor:pointer;font-family:\'DM Sans\',sans-serif;margin-top:4px;">Cancel</button>' +
+  '</div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+}
+
+function confirmMove(weekIdx, fromDay, toDay) {
+  const w = planData.weeks[weekIdx];
+  // Swap the days (preserve the .day field for day-of-week label)
+  const fromDayLabel = w.days[fromDay].day;
+  const toDayLabel = w.days[toDay].day;
+  const session = Object.assign({}, w.days[fromDay], {day: toDayLabel});
+  const rest = Object.assign({}, w.days[toDay], {day: fromDayLabel});
+  w.days[fromDay] = rest;
+  w.days[toDay] = session;
+
+  const modal = document.getElementById('iron-move-modal');
+  if (modal) modal.remove();
+  document.getElementById('sd').style.display = 'none';
+
+  checkAndSavePlan(JSON.stringify(planData));
+  curDay = toDay;
+  renderWeek();
+  selectDay(toDay);
+
+  const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  showIronToast('Moved to ' + dayNames[toDay] + ' ✓', '#1E90FF');
+}
+
+function showIronToast(msg, color) {
+  const old = document.getElementById('iron-toast');
+  if (old) old.remove();
+  const t = document.createElement('div');
+  t.id = 'iron-toast';
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:' + color + ';color:#fff;padding:11px 22px;border-radius:30px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4);font-family:\'DM Sans\',sans-serif;animation:fu 0.3s ease;pointer-events:none;';
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.remove(); }, 3000);
+}
+// ── END SKIP & MOVE ───────────────────────────────────────────────────────────
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('modal').classList.remove('open');
+});
+
+// ── PLAN PAUSE ──────────────────────────────────────────────────────────────
+let pauseDays = 0;
+
+function openPauseModal() {
+  pauseDays = 0;
+  document.getElementById('pause-days-input').value = '';
+  document.getElementById('pause-preview').style.display = 'none';
+  document.querySelectorAll('.pause-opt').forEach(b => b.style.borderColor = 'rgba(255,255,255,0.15)');
+  document.getElementById('pause-modal').style.display = 'flex';
+}
+
+function closePauseModal() {
+  document.getElementById('pause-modal').style.display = 'none';
+}
+
+function selectPauseDays(days, btn) {
+  pauseDays = days;
+  document.getElementById('pause-days-input').value = '';
+  document.querySelectorAll('.pause-opt').forEach(b => {
+    b.style.background = 'rgba(255,255,255,0.06)';
+    b.style.borderColor = 'rgba(255,255,255,0.15)';
+    b.style.color = 'rgba(255,255,255,0.8)';
+  });
+  btn.style.background = 'rgba(30,144,255,0.15)';
+  btn.style.borderColor = 'var(--blue)';
+  btn.style.color = '#fff';
+  showPausePreview();
+}
+
+function showPausePreview() {
+  if (pauseDays < 1) return;
+  const resume = new Date();
+  resume.setDate(resume.getDate() + pauseDays);
+  const opts = {weekday:'long', day:'numeric', month:'long'};
+  const shortOpts = {day:'numeric', month:'short', year:'numeric'};
+
+  let msg = `Your plan will resume ${resume.toLocaleDateString('en-AU', opts)}. All upcoming sessions shift forward by ${pauseDays} day${pauseDays===1?'':'s'}.`;
+
+  // Check if pause pushes past race date
+  const raceDate = planData.raceDate || A.date;
+  if (raceDate) {
+    const race = new Date(raceDate);
+    const totalWeeks = planData.weeks ? planData.weeks.length : 0;
+    const planEnd = new Date(planData.startDate || new Date());
+    planEnd.setDate(planEnd.getDate() + totalWeeks * 7);
+    const newPlanEnd = new Date(planEnd);
+    newPlanEnd.setDate(newPlanEnd.getDate() + pauseDays);
+
+    if (newPlanEnd > race) {
+      const daysOver = Math.ceil((newPlanEnd - race) / 86400000);
+      const weeksOver = Math.round(daysOver / 7);
+      document.getElementById('pause-preview').style.background = 'rgba(239,68,68,0.08)';
+      document.getElementById('pause-preview').style.borderColor = 'rgba(239,68,68,0.3)';
+      msg = `⚠️ Your race is on ${race.toLocaleDateString('en-AU', shortOpts)}. Pausing ${pauseDays} days means your plan finishes ${weeksOver > 0 ? weeksOver + ' week' + (weeksOver===1?'':'s') : daysOver + ' day' + (daysOver===1?'':'s')} after race day — you may need to skip some later sessions. Consider a shorter pause.`;
+    } else {
+      document.getElementById('pause-preview').style.background = 'rgba(30,144,255,0.08)';
+      document.getElementById('pause-preview').style.borderColor = 'rgba(30,144,255,0.2)';
+    }
+  }
+
+  document.getElementById('pause-preview-text').textContent = msg;
+  document.getElementById('pause-preview').style.display = 'block';
+}
+
+document.getElementById('pause-days-input')?.addEventListener('input', showPausePreview);
+
+async function confirmPause() {
+  const days = pauseDays || parseInt(document.getElementById('pause-days-input').value) || 0;
+  if (days < 1) { showIronToast('Please select or enter a number of days', '#ef4444'); return; }
+
+  // Shift planData.startDate forward
+  const oldStart = planData.startDate ? new Date(planData.startDate) : new Date();
+  const newStart = new Date(oldStart);
+  newStart.setDate(newStart.getDate() + days);
+  planData.startDate = newStart.toISOString().split('T')[0];
+  planData.pausedUntil = planData.startDate;
+  planData.pausedDays = (planData.pausedDays || 0) + days;
+
+  // Save back to Supabase
+  const btn = document.querySelector('#pause-modal button:last-child');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  try {
+    const { data: d1 } = await sb2.auth.getSession();
+    const session = d1?.session;
+    if (session) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const loadId = urlParams.get('load');
+      if (loadId) {
+        await sb2.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', loadId);
+      }
+    }
+  } catch(e) { console.error('Pause save error', e); }
+
+  closePauseModal();
+
+  // Show pause banner
+  const resume = new Date(planData.startDate);
+  const opts = {weekday:'short', day:'numeric', month:'short'};
+  document.getElementById('pause-resume-date').textContent =
+    `Resuming ${resume.toLocaleDateString('en-AU', opts)} · ${days} day${days===1?'':'s'} added to your plan`;
+  document.getElementById('pause-banner').style.display = 'flex';
+  document.getElementById('pause-btn').style.display = 'none';
+
+  showIronToast(`Plan paused for ${days} day${days===1?'':'s'} ⏸️`, '#fb923c');
+}
+
+async function resumePlan() {
+  if (!confirm('Resume your plan now? Remaining paused time will be cancelled.')) return;
+
+  // Shift startDate back to today
+
+  // Set plan start date back to today
+  const today = new Date().toISOString().split('T')[0];
+  planData.startDate = today;
+  delete planData.pausedUntil;
+
+  // Save
+  try {
+    const { data: d1 } = await sb2.auth.getSession();
+    if (d1?.session) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const loadId = urlParams.get('load');
+      if (loadId) {
+        await sb2.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', loadId);
+      }
+    }
+  } catch(e) { console.error('Resume save error', e); }
+
+  document.getElementById('pause-banner').style.display = 'none';
+  document.getElementById('pause-btn').style.display = 'flex';
+  renderWeek();
+  showIronToast('Plan resumed! ▶️', '#4ade80');
+  renderStartDateEditor(A.startDate, new URLSearchParams(location.search).get('load'));
+}
+// ── END PLAN PAUSE ──────────────────────────────────────────────────────────
+
+async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
+  try {
+    const tooEasy = rating <= 2;
+    const tooHard = rating >= 4;
+    if (!tooEasy && !tooHard) return;
+
+    const prompt = 'You are an elite triathlon coach. A athlete just rated a ' + sportType + ' session RPE ' + rating + '/5 (' + (tooEasy ? 'too easy' : 'too hard') + ').' +
+      ' Rewrite the NEXT 3 ' + sportType + ' sessions to be ' + (tooEasy ? '10-15% harder' : '10-15% easier') + '.' +
+      ' Return ONLY a JSON array of 3 session objects with keys: name, duration, effort, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone.' +
+      ' No other text.';
+
+    const r = await fetch('/api/generate-plan', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ prompt })
+    });
+    const d = await r.json();
+    let txt = d.plan || '';
+    txt = txt.replace(/```json/g,'').replace(/```/g,'').trim();
+    const s = txt.indexOf('['); const e = txt.lastIndexOf(']');
+    if (s === -1 || e === -1) return;
+    const newSessions = JSON.parse(txt.slice(s, e+1));
+
+    let replaced = 0;
+    for (let w = fromWeek; w < planData.weeks.length && replaced < 3; w++) {
+      for (let d2 = (w === fromWeek ? fromDay + 1 : 0); d2 < planData.weeks[w].days.length && replaced < 3; d2++) {
+        const day = planData.weeks[w].days[d2];
+        if (day.type === sportType) {
+          Object.assign(day, newSessions[replaced]);
+          day.type = sportType;
+          replaced++;
+        }
+      }
+    }
+
+    if (replaced > 0) {
+      checkAndSavePlan(JSON.stringify(planData));
+      renderWeek();
+      showIronToast('Sessions adapted based on your feedback ✓', '#4ade80');
+    }
+  } catch(e) { console.log('Adapt error:', e); }
+}
+
+function renderExtendButton(pd,pid){var e=document.getElementById("extend-btn-wrap");if(e)e.remove();var w=pd&&pd.weeks;if(!w||!w.length)return;var n=w.length+1;var d=document.createElement("div");d.id="extend-btn-wrap";d.style.cssText="text-align:center;padding:32px 0 16px;";d.innerHTML='<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:32px;"><div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:12px;">Your plan covers '+w.length+' weeks</div><button id="extend-plan-btn" onclick="extendPlan()" style="background:rgba(30,144,255,0.12);border:1.5px solid #1E90FF;color:#1E90FF;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">Generate weeks '+n+' to '+(n+3)+'</button><div id="extend-status" style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:10px;display:none;"></div></div>';var c=document.getElementById("plan");if(c)c.after(d);}
+async function extendPlan(){
+  var btn=document.getElementById("extend-plan-btn");
+  var st=document.getElementById("extend-status");
+  if(!btn||!planData)return;
+  btn.disabled=true;
+  btn.textContent="Generating...";
+  if(st){st.style.display="block";st.textContent="Building your next 4 weeks...";}
+  try {
+    var sd=await sb2.auth.getSession();
+    var sess=sd.data.session;
+    var sw=planData.weeks.length+1;
+    var lastWeeks=planData.weeks.slice(-2);
+    var prompt="You are a triathlon coach. A "+planData.race+" athlete needs weeks "+sw+" to "+(sw+3)+" of their training plan.\n\nExisting plan summary:\n- Race: "+planData.race+"\n- Race date: "+(planData.raceDate||'TBD')+"\n- Total weeks so far: "+planData.weeks.length+"\n- Recent weeks: "+JSON.stringify(lastWeeks.map(function(w){return{weekNum:w.weekNum,phase:w.phase,totalVolume:w.totalVolume};}))+"\n\nGenerate ONLY weeks "+sw+" to "+(sw+3)+". Return a JSON object with a \"weeks\" array containing exactly 4 week objects. Each week must have: weekNumber, phase, focus, weeklyNarrative, totalVolume, days (array of 7 days). Each day must have: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone.\nReturn ONLY valid JSON, no other text.";
+    var res=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:prompt,userId:sess&&sess.user&&sess.user.id,race:planData.race})});
+    if(!res.ok)throw new Error("API error "+res.status);
+    var data=await res.json();
+    var txt=data.plan||data.content&&data.content[0]&&data.content[0].text||'';txt=txt.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    txt=txt.substring(txt.indexOf('{'),txt.lastIndexOf('}')+1);
+    var newData=JSON.parse(txt);
+    if(!newData.weeks||!newData.weeks.length)throw new Error("No weeks in response");
+    var savedStartDate=planData.startDate;
+    planData.weeks=[...planData.weeks,...newData.weeks];
+    planData.startDate=savedStartDate;
+    if(sess&&sess.user&&currentPlanId)await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",currentPlanId);
+    // Re-render the plan with new weeks without re-generating
+    document.getElementById('ptitle').textContent = (A.name ? A.name+"'s " : '') + (planData.race || A.race) + ' Plan';
+    document.getElementById('pstats').innerHTML=[
+      {v:planData.weeks.length,l:'Total weeks'},{v:A.hours+'h',l:'Per week'},
+      {v:A.days.length||'—',l:'Sessions/week'},{v:(planData.race||A.race||'').split(' ')[0],l:'Race type'}
+    ].map(function(s){return '<div class="ps"><div class="psv">'+s.v+'</div><div class="psl">'+s.l+'</div></div>';}).join('');
+    const phases=[...new Set(planData.weeks.map(function(w){return w.phase;}))];
+    document.getElementById('phases').innerHTML=phases.map(function(ph,i){
+      return '<button class="phase-pill'+(i===0?' active':'')+'" data-phase="'+ph+'" onclick="jumpToPhase(''+ph+'')">'+ph+' Phase</button>';
+    }).join('');
+    curWeek=planData.weeks.length-4; curDay=null;
+    renderWeek(); renderGraph();
+    renderExtendButton(planData, window.currentPlanId);
+    if(st)st.textContent="Done! Weeks added.";
+  } catch(e) {
+    console.error(e);
+    btn.disabled=false;
+    btn.textContent="Generate weeks "+(planData.weeks.length+1)+" to "+(planData.weeks.length+4);
+    if(st)st.textContent="Something went wrong: "+e.message;
+  }
+}
+
+async function saveStartDate(planId) {
+  var ip = document.getElementById("start-date-input");
+  var mg = document.getElementById("start-date-msg");
+  var bt = document.getElementById("start-date-save-btn");
+  if (!ip || !ip.value) return;
+  var nd = ip.value;
+  if (bt) { bt.disabled = true; bt.textContent = "Saving..."; }
+  try {
+    var pid = planId || new URLSearchParams(location.search).get("load");
+    var sess = (await sb2.auth.getSession()).data.session;
+    if (!sess) throw new Error("Not logged in");
+    var pr = await sb2.from("plans").select("*").eq("id", pid).eq("user_id", sess.user.id).single();
+    if (pr.error) throw pr.error;
+    var txt = pr.data.plan_data;
+    txt = txt.substring(txt.indexOf("{"), txt.lastIndexOf("}") + 1);
+    var pd = JSON.parse(txt); pd.startDate = nd;
+    var answers = JSON.parse(localStorage.getItem("irontri_pending_answers") || "{}");
+    answers.startDate = nd;
+    localStorage.setItem("irontri_pending_answers", JSON.stringify(answers));
+    A.startDate = nd;
+    await sb2.from("plans").update({ plan_data: JSON.stringify(pd) }).eq("id", pid);
+    buildPlan(JSON.stringify(pd));
+    if (mg) { mg.style.display = "inline"; setTimeout(function() { mg.style.display = "none"; }, 2000); }
+  } catch(e) { console.error("saveStartDate:", e); alert("Could not save: " + e.message); }
+  if (bt) { bt.disabled = false; bt.textContent = "Save"; }
+}
+</script>
+
+<!-- PAUSE MODAL -->
+<div id="pause-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);">
+  <div style="background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:28px;max-width:420px;width:100%;animation:fu 0.3s ease both;">
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px;">⏸️ Pause your plan</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Your sessions shift forward — nothing gets lost.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <button class="pause-opt" onclick="selectPauseDays(3,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">3 days</button>
+      <button class="pause-opt" onclick="selectPauseDays(7,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">1 week</button>
+      <button class="pause-opt" onclick="selectPauseDays(14,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">2 weeks</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
+      <span style="font-size:12px;color:rgba(255,255,255,0.3);">or enter days</span>
+      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
+    </div>
+    <input type="number" id="pause-days-input" min="1" max="90" placeholder="e.g. 10" style="width:100%;padding:13px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:12px;">
+    <div id="pause-preview" style="display:none;background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;">
+      <span id="pause-preview-text"></span>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closePauseModal()" style="flex:1;padding:13px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.6);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">Cancel</button>
+      <button onclick="confirmPause()" style="flex:2;padding:13px;background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.3);border-radius:10px;color:#fb923c;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">⏸️ Pause plan</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- BOTTOM TAB BAR -->
+<nav style="position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,0.08);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);">
+  <a href="/dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">📅</span>Today
+  </a>
+  <a href="#" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:#1E90FF;font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">🗓️</span>My Plan
+  </a>
+  <a href="/feedback.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">💬</span>Feedback
+  </a>
+</nav>
+<!-- END BOTTOM TAB BAR -->
+</body>
+</html>
