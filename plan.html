@@ -1025,6 +1025,7 @@ async function buildPlan(){
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
   const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+". Plan: "+w+" weeks, start: "+(A.startDate||"soon")+", race date: "+(A.date||"TBD")+". Taper: week "+w+" = race week max 45min easy; week "+(w-1)+" = taper -50%; week "+(w-2)+" = taper -30%; week "+(w-3)+" = peak.\n\n";
+  try{
         const prompt1 = prompt + '\n\nGenerate ONLY weeks 1 and 2. Return JSON with keys: intro, weeks (array of 2 weeks only).';
     const prompt2 = prompt + '\n\nGenerate ONLY weeks 3 and 4 (Build and Peak phases). Return JSON with keys: weeks (array of 2 weeks only, weekNumber starting at 3). No intro needed.';
 
@@ -2286,7 +2287,7 @@ async function extendPlan(){
     ].map(function(s){return '<div class="ps"><div class="psv">'+s.v+'</div><div class="psl">'+s.l+'</div></div>';}).join('');
     const phases=[...new Set(planData.weeks.map(function(w){return w.phase;}))];
     document.getElementById('phases').innerHTML=phases.map(function(ph,i){
-      return '<button class="phase-pill'+(i===0?' active':'')+'" data-phase="'+ph+'" onclick="jumpToPhase(''+ph+'')">'+ph+' Phase</button>';
+      return '<button class="phase-pill'+(i===0?' active':'')+'" data-phase="'+ph+'" onclick="jumpToPhase(\'"+ph+"\')">'+ph+' Phase</button>';
     }).join('');
     curWeek=planData.weeks.length-4; curDay=null;
     renderWeek(); renderGraph();
