@@ -1083,7 +1083,6 @@ async function buildPlan(){
     checkAndSavePlan(JSON.stringify(planData));
     if(A.date&&planData.weeks.length<w){const _bt=document.createElement('div');_bt.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1E90FF;color:#fff;padding:14px 20px;border-radius:12px;font-size:13px;font-family:DM Sans,sans-serif;text-align:center;z-index:9999;max-width:340px;line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.4);';_bt.innerHTML='<strong>Your first 4 weeks are ready!</strong><br>Building your full '+w+'-week plan to race day in the background.';document.body.appendChild(_bt);setTimeout(()=>{if(_bt.parentNode)_bt.remove();},8000);setTimeout(()=>autoGenerateRemainingWeeks(w),5000);}
     window.scrollTo({top:0,behavior:'smooth'});
-    renderExtendButton(planData, window.currentPlanId||null);
     setTimeout(() => window.dispatchEvent(new Event('plan-loaded')), 100);
 
   }catch(e){
@@ -1251,7 +1250,6 @@ const STRAVA_TO_PLAN = {
 
 async function syncStravaActivities() {
 
-  renderExtendButton(planData, currentPlanId);
   if (!sb2 || !planData || !A.startDate) return;
   try {
     const { data: { session } } = await sb2.auth.getSession();
@@ -2265,53 +2263,6 @@ async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
   } catch(e) { console.log('Adapt error:', e); }
 }
 
-function renderExtendButton(pd,pid){var e=document.getElementById("extend-btn-wrap");if(e)e.remove();var w=pd&&pd.weeks;if(!w||!w.length)return;var n=w.length+1;var d=document.createElement("div");d.id="extend-btn-wrap";d.style.cssText="text-align:center;padding:32px 0 16px;";d.innerHTML='<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:32px;"><div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:12px;">Your plan covers '+w.length+' weeks</div><button id="extend-plan-btn" onclick="extendPlan()" style="background:rgba(30,144,255,0.12);border:1.5px solid #1E90FF;color:#1E90FF;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">Generate weeks '+n+' to '+(n+3)+'</button><div id="extend-status" style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:10px;display:none;"></div></div>';var c=document.getElementById("plan");if(c)c.after(d);}
-async function extendPlan(){
-  var btn=document.getElementById("extend-plan-btn");
-  var st=document.getElementById("extend-status");
-  if(!btn||!planData)return;
-  btn.disabled=true;
-  btn.textContent="Generating...";
-  if(st){st.style.display="block";st.textContent="Building your next 4 weeks...";}
-  try {
-    var sd=await sb2.auth.getSession();
-    var sess=sd.data.session;
-    var sw=planData.weeks.length+1;
-    var lastWeeks=planData.weeks.slice(-2);
-    var prompt="You are a triathlon coach. A "+planData.race+" athlete needs weeks "+sw+" to "+(sw+3)+" of their training plan.\n\nExisting plan summary:\n- Race: "+planData.race+"\n- Race date: "+(planData.raceDate||'TBD')+"\n- Total weeks so far: "+planData.weeks.length+"\n- Recent weeks: "+JSON.stringify(lastWeeks.map(function(w){return{weekNum:w.weekNum,phase:w.phase,totalVolume:w.totalVolume};}))+"\n\nGenerate ONLY weeks "+sw+" to "+(sw+3)+". Return a JSON object with a \"weeks\" array containing exactly 4 week objects. Each week must have: weekNumber, phase, focus, weeklyNarrative, totalVolume, days (array of 7 days). Each day must have: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone.\nReturn ONLY valid JSON, no other text.";
-    var res=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:prompt,userId:sess&&sess.user&&sess.user.id,race:planData.race})});
-    if(!res.ok)throw new Error("API error "+res.status);
-    var data=await res.json();
-    var txt=data.plan||data.content&&data.content[0]&&data.content[0].text||'';txt=txt.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
-    txt=txt.substring(txt.indexOf('{'),txt.lastIndexOf('}')+1);
-    var newData=JSON.parse(txt);
-    if(!newData.weeks||!newData.weeks.length)throw new Error("No weeks in response");
-    var savedStartDate=planData.startDate;
-    planData.weeks=[...planData.weeks,...newData.weeks];
-    planData.startDate=savedStartDate;
-    if(sess&&sess.user&&currentPlanId)await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",currentPlanId);
-    // Re-render the plan with new weeks without re-generating
-    document.getElementById('ptitle').textContent = (A.name ? A.name+"'s " : '') + (planData.race || A.race) + ' Plan';
-    document.getElementById('pstats').innerHTML=[
-      {v:planData.weeks.length,l:'Total weeks'},{v:A.hours+'h',l:'Per week'},
-      {v:A.days.length||'—',l:'Sessions/week'},{v:(planData.race||A.race||'').split(' ')[0],l:'Race type'}
-    ].map(function(s){return '<div class="ps"><div class="psv">'+s.v+'</div><div class="psl">'+s.l+'</div></div>';}).join('');
-    const phases=[...new Set(planData.weeks.map(function(w){return w.phase;}))];
-    document.getElementById('phases').innerHTML=phases.map(function(ph,i){
-      return '<button class="phase-pill'+(i===0?' active':'')+'" data-phase="'+ph+'" onclick="jumpToPhase(\'"+ph+"\')">'+ph+' Phase</button>';
-    }).join('');
-    curWeek=planData.weeks.length-4; curDay=null;
-    renderWeek(); renderGraph();
-    renderExtendButton(planData, window.currentPlanId);
-    if(st)st.textContent="Done! Weeks added.";
-  } catch(e) {
-    console.error(e);
-    btn.disabled=false;
-    btn.textContent="Generate weeks "+(planData.weeks.length+1)+" to "+(planData.weeks.length+4);
-    if(st)st.textContent="Something went wrong: "+e.message;
-  }
-}
-
 async function saveStartDate(planId) {
   var ip = document.getElementById("start-date-input");
   var mg = document.getElementById("start-date-msg");
@@ -2376,3 +2327,16 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
 
 <!-- BOTTOM TAB BAR -->
 <nav style="position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,0.08);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);">
+  <a href="/dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">📅</span>Today
+  </a>
+  <a href="#" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:#1E90FF;font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">🗓️</span>My Plan
+  </a>
+  <a href="/feedback.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">💬</span>Feedback
+  </a>
+</nav>
+<!-- END BOTTOM TAB BAR -->
+</body>
+</html>
