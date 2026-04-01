@@ -736,7 +736,7 @@ function cf(){
   A.date=document.getElementById('idate').value;
   document.getElementById('n12').disabled=!A.startDate;
 }
-function wks(d){if(!d)return 16;const w=Math.round((new Date(d)-new Date())/(7*24*60*60*1000));return Math.min(Math.max(w,8),52);}
+function wks(d){if(!d)return 16;const start=A.startDate?new Date(A.startDate+"T00:00:00"):new Date();const w=Math.round((new Date(d+"T00:00:00")-start)/(7*24*60*60*1000));return Math.min(Math.max(w,8),52);}
 
 function showSum(){
   const w=wks(A.date);
@@ -1746,7 +1746,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         syncStravaActivities();
         // Resume background generation if plan is incomplete
         if(planData.raceDate){
-          const raceWks = Math.round((new Date(planData.raceDate) - new Date()) / (7*24*60*60*1000));
+          const _start = A.startDate ? new Date(A.startDate+"T00:00:00") : new Date();
+          const raceWks = Math.round((new Date(planData.raceDate+"T00:00:00") - _start) / (7*24*60*60*1000));
           const targetW = Math.min(Math.max(raceWks, 8), 52);
           if(planData.weeks.length < targetW){
             window._targetWeeks = targetW;
