@@ -557,7 +557,7 @@ async function loadTodaySession() {
       planData = JSON.parse(txt);
     } catch(e) { return; }
 
-    // Check localStorage override first
+    // Check localStorage override first (set by change date feature)
     const startOverrides = JSON.parse(localStorage.getItem('irontri_start_override') || '{}');
     const resolvedStart = startOverrides[plan.id] || planData.startDate || plan.created_at?.split('T')[0];
     if (!planData.weeks || !resolvedStart) return;
