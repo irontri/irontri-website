@@ -1835,7 +1835,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         curWeek=0; curDay=null;
         renderWeek();
-        renderGraph();
+        try { renderGraph(); } catch(eg) {}
+        // Update load-more button to show correct next week numbers
+        const lmb = document.getElementById('load-more-btn');
+        if (lmb && planData.weeks) { const nw = planData.weeks.length; lmb.textContent = 'Load weeks ' + (nw+1) + '–' + (nw+4) + ' →'; }
         await loadCompletions();
         renderWeek();
         syncStravaActivities();
