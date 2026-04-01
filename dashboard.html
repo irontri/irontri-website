@@ -434,7 +434,7 @@ async function loadPlans() {
           <button class="btn-date" onclick="event.stopPropagation();showStartDateEditor('${p.id}', '${(()=>{ try { const ov=JSON.parse(localStorage.getItem(\'irontri_start_override\')||\'{}\'); return ov[p.id] || planObj?.startDate || plan.created_at?.split(\'T\')[0] || \'\'; } catch(e){ return planObj?.startDate || \'\'; } })()}')" >📅 Change date</button>
           <button class="btn-delete" onclick="event.stopPropagation();deletePlan('${p.id}')">Delete</button>
         </div>
-        <div id="start-date-editor-${p.id}" style="display:none;" onclick="event.stopPropagation()"></div
+        <div id="start-date-editor-${p.id}" style="display:none;" onclick="event.stopPropagation()"></div>
         </div>
       </div>`;
   }).join('');
