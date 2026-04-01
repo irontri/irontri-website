@@ -957,7 +957,7 @@ function changeWeek(dir){
   curWeek+=dir;
   curDay=null;
   renderWeek();
-  renderGraph();
+  try { renderGraph(); } catch(eg) {}
   window.scrollTo({top:document.getElementById('plan').offsetTop-20,behavior:'smooth'});
   document.querySelectorAll('.phase-pill').forEach(p=>{
     p.classList.toggle('active',p.dataset.phase===planData.weeks[curWeek].phase);
@@ -1240,6 +1240,14 @@ async function autoGenerateRemainingWeeks(targetWeeks) {
       txt = txt.substring(txt.indexOf("{"), txt.lastIndexOf("}")+1);
       const nd = JSON.parse(txt);
       if (!nd.weeks||!nd.weeks.length) { attempts+=3; continue; }
+      // Normalise types and day names before merging
+      const dayNames2 = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+      nd.weeks.forEach(wk => {
+        if (wk.days) wk.days.forEach((d, i) => {
+          if (d.type) d.type = d.type.charAt(0).toUpperCase() + d.type.slice(1).toLowerCase();
+          if (typeof d.day === 'number') d.day = dayNames2[d.day - 1] || dayNames2[i] || 'Monday';
+        });
+      });
       const savedStart = planData.startDate;
       planData.weeks = [...planData.weeks, ...nd.weeks];
       planData.startDate = savedStart;
@@ -1270,6 +1278,8 @@ async function loadNextWeeks() {
     txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
     const newData = JSON.parse(txt);
     if (!newData.weeks || !newData.weeks.length) throw new Error('No weeks in response');
+    const dayNamesLN=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    newData.weeks.forEach(wk=>{if(wk.days)wk.days.forEach((d,i)=>{if(d.type)d.type=d.type.charAt(0).toUpperCase()+d.type.slice(1).toLowerCase();if(typeof d.day==='number')d.day=dayNamesLN[d.day-1]||dayNamesLN[i]||'Monday';});});
     const savedStartDate = planData.startDate;
     planData.weeks = [...planData.weeks, ...newData.weeks];
     planData.startDate = savedStartDate;
@@ -1775,6 +1785,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         let txt = plan.plan_data || '';
         txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
         planData = JSON.parse(txt);
+        // Normalise extended weeks - fix lowercase types and numeric day names
+        if (planData.weeks) {
+          const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+          planData.weeks.forEach(wk => {
+            if (wk.days) wk.days.forEach((d, i) => {
+              if (d.type) d.type = d.type.charAt(0).toUpperCase() + d.type.slice(1).toLowerCase();
+              if (typeof d.day === 'number') d.day = dayNames[d.day - 1] || dayNames[i] || 'Monday';
+            });
+          });
+        }
         A.race = plan.race || planData.race || 'Triathlon';
         A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
         A.startDate = (()=>{ try { const ov=JSON.parse(localStorage.getItem('irontri_start_override')||'{}'); return ov[loadId] || planData.startDate || ''; } catch(e){ return planData.startDate || ''; } })();
