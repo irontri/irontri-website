@@ -202,55 +202,13 @@
     @media(max-width:768px){
       nav{padding:0 20px;}
       .nav-links{display:none;}
-
-      /* HERO: single col, no widget */
-      .hero{padding:48px 20px 40px!important;display:block!important;}
-      .hero > div:last-child{display:none!important;}
-
-      /* PHONE SHOWCASE: remove entirely */
-      section[style*="background:#080c18"]{display:none!important;}
-
-      /* TRUST BAR: 2x2 grid */
-      .trust-bar{padding:20px!important;display:grid!important;grid-template-columns:1fr 1fr;gap:16px 12px;}
-
-      /* STRAVA: single col, hide visual mock */
-      .strava-section{padding:48px 20px!important;}
-      .strava-inner{grid-template-columns:1fr!important;padding:32px 20px!important;gap:24px!important;}
-      .strava-visual{display:none!important;}
-
-      /* HOW IT WORKS */
-      .how{padding:48px 20px!important;}
-      .steps{grid-template-columns:1fr 1fr!important;gap:12px!important;margin-top:32px!important;}
-
-      /* DISCIPLINES */
-      .disciplines{padding:48px 20px!important;}
-      .disc-grid{grid-template-columns:1fr 1fr!important;gap:12px!important;margin-top:32px!important;}
-
-      /* FEATURES */
-      .features{padding:48px 20px!important;}
-      .features-grid{grid-template-columns:1fr!important;gap:12px!important;margin-top:32px!important;}
-      .feature-card.wide{flex-direction:column!important;}
-      .feature-wide-visual{display:none!important;}
-
-      /* TESTIMONIALS */
-      .testimonials{padding:48px 20px!important;}
-      .testi-grid{grid-template-columns:1fr!important;gap:12px!important;margin-top:32px!important;}
-
-      /* PRICING */
-      .pricing{padding:48px 20px!important;}
+      .hero{padding:60px 24px 50px;}
+      .trust-bar{padding:24px;}
+      .strava-section,.disciplines,.features,.pricing,.how,.testimonials,.devices{padding:60px 24px;}
+      .cta-banner{margin:0 24px 60px;padding:48px 28px;}
+      footer{padding:40px 24px 24px;}
       .pricing-features{grid-template-columns:1fr;}
-
-      /* CTA BANNER */
-      .cta-banner{margin:0 16px 48px!important;padding:40px 24px!important;}
-
-      /* DEVICES */
-      .devices{padding:48px 20px!important;}
-      .devices-inner{flex-direction:column!important;gap:32px!important;}
-      .devices-logos{grid-template-columns:repeat(3,1fr)!important;}
-
-      /* FOOTER */
-      footer{padding:32px 20px 24px!important;}
-      .footer-top{flex-direction:column;gap:24px;}
+      .devices-inner{gap:32px;}
     }
   </style>
   <script src="/nav-auth.js" defer></script>
