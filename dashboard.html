@@ -431,7 +431,7 @@ async function loadPlans() {
         </div>
         <div class="plan-card-actions">
           <button class="btn-view" onclick="event.stopPropagation();viewPlan('${p.id}')">View plan →</button>
-          <button class="btn-date" onclick="event.stopPropagation();showStartDateEditor('${p.id}', '${planObj && planObj.startDate ? planObj.startDate : ''}')" >📅 Change date</button>
+          <button class="btn-date" onclick="event.stopPropagation();showStartDateEditor('${p.id}', '${(()=>{ try { const ov=JSON.parse(localStorage.getItem(\'irontri_start_override\')||\'{}\'); return ov[p.id] || planObj?.startDate || plan.created_at?.split(\'T\')[0] || \'\'; } catch(e){ return planObj?.startDate || \'\'; } })()}')" >📅 Change date</button>
           <button class="btn-delete" onclick="event.stopPropagation();deletePlan('${p.id}')">Delete</button>
         </div>
         <div id="start-date-editor-${p.id}" style="display:none;" onclick="event.stopPropagation()"></div
@@ -557,8 +557,9 @@ async function loadTodaySession() {
       planData = JSON.parse(txt);
     } catch(e) { return; }
 
-    // Fall back to created_at for plans that predate startDate storage
-    const resolvedStart = planData.startDate || plan.created_at?.split('T')[0];
+    // Check localStorage override first
+    const startOverrides = JSON.parse(localStorage.getItem('irontri_start_override') || '{}');
+    const resolvedStart = startOverrides[plan.id] || planData.startDate || plan.created_at?.split('T')[0];
     if (!planData.weeks || !resolvedStart) return;
     planData.startDate = resolvedStart;
 
