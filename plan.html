@@ -1225,7 +1225,7 @@ async function autoGenerateRemainingWeeks(targetWeeks) {
     const currentCount = planData.weeks.length;
     const nextStart = currentCount + 1;
     const weeksLeft = targetWeeks - currentCount;
-    const batch = Math.min(4, weeksLeft);
+    const batch = Math.min(2, weeksLeft);
     const phase = weeksLeft <= 2 ? "Taper/Race week" : weeksLeft <= 4 ? "Peak" : weeksLeft <= 8 ? "Build" : "Base";
     bar.textContent = "Building weeks " + nextStart + "-" + (nextStart+batch-1) + " of " + targetWeeks + " (" + phase + ")...";
     try {
@@ -1267,7 +1267,7 @@ async function loadNextWeeks() {
   btn.disabled = true;
   const currentWeekCount = planData.weeks.length;
   const nextWeekStart = currentWeekCount + 1;
-  const prompt = `You are an elite triathlon coach. Generate the NEXT 4 weeks of a ${planData.race||A.race||'triathlon'} plan continuing from week ${currentWeekCount}.
+  const prompt = `You are an elite triathlon coach. Generate the NEXT 2 weeks of a ${planData.race||A.race||'triathlon'} plan continuing from week ${currentWeekCount}.
 
 Athlete: ${A.name||'Athlete'}, Experience: ${A.exp||'intermediate'}, Hours/week: ${A.hours||8}, Training days: ${A.days?.join(', ')||'varies'}, Weakness: ${A.weak||'balanced'}.
 
