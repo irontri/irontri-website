@@ -900,7 +900,7 @@ async function downloadPDF() {
             const emoji = typeEmoji[day.type] || '🏅';
             html += '<div class="session">';
             html += '<div class="session-top"><span class="session-name">' + emoji + ' ' + (day.name||day.type) + '</span><span class="session-tag">' + (day.type||'') + '</span></div>';
-            html += '<div class="session-meta">' + (day.day||'') + (day.duration ? ' • ' + day.duration + 'min' : '') + (day.effort ? ' • RPE ' + day.effort + '/10' : '') + (day.zone ? ' • Zone ' + day.zone : '') + '</div>';
+            html += '<div class="session-meta">' + (day.day||'') + (day.duration ? ' • ' + (()=>{const m=parseInt(day.duration)||0;if(m<60)return m+'m';const h=Math.floor(m/60),r=m%60;return r>0?h+'h '+r+'m':h+'h';})() : '') + (day.effort ? ' • RPE ' + day.effort + '/10' : '') + (day.zone ? ' • Zone ' + day.zone : '') + '</div>';
             if (day.mainset) html += '<div class="session-mainset"><strong>Mainset:</strong> ' + day.mainset + '</div>';
             if (day.coachNote) html += '<div class="session-mainset" style="color:#666;margin-top:2px;"><strong>Coach:</strong> ' + day.coachNote + '</div>';
             html += '</div>';
