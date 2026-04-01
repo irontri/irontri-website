@@ -1087,7 +1087,7 @@ async function buildPlan(){
 
     curWeek=0;curDay=null;
     renderWeek();
-    renderGraph();
+    try { renderGraph(); } catch(eg) {}
     loadCompletions().then(() => { renderWeek(); syncStravaActivities(); });
     if(A.date){planData.raceDate=A.date;} checkAndSavePlan(JSON.stringify(planData));
     window.scrollTo({top:0,behavior:'smooth'});
@@ -1669,12 +1669,11 @@ async function checkAndSavePlan(planText) {
   try {
     if (!sb2) { localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race})); document.getElementById('save-banner').style.display='block'; return; }
     let session = null;
-    const { data: d1 } = await sb2.auth.getSession();
-    session = d1?.session;
-    if (!session) {
-      await new Promise(r => setTimeout(r, 1500));
-      const { data: d2 } = await sb2.auth.getSession();
-      session = d2?.session;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data: da } = await sb2.auth.getSession();
+      session = da?.session;
+      if (session) break;
+      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
     }
     if (session) {
       const { error } = await sb2.from('plans').insert({user_id: session.user.id, plan_data: planText, race: A.race || 'Triathlon'});
