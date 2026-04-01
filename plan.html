@@ -592,8 +592,8 @@
       <button class="info-btn" onclick="showExplainer('overload')" style="font-size:12px;">What is this? ℹ️</button>
     </div>
     <div style="font-size:12px;color:var(--faint);margin-bottom:16px;">Volume builds progressively then drops in taper week before race day</div>
-    <div id="graph-bars" style="display:flex;align-items:flex-end;gap:6px;height:80px;"></div>
-    <div id="graph-labels" style="display:flex;gap:6px;margin-top:8px;"></div>
+    <div id="graph-bars" style="display:flex;align-items:flex-end;gap:4px;height:80px;overflow-x:auto;padding-bottom:4px;"></div>
+    <div id="graph-labels" style="display:flex;gap:4px;margin-top:4px;overflow-x:auto;"></div>
     <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#4ade80;"></div><span style="font-size:11px;color:var(--faint);">Base</span></div>
       <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#fb923c;"></div><span style="font-size:11px;color:var(--faint);">Build</span></div>
@@ -1807,7 +1807,7 @@ function renderGraph() {
     const hrs = Math.floor(totals[i]/60);
     const mins = totals[i]%60;
     const isActive = i === curWeek;
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;" onclick="jumpToWeek(${i})">
+    return `<div style="flex:0 0 auto;min-width:18px;max-width:36px;width:calc((100% - ${weeks.length*4}px) / ${weeks.length});display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;" onclick="jumpToWeek(${i})">
       <div style="font-size:10px;color:${isActive?'#fff':'var(--faint)'};">${hrs}h${mins>0?mins+'m':''}</div>
       <div style="width:100%;background:${color};border-radius:4px 4px 0 0;height:${pct}%;opacity:${isActive?1:0.5};transition:all 0.3s;border:${isActive?'2px solid #fff':'2px solid transparent'};" title="Week ${i+1}: ${hrs}h${mins}m"></div>
     </div>`;
@@ -1815,7 +1815,7 @@ function renderGraph() {
 
   document.getElementById('graph-labels').innerHTML = weeks.map((w,i) => {
     const isActive = i === curWeek;
-    return `<div style="flex:1;text-align:center;font-size:10px;color:${isActive?'#fff':'var(--faint)'};font-weight:${isActive?'500':'400'};">W${i+1}</div>`;
+    return `<div style="flex:0 0 auto;min-width:18px;max-width:36px;width:calc((100% - ${weeks.length*4}px) / ${weeks.length});text-align:center;font-size:10px;color:${isActive?'#fff':'var(--faint)'};font-weight:${isActive?'500':'400'};">W${i+1}</div>`;
   }).join('');
 }
 
