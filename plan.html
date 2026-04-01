@@ -626,7 +626,7 @@
       <span style="font-size:11px;color:#f87171;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#f87171;display:inline-block;"></span>Taper</span>
       <span id="roadmap-progress-text" style="font-size:11px;color:rgba(255,255,255,0.4);margin-left:auto;"></span>
     </div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.3);font-style:italic;">✨ Your plan adapts as you train — sessions update based on your feedback and completed workouts.</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.3);font-style:italic;">✨ 📅 Your full plan is building to race day in the background — keep this tab open. Sessions adapt as you train.</div>
   </div>
 
   <!-- PHASE SELECTOR -->
@@ -1256,7 +1256,15 @@ async function buildPlan(){
     loadCompletions().then(() => { renderWeek(); syncStravaActivities(); });
     if(A.date){planData.raceDate=A.date;}
     checkAndSavePlan(JSON.stringify(planData));
-    if(A.date && planData.weeks.length < w){ setTimeout(()=>autoGenerateRemainingWeeks(w), 5000); }
+    if(A.date && planData.weeks.length < w){
+      // Show explanation toast before auto-gen starts
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1E90FF;color:#fff;padding:14px 20px;border-radius:12px;font-size:13px;font-family:DM Sans,sans-serif;text-align:center;z-index:9999;max-width:340px;line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+      toast.innerHTML = '<strong>Your first 4 weeks are ready!</strong><br>We\'re now building your full ' + w + '-week plan to race day in the background. Keep this tab open — it takes a few minutes.';
+      document.body.appendChild(toast);
+      setTimeout(() => { if(toast.parentNode) toast.remove(); }, 8000);
+      setTimeout(()=>autoGenerateRemainingWeeks(w), 5000);
+    }
     window.scrollTo({top:0,behavior:'smooth'});
     renderExtendButton(planData, loadId);
     setTimeout(() => window.dispatchEvent(new Event('plan-loaded')), 100);
@@ -1392,7 +1400,7 @@ async function autoGenerateRemainingWeeks(targetWeeks) {
     const weeksLeft = targetWeeks - currentCount;
     const batch = Math.min(2, weeksLeft);
     const phase = weeksLeft <= 2 ? "Taper/Race week" : weeksLeft <= 4 ? "Peak" : weeksLeft <= 8 ? "Build" : "Base";
-    bar.textContent = "Building weeks " + nextStart + "-" + (nextStart+batch-1) + " of " + targetWeeks + " (" + phase + ")...";
+    bar.textContent = nextStart <= 3 ? "📅 Building your full " + targetWeeks + "-week plan to race day — weeks " + nextStart + "-" + (nextStart+batch-1) + " of " + targetWeeks + " (" + phase + ")..." : "Building weeks " + nextStart + "-" + (nextStart+batch-1) + " of " + targetWeeks + " (" + phase + ")...";
     try {
       const recent = JSON.stringify(planData.weeks.slice(-2).map(w => ({phase:w.phase,focus:w.focus})));
       const prompt = "Elite triathlon coach. Generate weeks " + nextStart + " to " + (nextStart+batch-1) + " of a " + targetWeeks + "-week " + (planData.race||"triathlon") + " plan. Race: " + (planData.raceDate||"TBD") + ". Phase: " + phase + ". WeeksToRace: " + weeksLeft + ". Recent: " + recent + ". RULES: Evocative session names. Exact mainsets with intervals+rest+pace+technique cue. Bike: cadence+km/h+watts. Run: technique cue. weeklyNarrative 2 sentences. TAPER weeksLeft<=2: max 45min easy only; weeksLeft<=4: volume -40%. day=Monday not 1. type capitalised. Return ONLY JSON weeks array, each week: weekNumber,phase,focus,weeklyNarrative,days(7). Each day: day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone.";
