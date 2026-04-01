@@ -1219,49 +1219,47 @@ async function autoGenerateRemainingWeeks(targetWeeks) {
   const bar = document.createElement("div");
   bar.id = "auto-gen-bar";
   bar.style.cssText = "position:fixed;top:68px;left:0;right:0;background:rgba(30,144,255,0.12);border-bottom:2px solid #1E90FF;padding:9px 20px;font-size:13px;color:#1E90FF;text-align:center;z-index:999;font-family:DM Sans,sans-serif;";
-  bar.textContent = "Building your full " + targetWeeks + "-week plan to race day...";
   document.body.appendChild(bar);
-  let attempts = 0;
-  while (planData.weeks.length < targetWeeks && attempts < 15) {
-    attempts++;
+  let failedBatches = 0;
+  while (planData.weeks.length < targetWeeks && failedBatches < 3) {
+    const currentCount = planData.weeks.length;
+    const nextStart = currentCount + 1;
+    const weeksLeft = targetWeeks - currentCount;
+    const batch = Math.min(4, weeksLeft);
+    const phase = weeksLeft <= 2 ? "Taper/Race week" : weeksLeft <= 4 ? "Peak" : weeksLeft <= 8 ? "Build" : "Base";
+    bar.textContent = "Building weeks " + nextStart + "-" + (nextStart+batch-1) + " of " + targetWeeks + " (" + phase + ")...";
     try {
-      const currentCount = planData.weeks.length;
-      const nextStart = currentCount + 1;
-      const weeksLeft = targetWeeks - currentCount;
-      const batch = Math.min(4, weeksLeft);
-      const phase = weeksLeft <= 2 ? "Taper/Race week" : weeksLeft <= 4 ? "Peak" : weeksLeft <= 8 ? "Build" : "Base";
-      bar.textContent = "Building weeks " + nextStart + "-" + (nextStart+batch-1) + " of " + targetWeeks + " (" + phase + ")...";
       const recent = JSON.stringify(planData.weeks.slice(-2).map(w => ({phase:w.phase,focus:w.focus})));
-      const prompt = "You are an elite triathlon coach. Generate weeks " + nextStart + " to " + (nextStart+batch-1) + " of a " + targetWeeks + "-week " + (planData.race||"triathlon") + " plan. Race: " + (planData.raceDate||"TBD") + ". Phase: " + phase + ". WeeksToRace: " + weeksLeft + ". Recent: " + recent + ". RULES: Evocative session names. Exact mainsets with intervals+rest+pace+technique cue. Bike: cadence+km/h+watts. Run: technique cue. Coach note explains why session exists. weeklyNarrative 2 sentences. TAPER: weeksLeft<=2 max 45min easy; weeksLeft<=4 volume -40%. day=Monday not 1. type=capitalised Swim/Bike/Run/Brick/Strength/Rest. Return ONLY JSON: {weeks:[...]} each week: weekNumber,phase,focus,weeklyNarrative,days(7). Each day: day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone.";
-      const res = await fetch("/api/generate-plan", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({prompt:prompt, race:planData.race||A.race})});
+      const prompt = "Elite triathlon coach. Generate weeks " + nextStart + " to " + (nextStart+batch-1) + " of a " + targetWeeks + "-week " + (planData.race||"triathlon") + " plan. Race: " + (planData.raceDate||"TBD") + ". Phase: " + phase + ". WeeksToRace: " + weeksLeft + ". Recent: " + recent + ". RULES: Evocative session names. Exact mainsets with intervals+rest+pace+technique cue. Bike: cadence+km/h+watts. Run: technique cue. weeklyNarrative 2 sentences. TAPER weeksLeft<=2: max 45min easy only; weeksLeft<=4: volume -40%. day=Monday not 1. type capitalised. Return ONLY JSON weeks array, each week: weekNumber,phase,focus,weeklyNarrative,days(7). Each day: day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone.";
+      const res = await fetch("/api/generate-plan", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({prompt, race:planData.race||A.race})});
+      if (!res.ok) throw new Error("API " + res.status);
       const d = await res.json();
       let txt = d.plan || "";
       txt = txt.replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();
       txt = txt.substring(txt.indexOf("{"), txt.lastIndexOf("}")+1);
       const nd = JSON.parse(txt);
-      if (!nd.weeks||!nd.weeks.length) { attempts+=3; continue; }
-      // Normalise types and day names before merging
-      const dayNames2 = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-      nd.weeks.forEach(wk => {
-        if (wk.days) wk.days.forEach((d, i) => {
-          if (d.type) d.type = d.type.charAt(0).toUpperCase() + d.type.slice(1).toLowerCase();
-          if (typeof d.day === 'number') d.day = dayNames2[d.day - 1] || dayNames2[i] || 'Monday';
-        });
-      });
+      if (!nd.weeks || !nd.weeks.length) throw new Error("Empty");
+      const dn2 = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+      nd.weeks.forEach(wk => { if (wk.days) wk.days.forEach((d,i) => { if (d.type) d.type = d.type.charAt(0).toUpperCase()+d.type.slice(1).toLowerCase(); if (typeof d.day==="number") d.day=dn2[d.day-1]||dn2[i]||"Monday"; }); });
       const savedStart = planData.startDate;
       planData.weeks = [...planData.weeks, ...nd.weeks];
       planData.startDate = savedStart;
-      const sess2 = (await sb2.auth.getSession()).data.session;
-      if (sess2 && planId) { sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id", planId).catch(e=>console.log("save err",e)); }
-      renderWeek();
-      try { renderGraph(); } catch(eg) {}
+      failedBatches = 0;
+      bar.textContent = "Saving " + planData.weeks.length + " of " + targetWeeks + " weeks...";
+      let saved = false;
+      for (let att = 0; att < 3 && !saved; att++) {
+        try { const s2 = (await sb2.auth.getSession()).data.session; if (s2 && planId) { const {error} = await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id", planId); if (!error) saved = true; } } catch(se) {}
+        if (!saved) await new Promise(r => setTimeout(r, 1000));
+      }
+      console.log(saved ? "Saved "+planData.weeks.length+" weeks" : "Save failed");
+      renderWeek(); try { renderGraph(); } catch(eg) {}
       const nb = document.getElementById("load-more-btn");
-      if (nb) nb.textContent = "Load weeks " + (planData.weeks.length+1) + "-" + (planData.weeks.length+4) + " →";
-    } catch(e) { console.log("auto-gen error:", e); attempts+=2; }
-    await new Promise(r => setTimeout(r, 2000));
+      if (nb) nb.textContent = "Load weeks "+(planData.weeks.length+1)+"-"+(planData.weeks.length+4)+" →";
+    } catch(e) { console.error("Batch error:", e.message); failedBatches++; bar.textContent = "Retrying (" + failedBatches + "/3)..."; }
+    await new Promise(r => setTimeout(r, 3000));
   }
-  bar.textContent = planData.weeks.length >= targetWeeks ? "✅ Full " + targetWeeks + "-week plan to race day ready!" : "Plan built " + planData.weeks.length + " of " + targetWeeks + " weeks";
-  setTimeout(() => { if(bar.parentNode) bar.remove(); }, 5000);
+  bar.textContent = planData.weeks.length >= targetWeeks ? "✅ Full "+targetWeeks+"-week plan ready!" : "Built "+planData.weeks.length+" of "+targetWeeks+" weeks — tap Load More to continue.";
+  setTimeout(() => { if (bar.parentNode) bar.remove(); }, 6000);
 }
 async function loadNextWeeks() {
   const btn = document.getElementById('load-more-btn');
