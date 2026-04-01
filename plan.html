@@ -1183,44 +1183,7 @@ async function buildPlan(){
   });
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
-  const prompt = 'You are an elite triathlon coach. Return ONLY valid JSON, no other text.\n\n' +
-    'ATHLETE: Name: ' + A.name + ', Race: ' + A.race + ', Goal: ' + (A.goaltimeText||'Complete') + ', Experience: ' + A.exp + ', Fitness: ' + A.fitness + ', Weakness: ' + A.weak + ', Hours/week: ' + A.hours + ', FTP: ' + (A.ftp ? A.ftp+'w' : 'unknown') + ', CSS: ' + (A.css||'unknown') + ', Run threshold: ' + (A.runThreshold||'unknown') + ', Days: ' + A.days.join(', ') + ', Pool: ' + A.pool + ', Injury: ' + (A.injury||'None') + ', Age: ' + A.age + ', Weeks: ' + w + ', Start date: ' + (A.startDate||'TBD') + ', Race date: ' + (A.date||'TBD') + '\n\n' +
-    'RACE DATE TAPER STRUCTURE — FOLLOW EXACTLY:\n' +
-    '- Total plan: ' + w + ' weeks. Starts ' + (A.startDate||'soon') + '. Race: ' + (A.date||'TBD') + '.\n' +
-    '- Week ' + w + ' = RACE WEEK. Max 30-45 min per session, easy pace only. Last session 2 days before race. coachNote counts down days to race.\n' +
-    '- Week ' + (w-1) + ' = TAPER 2 — volume -50% vs peak week. Short sharp sessions only. No long ride or run. coachNote counts down days to race.\n' +
-    '- Week ' + (w-2) + ' = TAPER 1 — volume -30% vs peak. Last medium sessions. coachNote references race week approaching.\n' +
-    '- Week ' + (w-3) + ' = PEAK WEEK — highest intensity of entire plan. Last big training push before taper.\n' +
-    '- Weeks 1 to ' + (w-4) + ' = progressive build: Base (aerobic) → Build (threshold) → Peak (race-specific intensity).\n' +
-    '- RULE: Never put long ride (>90 min) or long run (>75 min) in weeks ' + (w-1) + ' or ' + w + '.\n\n' +
-    'MANDATORY SESSION QUALITY RULES:\n' +
-    '1. MAINSET: Exact intervals, exact rest, exact pace, one technique cue. Never vague. E.g. "8x100m descending 1:55 to 1:45, 15sec rest, high elbow on catch."\n' +
-    '2. COACH NOTE: Reference why this session exists in the week. "Hard bike tomorrow — keep this controlled, move blood not create fatigue."\n' +
-    '3. SWIM mainsets: exact intervals + rest + technique cue.\n' +
-    '4. BIKE mainsets: always include cadence, speed AND power. Format: "85-90rpm, 30-32km/h at 75-80% FTP (e.g. 150-165w — scale to your FTP)". Every bike session must include cadence, km/h and watts.\n' +
-    '5. RUN mainsets: always include technique cue. "175-180spm, land under hips not in front."\n' +
-    '6. SESSION NAMES: Evocative and specific. "Descending 100s — Find Your Pace" not "Swim Intervals."\n' +
-    '7. weeklyNarrative field: 2 sentences on why this week is structured this way.\n' +
-    '8. PHASE CHARACTER: Base=conversational RPE4-6 technique. Build=threshold RPE6-8. Peak=race pace RPE7-9.\n' +
-    '9. Never repeat the same mainset structure twice across the plan.\n' +
-    '10. ADDRESS WEAKNESS: ' + A.weak + ' — extra cues in relevant sessions, reference it in intro.\n\n' +
-    'STRUCTURE:\n' +
-    '- Training days (' + A.days.join(', ') + ') get sessions. Others = Rest.\n' +
-    '- Never two hard sessions (RPE7+) back to back. Follow hard with easy.\n' +
-    '- Week 1-2: Base. Week 3: Build. Week 4: Peak/Build.\n' +
-    '- Types: Swim/Bike/Run/Brick/Strength/Rest. Brick name: "Brick — Bike + Run"\n' +
-    '- duration: int minutes. effort: RPE 1-10. zone: HR 1-5.\n' +
-    '- paceTarget: Swim="/100m", Bike="km/h", Run="/km", else "N/A". Always a specific range.\n\n' +
-    (A.race === 'Full Ironman' ? 'IRONMAN: Long ride 180-240min TT position aerobic only (coachNote must say NOT FAST, Aerobic, 85+ cadence). Long run 90-120min with race-pace km in middle. Threshold bike 90min (30WU+45FTP+15CD). Week 4 = recovery (coachNote must say SLEEP EAT HYDRATE, fitness is made in recovery).\n\n' :
-     A.race === 'T100 Triathlon' ? 'T100: Intensity between Olympic and 70.3. Swim 2000-2500m with race-pace sets. Bike 80-100min threshold at high cadence, slightly faster than 70.3 effort. Run 60-75min with race pace in final third. Bricks 20-25min at race pace. Week 4 = recovery -40% volume.\n\n' :
-     A.race === 'Half Ironman 70.3' ? '70.3: Long ride 150-180min with race-pace intervals + 20-30min brick. Long run 90-105min, race pace in final third. Swim 2000-3000m with race-pace sets. Week 4 = recovery -40% volume.\n\n' :
-     A.race === 'Olympic Triathlon' ? 'OLYMPIC: High intensity. Ride 75-90min threshold. Run 50-65min tempo. Swim 1500-2500m race-pace 200/400s. Bricks 15-20min at race pace.\n\n' :
-     A.race === 'Sprint Triathlon' ? 'SPRINT: Max intensity. Bike 45-60min VO2max intervals. Run 30-45min speed work. Swim 800-1500m fast 50s/100s. Brick 10-15min full gas.\n\n' : '') +
-    'OUTPUT FORMAT: Valid JSON with keys: intro, weeks (array). Each week: weekNumber, phase, focus, weeklyNarrative, days (array). Each day: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone.\n\n' +
-    'Return ONLY the JSON object. No markdown, no explanation.';
-
-  try{
-    // Split into 2 API calls (weeks 1-2, then weeks 3-4) to avoid Vercel timeout
+  const prompt = 'Race: ' + A.race + '. Athlete: ' + A.name + ', exp: ' + A.exp + ', fitness: ' + A.fitness + ', weakness: ' + A.weak + ', ' + A.hours + 'hrs/week, days: ' + A.days.join('/') + ', pool: ' + A.pool + ', injury: ' + (A.injury||'none') + ', age: ' + A.age + ', FTP: ' + (A.ftp||'unknown') + ', CSS: ' + (A.css||'unknown') + '. Goal: ' + (A.goaltimeText||'finish'). Plan: ' + w + ' weeks, start: ' + (A.startDate||'soon') + ', race date: ' + (A.date||'TBD') + '. Taper: week ' + w + ' = race week max 45min easy; week ' + (w-1) + ' = taper -50% volume; week ' + (w-2) + ' = taper -30%; week ' + (w-3) + ' = peak.\n\n';
     const prompt1 = prompt + '\n\nGenerate ONLY weeks 1 and 2. Return JSON with keys: intro, weeks (array of 2 weeks only).';
     const prompt2 = prompt + '\n\nGenerate ONLY weeks 3 and 4 (Build and Peak phases). Return JSON with keys: weeks (array of 2 weeks only, weekNumber starting at 3). No intro needed.';
 
