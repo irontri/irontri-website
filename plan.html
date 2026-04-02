@@ -1039,24 +1039,16 @@ async function buildPlan(){
     function parsePlan(txt) {
       txt = (txt||'').replace(/```json/g,'').replace(/```/g,'').trim();
       const s = txt.indexOf('{'); const e = txt.lastIndexOf('}');
-      if(s===-1||e===-1) throw new Error('No JSON found in plan response');
-      let jsonStr = txt.slice(s,e+1);
-      try {
-        return JSON.parse(jsonStr);
-      } catch(parseErr) {
-        // Try to salvage truncated JSON by finding last complete week
-        const lastComplete = jsonStr.lastIndexOf('}]},');
-        if(lastComplete > 0) {
-          try { return JSON.parse(jsonStr.slice(0, lastComplete) + '}]}'); } catch(e2) {}
-        }
-        // Try closing any open arrays/objects
-        const opens = (jsonStr.match(/{/g)||[]).length - (jsonStr.match(/}/g)||[]).length;
-        const arrOpens = (jsonStr.match(/\[/g)||[]).length - (jsonStr.match(/\]/g)||[]).length;
-        let fixed = jsonStr;
-        for(let i=0;i<arrOpens;i++) fixed += ']';
-        for(let i=0;i<opens;i++) fixed += '}';
-        try { return JSON.parse(fixed); } catch(e3) {}
-        throw new Error('Plan generation was cut off. Please try again.');
+      if(s===-1||e===-1) throw new Error('No JSON found in response');
+      let j = txt.slice(s,e+1);
+      try { return JSON.parse(j); } catch(pe) {
+        const lc = j.lastIndexOf('}]},');
+        if(lc>0){try{return JSON.parse(j.slice(0,lc)+'}]}');}catch(e2){}}
+        const o=(j.match(/{/g)||[]).length-(j.match(/}/g)||[]).length;
+        const a=(j.match(/\[/g)||[]).length-(j.match(/\]/g)||[]).length;
+        let f=j; for(let i=0;i<a;i++)f+=']'; for(let i=0;i<o;i++)f+='}';
+        try{return JSON.parse(f);}catch(e3){}
+        throw new Error('Plan generation was cut off — please try again.');
       }
     }
 
@@ -1105,12 +1097,16 @@ async function buildPlan(){
     console.error('Plan error:',e);
     document.getElementById('gen').style.display='none';
     document.querySelector('.prog-wrap').style.display='none';
-    // Show error with retry button — keep quiz accessible
     document.getElementById('plan').style.display='block';
     document.getElementById('ptitle').textContent='Generation failed';
     document.getElementById('pintro').textContent='';
     document.getElementById('pstats').innerHTML='<div style="color:rgba(255,255,255,0.6);font-size:14px;margin-top:8px;">'+e.message+'</div>';
-    document.getElementById('cal').innerHTML='<div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;"><button onclick="document.getElementById('plan').style.display='none';document.getElementById('quiz-wrap').style.display='block';document.querySelector('.prog-wrap').style.display='block';" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;cursor:pointer;">← Go back</button><button onclick="buildPlan()" style="background:#1E90FF;border:none;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;cursor:pointer;">Try again →</button></div>';
+    const eb=document.createElement('div');eb.style.cssText='margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;';
+    const gb=document.createElement('button');gb.textContent='← Go back';gb.style.cssText='background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;cursor:pointer;';
+    gb.onclick=function(){document.getElementById('plan').style.display='none';document.getElementById('quiz-wrap').style.display='block';document.querySelector('.prog-wrap').style.display='block';};
+    const rb=document.createElement('button');rb.textContent='Try again →';rb.style.cssText='background:#1E90FF;border:none;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;cursor:pointer;';
+    rb.onclick=buildPlan;eb.appendChild(gb);eb.appendChild(rb);
+    const cal=document.getElementById('cal');if(cal){cal.innerHTML='';cal.appendChild(eb);}
   }
 }
 
