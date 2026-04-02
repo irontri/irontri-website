@@ -586,11 +586,18 @@ async function loadTodaySession() {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return;
 
-    // Get most recently viewed plan (latest created)
-    const { data: plans } = await sb.from('plans').select('*').eq('user_id', session.user.id).order('created_at', {ascending: false}).limit(1);
-    if (!plans || plans.length === 0) return;
-
-    const plan = plans[0];
+    // Get pinned plan first, fall back to most recently created
+    const pinnedPlanId = localStorage.getItem('irontri_pinned_plan');
+    let plan = null;
+    if (pinnedPlanId) {
+      const { data: pinnedPlans } = await sb.from('plans').select('*').eq('user_id', session.user.id).eq('id', pinnedPlanId).limit(1);
+      if (pinnedPlans && pinnedPlans.length > 0) plan = pinnedPlans[0];
+    }
+    if (!plan) {
+      const { data: plans } = await sb.from('plans').select('*').eq('user_id', session.user.id).order('created_at', {ascending: false}).limit(1);
+      if (!plans || plans.length === 0) return;
+      plan = plans[0];
+    }
     let planData;
     try {
       let txt = plan.plan_data || '';
