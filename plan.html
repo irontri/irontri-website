@@ -1026,7 +1026,6 @@ async function buildPlan(){
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
   const startDayName = A.startDate ? ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(A.startDate+"T00:00:00").getDay()] : "Monday";
-  const startDayName = A.startDate ? ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(A.startDate+"T00:00:00").getDay()] : "Monday";
   const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+". Plan: "+w+" weeks, start date: "+(A.startDate||"soon")+" ("+startDayName+"), race date: "+(A.date||"TBD")+". IMPORTANT: Week 1 starts on "+startDayName+". TAPER: ONLY week "+w+" is race week (easy 30-45min only, NO hard sessions). Week "+(w-1)+" = -50% volume taper. Week "+(w-2)+" = -30% volume taper. Week "+(w-3)+" = peak. Do NOT create race week content in any other week.\n\n";
   try{
         const prompt1 = prompt + '\n\nGenerate ONLY weeks 1 and 2. Return JSON with keys: intro, weeks (array of 2 weeks only).';
