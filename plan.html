@@ -853,7 +853,7 @@ function renderWeek(){
       <div style="margin-left:auto;font-size:11px;color:var(--faint);">${Math.round(easyMin/60*10)/10}h easy · ${Math.round(modMin/60*10)/10}h mod · ${Math.round(hardMin/60*10)/10}h hard</div>
     </div>`;
 
-  const allDays=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const allDaysFull=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('cal').innerHTML=w.days.map((d,i)=>{
     const t=typeInfo[d.type]||typeInfo['Rest'];
@@ -862,8 +862,9 @@ function renderWeek(){
     const dayDate = new Date(planStartDate);
     dayDate.setDate(planStartDate.getDate() + i);
     const dateStr = dayDate.getDate()+' '+months[dayDate.getMonth()];
+    const dayName = allDaysFull[dayDate.getDay()];
     return `<div class="cal-day${d.type==='Rest'?' rest':''}${isActive?' active':''}" data-type="${d.swapped?'Run':d.type}" onclick="selectDay(${i})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
-      <div class="cal-day-name">${allDays[i]}</div>
+      <div class="cal-day-name">${dayName}</div>
       <div style="font-size:10px;color:var(--faint);margin-bottom:4px;">${dateStr}</div>
       <div class="cal-day-icon">${isComplete ? '✅' : d.swapped ? '😓' : t.icon}</div>
       <div class="cal-day-type ${t.cls}">${d.swapped ? 'Easy' : t.label}</div>
@@ -896,8 +897,8 @@ function selectDay(i){
   const dayDate2 = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
   dayDate2.setDate(dayDate2.getDate() + (curWeek * 7) + i);
   const months3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const fullDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const fullDateStr = fullDays[i]+' '+dayDate2.getDate()+' '+months3[dayDate2.getMonth()];
+  const fullDayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const fullDateStr = fullDayNames[dayDate2.getDay()]+' '+dayDate2.getDate()+' '+months3[dayDate2.getMonth()];
 
   if(d.type==='Rest'){
     sd.style.display='block';
