@@ -280,14 +280,14 @@ const SPORT = {
   Workout:{icon:'💪',label:'Workout',color:'#fbbf24'},
 };
 
-function togglePin(btn, id) {
+function pinPlan(id) {
   var current = localStorage.getItem('irontri_pinned_plan');
-  if (current === id) {
+  if (current === String(id)) {
     localStorage.removeItem('irontri_pinned_plan');
   } else {
-    localStorage.setItem('irontri_pinned_plan', id);
+    localStorage.setItem('irontri_pinned_plan', String(id));
   }
-  if (currentUser) loadPlans();
+  loadPlans();
 }
 
 document.addEventListener('click', function(e) {
@@ -438,7 +438,7 @@ async function loadPlans() {
   document.getElementById('s-plans').textContent=plans.length;
   document.getElementById('s-race').textContent=plans[0].race?plans[0].race.split(' ')[0]:'—';
   const pinnedId = localStorage.getItem('irontri_pinned_plan');
-  const sorted = [...plans].sort((a,b) => { if(a.id===pinnedId)return -1; if(b.id===pinnedId)return 1; return 0; });
+  const sorted = [...plans].sort((a,b) => { if(String(a.id)===pinnedId)return -1; if(String(b.id)===pinnedId)return 1; return 0; });
   document.getElementById('plans-list').innerHTML = sorted.map(p => {
     const date = new Date(p.created_at).toLocaleString('en-AU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
     let planObj = null;
@@ -448,7 +448,7 @@ async function loadPlans() {
     try { const fresh = JSON.parse(p.plan_data); weeks = fresh?.weeks?.length || weeks; } catch(e) {}
     const savedNames = JSON.parse(localStorage.getItem('irontri_plan_names') || '{}');
     const displayName = savedNames[p.id] || p.name || planObj?.planName || p.race || 'Training Plan';
-    const isPinned = p.id === pinnedId;
+    const isPinned = String(p.id) === pinnedId;
     return `
       <div class="plan-card${isPinned ? ' pinned' : ''}" onclick="if(!event.target.closest('.btn-pin')){viewPlan('${p.id}')}">
         <div class="plan-card-top">
@@ -456,10 +456,7 @@ async function loadPlans() {
             <div class="plan-card-title" id="name-display-${p.id}">${isPinned ? '📌 ' : ''}${displayName}</div>
             <div class="plan-card-date">Created ${date}</div>
           </div>
-          <div style="display:flex;gap:8px;flex-shrink:0;">
-            <button class="btn-pin" data-planid="${p.id}"><span style="pointer-events:none;">&#128205;</span></button>
-            <button onclick="event.stopPropagation();startRename('${p.id}')" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(30,144,255,0.4)';this.style.color='#1E90FF'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.4)'">✏️ Rename</button>
-          </div>
+          <button onclick="event.stopPropagation();startRename('${p.id}')" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(30,144,255,0.4)';this.style.color='#1E90FF'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.4)'">✏️ Rename</button>
         </div>
         <div id="rename-form-${p.id}" style="display:none;margin-bottom:12px;" onclick="event.stopPropagation()">
           <div style="display:flex;gap:8px;align-items:center;">
@@ -475,6 +472,7 @@ async function loadPlans() {
         <div class="plan-card-actions">
           <button class="btn-view" onclick="event.stopPropagation();viewPlan('${p.id}')">View plan →</button>
           <button class="btn-date" onclick="event.stopPropagation();showStartDateEditor('${p.id}', '${planObj?.startDate || ''}')" >📅 Change date</button>
+          <button onclick="event.stopPropagation();pinPlan('${p.id}')" style="background:${isPinned ? 'rgba(232,162,64,0.1)' : 'transparent'};border:1px solid ${isPinned ? 'rgba(232,162,64,0.4)' : 'rgba(255,255,255,0.12)'};color:${isPinned ? '#e8a240' : 'rgba(255,255,255,0.4)'};padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">📌 ${isPinned ? 'Unpin' : 'Pin to top'}</button>
           <button class="btn-delete" onclick="event.stopPropagation();deletePlan('${p.id}')">Delete</button>
         </div>
         <div id="start-date-editor-${p.id}" style="display:none;" onclick="event.stopPropagation()"></div
