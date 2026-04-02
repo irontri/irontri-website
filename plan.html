@@ -1156,7 +1156,7 @@ function updateRTP(){
   }
 }
 
-let currentUnits = localStorage.getItem('irontri_units') || 'metric';
+let currentUnits = (localStorage.getItem('irontri_units') === 'imperial') ? 'imperial' : 'metric';
 
 function setUnits(units) {
   currentUnits = units;
