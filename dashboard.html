@@ -290,6 +290,21 @@ function togglePin(btn, id) {
   if (currentUser) loadPlans();
 }
 
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.btn-pin');
+  if (!btn) return;
+  e.stopPropagation();
+  var id = btn.getAttribute('data-planid');
+  if (!id) return;
+  var current = localStorage.getItem('irontri_pinned_plan');
+  if (current === id) {
+    localStorage.removeItem('irontri_pinned_plan');
+  } else {
+    localStorage.setItem('irontri_pinned_plan', id);
+  }
+  if (currentUser) loadPlans();
+});
+
 async function logOut() {
   await sb.auth.signOut();
   window.location.href = '/auth.html';
@@ -441,7 +456,7 @@ async function loadPlans() {
             <div class="plan-card-date">Created ${date}</div>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
-            <button class="btn-pin${isPinned ? ' active' : ''}" onclick="event.stopPropagation();togglePin(this,'${p.id}')">📌</button>
+            <button class="btn-pin" data-planid="${p.id}">&#128205;</button>
             <button onclick="event.stopPropagation();startRename('${p.id}')" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(30,144,255,0.4)';this.style.color='#1E90FF'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.4)'">✏️ Rename</button>
           </div>
         </div>
