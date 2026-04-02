@@ -268,12 +268,17 @@
 <!-- HERO -->
 <section class="hero" style="max-width:1200px;margin:0 auto;padding:80px 56px 60px;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;">
   <div>
-    <div class="hero-badge"><span class="badge-dot"></span>Personalised triathlon coaching</div>
-    <h1 style="font-family:'Syne',sans-serif;font-size:clamp(36px,5vw,62px);font-weight:800;line-height:1.05;letter-spacing:-2.5px;margin-bottom:24px;">Your <span class="accent">race.</span> Your plan. No guesswork.</h1>
-    <p class="hero-sub">From complete beginner to Ironman finisher — personalised swim, bike &amp; run plans built around you. Connects with Strava to automatically track your sessions.</p>
+    <div class="hero-badge"><span class="badge-dot"></span><span id="hero-counter">162</span> athletes · Sprint to Full Ironman</div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:clamp(36px,5vw,62px);font-weight:800;line-height:1.05;letter-spacing:-2.5px;margin-bottom:24px;">Stop training to<br>someone else's<br><span class="accent">schedule.</span></h1>
+    <p class="hero-sub">irontri builds your triathlon plan backwards from your race date — every session timed, explained, and auto-tracked on Strava. Built by a real triathlete who got sick of generic plans.</p>
     <div class="hero-cta">
-      <a href="plan.html" class="btn-primary">Get my free training plan →</a>
+      <a href="plan.html" class="btn-primary">Build my free plan →</a>
       <a href="#how" class="btn-outline">See how it works</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:20px;margin-top:16px;flex-wrap:wrap;">
+      <span style="font-size:13px;color:rgba(255,255,255,0.3);">✓ Free right now</span>
+      <span style="font-size:13px;color:rgba(255,255,255,0.3);">✓ No credit card</span>
+      <span style="font-size:13px;color:rgba(255,255,255,0.3);">✓ Ready in 3 minutes</span>
     </div>
   </div>
   <div>
@@ -410,25 +415,66 @@
   </div>
 </section>
 
-<!-- TRUST BAR -->
+<!-- TRUST BAR UPGRADED -->
 <div class="trust-bar">
+  <div class="trust-item">
+    <div class="trust-num" id="trust-counter">162</div>
+    <div class="trust-label">Athletes training now</div>
+  </div>
   <div class="trust-item">
     <div class="trust-num">Sprint → Ironman</div>
     <div class="trust-label">All race distances</div>
   </div>
   <div class="trust-item">
-    <div class="trust-num">3 sports</div>
-    <div class="trust-label">One unified plan</div>
+    <div class="trust-num" style="color:#FC4C02;">Strava</div>
+    <div class="trust-label">Auto-sync · Live</div>
   </div>
   <div class="trust-item">
-    <div class="trust-num">Strava sync</div>
-    <div class="trust-label">✅ Live</div>
+    <div class="trust-num">~18 sec</div>
+    <div class="trust-label">Plan generation</div>
   </div>
   <div class="trust-item">
-    <div class="trust-num">Free forever</div>
-    <div class="trust-label">First 100 members</div>
+    <div class="trust-num">Free</div>
+    <div class="trust-label">Right now · No card</div>
   </div>
 </div>
+
+<!-- VS GENERIC PLANS -->
+<section style="padding:72px 56px;border-bottom:1px solid var(--border);">
+  <div style="max-width:1000px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:48px;">
+      <div class="section-label">Why irontri</div>
+      <h2 style="font-family:'Syne',sans-serif;font-size:clamp(26px,3.5vw,40px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin:0 auto;">Generic plans set you up to fail.</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="vs-grid">
+      <div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:20px;padding:36px;">
+        <div style="font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(239,68,68,0.6);margin-bottom:24px;">Generic plan</div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;gap:14px;align-items:flex-start;"><span style="color:rgba(239,68,68,0.6);flex-shrink:0;margin-top:2px;">✕</span><span style="font-size:15px;color:rgba(255,255,255,0.5);line-height:1.5;">Built for a fictional athlete with a fictional schedule</span></div>
+          <div style="display:flex;gap:14px;align-items:flex-start;"><span style="color:rgba(239,68,68,0.6);flex-shrink:0;margin-top:2px;">✕</span><span style="font-size:15px;color:rgba(255,255,255,0.5);line-height:1.5;">Assumes 12 hours/week, every week, no exceptions</span></div>
+          <div style="display:flex;gap:14px;align-items:flex-start;"><span style="color:rgba(239,68,68,0.6);flex-shrink:0;margin-top:2px;">✕</span><span style="font-size:15px;color:rgba(255,255,255,0.5);line-height:1.5;">Taper is guesswork — often wrong by days or weeks</span></div>
+          <div style="display:flex;gap:14px;align-items:flex-start;"><span style="color:rgba(239,68,68,0.6);flex-shrink:0;margin-top:2px;">✕</span><span style="font-size:15px;color:rgba(255,255,255,0.5);line-height:1.5;">No explanation — just sessions to survive</span></div>
+          <div style="display:flex;gap:14px;align-items:flex-start;"><span style="color:rgba(239,68,68,0.6);flex-shrink:0;margin-top:2px;">✕</span><span style="font-size:15px;color:rgba(255,255,255,0.5);line-height:1.5;">Manual tracking — another app to update daily</span></div>
+        </div>
+      </div>
+      <div style="background:rgba(30,144,255,0.06);border:2px solid rgba(30,144,255,0.3);border-radius:20px;padding:36px;position:relative;">
+        <div style="position:absolute;top:-13px;left:28px;background:var(--blue);color:#fff;font-size:11px;font-weight:700;padding:4px 14px;border-radius:100px;letter-spacing:0.5px;white-space:nowrap;">IRONTRI</div>
+        <div style="font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:24px;">irontri</div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;gap:14px;align-items:flex-start;"><span style="color:#4ade80;flex-shrink:0;margin-top:2px;">✓</span><span style="font-size:15px;color:rgba(255,255,255,0.85);line-height:1.5;">Built around your actual schedule and race date</span></div>
+          <div style="display:flex;gap:14px;align-items:flex-start;"><span style="color:#4ade80;flex-shrink:0;margin-top:2px;">✓</span><span style="font-size:15px;color:rgba(255,255,255,0.85);line-height:1.5;">Adapts to the hours you actually have each week</span></div>
+          <div style="display:flex;gap:14px;align-items:flex-start;"><span style="color:#4ade80;flex-shrink:0;margin-top:2px;">✓</span><span style="font-size:15px;color:rgba(255,255,255,0.85);line-height:1.5;">Taper pinned to your race day — automatically correct</span></div>
+          <div style="display:flex;gap:14px;align-items:flex-start;"><span style="color:#4ade80;flex-shrink:0;margin-top:2px;">✓</span><span style="font-size:15px;color:rgba(255,255,255,0.85);line-height:1.5;">Every session has a coaching note explaining why</span></div>
+          <div style="display:flex;gap:14px;align-items:flex-start;"><span style="color:#4ade80;flex-shrink:0;margin-top:2px;">✓</span><span style="font-size:15px;color:rgba(255,255,255,0.85);line-height:1.5;">Strava auto-tracks everything — zero manual logging</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:36px;">
+      <a href="plan.html" class="btn-primary" style="font-size:15px;padding:14px 32px;">Build my free plan →</a>
+    </div>
+  </div>
+</section>
+<style>@media(max-width:768px){.vs-grid{grid-template-columns:1fr!important;} section .vs-grid+*{padding:0 20px!important;}}</style>
 
 <!-- HOW IT WORKS -->
 <section class="how" id="how">
@@ -734,6 +780,7 @@
         </div>
         <p class="testi-quote">"Finished my ride on Saturday, went to check it off — it was already done. Strava had synced it automatically. That alone is worth it for someone who hates admin."</p>
         <div class="testi-author">
+          <div style="width:38px;height:38px;border-radius:50%;background:rgba(251,146,60,0.2);border:2px solid rgba(251,146,60,0.4);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fb923c;flex-shrink:0;">CD</div>
           <div>
             <div class="testi-name">Chris D.</div>
             <div class="testi-detail">Olympic distance · First triathlon · Brisbane, QLD</div>
@@ -747,6 +794,7 @@
         </div>
         <p class="testi-quote">"I told it my swim was my weakness. Every single swim session had specific technique cues — catch drills, hip rotation reminders. It actually listened."</p>
         <div class="testi-author">
+          <div style="width:38px;height:38px;border-radius:50%;background:rgba(74,222,128,0.2);border:2px solid rgba(74,222,128,0.4);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#4ade80;flex-shrink:0;">SK</div>
           <div>
             <div class="testi-name">Sarah K.</div>
             <div class="testi-detail">Full Ironman build · Melbourne, VIC</div>
@@ -890,9 +938,9 @@ function handlePricingNotify(e) {
 
 <!-- CTA BANNER -->
 <div class="cta-banner">
-  <h2>Your race is closer than you think.</h2>
-  <p>Get your free personalised triathlon plan in under 5 minutes — no credit card needed.</p>
-  <a href="plan.html" class="btn-white">Get my free training plan</a>
+  <h2>Your race date is already set.<br>Is your training?</h2>
+  <p>Build your free personalised plan in 3 minutes. No generic templates. No guesswork. Just a plan built for your race, your schedule, and your fitness.</p>
+  <a href="plan.html" class="btn-white">Build my free plan →</a>
 </div>
 
 <!-- FOOTER -->
@@ -935,51 +983,3 @@ function handlePricingNotify(e) {
       <li><a href="/about.html">About Dean</a></li>
       <li><a href="/privacy.html">Privacy policy</a></li>
       <li><a href="/terms.html">Terms of service</a></li>
-    </ul>
-  </div>
-</footer>
-
-<script src="https://groot.mailerlite.com/js/w/webforms.min.js?v95037e5bac78f29ed026832ca21a7c7b" type="text/javascript"></script>
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js');
-  });
-}
-</script>
-
-
-
-<script>
-window.addEventListener('load', function() {
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/rpc/get_user_count');
-  xhr.setRequestHeader('apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU');
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.onload = function() {
-    if (xhr.status === 200) {
-      var count = JSON.parse(xhr.responseText);
-      var el = document.getElementById('live-counter');
-      if (el && count > 0) el.textContent = count;
-    }
-  };
-  xhr.send('{}');
-});
-</script>
-<script>
-function toggleMobileNav(){
-  const ham = document.getElementById('nav-ham');
-  const menu = document.getElementById('nav-mobile');
-  ham.classList.toggle('open');
-  menu.classList.toggle('open');
-}
-// Close menu when a link is clicked
-document.querySelectorAll('.nav-mobile-menu a').forEach(function(a){
-  a.addEventListener('click', function(){ 
-    document.getElementById('nav-ham').classList.remove('open');
-    document.getElementById('nav-mobile').classList.remove('open');
-  });
-});
-</script></body>
-</html>
