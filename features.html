@@ -486,6 +486,104 @@
     border-color: rgba(255,255,255,0.35); color: #fff;
   }
 
+  /* ─── ROADMAP ─── */
+  .roadmap-section {
+    padding: 120px 40px;
+    max-width: 1200px; margin: 0 auto;
+    opacity: 0; transform: translateY(40px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .roadmap-section.visible { opacity: 1; transform: translateY(0); }
+  .roadmap-header { text-align: center; margin-bottom: 72px; }
+  .roadmap-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 900; letter-spacing: -2px;
+    margin-bottom: 16px;
+  }
+  .roadmap-header p { font-size: 17px; color: var(--muted); max-width: 480px; margin: 0 auto; line-height: 1.7; }
+  .roadmap-cols {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .roadmap-col-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 24px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .roadmap-col-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .roadmap-col-title {
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase;
+  }
+  .roadmap-col {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px; padding: 28px;
+  }
+  .roadmap-col.live { border-color: rgba(74,222,128,0.2); }
+  .roadmap-col.soon { border-color: rgba(30,144,255,0.2); }
+  .roadmap-col.future { border-color: rgba(255,255,255,0.06); }
+  .roadmap-item {
+    display: flex; align-items: flex-start;
+    gap: 12px; margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .roadmap-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .roadmap-item-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0; margin-top: 1px;
+  }
+  .roadmap-item-icon.green { background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.2); }
+  .roadmap-item-icon.blue { background: rgba(30,144,255,0.12); border: 1px solid rgba(30,144,255,0.2); }
+  .roadmap-item-icon.gray { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); }
+  .roadmap-item-name {
+    font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 3px;
+  }
+  .roadmap-item-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .roadmap-item-badge {
+    display: inline-block; margin-top: 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; padding: 2px 8px; border-radius: 100px;
+  }
+  .roadmap-item-badge.live { background: rgba(74,222,128,0.15); color: #4ade80; }
+  .roadmap-item-badge.coming { background: rgba(30,144,255,0.15); color: var(--blue); }
+  .roadmap-item-badge.later { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); }
+  .roadmap-notify {
+    margin-top: 56px;
+    background: rgba(30,144,255,0.06);
+    border: 1px solid rgba(30,144,255,0.2);
+    border-radius: 16px; padding: 32px;
+    text-align: center; max-width: 520px; margin-left: auto; margin-right: auto;
+  }
+  .roadmap-notify h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px; font-weight: 800; margin-bottom: 8px;
+  }
+  .roadmap-notify p { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+  .roadmap-notify-form { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .roadmap-notify-form input {
+    flex: 1; min-width: 200px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; padding: 11px 16px;
+    font-size: 14px; color: #fff; font-family: 'DM Sans', sans-serif; outline: none;
+  }
+  .roadmap-notify-form button {
+    background: var(--blue); color: #fff; border: none;
+    padding: 11px 22px; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+  .roadmap-notify-form button:hover { opacity: 0.9; }
+  @media(max-width:900px){ .roadmap-cols{ grid-template-columns: 1fr; } }
+  @media(max-width:768px){ .roadmap-section{ padding: 60px 20px; } .roadmap-notify{ margin-top: 40px; padding: 24px 20px; } }
+
   /* ─── FOOTER ─── */
   footer {
     border-top: 1px solid var(--border);
@@ -930,6 +1028,169 @@
   </div>
 </section>
 
+<!-- ROADMAP -->
+<section class="roadmap-section">
+  <div class="roadmap-header">
+    <div class="feature-tag" style="justify-content:center;margin-bottom:16px;">
+      <div class="feature-tag-dot"></div>
+      What's coming
+    </div>
+    <h2>Built in public.<br><span style="color:var(--blue);">Improving every week.</span></h2>
+    <p>irontri is a living product. Here's exactly what's live, what's being built, and what's on the horizon.</p>
+  </div>
+
+  <div class="roadmap-cols">
+
+    <!-- LIVE -->
+    <div class="roadmap-col live">
+      <div class="roadmap-col-header">
+        <div class="roadmap-col-dot" style="background:#4ade80;box-shadow:0 0 8px #4ade80;"></div>
+        <div class="roadmap-col-title" style="color:#4ade80;">Live now</div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon green">📅</div>
+        <div>
+          <div class="roadmap-item-name">Race-date anchored plans</div>
+          <div class="roadmap-item-desc">Plan builds backwards from your race day. Taper is automatic and pinned to race day.</div>
+          <span class="roadmap-item-badge live">Live</span>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon green">🔥</div>
+        <div>
+          <div class="roadmap-item-name">Strava auto-sync</div>
+          <div class="roadmap-item-desc">Finish a session on Strava and it's ticked off your plan automatically.</div>
+          <span class="roadmap-item-badge live">Live</span>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon green">💬</div>
+        <div>
+          <div class="roadmap-item-name">Coaching notes</div>
+          <div class="roadmap-item-desc">Every session explains why it exists in your plan — not just what to do.</div>
+          <span class="roadmap-item-badge live">Live</span>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon green">📈</div>
+        <div>
+          <div class="roadmap-item-name">RPE adaptation</div>
+          <div class="roadmap-item-desc">Rate sessions 1–5. Future training adjusts based on how hard you're finding it.</div>
+          <span class="roadmap-item-badge live">Live</span>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon green">🔄</div>
+        <div>
+          <div class="roadmap-item-name">Session controls</div>
+          <div class="roadmap-item-desc">Swap, skip, move or pause any session. Life happens — your plan adapts.</div>
+          <span class="roadmap-item-badge live">Live</span>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon green">📧</div>
+        <div>
+          <div class="roadmap-item-name">Weekly email summaries</div>
+          <div class="roadmap-item-desc">Your week ahead delivered to your inbox every Monday morning.</div>
+          <span class="roadmap-item-badge live">Live</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMING SOON -->
+    <div class="roadmap-col soon">
+      <div class="roadmap-col-header">
+        <div class="roadmap-col-dot" style="background:var(--blue);box-shadow:0 0 8px var(--blue);animation:pulse 2s infinite;"></div>
+        <div class="roadmap-col-title" style="color:var(--blue);">Coming soon</div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon blue">💳</div>
+        <div>
+          <div class="roadmap-item-name">Paid plans</div>
+          <div class="roadmap-item-desc">$20/month or $180/year. Founding members stay free forever — no catch.</div>
+          <span class="roadmap-item-badge coming">In progress</span>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon blue">📊</div>
+        <div>
+          <div class="roadmap-item-name">Strava fitness ingestion</div>
+          <div class="roadmap-item-desc">irontri reads your recent Strava data to auto-detect your FTP, threshold pace and CSS — no guessing required at onboarding.</div>
+          <span class="roadmap-item-badge coming">Planned</span>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon blue">🔔</div>
+        <div>
+          <div class="roadmap-item-name">Push notifications</div>
+          <div class="roadmap-item-desc">Daily session reminders so you never miss a training day.</div>
+          <span class="roadmap-item-badge coming">Planned</span>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon blue">🔗</div>
+        <div>
+          <div class="roadmap-item-name">Shareable plans</div>
+          <div class="roadmap-item-desc">Share your training plan with friends, training partners or your coach.</div>
+          <span class="roadmap-item-badge coming">Planned</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FUTURE -->
+    <div class="roadmap-col future">
+      <div class="roadmap-col-header">
+        <div class="roadmap-col-dot" style="background:rgba(255,255,255,0.3);"></div>
+        <div class="roadmap-col-title" style="color:rgba(255,255,255,0.4);">On the horizon</div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon gray">📱</div>
+        <div>
+          <div class="roadmap-item-name">Native mobile apps</div>
+          <div class="roadmap-item-desc">iOS and Android apps for a seamless on-the-go experience.</div>
+          <span class="roadmap-item-badge later">Later</span>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon gray">🧑‍🏫</div>
+        <div>
+          <div class="roadmap-item-name">Coach marketplace</div>
+          <div class="roadmap-item-desc">Connect with real triathlon coaches who can review and customise your plan.</div>
+          <span class="roadmap-item-badge later">Later</span>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon gray">👥</div>
+        <div>
+          <div class="roadmap-item-name">Group training</div>
+          <div class="roadmap-item-desc">Train alongside friends targeting the same race with shared accountability.</div>
+          <span class="roadmap-item-badge later">Later</span>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-item-icon gray">🏁</div>
+        <div>
+          <div class="roadmap-item-name">Race integrations</div>
+          <div class="roadmap-item-desc">Import your race entry directly and irontri builds your plan automatically.</div>
+          <span class="roadmap-item-badge later">Later</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- NOTIFY -->
+  <div class="roadmap-notify">
+    <h3>Want to know when new features drop?</h3>
+    <p>Leave your email and we'll let you know when something big ships.</p>
+    <form class="roadmap-notify-form" id="roadmap-notify-form" onsubmit="handleRoadmapNotify(event)">
+      <input type="email" id="roadmap-notify-email" placeholder="your@email.com" required />
+      <button type="submit">Notify me →</button>
+    </form>
+    <div id="roadmap-notify-success" style="display:none;font-size:14px;color:#4ade80;margin-top:12px;">✓ You're on the list!</div>
+  </div>
+</section>
+
 <!-- QUOTES -->
 <div class="quotes-section">
   <div class="quotes-title">Real athletes. Real results.</div>
@@ -956,7 +1217,7 @@
 <section class="cta-section">
   <div class="cta-bg"></div>
   <h2>Ready to race<br>smarter?</h2>
-  <p>Get your personalised triathlon plan in under 5 minutes. Free for founding members.</p>
+  <p>Get your personalised triathlon plan in under 3 minutes. Free to get started — no credit card.</p>
   <div class="cta-buttons">
     <a href="/plan.html" class="btn-primary">Get my free plan →</a>
     <a href="/index.html" class="btn-secondary">Back to home</a>
@@ -1002,9 +1263,30 @@ var observer = new IntersectionObserver(function(entries){
   });
 }, { threshold: 0.1 });
 
-document.querySelectorAll('.feature-section, .stats-strip, .quotes-section, .cta-section').forEach(function(el){
+document.querySelectorAll('.feature-section, .stats-strip, .quotes-section, .cta-section, .roadmap-section').forEach(function(el){
   observer.observe(el);
 });
+
+function handleRoadmapNotify(e) {
+  e.preventDefault();
+  var email = document.getElementById('roadmap-notify-email').value;
+  var btn = e.target.querySelector('button');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/pricing_notify');
+  xhr.setRequestHeader('apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU');
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.onload = function() {
+    document.getElementById('roadmap-notify-form').style.display = 'none';
+    document.getElementById('roadmap-notify-success').style.display = 'block';
+  };
+  xhr.onerror = function() {
+    document.getElementById('roadmap-notify-form').style.display = 'none';
+    document.getElementById('roadmap-notify-success').style.display = 'block';
+  };
+  xhr.send(JSON.stringify({email: email}));
+}
 </script>
 
 <script>
