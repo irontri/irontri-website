@@ -1026,8 +1026,7 @@ async function buildPlan(){
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
   const startDayName = A.startDate ? ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(A.startDate+"T00:00:00").getDay()] : "Monday";
-  const startDayName = A.startDate ? ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(A.startDate+"T00:00:00").getDay()] : "Monday";
-  const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+". Plan: "+w+" weeks, start date: "+(A.startDate||"soon")+" ("+startDayName+"), race date: "+(A.date||"TBD")+". IMPORTANT: Week 1 starts on "+startDayName+". TAPER: ONLY week "+w+" is race week (easy 30-45min only, NO hard sessions). Week "+(w-1)+" = -50% volume taper. Week "+(w-2)+" = -30% volume taper. Week "+(w-3)+" = peak. Do NOT create race week content in any other week.\n\n";
+  const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+". Plan: "+w+" weeks, start date: "+(A.startDate||"soon")+" ("+startDayName+"), race date: "+(A.date||"TBD")+". IMPORTANT: Week 1 starts on "+startDayName+". TAPER: ONLY week "+w+" = race week (easy 30-45min only, NO hard sessions). Week "+(w-1)+" = -50% volume taper. Week "+(w-2)+" = -30% volume taper. Week "+(w-3)+" = peak. Do NOT create race week content in any other week.\n\n";
   try{
         const prompt1 = prompt + '\n\nGenerate ONLY weeks 1 and 2. Return JSON with keys: intro, weeks (array of 2 weeks only).';
     const prompt2 = prompt + '\n\nGenerate ONLY weeks 3 and 4 (Build and Peak phases). Return JSON with keys: weeks (array of 2 weeks only, weekNumber starting at 3). No intro needed.';
@@ -1201,7 +1200,7 @@ async function loadNextWeeks() {
   btn.disabled = true;
   const currentWeekCount = planData.weeks.length;
   const nextWeekStart = currentWeekCount + 1;
-  const prompt = `You are an expert triathlon coach. Generate the NEXT 4 weeks of a training plan continuing from week ${currentWeekCount}.\n\nAthlete:\nName: ${A.name}, Race: ${A.race}, Goal time: ${A.goaltimeText||'No specific time target'}, Experience: ${A.exp}, Fitness: ${A.fitness}\nHours/week: ${A.hours}, Training days: ${A.days.join(', ')}, Weakest: ${A.weak}\n\nContinue with progressive overload. Week ${nextWeekStart} = build, Week ${nextWeekStart+1} = peak, Week ${nextWeekStart+2} = peak race specific, Week ${nextWeekStart+3} = taper.\n\nReturn ONLY JSON: {"weeks":[{"week":${nextWeekStart},"phase":"Build","focus":"string","totalTime":0,"sessions":0,"days":[{"day":"Monday","type":"Rest","name":"Rest","duration":0,"effort":0,"zone":0,"focus":"Rest","warmup":"","mainset":"","cooldown":"","coachNote":""}]}]}\n\nRules: Each week has exactly 7 days Monday-Sunday. Training days (${A.days.join(', ')}) get sessions, others are Rest. Return ONLY the JSON.`;
+  const prompt = `You are an expert triathlon coach. Generate the NEXT 4 weeks of a training plan continuing from week ${currentWeekCount}.\n\nAthlete:\nName: ${A.name}, Race: ${A.race}, Goal time: ${A.goaltimeText||'No specific time target'}, Experience: ${A.exp}, Fitness: ${A.fitness}\nHours/week: ${A.hours}, Training days: ${A.days.join(', ')}, Weakest: ${A.weak}${A.css ? ", Swim CSS: "+A.css : ""}${A.runThreshold ? ", Run threshold: "+A.runThreshold : ""}${A.ftp ? ", Bike FTP: "+A.ftp+"w" : ""}\n\nContinue with progressive overload. Week ${nextWeekStart} = build, Week ${nextWeekStart+1} = peak, Week ${nextWeekStart+2} = peak race specific, Week ${nextWeekStart+3} = taper.\n\nReturn ONLY JSON: {"weeks":[{"week":${nextWeekStart},"phase":"Build","focus":"string","totalTime":0,"sessions":0,"days":[{"day":"Monday","type":"Rest","name":"Rest","duration":0,"effort":0,"zone":0,"focus":"Rest","warmup":"","mainset":"","cooldown":"","coachNote":""}]}]}\n\nRules: Each week has exactly 7 days Monday-Sunday. Training days (${A.days.join(', ')}) get sessions, others are Rest. Return ONLY the JSON.`;
   try {
     const r = await fetch('/api/generate-plan', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
     const d = await r.json();
@@ -1684,7 +1683,6 @@ async function checkAndSavePlan(planText) {
       await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
     }
     if (session) {
-      // If we already have a plan ID, update it — never create duplicates
       if (window.currentPlanId) {
         const { error } = await sb2.from('plans').update({plan_data: planText, race: A.race || 'Triathlon'}).eq('id', window.currentPlanId).eq('user_id', session.user.id);
         if (!error) { const b = document.getElementById('saved-banner'); if(b) b.style.display='block'; }
@@ -1700,11 +1698,11 @@ async function checkAndSavePlan(planText) {
       }
     } else {
       localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race}));
-      const b = document.getElementById('save-banner'); if(b) b.style.display='block';
+      document.getElementById('save-banner').style.display='block';
     }
   } catch(e) {
     localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race}));
-    const b = document.getElementById('save-banner'); if(b) b.style.display='block';
+    document.getElementById('save-banner').style.display='block';
   }
 }
 
@@ -1799,18 +1797,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const saved = JSON.parse(pending);
       Object.assign(A, saved);
-      if (!Array.isArray(A.days)) A.days = [];
-      if (!A.hours) A.hours = 8;
-      const { data: { user } } = await sb2.auth.getUser();
-      if (user && (!A.name || A.name === 'Athlete')) {
-        A.name = user.user_metadata?.full_name || user.user_metadata?.name || localStorage.getItem('irontri_user_name') || 'Athlete';
-      }
       localStorage.removeItem('irontri_pending_answers');
       document.getElementById('quiz-wrap').style.display = 'none';
       document.querySelector('.prog-wrap').style.display = 'none';
       document.getElementById('gen').style.display = 'block';
       setTimeout(() => buildPlan(), 500);
-    } catch(e) { console.error('Pending restore error:', e); }
+    } catch(e) {}
   }
 });
 </script>
