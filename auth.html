@@ -182,6 +182,8 @@ async function doSignUp() {
     return;
   }
   showMsg('msg-signup', '🎉 Account created! Redirecting...', 'success');
+  // Send welcome email — fire and forget, don't block redirect
+  fetch('/api/send-welcome-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, name }) }).catch(() => {});
   await savePendingPlan(data.user && data.user.id);
   const redirectTo = new URLSearchParams(window.location.search).get('redirect');
   setTimeout(() => window.location.href = redirectTo === 'plan' ? '/plan.html' : '/dashboard.html', 1000);
