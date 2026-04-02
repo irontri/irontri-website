@@ -1083,7 +1083,14 @@ async function buildPlan(){
       `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="jumpToPhase('${p}')">${p} Phase</button>`
     ).join('');
 
+    // Jump to today's week on new plan generation too
     curWeek=0;curDay=null;
+    if(A.startDate) {
+      const _t=new Date();_t.setHours(0,0,0,0);
+      const _s=new Date(A.startDate+'T00:00:00');
+      const _d=Math.floor((_t-_s)/(1000*60*60*24));
+      if(_d>=0){curWeek=Math.min(Math.floor(_d/7),planData.weeks.length-1);curDay=_d%7;}
+    }
     renderWeek();
     try { renderGraph(); } catch(eg) {}
     renderRoadmap();
@@ -1750,7 +1757,20 @@ document.addEventListener('DOMContentLoaded', async () => {
           `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="jumpToPhase('${p}')">${p} Phase</button>`
         ).join('');
 
+        // Jump to today's week instead of always starting at week 1
         curWeek=0; curDay=null;
+        if(A.startDate && planData.weeks && planData.weeks.length > 0) {
+          const _today = new Date();
+          _today.setHours(0,0,0,0);
+          const _planStart = new Date(A.startDate + 'T00:00:00');
+          const _diffDays = Math.floor((_today - _planStart) / (1000 * 60 * 60 * 24));
+          if(_diffDays >= 0) {
+            const _todayWeek = Math.min(Math.floor(_diffDays / 7), planData.weeks.length - 1);
+            const _todayDay = _diffDays % 7;
+            curWeek = _todayWeek;
+            curDay = _todayDay < 7 ? _todayDay : null;
+          }
+        }
         renderWeek();
         try{renderGraph();}catch(eg){}
         const _lmb=document.getElementById('load-more-btn');if(_lmb&&planData.weeks){const _nw=planData.weeks.length;_lmb.textContent='Load weeks '+(_nw+1)+'–'+(_nw+4)+' →';}
