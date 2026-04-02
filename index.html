@@ -34,6 +34,18 @@
     nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 56px;height:68px;background:#1E90FF;border-bottom:1px solid rgba(255,255,255,0.15);overflow:hidden;}
     .nav-logo{height:auto;width:160px;display:block;mix-blend-mode:screen;filter:brightness(10);}
     .nav-links{display:flex;gap:36px;list-style:none;}
+  .nav-hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;background:none;border:none;}
+  .nav-hamburger span{display:block;width:22px;height:2px;background:#fff;border-radius:2px;transition:all 0.3s;}
+  .nav-hamburger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px);}
+  .nav-hamburger.open span:nth-child(2){opacity:0;}
+  .nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px);}
+  .nav-mobile-menu{display:none;position:fixed;top:64px;left:0;right:0;background:#111;border-bottom:1px solid rgba(255,255,255,0.08);padding:20px;flex-direction:column;gap:4px;z-index:99;}
+  .nav-mobile-menu.open{display:flex;}
+  .nav-mobile-menu a{font-size:16px;color:rgba(255,255,255,0.7);text-decoration:none;padding:12px 8px;border-radius:8px;border-bottom:1px solid rgba(255,255,255,0.06);transition:color 0.2s;}
+  .nav-mobile-menu a:last-child{border-bottom:none;}
+  .nav-mobile-menu a:hover{color:#fff;}
+  .nav-mobile-cta{margin-top:8px;background:#1E90FF!important;color:#fff!important;text-align:center;border-radius:10px;padding:14px!important;font-weight:600;border-bottom:none!important;}
+  @media(max-width:768px){.nav-hamburger{display:flex;}.nav-links{display:none!important;}}
     .nav-links a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:14px;transition:color 0.2s;}
     .nav-links a:hover{color:#fff;}
     .nav-right{display:flex;align-items:center;gap:12px;}
@@ -238,7 +250,20 @@
     <a href="auth.html" class="btn-ghost">Log in</a>
     <a href="auth.html" class="btn-white">Sign up free</a>
   </div>
+
+  <button class="nav-hamburger" id="nav-ham" onclick="toggleMobileNav()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+<div class="nav-mobile-menu" id="nav-mobile">
+  <a href="#how">How it works</a>
+  <a href="/features.html">Features</a>
+  <a href="/predict.html">Race Predictor</a>
+  <a href="#plans">Training plans</a>
+  <a href="#pricing-plans">Pricing</a>
+  <a href="#devices">Devices</a>
+  <a href="/plan.html" class="nav-mobile-cta">Get my free plan →</a>
+</div>
 
 <!-- HERO -->
 <section class="hero" style="max-width:1200px;margin:0 auto;padding:80px 56px 60px;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;">
@@ -915,5 +940,19 @@ window.addEventListener('load', function() {
   xhr.send('{}');
 });
 </script>
-</body>
+<script>
+function toggleMobileNav(){
+  const ham = document.getElementById('nav-ham');
+  const menu = document.getElementById('nav-mobile');
+  ham.classList.toggle('open');
+  menu.classList.toggle('open');
+}
+// Close menu when a link is clicked
+document.querySelectorAll('.nav-mobile-menu a').forEach(function(a){
+  a.addEventListener('click', function(){ 
+    document.getElementById('nav-ham').classList.remove('open');
+    document.getElementById('nav-mobile').classList.remove('open');
+  });
+});
+</script></body>
 </html>
