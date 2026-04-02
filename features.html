@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>irontri — Features</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-BDZ8K3RR10');</script>
+<style>
+  :root {
+    --blue: #1E90FF;
+    --blue-dim: rgba(30,144,255,0.12);
+    --blue-border: rgba(30,144,255,0.25);
+    --bg: #0a0a0a;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text: #fff;
+    --muted: rgba(255,255,255,0.5);
+    --faint: rgba(255,255,255,0.2);
+    --green: #4ade80;
+    --orange: #FC4C02;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px; height: 64px;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    display: flex; align-items: center;
+    text-decoration: none;
+  }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a {
+    font-size: 14px; color: var(--muted);
+    text-decoration: none; transition: color 0.2s;
+  }
+  .nav-links a:hover { color: #fff; }
+  .nav-cta {
+    background: var(--blue); color: #fff !important;
+    padding: 9px 20px; border-radius: 8px;
+    font-weight: 500; font-size: 14px !important;
+    transition: background 0.2s !important;
+  }
+  .nav-cta:hover { background: #1478d4 !important; }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 120px 40px 80px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(30,144,255,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(30,144,255,0.06) 0%, transparent 50%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 80%);
+  }
+  .hero-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--blue);
+    margin-bottom: 24px;
+    position: relative;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .hero-label::before, .hero-label::after {
+    content: ''; display: block;
+    width: 32px; height: 1px; background: var(--blue-border);
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(48px, 8vw, 96px);
+    font-weight: 900; line-height: 0.95;
+    letter-spacing: -3px;
+    margin-bottom: 28px;
+    position: relative;
+  }
+  .hero h1 em {
+    font-style: normal; color: var(--blue);
+  }
+  .hero p {
+    font-size: clamp(16px, 2vw, 20px);
+    color: var(--muted); max-width: 560px;
+    line-height: 1.6; margin-bottom: 48px;
+    position: relative;
+  }
+  .hero-cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--blue); color: #fff;
+    font-size: 16px; font-weight: 600;
+    padding: 16px 36px; border-radius: 12px;
+    text-decoration: none; position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 40px rgba(30,144,255,0.3);
+  }
+  .hero-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 60px rgba(30,144,255,0.4);
+  }
+  .hero-scroll {
+    position: absolute; bottom: 40px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center;
+    gap: 8px; color: var(--faint); font-size: 11px;
+    letter-spacing: 2px; text-transform: uppercase;
+  }
+  .scroll-line {
+    width: 1px; height: 48px;
+    background: linear-gradient(to bottom, var(--blue), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.4; transform: scaleY(1); }
+    50% { opacity: 1; transform: scaleY(1.1); }
+  }
+
+  /* ─── FEATURE SECTIONS ─── */
+  .feature-section {
+    padding: 140px 40px;
+    max-width: 1200px; margin: 0 auto;
+    opacity: 0; transform: translateY(40px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .feature-section.visible {
+    opacity: 1; transform: translateY(0);
+  }
+
+  .feature-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 120px; font-weight: 900;
+    color: rgba(255,255,255,0.03);
+    line-height: 1; margin-bottom: -40px;
+    letter-spacing: -8px;
+  }
+
+  .feature-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 600; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--blue);
+    margin-bottom: 20px;
+  }
+  .feature-tag-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--blue);
+    box-shadow: 0 0 8px var(--blue);
+  }
+
+  .feature-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px; align-items: center;
+  }
+  .feature-layout.reverse { direction: rtl; }
+  .feature-layout.reverse > * { direction: ltr; }
+
+  .feature-copy h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 800; line-height: 1.1;
+    letter-spacing: -2px; margin-bottom: 20px;
+  }
+  .feature-copy h2 span { color: var(--blue); }
+  .feature-copy p {
+    font-size: 17px; color: var(--muted);
+    line-height: 1.8; margin-bottom: 32px;
+  }
+  .feature-points { display: flex; flex-direction: column; gap: 14px; }
+  .feature-point {
+    display: flex; align-items: flex-start; gap: 14px;
+    font-size: 15px; color: rgba(255,255,255,0.7);
+    line-height: 1.5;
+  }
+  .feature-point-icon {
+    width: 28px; height: 28px; flex-shrink: 0;
+    background: var(--blue-dim); border: 1px solid var(--blue-border);
+    border-radius: 6px; display: flex; align-items: center;
+    justify-content: center; font-size: 13px; margin-top: 2px;
+  }
+
+  /* ─── UI MOCKUPS ─── */
+  .mockup {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px; padding: 24px;
+    position: relative; overflow: hidden;
+  }
+  .mockup::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(30,144,255,0.4), transparent);
+  }
+  .mockup-bar {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 20px;
+  }
+  .mockup-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .mockup-header {
+    background: #1E90FF;
+    border-radius: 10px 10px 0 0;
+    padding: 14px 18px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px; font-weight: 800;
+    margin: -24px -24px 20px -24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  /* Session card mockup */
+  .session-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 18px;
+    margin-bottom: 12px;
+    transition: border-color 0.3s;
+  }
+  .session-card:hover { border-color: var(--blue-border); }
+  .session-card-top {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 10px;
+  }
+  .session-type {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; color: var(--blue);
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .session-pace {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 700; color: #fff;
+  }
+  .session-name {
+    font-size: 16px; font-weight: 600; color: #fff;
+    margin-bottom: 6px;
+  }
+  .session-desc {
+    font-size: 13px; color: var(--muted); line-height: 1.5;
+  }
+  .session-coach {
+    margin-top: 12px; padding: 12px;
+    background: rgba(30,144,255,0.06);
+    border-left: 2px solid var(--blue);
+    border-radius: 0 8px 8px 0;
+    font-size: 12px; color: var(--muted);
+    font-style: italic; line-height: 1.5;
+  }
+
+  /* Week calendar mockup */
+  .week-strip {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 6px; margin-bottom: 16px;
+  }
+  .day-cell {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 10px 4px;
+    text-align: center;
+  }
+  .day-cell.active {
+    background: var(--blue-dim);
+    border-color: var(--blue-border);
+  }
+  .day-cell.done {
+    background: rgba(74,222,128,0.08);
+    border-color: rgba(74,222,128,0.2);
+  }
+  .day-name {
+    font-size: 10px; color: var(--faint);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .day-icon { font-size: 16px; }
+  .day-date { font-size: 10px; color: var(--faint); margin-top: 4px; }
+
+  /* RPE rating mockup */
+  .rpe-mock {
+    background: rgba(30,144,255,0.06);
+    border: 1px solid var(--blue-border);
+    border-radius: 12px; padding: 18px;
+    text-align: center;
+  }
+  .rpe-mock-title {
+    font-size: 14px; font-weight: 600; color: #fff;
+    margin-bottom: 4px;
+  }
+  .rpe-mock-sub {
+    font-size: 11px; color: var(--muted); margin-bottom: 16px;
+  }
+  .rpe-buttons {
+    display: flex; gap: 8px; justify-content: center;
+    margin-bottom: 12px;
+  }
+  .rpe-button {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700;
+    border: 2px solid;
+  }
+  .rpe-button.r1 { border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,0.1); }
+  .rpe-button.r2 { border-color: #4ade80; color: #4ade80; }
+  .rpe-button.r3 { border-color: #fbbf24; color: #fbbf24; }
+  .rpe-button.r4 { border-color: #fb923c; color: #fb923c; }
+  .rpe-button.r5 { border-color: #f87171; color: #f87171; }
+  .rpe-scale {
+    display: flex; justify-content: space-between;
+    font-size: 11px;
+  }
+  .rpe-scale span:first-child { color: #4ade80; }
+  .rpe-scale span:last-child { color: #f87171; }
+
+  /* Strava mockup */
+  .strava-activity {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px; border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 10px;
+  }
+  .strava-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(252,76,2,0.12);
+    border: 1px solid rgba(252,76,2,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .strava-info { flex: 1; }
+  .strava-name { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+  .strava-meta { font-size: 12px; color: var(--muted); }
+  .strava-badge {
+    font-size: 11px; font-weight: 600; color: #4ade80;
+    background: rgba(74,222,128,0.1);
+    border: 1px solid rgba(74,222,128,0.2);
+    padding: 4px 10px; border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* ─── DIVIDER ─── */
+  .section-divider {
+    max-width: 1200px; margin: 0 auto;
+    padding: 0 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ─── STATS STRIP ─── */
+  .stats-strip {
+    background: rgba(30,144,255,0.06);
+    border-top: 1px solid var(--blue-border);
+    border-bottom: 1px solid var(--blue-border);
+    padding: 48px 40px;
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .stats-strip.visible { opacity: 1; transform: translateY(0); }
+  .stats-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 40px; text-align: center;
+  }
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 900; color: #fff;
+    letter-spacing: -2px; margin-bottom: 8px;
+  }
+  .stat-value span { color: var(--blue); }
+  .stat-label {
+    font-size: 13px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1.5px;
+  }
+
+  /* ─── QUOTE SECTION ─── */
+  .quotes-section {
+    padding: 120px 40px;
+    max-width: 1200px; margin: 0 auto;
+    opacity: 0; transform: translateY(40px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .quotes-section.visible { opacity: 1; transform: translateY(0); }
+  .quotes-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 3vw, 40px);
+    font-weight: 800; letter-spacing: -1.5px;
+    text-align: center; margin-bottom: 56px;
+  }
+  .quotes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .quote-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .quote-card:hover {
+    border-color: var(--blue-border);
+    transform: translateY(-4px);
+  }
+  .quote-stars { color: var(--blue); font-size: 14px; margin-bottom: 16px; letter-spacing: 2px; }
+  .quote-text {
+    font-size: 15px; color: rgba(255,255,255,0.75);
+    line-height: 1.7; margin-bottom: 20px;
+    font-style: italic;
+  }
+  .quote-text strong { color: #fff; font-style: normal; }
+  .quote-author { font-size: 13px; color: var(--muted); }
+  .quote-author strong { color: rgba(255,255,255,0.7); display: block; margin-bottom: 2px; }
+
+  /* ─── CTA SECTION ─── */
+  .cta-section {
+    padding: 140px 40px;
+    text-align: center; position: relative; overflow: hidden;
+    opacity: 0; transform: translateY(40px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .cta-section.visible { opacity: 1; transform: translateY(0); }
+  .cta-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(30,144,255,0.1) 0%, transparent 70%);
+  }
+  .cta-section h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(36px, 6vw, 72px);
+    font-weight: 900; letter-spacing: -3px;
+    line-height: 1; margin-bottom: 24px;
+    position: relative;
+  }
+  .cta-section p {
+    font-size: 18px; color: var(--muted);
+    max-width: 480px; margin: 0 auto 48px;
+    line-height: 1.6; position: relative;
+  }
+  .cta-buttons {
+    display: flex; gap: 16px; justify-content: center;
+    flex-wrap: wrap; position: relative;
+  }
+  .btn-primary {
+    background: var(--blue); color: #fff;
+    padding: 16px 40px; border-radius: 12px;
+    font-size: 16px; font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 40px rgba(30,144,255,0.25);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 60px rgba(30,144,255,0.4);
+  }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.7);
+    padding: 16px 40px; border-radius: 12px;
+    font-size: 16px; font-weight: 500;
+    text-decoration: none;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-secondary:hover {
+    border-color: rgba(255,255,255,0.35); color: #fff;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 900;
+    color: rgba(255,255,255,0.4); letter-spacing: -1px;
+  }
+  .footer-links {
+    display: flex; gap: 28px;
+  }
+  .footer-links a {
+    font-size: 13px; color: var(--faint);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--muted); }
+  .footer-copy { font-size: 12px; color: var(--faint); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .feature-layout { grid-template-columns: 1fr; gap: 40px; }
+    .feature-layout.reverse { direction: ltr; }
+    .feature-number { font-size: 72px; margin-bottom: -24px; }
+    .stats-inner { grid-template-columns: repeat(2, 1fr); }
+    .quotes-grid { grid-template-columns: 1fr; }
+    .hero { padding: 100px 20px 60px; }
+    .feature-section, .quotes-section { padding: 80px 20px; }
+    footer { flex-direction: column; gap: 20px; text-align: center; }
+    .footer-links { flex-wrap: wrap; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/index.html" class="nav-logo"><img src="/irontri_logo.png" alt="irontri" style="height:120px;width:auto;mix-blend-mode:screen;filter:brightness(10);" /></a>
+  <div class="nav-links">
+    <a href="/index.html">Home</a>
+    <a href="/index.html#pricing">Pricing</a>
+    <a href="/predict.html">Race predictor</a>
+    <a href="/plan.html" class="nav-cta">Get my plan →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-label">
+    <span></span>Everything irontri does
+  </div>
+  <h1>Built for<br><em>triathletes.</em><br>Not everyone.</h1>
+  <p>Every feature was built because triathlon is three sports, one race. Generic training apps don't get that. irontri does.</p>
+  <a href="/plan.html" class="hero-cta">Get my free plan →</a>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    Scroll
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-strip">
+  <div class="stats-inner">
+    <div>
+      <div class="stat-value"><span id="live-counter">159</span></div>
+      <div class="stat-label">Athletes using irontri</div>
+    </div>
+    <div>
+      <div class="stat-value">5<span>min</span></div>
+      <div class="stat-label">To get your full plan</div>
+    </div>
+    <div>
+      <div class="stat-value">5</div>
+      <div class="stat-label">Race distances supported</div>
+    </div>
+    <div>
+      <div class="stat-value">3</div>
+      <div class="stat-label">Sports, one unified plan</div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURE 1: PERSONALISED PLAN -->
+<section class="feature-section">
+  <div class="feature-number">01</div>
+  <div class="feature-tag"><div class="feature-tag-dot"></div>Your training plan</div>
+  <div class="feature-layout">
+    <div class="feature-copy">
+      <h2>Not a template.<br>Your <span>plan.</span></h2>
+      <p>Answer 12 questions about your race, your schedule, and how fit you are right now. irontri builds a fully periodised, week-by-week swim, bike and run plan — just for you. Every single week is different. Every session has a reason.</p>
+      <div class="feature-points">
+        <div class="feature-point">
+          <div class="feature-point-icon">🏁</div>
+          <div>Sprint, Olympic, T100, 70.3 or Full Ironman — each distance has its own structure and approach</div>
+        </div>
+        <div class="feature-point">
+          <div class="feature-point-icon">📅</div>
+          <div>Tell us how many hours you can train per week and which days — your plan works around your life, not the other way</div>
+        </div>
+        <div class="feature-point">
+          <div class="feature-point-icon">🔁</div>
+          <div>Change your race or start date at any time — your plan rebuilds instantly around the new dates</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mockup">
+        <div class="mockup-header">
+          <span>Dean's Full Ironman Plan</span>
+          <span style="font-size:13px;font-weight:400;opacity:0.7;">36 weeks</span>
+        </div>
+        <div class="week-strip">
+          <div class="day-cell done"><div class="day-name">Mon</div><div class="day-icon">✅</div><div class="day-date">31 Mar</div></div>
+          <div class="day-cell done"><div class="day-name">Tue</div><div class="day-icon">✅</div><div class="day-date">1 Apr</div></div>
+          <div class="day-cell done"><div class="day-name">Wed</div><div class="day-icon">✅</div><div class="day-date">2 Apr</div></div>
+          <div class="day-cell active"><div class="day-name">Thu</div><div class="day-icon">🚴</div><div class="day-date">3 Apr</div></div>
+          <div class="day-cell"><div class="day-name">Fri</div><div class="day-icon">😴</div><div class="day-date">4 Apr</div></div>
+          <div class="day-cell"><div class="day-name">Sat</div><div class="day-icon">🏊</div><div class="day-date">5 Apr</div></div>
+          <div class="day-cell"><div class="day-name">Sun</div><div class="day-icon">🏃</div><div class="day-date">6 Apr</div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:16px;padding:0 2px;">
+          <span>Week 3 of 36 · Build Phase</span>
+          <span>8h 25m total</span>
+        </div>
+        <div class="session-card">
+          <div class="session-card-top">
+            <div class="session-type">🚴 Bike</div>
+            <div class="session-pace">28 km/h · Zone 2</div>
+          </div>
+          <div class="session-name">Endurance Engine</div>
+          <div class="session-desc">3h long ride · 85-90rpm · Keep HR in Zone 2 the entire ride. No surging.</div>
+          <div class="session-coach">"Week 3 long ride is about time on the bike, not speed. Your aerobic engine is being built right now — every minute at Zone 2 matters more than you think."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- FEATURE 2: SESSION QUALITY -->
+<section class="feature-section">
+  <div class="feature-number">02</div>
+  <div class="feature-tag"><div class="feature-tag-dot"></div>Session detail</div>
+  <div class="feature-layout reverse">
+    <div class="feature-copy">
+      <h2>Every session has<br>a <span>purpose.</span></h2>
+      <p>Not just "easy run" or "bike intervals". Every session comes with exact pace targets, heart rate zones, a full warm-up, main set with rest periods, cool-down, and a coach note that tells you why you're doing this specific session this specific week.</p>
+      <div class="feature-points">
+        <div class="feature-point">
+          <div class="feature-point-icon">🏊</div>
+          <div>Swim: interval distances in metres or yards, rest periods, and technique cues based on your weakness</div>
+        </div>
+        <div class="feature-point">
+          <div class="feature-point-icon">🚴</div>
+          <div>Bike: cadence targets, speed or power zones, and whether it's indoor or outdoor — every detail specified</div>
+        </div>
+        <div class="feature-point">
+          <div class="feature-point-icon">🏃</div>
+          <div>Run: pace per km or mile, cadence, stride cues — and brick runs that build race-ready legs</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mockup">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+          <div style="font-size:28px;">🏊</div>
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;">Threshold Intervals</div>
+            <div style="font-size:13px;color:var(--muted);">Thursday · 70 min · Zone 4</div>
+          </div>
+          <div style="margin-left:auto;font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--blue);">1:45/100m</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="padding:14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid var(--border);">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--faint);margin-bottom:6px;">🔥 Warm up</div>
+            <div style="font-size:14px;color:rgba(255,255,255,0.7);">400m easy freestyle · focus on long strokes and breathing rhythm</div>
+          </div>
+          <div style="padding:14px;background:rgba(30,144,255,0.06);border-radius:10px;border:1px solid var(--blue-border);">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--blue);margin-bottom:6px;">💪 Main set</div>
+            <div style="font-size:14px;color:#fff;font-weight:500;">8×100m @ RPE 8 · 15 sec rest<br>Focus on hip rotation and early catch</div>
+          </div>
+          <div style="padding:14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid var(--border);">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--faint);margin-bottom:6px;">💬 Coach note</div>
+            <div style="font-size:13px;color:var(--muted);font-style:italic;">"8×100s at threshold this week because we're entering Build phase. Your aerobic base is ready — now we sharpen it."</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- FEATURE 3: ADAPTIVE PLAN -->
+<section class="feature-section">
+  <div class="feature-number">03</div>
+  <div class="feature-tag"><div class="feature-tag-dot"></div>Adaptive training</div>
+  <div class="feature-layout">
+    <div class="feature-copy">
+      <h2>Your plan <span>learns</span><br>as you train.</h2>
+      <p>Rate each session after you finish. Too easy? Your upcoming sessions of that sport get harder. Struggling? They back off. irontri rewrites your future sessions automatically — so your plan stays calibrated to your actual fitness, not a guess from week one.</p>
+      <div class="feature-points">
+        <div class="feature-point">
+          <div class="feature-point-icon">📊</div>
+          <div>Rate 1–5 after each session. Takes 2 seconds. Makes every future session more accurate</div>
+        </div>
+        <div class="feature-point">
+          <div class="feature-point-icon">🧠</div>
+          <div>Adapts by sport — a hard run doesn't change your swim sessions. Each discipline is calibrated separately</div>
+        </div>
+        <div class="feature-point">
+          <div class="feature-point-icon">📈</div>
+          <div>Your plan gets smarter the longer you use it — the feedback loop compounds over weeks</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mockup">
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--faint);margin-bottom:8px;">Just completed</div>
+          <div class="session-card" style="margin-bottom:0;">
+            <div class="session-card-top">
+              <div class="session-type">🏃 Run</div>
+              <div style="font-size:12px;color:var(--green);background:rgba(74,222,128,0.1);padding:3px 10px;border-radius:20px;border:1px solid rgba(74,222,128,0.2);">✅ Completed</div>
+            </div>
+            <div class="session-name">Tempo Surge Assault</div>
+            <div class="session-desc">45 min · 6 × 4 min at 5:10/km · 90 sec recovery</div>
+          </div>
+        </div>
+        <div class="rpe-mock">
+          <div class="rpe-mock-title">How did that session feel?</div>
+          <div class="rpe-mock-sub">Your future sessions adapt based on your rating</div>
+          <div class="rpe-buttons">
+            <div class="rpe-button r1">1</div>
+            <div class="rpe-button r2">2</div>
+            <div class="rpe-button r3" style="transform:scale(1.15);box-shadow:0 0 12px rgba(251,191,36,0.3);">3</div>
+            <div class="rpe-button r4">4</div>
+            <div class="rpe-button r5">5</div>
+          </div>
+          <div class="rpe-scale">
+            <span>1–2 too easy → sessions get harder</span>
+            <span>4–5 too hard → ease off</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- FEATURE 4: STRAVA -->
+<section class="feature-section">
+  <div class="feature-number">04</div>
+  <div class="feature-tag"><div class="feature-tag-dot"></div>Strava integration</div>
+  <div class="feature-layout reverse">
+    <div class="feature-copy">
+      <h2>Train. Finish.<br>Already <span>done.</span></h2>
+      <p>Connect Strava once. Every ride, run, and swim you record automatically ticks off the matching session in your plan. No manual logging. No copy-pasting. You just train — irontri handles the rest.</p>
+      <div class="feature-points">
+        <div class="feature-point">
+          <div class="feature-point-icon">🔄</div>
+          <div>Works with Garmin, Apple Watch, Wahoo, COROS, and any device that syncs to Strava</div>
+        </div>
+        <div class="feature-point">
+          <div class="feature-point-icon">📍</div>
+          <div>Activities are matched by sport type and date — a 46km ride on Saturday ticks the Saturday ride session</div>
+        </div>
+        <div class="feature-point">
+          <div class="feature-point-icon">🔒</div>
+          <div>We only read activity type, date, and distance. We never write to Strava without your explicit action</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mockup">
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--faint);margin-bottom:14px;">Recent Strava activities</div>
+        <div class="strava-activity">
+          <div class="strava-icon">🏃</div>
+          <div class="strava-info">
+            <div class="strava-name">Morning Run</div>
+            <div class="strava-meta">Today · 10.2 km · 52:14</div>
+          </div>
+          <div class="strava-badge">✅ Auto-ticked</div>
+        </div>
+        <div class="strava-activity">
+          <div class="strava-icon">🚴</div>
+          <div class="strava-info">
+            <div class="strava-name">Long Endurance Ride</div>
+            <div class="strava-meta">Yesterday · 46.3 km · 1h 42m</div>
+          </div>
+          <div class="strava-badge">✅ Auto-ticked</div>
+        </div>
+        <div class="strava-activity">
+          <div class="strava-icon">🏊</div>
+          <div class="strava-info">
+            <div class="strava-name">Open Water Technique</div>
+            <div class="strava-meta">Mon · 1.8 km · 38:00</div>
+          </div>
+          <div class="strava-badge">✅ Auto-ticked</div>
+        </div>
+        <div style="margin-top:14px;padding:12px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);border-radius:10px;font-size:13px;color:rgba(74,222,128,0.8);text-align:center;">
+          4 of 5 sessions complete this week
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- FEATURE 5: RACE DATE -->
+<section class="feature-section">
+  <div class="feature-number">05</div>
+  <div class="feature-tag"><div class="feature-tag-dot"></div>Race day ready</div>
+  <div class="feature-layout">
+    <div class="feature-copy">
+      <h2>Taper lands on<br>the right <span>week.</span><br>Every time.</h2>
+      <p>Your plan counts backwards from race day. Base, build, peak, taper — each phase lands exactly where it should. You'll arrive at the start line fresh and sharp, not grinding out a hard session three days before your race.</p>
+      <div class="feature-points">
+        <div class="feature-point">
+          <div class="feature-point-icon">📆</div>
+          <div>Set your race date once — the entire plan periodises around it automatically from day one</div>
+        </div>
+        <div class="feature-point">
+          <div class="feature-point-icon">🏁</div>
+          <div>Race week is always 30–45 min easy sessions only. No surprises, no hard efforts close to race day</div>
+        </div>
+        <div class="feature-point">
+          <div class="feature-point-icon">⏱️</div>
+          <div>Enter your goal finish time — irontri breaks it into swim pace, bike speed, and run pace, then builds every session around those targets</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mockup">
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--faint);margin-bottom:16px;">Plan roadmap · Full Ironman · 36 weeks</div>
+        <div style="display:flex;gap:4px;height:48px;border-radius:10px;overflow:hidden;margin-bottom:12px;">
+          <div style="flex:4;background:linear-gradient(90deg,rgba(30,144,255,0.3),rgba(30,144,255,0.4));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);">BASE</div>
+          <div style="flex:4;background:linear-gradient(90deg,rgba(251,191,36,0.3),rgba(251,191,36,0.4));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);">BUILD</div>
+          <div style="flex:3;background:linear-gradient(90deg,rgba(248,113,113,0.3),rgba(248,113,113,0.4));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);">PEAK</div>
+          <div style="flex:2;background:linear-gradient(90deg,rgba(74,222,128,0.3),rgba(74,222,128,0.4));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);">TAPER</div>
+          <div style="flex:1;background:linear-gradient(90deg,rgba(252,76,2,0.4),rgba(252,76,2,0.5));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;">🏁</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--faint);margin-bottom:20px;padding:0 2px;">
+          <span>Week 1</span>
+          <span>Race day 29 Dec</span>
+        </div>
+        <div style="padding:16px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);border-radius:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="font-size:13px;font-weight:600;color:#4ade80;">Race week</div>
+            <div style="font-size:12px;color:var(--muted);">Week 36 of 36</div>
+          </div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.5;">Mon: 30 min easy swim · Wed: 20 min easy bike · Thu: 15 min easy run · Fri: Rest · Sun: 🏁 Race day</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- FEATURE 6: UNITS -->
+<section class="feature-section">
+  <div class="feature-number">06</div>
+  <div class="feature-tag"><div class="feature-tag-dot"></div>Your units</div>
+  <div class="feature-layout reverse">
+    <div class="feature-copy">
+      <h2>km or miles.<br>Your <span>choice.</span></h2>
+      <p>irontri works in whatever units you train in. Switch between metric and imperial at the start of your quiz — every pace target, bike speed, swim distance, and coaching note in your plan will use your preferred units throughout.</p>
+      <div class="feature-points">
+        <div class="feature-point">
+          <div class="feature-point-icon">🌍</div>
+          <div>Metric: km/h, min/km, metres per 100m — for the majority of the world</div>
+        </div>
+        <div class="feature-point">
+          <div class="feature-point-icon">🇺🇸</div>
+          <div>Imperial: mph, min/mile, yards per 100yd — fully consistent throughout your plan, no km leaking in</div>
+        </div>
+        <div class="feature-point">
+          <div class="feature-point-icon">⚡</div>
+          <div>Set it once at the start — every session, every week, every target is in your units automatically</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mockup">
+        <div style="margin-bottom:20px;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Select your units — shown on the first question</div>
+          <div style="display:flex;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:4px;gap:4px;">
+            <div style="flex:1;padding:10px;border-radius:8px;background:transparent;color:rgba(255,255,255,0.4);font-size:14px;font-weight:600;text-align:center;cursor:pointer;">km / m</div>
+            <div style="flex:1;padding:10px;border-radius:8px;background:#1E90FF;color:#fff;font-size:14px;font-weight:600;text-align:center;">mi / yd</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="padding:14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:13px;color:var(--muted);">🚴 Bike pace target</div>
+            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--blue);">15–18 mph</div>
+          </div>
+          <div style="padding:14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:13px;color:var(--muted);">🏃 Run pace target</div>
+            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--blue);">10:30 / mile</div>
+          </div>
+          <div style="padding:14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:13px;color:var(--muted);">🏊 Swim pace target</div>
+            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--blue);">2:20 / 100yd</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTES -->
+<div class="quotes-section">
+  <div class="quotes-title">Real athletes. Real results.</div>
+  <div class="quotes-grid">
+    <div class="quote-card">
+      <div class="quote-stars">★★★★★</div>
+      <div class="quote-text">"I've used Garmin Coach and generic PDF plans before. This is the first time sessions have actually explained <strong>why I'm doing them</strong>. The coach notes make a huge difference."</div>
+      <div class="quote-author"><strong>Alex M.</strong> Olympic Triathlon · Perth, WA</div>
+    </div>
+    <div class="quote-card">
+      <div class="quote-stars">★★★★★</div>
+      <div class="quote-text">"Finished my ride on Saturday, went to check it off — <strong>it was already done</strong>. Strava had synced it automatically. That alone is worth it for someone who hates admin."</div>
+      <div class="quote-author"><strong>Chris D.</strong> Olympic distance · First triathlon · Brisbane, QLD</div>
+    </div>
+    <div class="quote-card">
+      <div class="quote-stars">★★★★★</div>
+      <div class="quote-text">"I told it my swim was my weakness. Every single swim session had <strong>specific technique cues</strong> — catch drills, hip rotation reminders. It actually listened."</div>
+      <div class="quote-author"><strong>Sarah K.</strong> Full Ironman build · Melbourne, VIC</div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-bg"></div>
+  <h2>Ready to race<br>smarter?</h2>
+  <p>Get your personalised triathlon plan in under 5 minutes. Free for founding members.</p>
+  <div class="cta-buttons">
+    <a href="/plan.html" class="btn-primary">Get my free plan →</a>
+    <a href="/index.html" class="btn-secondary">Back to home</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">irontri</div>
+  <div class="footer-links">
+    <a href="/index.html">Home</a>
+    <a href="/features.html">Features</a>
+    <a href="/predict.html">Race predictor</a>
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
+  </div>
+  <div class="footer-copy">© 2026 irontri</div>
+</footer>
+
+<script>
+// Live counter
+(function(){
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST','https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/rpc/get_user_count');
+  xhr.setRequestHeader('apikey','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU');
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.onload = function(){
+    if(xhr.status===200){
+      var c = JSON.parse(xhr.responseText);
+      var el = document.getElementById('live-counter');
+      if(el && c > 0) el.textContent = c;
+    }
+  };
+  xhr.send('{}');
+})();
+
+// Scroll reveal
+var observer = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.feature-section, .stats-strip, .quotes-section, .cta-section').forEach(function(el){
+  observer.observe(el);
+});
+</script>
+</body>
+</html>
