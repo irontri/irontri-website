@@ -983,3 +983,61 @@ function handlePricingNotify(e) {
       <li><a href="/about.html">About Dean</a></li>
       <li><a href="/privacy.html">Privacy policy</a></li>
       <li><a href="/terms.html">Terms of service</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script src="https://groot.mailerlite.com/js/w/webforms.min.js?v95037e5bac78f29ed026832ca21a7c7b" type="text/javascript"></script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js');
+  });
+}
+</script>
+
+
+
+<script>
+window.addEventListener('load', function() {
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/rpc/get_user_count');
+  xhr.setRequestHeader('apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU');
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      var count = JSON.parse(xhr.responseText);
+      if (count > 0) {
+        var el = document.getElementById('live-counter');
+        if (el) el.textContent = count;
+        var tc = document.getElementById('trust-counter');
+        if (tc) tc.textContent = count;
+        var hc = document.getElementById('hero-counter');
+        if (hc) hc.textContent = count;
+      }
+    }
+  };
+  xhr.send('{}');
+});
+</script>
+<script>
+function toggleMobileNav(){
+  var ham = document.getElementById('nav-ham');
+  var menu = document.getElementById('nav-mobile');
+  if (!ham || !menu) return;
+  ham.classList.toggle('open');
+  menu.classList.toggle('open');
+}
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.nav-mobile-menu a').forEach(function(a){
+    a.addEventListener('click', function(){ 
+      var ham = document.getElementById('nav-ham');
+      var menu = document.getElementById('nav-mobile');
+      if (ham) ham.classList.remove('open');
+      if (menu) menu.classList.remove('open');
+    });
+  });
+});
+</script></body>
+</html>
