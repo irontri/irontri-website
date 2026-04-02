@@ -288,6 +288,7 @@ function pinPlan(id) {
     localStorage.setItem('irontri_pinned_plan', String(id));
   }
   loadPlans();
+  loadTodaySession();
 }
 
 document.addEventListener('click', function(e) {
