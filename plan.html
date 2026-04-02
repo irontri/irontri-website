@@ -1771,12 +1771,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const saved = JSON.parse(pending);
       Object.assign(A, saved);
+      // Safety guards
+      if (!Array.isArray(A.days)) A.days = [];
+      if (!A.hours) A.hours = 8;
+      // Get name from Supabase user if not set
+      if (!A.name || A.name === 'Athlete') {
+        const { data: { user } } = await sb2.auth.getUser();
+        if (user) {
+          A.name = user.user_metadata?.full_name || user.user_metadata?.name || localStorage.getItem('irontri_user_name') || 'Athlete';
+        }
+      }
       localStorage.removeItem('irontri_pending_answers');
       document.getElementById('quiz-wrap').style.display = 'none';
       document.querySelector('.prog-wrap').style.display = 'none';
       document.getElementById('gen').style.display = 'block';
       setTimeout(() => buildPlan(), 500);
-    } catch(e) {}
+    } catch(e) { console.error('Pending restore error:', e); }
   }
 });
 </script>
