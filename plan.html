@@ -211,7 +211,7 @@
     .strava-share-btn.shared{background:rgba(74,222,128,0.08);border-color:rgba(74,222,128,0.3);color:#4ade80;cursor:default;}
 
     /* ── RPE RATING ── */
-    .rpe-prompt{margin-top:12px;background:rgba(30,144,255,0.06);border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:16px;animation:fu 0.3s ease both;}
+    .rpe-prompt{margin-top:0;animation:fu 0.3s ease both;}
     .rpe-prompt-title{font-size:13px;color:var(--muted);margin-bottom:12px;text-align:center;}
     .rpe-options{display:flex;gap:8px;justify-content:center;}
     .rpe-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
@@ -288,8 +288,8 @@
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
       <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);letter-spacing:0.5px;text-transform:uppercase;">Your units</div>
       <div style="display:flex;align-items:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:3px;gap:2px;">
-        <button id="btn-metric" onclick="setUnits('metric')" style="padding:6px 16px;border-radius:6px;border:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;background:#1E90FF;color:#fff;transition:all 0.15s;">km / m</button>
-        <button id="btn-imperial" onclick="setUnits('imperial')" style="padding:6px 16px;border-radius:6px;border:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;">mi / yd</button>
+        <button id="q1-btn-metric" onclick="setUnits('metric')" style="padding:6px 16px;border-radius:6px;border:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;background:#1E90FF;color:#fff;transition:all 0.15s;">km / m</button>
+        <button id="q1-btn-imperial" onclick="setUnits('imperial')" style="padding:6px 16px;border-radius:6px;border:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;">mi / yd</button>
       </div>
       <div style="font-size:11px;color:rgba(255,255,255,0.35);">Your plan will use these units</div>
     </div>
@@ -971,6 +971,7 @@ function selectDay(i){
         <button id="complete-btn-${i}" onclick="toggleComplete(${i})" style="width:100%;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);color:#4ade80;padding:14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;">
           ${completions.has(`${curWeek}-${i}`) ? '✅ Session completed!' : '✓ Mark as complete'}
         </button>
+        ${!completions.has(`${curWeek}-${i}`) && d.type !== 'Rest' ? `<div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.3);">Rate it after — your plan adapts to how it felt 🎯</div>` : ''}
         <button onclick="swapSession(${i})" style="width:100%;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;">
           😓 Not feeling 100%? Swap for an easier session
         </button>
@@ -1163,8 +1164,12 @@ function setUnits(units) {
   localStorage.setItem('irontri_units', units);
   const m = document.getElementById('btn-metric');
   const i = document.getElementById('btn-imperial');
+  const m1 = document.getElementById('q1-btn-metric');
+  const i1 = document.getElementById('q1-btn-imperial');
   if(m){ m.style.background=units==='metric'?'#1E90FF':'transparent'; m.style.color=units==='metric'?'#fff':'rgba(255,255,255,0.4)'; }
   if(i){ i.style.background=units==='imperial'?'#1E90FF':'transparent'; i.style.color=units==='imperial'?'#fff':'rgba(255,255,255,0.4)'; }
+  if(m1){ m1.style.background=units==='metric'?'#1E90FF':'transparent'; m1.style.color=units==='metric'?'#fff':'rgba(255,255,255,0.4)'; }
+  if(i1){ i1.style.background=units==='imperial'?'#1E90FF':'transparent'; i1.style.color=units==='imperial'?'#fff':'rgba(255,255,255,0.4)'; }
   const sl = document.getElementById('swim-unit-label');
   const rl = document.getElementById('run-unit-label');
   if(sl) sl.textContent = units==='metric' ? '/ 100m' : '/ 100yd';
@@ -1494,15 +1499,22 @@ function showRpePrompt(dayIndex) {
   prompt.className = 'rpe-prompt';
   prompt.id = 'rpe-prompt';
   prompt.innerHTML = `
-    <div class="rpe-prompt-title">How did that session feel?</div>
-    <div class="rpe-options">
-      ${[1,2,3,4,5].map(n => `
-        <button class="rpe-btn r${n}" onclick="saveRpe(${dayIndex}, ${n}, this)" title="${RPE_LABELS[n]}">
-          ${n}
-        </button>`).join('')}
+    <div style="background:rgba(30,144,255,0.06);border:1px solid rgba(30,144,255,0.2);border-radius:12px;padding:18px;margin-top:12px;">
+      <div class="rpe-prompt-title" style="font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;">How did that session feel?</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:14px;">Your future sessions adapt based on your rating</div>
+      <div class="rpe-options" style="gap:10px;">
+        ${[1,2,3,4,5].map(n => `
+          <button class="rpe-btn r${n}" onclick="saveRpe(${dayIndex}, ${n}, this)" title="${RPE_LABELS[n]}" style="width:52px;height:52px;font-size:16px;">
+            ${n}
+          </button>`).join('')}
+      </div>
+      <div class="rpe-label" style="font-size:12px;margin-top:10px;">
+        <span style="color:#4ade80;">1–2 too easy → next sessions get harder</span>
+        &nbsp;·&nbsp;
+        <span style="color:#f87171;">4–5 too hard → next sessions ease off</span>
+      </div>
+      <div class="rpe-saved" id="rpe-saved">✅ Got it — adjusting your upcoming sessions.</div>
     </div>
-    <div class="rpe-label">1 = Very easy &nbsp;·&nbsp; 5 = All out</div>
-    <div class="rpe-saved" id="rpe-saved">✅ Saved! Thanks for the feedback.</div>
   `;
 
   // Insert after the complete button
