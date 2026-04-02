@@ -39,28 +39,39 @@
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 40px; height: 64px;
-    background: rgba(10,10,10,0.85);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
+    padding: 0 32px; height: 68px;
+    background: #1E90FF;
   }
   .nav-logo {
     display: flex; align-items: center;
     text-decoration: none;
   }
+  .nav-logo img { height: 120px; width: auto; mix-blend-mode: screen; filter: brightness(10); }
   .nav-links { display: flex; gap: 32px; align-items: center; }
   .nav-links a {
-    font-size: 14px; color: var(--muted);
+    font-size: 14px; color: rgba(255,255,255,0.85);
     text-decoration: none; transition: color 0.2s;
   }
   .nav-links a:hover { color: #fff; }
+  .nav-hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; padding:4px; background:none; border:none; }
+  .nav-hamburger span { display:block; width:22px; height:2px; background:#fff; border-radius:2px; transition:all 0.3s; }
+  .nav-hamburger.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
+  .nav-hamburger.open span:nth-child(2) { opacity:0; }
+  .nav-hamburger.open span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
+  .nav-mobile-menu { display:none; position:fixed; top:68px; left:0; right:0; background:#1478d4; padding:16px; flex-direction:column; gap:4px; z-index:99; }
+  .nav-mobile-menu.open { display:flex; }
+  .nav-mobile-menu a { font-size:16px; color:rgba(255,255,255,0.85); text-decoration:none; padding:12px 8px; border-bottom:1px solid rgba(255,255,255,0.15); transition:color 0.2s; }
+  .nav-mobile-menu a:last-child { border-bottom:none; background:#fff; color:#1E90FF !important; text-align:center; border-radius:10px; padding:14px; font-weight:700; margin-top:8px; }
+  .nav-mobile-menu a:hover { color:#fff; }
+  @media(max-width:768px) { .nav-hamburger { display:flex; } .nav-links { display:none !important; } nav { padding: 0 20px; } }
   .nav-cta {
-    background: var(--blue); color: #fff !important;
+    background: rgba(255,255,255,0.15); color: #fff !important;
     padding: 9px 20px; border-radius: 8px;
-    font-weight: 500; font-size: 14px !important;
+    font-weight: 600; font-size: 14px !important;
+    border: 1px solid rgba(255,255,255,0.3);
     transition: background 0.2s !important;
   }
-  .nav-cta:hover { background: #1478d4 !important; }
+  .nav-cta:hover { background: rgba(255,255,255,0.25) !important; }
 
   /* ─── HERO ─── */
   .hero {
@@ -538,7 +549,25 @@
     <a href="/predict.html">Race predictor</a>
     <a href="/plan.html" class="nav-cta">Get my plan →</a>
   </div>
+  <div class="nav-right" id="nav-right-feat" style="display:flex;align-items:center;gap:12px;">
+    <a href="/dashboard.html" class="btn-ghost" id="nav-dashboard-feat" style="display:none;background:transparent;color:rgba(255,255,255,0.9);border:1px solid rgba(255,255,255,0.35);padding:9px 20px;border-radius:8px;font-size:14px;cursor:pointer;text-decoration:none;font-family:'DM Sans',sans-serif;transition:all 0.2s;">Dashboard</a>
+    <a href="/dashboard.html" id="nav-user-feat" style="display:none;align-items:center;gap:6px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);padding:7px 14px;border-radius:8px;font-size:14px;color:#fff;text-decoration:none;font-family:'DM Sans',sans-serif;">
+      <span style="font-size:16px;">👤</span><span id="nav-username-feat"></span>
+    </a>
+    <a href="/plan.html" id="nav-getplan-feat" class="nav-cta" style="display:none;">Get my plan →</a>
+    <a href="/auth.html" id="nav-signin-feat" style="display:none;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:9px 20px;border-radius:8px;font-size:14px;cursor:pointer;text-decoration:none;font-family:'DM Sans',sans-serif;">Sign in</a>
+  </div>
+  <button class="nav-hamburger" id="nav-ham" onclick="toggleFeatMobileNav()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+<div class="nav-mobile-menu" id="nav-mobile-feat">
+  <a href="/index.html">Home</a>
+  <a href="/features.html">Features</a>
+  <a href="/predict.html">Race Predictor</a>
+  <a href="/index.html#pricing-plans">Pricing</a>
+  <a href="/plan.html">Get my free plan →</a>
+</div>
 
 <!-- HERO -->
 <section class="hero">
@@ -984,6 +1013,50 @@ var observer = new IntersectionObserver(function(entries){
 
 document.querySelectorAll('.feature-section, .stats-strip, .quotes-section, .cta-section').forEach(function(el){
   observer.observe(el);
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+<script>
+// Auth state for nav
+(function(){
+  const _url = 'https://aezfxagplaxlmovqbmfd.supabase.co';
+  const _key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
+  const sb = window.supabase.createClient(_url, _key, {auth:{persistSession:true,autoRefreshToken:true,storage:window.localStorage}});
+  sb.auth.getSession().then(function(res){
+    const session = res.data && res.data.session;
+    if(session){
+      const name = (session.user.user_metadata && session.user.user_metadata.full_name) || session.user.email.split('@')[0];
+      const dash = document.getElementById('nav-dashboard-feat');
+      const user = document.getElementById('nav-user-feat');
+      const uname = document.getElementById('nav-username-feat');
+      const getplan = document.getElementById('nav-getplan-feat');
+      if(dash) dash.style.display='inline-flex';
+      if(user){ user.style.display='inline-flex'; }
+      if(uname) uname.textContent = name;
+      if(getplan) getplan.style.display='inline-flex';
+    } else {
+      const signin = document.getElementById('nav-signin-feat');
+      const getplan = document.getElementById('nav-getplan-feat');
+      if(signin) signin.style.display='inline-flex';
+      if(getplan) getplan.style.display='inline-flex';
+    }
+  });
+})();
+</script>
+<script>
+function toggleFeatMobileNav(){
+  var ham = document.getElementById('nav-ham');
+  var menu = document.getElementById('nav-mobile-feat');
+  ham.classList.toggle('open');
+  menu.classList.toggle('open');
+}
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.nav-mobile-menu a').forEach(function(a){
+    a.addEventListener('click', function(){
+      document.getElementById('nav-ham').classList.remove('open');
+      document.getElementById('nav-mobile-feat').classList.remove('open');
+    });
+  });
 });
 </script>
 </body>
