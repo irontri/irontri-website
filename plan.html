@@ -990,8 +990,8 @@ function changeWeek(dir){
 }
 
 async function buildPlan(){
-  const userName = localStorage.getItem('irontri_user_name');
-  if (!userName) {
+  const { data: { session } } = await sb2.auth.getSession();
+  if (!session) {
     localStorage.setItem('irontri_pending_answers', JSON.stringify(A));
     window.location.href = '/auth.html?redirect=plan';
     return;
@@ -1767,8 +1767,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const pending = localStorage.getItem('irontri_pending_answers');
-  const userName = localStorage.getItem('irontri_user_name');
-  if (pending && userName) {
+  if (pending) {
     try {
       const saved = JSON.parse(pending);
       Object.assign(A, saved);
