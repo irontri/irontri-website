@@ -449,7 +449,7 @@ async function loadPlans() {
     const displayName = savedNames[p.id] || p.name || planObj?.planName || p.race || 'Training Plan';
     const isPinned = p.id === pinnedId;
     return `
-      <div class="plan-card${isPinned ? ' pinned' : ''}" onclick="viewPlan('${p.id}')">
+      <div class="plan-card${isPinned ? ' pinned' : ''}" onclick="if(!event.target.closest('.btn-pin'))viewPlan('${p.id}')">
         <div class="plan-card-top">
           <div style="flex:1;min-width:0;">
             <div class="plan-card-title" id="name-display-${p.id}">${isPinned ? '📌 ' : ''}${displayName}</div>
