@@ -1084,7 +1084,7 @@ async function buildPlan(){
     ).join('');
 
     curWeek=0;curDay=null;
-    if(A.startDate){const _t=new Date();_t.setHours(0,0,0,0);const _s=new Date(A.startDate+'T00:00:00');const _d=Math.floor((_t-_s)/(1000*60*60*1000*24));if(_d>=0){curWeek=Math.min(Math.floor(_d/7),planData.weeks.length-1);curDay=_d%7;}}
+    if(A.startDate){const _t=new Date();_t.setHours(0,0,0,0);const _s=new Date(A.startDate+'T00:00:00');const _d=Math.floor((_t-_s)/(1000*60*60*24));if(_d>0){curWeek=Math.min(Math.floor(_d/7),planData.weeks.length-1);curDay=_d%7;}}
     renderWeek();
     try { renderGraph(); } catch(eg) {}
     renderRoadmap();
@@ -1757,7 +1757,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const _today = new Date(); _today.setHours(0,0,0,0);
           const _planStart = new Date(A.startDate + 'T00:00:00');
           const _diff = Math.floor((_today - _planStart) / (1000 * 60 * 60 * 24));
-          if(_diff >= 0) { curWeek = Math.min(Math.floor(_diff/7), planData.weeks.length-1); curDay = _diff%7; }
+          if(_diff > 0) { curWeek = Math.min(Math.floor(_diff/7), planData.weeks.length-1); curDay = _diff%7; }
         }
         renderWeek();
         try{renderGraph();}catch(eg){}
