@@ -73,10 +73,6 @@
     .activity-stat-lbl{font-size:10px;color:var(--faint);margin-top:1px;}
     .plan-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:16px;transition:all 0.2s;cursor:pointer;}
     .plan-card:hover{border-color:rgba(30,144,255,0.3);background:rgba(30,144,255,0.05);}
-    .plan-card.pinned{border-color:rgba(232,162,64,0.4);background:rgba(232,162,64,0.04);}
-    .btn-pin{background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;transition:all 0.2s;}
-    .btn-pin:hover{border-color:rgba(232,162,64,0.5);color:#e8a240;}
-    .btn-pin.active{border-color:rgba(232,162,64,0.5);color:#e8a240;background:rgba(232,162,64,0.08);}
     .plan-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px;}
     .plan-card-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;}
     .plan-card-date{font-size:12px;color:var(--faint);}
@@ -440,7 +436,7 @@ async function loadPlans() {
   document.getElementById('s-race').textContent=plans[0].race?plans[0].race.split(' ')[0]:'—';
   const pinnedId = localStorage.getItem('irontri_pinned_plan');
   const sorted = [...plans].sort((a,b) => { if(String(a.id)===pinnedId)return -1; if(String(b.id)===pinnedId)return 1; return 0; });
-  document.getElementById('plans-list').innerHTML = sorted.map(p => {
+  document.getElementById('plans-list').innerHTML = sorted.map((p, planIndex) => {
     const date = new Date(p.created_at).toLocaleString('en-AU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
     let planObj = null;
     try { planObj = JSON.parse(p.plan_data); } catch(e) {}
@@ -449,12 +445,11 @@ async function loadPlans() {
     try { const fresh = JSON.parse(p.plan_data); weeks = fresh?.weeks?.length || weeks; } catch(e) {}
     const savedNames = JSON.parse(localStorage.getItem('irontri_plan_names') || '{}');
     const displayName = savedNames[p.id] || p.name || planObj?.planName || p.race || 'Training Plan';
-    const isPinned = String(p.id) === pinnedId;
     return `
-      <div class="plan-card${isPinned ? ' pinned' : ''}" onclick="if(!event.target.closest('.btn-pin')){viewPlan('${p.id}')}">
+      <div class="plan-card" onclick="viewPlan('${p.id}')">
         <div class="plan-card-top">
           <div style="flex:1;min-width:0;">
-            <div class="plan-card-title" id="name-display-${p.id}">${isPinned ? '📌 ' : ''}${displayName}</div>
+            <div class="plan-card-title" id="name-display-${p.id}">${displayName}</div>
             <div class="plan-card-date">Created ${date}</div>
           </div>
           <button onclick="event.stopPropagation();startRename('${p.id}')" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(30,144,255,0.4)';this.style.color='#1E90FF'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.4)'">✏️ Rename</button>
@@ -473,8 +468,7 @@ async function loadPlans() {
         <div class="plan-card-actions">
           <button class="btn-view" onclick="event.stopPropagation();viewPlan('${p.id}')">View plan →</button>
           <button class="btn-date" onclick="event.stopPropagation();showStartDateEditor('${p.id}', '${planObj?.startDate || ''}')" >📅 Change date</button>
-          <button onclick="event.stopPropagation();pinPlan('${p.id}')" style="background:${isPinned ? 'rgba(232,162,64,0.1)' : 'transparent'};border:1px solid ${isPinned ? 'rgba(232,162,64,0.4)' : 'rgba(255,255,255,0.12)'};color:${isPinned ? '#e8a240' : 'rgba(255,255,255,0.4)'};padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">📌 ${isPinned ? 'Unpin' : 'Pin to top'}</button>
-          <button class="btn-delete" onclick="event.stopPropagation();deletePlan('${p.id}')">Delete</button>
+          ${planIndex > 0 ? `<button onclick="event.stopPropagation();pinPlan('${p.id}')" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">📌 Move to top</button>` : ''}<button class="btn-delete" onclick="event.stopPropagation();deletePlan('${p.id}')">Delete</button>
         </div>
         <div id="start-date-editor-${p.id}" style="display:none;" onclick="event.stopPropagation()"></div
         </div>
