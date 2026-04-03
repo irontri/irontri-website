@@ -1125,6 +1125,17 @@ async function buildPlan(){
 
   }catch(e){
     console.error('Plan error:',e);
+
+    // Auto-retry once before showing error UI
+    if (!window._planRetried) {
+      window._planRetried = true;
+      console.log('Auto-retrying plan generation...');
+      showIronToast('Generation timed out — retrying automatically...', '#fb923c');
+      setTimeout(() => buildPlan(), 2000);
+      return;
+    }
+    window._planRetried = false;
+
     document.getElementById('gen').style.display='none';
     document.querySelector('.prog-wrap').style.display='none';
     document.getElementById('plan').style.display='block';
