@@ -162,17 +162,13 @@
     } else if (daysLeft > 0) {
       planStatus.textContent = 'Free trial — ' + daysLeft + ' days left';
       planStatus.style.color = daysLeft <= 3 ? '#fb923c' : 'rgba(255,255,255,0.6)';
-      if (plan) {
-        document.getElementById('upgrade-btn-wrap').style.display = 'block';
-        document.getElementById('upgrade-link').href = '/plan.html?load=' + plan.id;
-      }
+      document.getElementById('upgrade-btn-wrap').style.display = 'block';
+      if (plan) document.getElementById('upgrade-link').setAttribute('data-plan-id', plan.id);
     } else {
       planStatus.textContent = 'Trial ended';
       planStatus.style.color = '#fb923c';
-      if (plan) {
-        document.getElementById('upgrade-btn-wrap').style.display = 'block';
-        document.getElementById('upgrade-link').href = '/plan.html?load=' + plan.id;
-      }
+      document.getElementById('upgrade-btn-wrap').style.display = 'block';
+      if (plan) document.getElementById('upgrade-link').setAttribute('data-plan-id', plan.id);
     }
 
     const completionResult = await sb.from('completions').select('week_num').eq('user_id', user.id);
