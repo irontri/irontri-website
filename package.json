@@ -1,0 +1,9 @@
+{
+  "name": "irontri-website",
+  "version": "1.0.0",
+  "dependencies": {
+    "stripe": "^14.0.0",
+    "@supabase/supabase-js": "^2.49.1",
+    "@anthropic-ai/sdk": "^0.20.0"
+  }
+}
