@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
   const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
   try {
-    const { userId, email } = req.body;
+    const { userId, email, planId } = req.body;
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -21,8 +21,8 @@ module.exports = async (req, res) => {
       ],
       customer_email: email,
       client_reference_id: userId,
-      success_url: 'https://irontriapp.com/plan.html?payment=success',
-      cancel_url: 'https://irontriapp.com/plan.html?payment=cancelled',
+      success_url: `https://irontriapp.com/plan.html?load=${planId}&payment=success`,
+      cancel_url: `https://irontriapp.com/plan.html?load=${planId}&payment=cancelled`,
     });
 
     res.status(200).json({ url: session.url });
