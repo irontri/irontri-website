@@ -28,7 +28,7 @@ SESSION QUALITY RULES (apply to every session):
 - coachNote: explain WHY this session exists this week
 - weeklyNarrative: 2 sentences on the week's purpose
 - day field: day name e.g. "Monday" not a number
-- type field: capitalised e.g. "Swim", "Bike", "Run", "Brick", "Strength", "Rest"
+- type field: MUST be EXACTLY one of: "Swim", "Bike", "Run", "Brick", "Strength", "Rest" — NO other values allowed. Never use "Recovery", "Threshold", "Endurance", "Vo2max" or any other custom type.
 
 REALISTIC PACE TARGETS BY LEVEL:
 - Beginner cyclist: ${isImperial ? '12-18 mph' : '20-28 km/h'}. Do NOT exceed ${isImperial ? '20 mph' : '30 km/h'} for beginners.
@@ -53,7 +53,7 @@ JSON structure for weeks:
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
-        max_tokens: 6000,
+        max_tokens: 8000,
         system: systemPrompt,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -88,6 +88,6 @@ JSON structure for weeks:
     return res.status(200).json({ plan: planText });
   } catch(e) {
     console.error('Handler error:', e);
-    return res.status(500).json({ error: 'Plan generation timed out. Please try again — it usually works on the second attempt.' });
+    return res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 }
