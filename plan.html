@@ -836,6 +836,23 @@ function fmtDur(mins) {
   return m > 0 ? h + 'h ' + m + 'm' : h + 'h';
 }
 
+function correctPhases(weeks) {
+  if (!weeks || weeks.length === 0) return;
+  const total = weeks.length;
+  // Check if phases are wrong (e.g. more than 35% Base)
+  const baseCount = weeks.filter(w => w.phase === 'Base').length;
+  if (baseCount / total <= 0.35) return; // phases look fine
+  // Reassign phases based on position
+  weeks.forEach((w, i) => {
+    const pct = (i + 1) / total;
+    if (i === total - 1) w.phase = 'Race Week';
+    else if (pct > 0.88) w.phase = 'Taper';
+    else if (pct > 0.68) w.phase = 'Peak';
+    else if (pct > 0.30) w.phase = 'Build';
+    else w.phase = 'Base';
+  });
+}
+
 function renderWeek(){
   const w=planData.weeks[curWeek];
   if(!w)return;
@@ -1844,6 +1861,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
         planData = JSON.parse(txt);
         if(planData.weeks){const _dn=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];planData.weeks.forEach(wk=>{if(wk.days)wk.days.forEach((d,i)=>{if(d.type)d.type=d.type.charAt(0).toUpperCase()+d.type.slice(1).toLowerCase();if(typeof d.day==='number')d.day=_dn[d.day-1]||_dn[i]||'Monday';});});}
+        correctPhases(planData.weeks);
         A.race = plan.race || planData.race || 'Triathlon';
         A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
         A.startDate = (()=>{ try { const ov=JSON.parse(localStorage.getItem('irontri_start_override')||'{}'); return ov[loadId] || planData.startDate || ''; } catch(e){ return planData.startDate || ''; } })();
