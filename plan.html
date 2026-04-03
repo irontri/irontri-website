@@ -818,14 +818,17 @@ const typeInfo={
   'Transition':   {icon:'🔥', cls:'type-brick',    color:'#a78bfa', label:'T-session'},
 };
 
-function resolveType(rawType, name) {
+function resolveType(rawType, name, warmup, mainset) {
   if (!rawType) return typeInfo['Rest'];
   if (typeInfo[rawType]) return typeInfo[rawType];
-  // Check session name for sport keywords first
-  const nameLower = (name || '').toLowerCase();
-  if (nameLower.includes('swim') || nameLower.includes('pool') || nameLower.includes('open water') || nameLower.includes('stroke') || nameLower.includes('kick') || nameLower.includes('aqua') || nameLower.includes('restoration flow')) return typeInfo['Swim'];
-  if (nameLower.includes('bike') || nameLower.includes('ride') || nameLower.includes('cycl') || nameLower.includes('watt') || nameLower.includes('cadence') || nameLower.includes('zwift')) return typeInfo['Bike'];
-  if (nameLower.includes('run') || nameLower.includes('jog') || nameLower.includes('stride') || nameLower.includes('pace') || nameLower.includes('tempo run') || nameLower.includes('track')) return typeInfo['Run'];
+  // Combine all text for keyword detection
+  const combined = ((name||'')+' '+(warmup||'')+' '+(mainset||'')).toLowerCase();
+  // Check run first (most specific keywords like /km, spm)
+  if (combined.includes('/km') || combined.includes('spm') || combined.includes('min/km') || combined.includes('easy run') || combined.includes('easy jog') || (combined.includes('run') && !combined.includes('running drills'))) return typeInfo['Run'];
+  // Check swim
+  if (combined.includes('swim') || combined.includes('/100m') || combined.includes('kick') || combined.includes('stroke') || combined.includes('drill') || combined.includes('pool') || combined.includes('open water') || combined.includes('css')) return typeInfo['Swim'];
+  // Check bike
+  if (combined.includes('bike') || combined.includes('rpm') || combined.includes('watt') || combined.includes('km/h') || combined.includes('cadence') || combined.includes('spin') || combined.includes('ride') || combined.includes('cycl') || combined.includes('ftp')) return typeInfo['Bike'];
   // Fall back to type keyword matching
   const lower = rawType.toLowerCase();
   if (lower.includes('swim')) return typeInfo['Swim'];
@@ -933,7 +936,7 @@ function renderWeek(){
   const allDaysFull=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('cal').innerHTML=w.days.map((d,i)=>{
-    const t=resolveType(d.type, d.name);
+    const t=resolveType(d.type, d.name, d.warmup, d.mainset);
     const isActive=curDay===i;
     const isComplete=completions.has(`${curWeek}-${i}`);
     const dayDate = new Date(planStartDate);
@@ -961,7 +964,7 @@ function selectDay(i){
   curDay=i;
   const w=planData.weeks[curWeek];
   const d=w.days[i];
-  const t=resolveType(d.type, d.name);
+  const t=resolveType(d.type, d.name, d.warmup, d.mainset);
   const sd=document.getElementById('sd');
 
   document.querySelectorAll('.cal-day').forEach((el,idx)=>{
