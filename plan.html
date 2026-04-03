@@ -2402,7 +2402,7 @@ async function startCheckout() {
     const r = await fetch('/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: session.user.id, email: session.user.email })
+      body: JSON.stringify({ userId: session.user.id, email: session.user.email, planId: new URLSearchParams(location.search).get('load') })
     });
     const d = await r.json();
     if (d.url) { window.location.href = d.url; }
