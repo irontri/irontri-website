@@ -843,7 +843,7 @@ function renderWeek(){
   }
 
   const sessions=w.days.filter(d=>d.type!=='Rest').length;
-  const totalMin=w.days.reduce((a,d)=>a+(d.duration||0),0);
+  const totalMin=w.days.reduce((a,d)=>{ const dur=typeof d.duration==='string'?parseFloat(d.duration)||0:(d.duration||0); return a+dur; },0);
   const hrs=Math.floor(totalMin/60);
   const mins=totalMin%60;
   document.getElementById('wsummary').innerHTML=`
@@ -853,9 +853,13 @@ function renderWeek(){
 
   let easyMin=0, modMin=0, hardMin=0;
   w.days.forEach(d=>{
-    if(d.type==='Rest'||!d.duration)return;
+    if(d.type==='Rest')return;
+    // Parse duration — handle both number and string like "45min"
+    let dur=d.duration;
+    if(typeof dur==='string') dur=parseFloat(dur)||0;
+    if(!dur)return;
+    // Parse effort — handle both number and string like "Hard"
     let e=d.effort;
-    // Normalise string effort values to numbers
     if(typeof e==='string'){
       const el=e.toLowerCase();
       if(el.includes('very hard')||el.includes('maximum')||el.includes('max'))e=9;
@@ -867,9 +871,9 @@ function renderWeek(){
       else e=5;
     }
     e=Number(e)||5;
-    if(e<=6) easyMin+=d.duration;
-    else if(e<=7) modMin+=d.duration;
-    else hardMin+=d.duration;
+    if(e<=6) easyMin+=dur;
+    else if(e<=7) modMin+=dur;
+    else hardMin+=dur;
   });
   const totalIntMin=easyMin+modMin+hardMin||1;
   const easyPct=Math.round(easyMin/totalIntMin*100);
