@@ -72,7 +72,7 @@
       <div>
         <div class="profile-name" id="p-name">—</div>
         <div class="profile-email" id="p-email">—</div>
-        <div class="member-badge">⭐ Founding member</div>
+        <div id="member-badge" style="display:none;" class="member-badge">⭐ Founding member</div>
       </div>
     </div>
 
@@ -110,7 +110,7 @@
       </div>
       <div class="info-row">
         <span class="info-key">Plan</span>
-        <span class="info-val" style="color:var(--blue);">Free — Founding member</span>
+        <span class="info-val" id="p-plan-status" style="color:var(--blue);">Free trial</span>
       </div>
     </div>
 
@@ -147,14 +147,35 @@
     document.getElementById('p-email2').textContent = email;
     document.getElementById('p-joined').textContent = joined;
 
-    const planResult = await sb.from('plans').select('*', { count:'exact', head:true }).eq('user_id', user.id);
+    // Fetch plan to check founding member / paid status
+    const { data: plans, count } = await sb.from('plans').select('*', { count:'exact' }).eq('user_id', user.id).order('created_at', { ascending: false });
+
+    const plan = plans && plans.length > 0 ? plans[0] : null;
+    const isFounding = plan && plan.is_founding_member === true;
+    const isPaid = plan && plan.is_paid === true;
+    const createdAt = new Date(user.created_at);
+    const daysSince = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+    const daysLeft = Math.max(0, 30 - daysSince);
+
+    // Show founding member badge and plan status
+    if (isFounding) {
+      document.getElementById('member-badge').style.display = 'inline-block';
+      document.getElementById('p-plan-status').textContent = 'Free — Founding member';
+      document.getElementById('p-plan-status').style.color = '#4ade80';
+    } else if (isPaid) {
+      document.getElementById('p-plan-status').textContent = 'Active — $20/month';
+      document.getElementById('p-plan-status').style.color = '#1E90FF';
+    } else {
+      document.getElementById('p-plan-status').textContent = daysLeft > 0 ? 'Free trial — ' + daysLeft + ' days left' : 'Trial ended';
+      document.getElementById('p-plan-status').style.color = daysLeft > 3 ? 'rgba(255,255,255,0.6)' : '#fb923c';
+    }
+
     const completionResult = await sb.from('completions').select('week_num').eq('user_id', user.id);
     const completionData = completionResult.data;
-
     const sessions = completionData ? completionData.length : 0;
     const weeks = completionData ? new Set(completionData.map(function(c){ return c.week_num; })).size : 0;
 
-    document.getElementById('s-plans').textContent    = planResult.count || 0;
+    document.getElementById('s-plans').textContent    = count || 0;
     document.getElementById('s-sessions').textContent = sessions;
     document.getElementById('s-weeks').textContent    = weeks;
 
