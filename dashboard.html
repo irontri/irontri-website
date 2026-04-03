@@ -214,12 +214,12 @@
     </div>
 
     <!-- TRIAL BANNER -->
-    <div id="trial-banner" style="display:none;background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.25);border-radius:14px;padding:16px 20px;margin-bottom:20px;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <div id="trial-banner" style="display:none;background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.25);border-radius:14px;padding:16px 20px;margin-bottom:20px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
       <div>
         <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:2px;">⏳ <span id="trial-days-left">30</span> days left on your free trial</div>
         <div style="font-size:12px;color:rgba(255,255,255,0.45);">Upgrade to keep your plan going all the way to race day.</div>
       </div>
-      <a href="/plan.html" style="background:#1E90FF;color:#fff;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;font-family:'DM Sans',sans-serif;">Upgrade — $20/mo</a>
+      <button id="trial-upgrade-btn" onclick="upgradeNow()" style="background:#1E90FF;color:#fff;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;font-family:'DM Sans',sans-serif;border:none;cursor:pointer;">Upgrade — $20/mo</button>
     </div>
     <!-- END TRIAL BANNER -->
 
@@ -476,7 +476,9 @@ async function loadPlans() {
     } else if (!isFounding && daysLeft > 0) {
       const el = document.getElementById('trial-banner');
       const dl = document.getElementById('trial-days-left');
+      const upgradeBtn = document.getElementById('trial-upgrade-btn');
       if (el && dl) { dl.textContent = daysLeft; el.style.display = 'flex'; }
+      if (upgradeBtn) upgradeBtn.href = '/plan.html?load=' + plan.id;
     }
   }
   // ── END TRIAL / PAID BANNER ──────────────────────────────────────────────
@@ -530,6 +532,29 @@ async function loadPlans() {
 }
 
 function viewPlan(id) { window.location.href = '/plan.html?load=' + id; }
+
+async function upgradeNow() {
+  const btn = document.getElementById('trial-upgrade-btn');
+  if (btn) { btn.textContent = 'Redirecting...'; btn.disabled = true; }
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = '/auth.html'; return; }
+    const { data: plans } = await sb.from('plans').select('id').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1);
+    const planId = plans?.[0]?.id;
+    const r = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: session.user.id, email: session.user.email, planId })
+    });
+    const d = await r.json();
+    if (d.url) { window.location.href = d.url; }
+    else { alert('Something went wrong. Please try again.'); }
+  } catch(e) {
+    console.error('Upgrade error:', e);
+    alert('Something went wrong. Please try again.');
+  }
+  if (btn) { btn.textContent = 'Upgrade — $20/mo'; btn.disabled = false; }
+}
 
 async function manageSubscription() {
   const btn = event.target;
