@@ -53,7 +53,7 @@ JSON structure for weeks:
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
-        max_tokens: 8000,
+        max_tokens: 6000,
         system: systemPrompt,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -88,6 +88,6 @@ JSON structure for weeks:
     return res.status(200).json({ plan: planText });
   } catch(e) {
     console.error('Handler error:', e);
-    return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    return res.status(500).json({ error: 'Plan generation timed out. Please try again — it usually works on the second attempt.' });
   }
 }
