@@ -213,7 +213,23 @@
       <p id="welcome-sub">Here's your training overview</p>
     </div>
 
-    
+    <!-- TRIAL BANNER -->
+    <div id="trial-banner" style="display:none;background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.25);border-radius:14px;padding:16px 20px;margin-bottom:20px;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:2px;">⏳ <span id="trial-days-left">30</span> days left on your free trial</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.45);">Upgrade to keep your plan going all the way to race day.</div>
+      </div>
+      <a href="/plan.html" style="background:#1E90FF;color:#fff;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;font-family:'DM Sans',sans-serif;">Upgrade — $20/mo</a>
+    </div>
+    <!-- END TRIAL BANNER -->
+
+    <!-- MANAGE SUBSCRIPTION BANNER (paid users) -->
+    <div id="manage-sub-banner" style="display:none;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:14px;padding:14px 20px;margin-bottom:20px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div style="font-size:13px;color:rgba(255,255,255,0.6);">✅ Active subscription</div>
+      <button onclick="manageSubscription()" style="background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);padding:7px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">Manage subscription</button>
+    </div>
+    <!-- END MANAGE SUBSCRIPTION BANNER -->
+
   <!-- TODAY'S SESSION -->
   <div class="race-countdown" id="race-countdown">
     <div><div class="rc-days" id="rc-days"></div><div class="rc-label">days to race</div></div>
@@ -444,6 +460,26 @@ async function loadPlans() {
   document.getElementById('loading').style.display='none';
   document.getElementById('content').style.display='block';
   loadStreakAndRing();
+
+  // ── TRIAL / PAID BANNER ─────────────────────────────────────────────────
+  if (plans && plans.length > 0) {
+    const plan = plans[0];
+    const isFounding = plan.is_founding_member === true;
+    const isPaid = plan.is_paid === true;
+    const createdAt = new Date(plan.created_at);
+    const daysSince = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+    const daysLeft = Math.max(0, 30 - daysSince);
+
+    if (isPaid) {
+      const el = document.getElementById('manage-sub-banner');
+      if (el) el.style.display = 'flex';
+    } else if (!isFounding && daysLeft > 0) {
+      const el = document.getElementById('trial-banner');
+      const dl = document.getElementById('trial-days-left');
+      if (el && dl) { dl.textContent = daysLeft; el.style.display = 'flex'; }
+    }
+  }
+  // ── END TRIAL / PAID BANNER ──────────────────────────────────────────────
   if (error || !plans || plans.length===0) {
     document.getElementById('s-plans').textContent='0';
     document.getElementById('plans-list').innerHTML=`<div class="empty"><div class="empty-icon">🏊🚴🏃</div><h3>No plans yet</h3><p>Build your first personalised triathlon training plan — it only takes 2 minutes.</p><a href="/plan.html" class="btn-create">Build my first plan →</a></div>`;
@@ -494,6 +530,27 @@ async function loadPlans() {
 }
 
 function viewPlan(id) { window.location.href = '/plan.html?load=' + id; }
+
+async function manageSubscription() {
+  const btn = event.target;
+  btn.textContent = 'Loading...';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/customer-portal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id })
+    });
+    const d = await r.json();
+    if (d.url) { window.location.href = d.url; }
+    else { alert('Could not open billing portal. Please try again.'); }
+  } catch(e) {
+    console.error('Portal error:', e);
+    alert('Something went wrong. Please try again.');
+  }
+  btn.textContent = 'Manage subscription';
+  btn.disabled = false;
+}
 
 function startRename(id) {
   document.getElementById('rename-form-' + id).style.display = 'block';
