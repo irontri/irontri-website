@@ -1,9 +1,5 @@
 <html lang="en"><head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
-  <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="irontri" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>irontri — Get Your Training Plan</title>
   <meta name="description" content="Answer 12 questions and get a fully personalised triathlon training plan in under 30 seconds. Sprint, Olympic, 70.3, T100 and Full Ironman. Free to start." />
@@ -858,7 +854,19 @@ function renderWeek(){
   let easyMin=0, modMin=0, hardMin=0;
   w.days.forEach(d=>{
     if(d.type==='Rest'||!d.duration)return;
-    const e=d.effort||5;
+    let e=d.effort;
+    // Normalise string effort values to numbers
+    if(typeof e==='string'){
+      const el=e.toLowerCase();
+      if(el.includes('very hard')||el.includes('maximum')||el.includes('max'))e=9;
+      else if(el.includes('hard')||el.includes('high'))e=8;
+      else if(el.includes('moderate-hard')||el.includes('mod-hard'))e=7;
+      else if(el.includes('moderate')||el.includes('medium'))e=6;
+      else if(el.includes('easy-moderate')||el.includes('easy mod'))e=5;
+      else if(el.includes('easy')||el.includes('low'))e=4;
+      else e=5;
+    }
+    e=Number(e)||5;
     if(e<=6) easyMin+=d.duration;
     else if(e<=7) modMin+=d.duration;
     else hardMin+=d.duration;
@@ -1129,17 +1137,6 @@ async function buildPlan(){
 
   }catch(e){
     console.error('Plan error:',e);
-
-    // Auto-retry once before showing error UI
-    if (!window._planRetried) {
-      window._planRetried = true;
-      console.log('Auto-retrying plan generation...');
-      showIronToast('Generation timed out — retrying automatically...', '#fb923c');
-      setTimeout(() => buildPlan(), 2000);
-      return;
-    }
-    window._planRetried = false;
-
     document.getElementById('gen').style.display='none';
     document.querySelector('.prog-wrap').style.display='none';
     document.getElementById('plan').style.display='block';
