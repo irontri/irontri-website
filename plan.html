@@ -795,14 +795,43 @@ const HR_ZONES = {
 
 // ── TYPE INFO — single source of truth for colours, icons, labels ──
 const typeInfo={
-  'Swim':    {icon:'🏊', cls:'type-swim',     color:'#38bdf8', label:'Swim'},
-  'Bike':    {icon:'🚴', cls:'type-bike',     color:'#fb923c', label:'Bike'},
-  'Run':     {icon:'🏃', cls:'type-run',      color:'#4ade80', label:'Run'},
-  'Brick':   {icon:'🔥', cls:'type-brick',    color:'#a78bfa', label:'Brick'},
-  'Strength':{icon:'💪', cls:'type-strength', color:'#fbbf24', label:'Strength'},
-  'Rest':    {icon:'😴', cls:'type-rest',     color:'rgba(255,255,255,0.3)', label:'Rest'},
-  'Race':    {icon:'🏁', cls:'type-race',     color:'#f87171', label:'Race'}
+  'Swim':         {icon:'🏊', cls:'type-swim',     color:'#38bdf8', label:'Swim'},
+  'Bike':         {icon:'🚴', cls:'type-bike',     color:'#fb923c', label:'Bike'},
+  'Run':          {icon:'🏃', cls:'type-run',      color:'#4ade80', label:'Run'},
+  'Brick':        {icon:'🔥', cls:'type-brick',    color:'#a78bfa', label:'Brick'},
+  'Strength':     {icon:'💪', cls:'type-strength', color:'#fbbf24', label:'Strength'},
+  'Rest':         {icon:'😴', cls:'type-rest',     color:'rgba(255,255,255,0.3)', label:'Rest'},
+  'Race':         {icon:'🏁', cls:'type-race',     color:'#f87171', label:'Race'},
+  // Non-standard AI-generated types — map to closest equivalent
+  'Recovery':     {icon:'🏃', cls:'type-run',      color:'#4ade80', label:'Recovery'},
+  'Threshold':    {icon:'🏃', cls:'type-run',      color:'#4ade80', label:'Threshold'},
+  'Endurance':    {icon:'🚴', cls:'type-bike',     color:'#fb923c', label:'Endurance'},
+  'Long endurance':{icon:'🚴',cls:'type-bike',     color:'#fb923c', label:'Long ride'},
+  'Vo2max':       {icon:'🏃', cls:'type-run',      color:'#4ade80', label:'VO2'},
+  'Interval':     {icon:'🏃', cls:'type-run',      color:'#4ade80', label:'Interval'},
+  'Tempo':        {icon:'🏃', cls:'type-run',      color:'#4ade80', label:'Tempo'},
+  'Easy':         {icon:'🏃', cls:'type-run',      color:'#4ade80', label:'Easy'},
+  'Long run':     {icon:'🏃', cls:'type-run',      color:'#4ade80', label:'Long run'},
+  'Long ride':    {icon:'🚴', cls:'type-bike',     color:'#fb923c', label:'Long ride'},
+  'Open water':   {icon:'🏊', cls:'type-swim',     color:'#38bdf8', label:'OW Swim'},
+  'Pool':         {icon:'🏊', cls:'type-swim',     color:'#38bdf8', label:'Pool'},
+  'Transition':   {icon:'🔥', cls:'type-brick',    color:'#a78bfa', label:'T-session'},
 };
+
+function resolveType(rawType) {
+  if (!rawType) return typeInfo['Rest'];
+  if (typeInfo[rawType]) return typeInfo[rawType];
+  // Case-insensitive fallback
+  const lower = rawType.toLowerCase();
+  if (lower.includes('swim')) return typeInfo['Swim'];
+  if (lower.includes('bike') || lower.includes('cycl') || lower.includes('ride')) return typeInfo['Bike'];
+  if (lower.includes('run') || lower.includes('jog') || lower.includes('tempo') || lower.includes('interval') || lower.includes('threshold') || lower.includes('vo2') || lower.includes('recovery') || lower.includes('easy') || lower.includes('endur')) return typeInfo['Run'];
+  if (lower.includes('brick') || lower.includes('transition')) return typeInfo['Brick'];
+  if (lower.includes('strength') || lower.includes('gym')) return typeInfo['Strength'];
+  if (lower.includes('race')) return typeInfo['Race'];
+  if (lower.includes('rest') || lower.includes('off')) return typeInfo['Rest'];
+  return typeInfo['Rest'];
+}
 
 
 function fmtDur(mins) {
@@ -899,7 +928,7 @@ function renderWeek(){
   const allDaysFull=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('cal').innerHTML=w.days.map((d,i)=>{
-    const t=typeInfo[d.type]||typeInfo['Rest'];
+    const t=resolveType(d.type);
     const isActive=curDay===i;
     const isComplete=completions.has(`${curWeek}-${i}`);
     const dayDate = new Date(planStartDate);
@@ -927,7 +956,7 @@ function selectDay(i){
   curDay=i;
   const w=planData.weeks[curWeek];
   const d=w.days[i];
-  const t=typeInfo[d.type]||typeInfo['Rest'];
+  const t=resolveType(d.type);
   const sd=document.getElementById('sd');
 
   document.querySelectorAll('.cal-day').forEach((el,idx)=>{
