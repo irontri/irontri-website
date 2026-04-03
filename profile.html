@@ -109,7 +109,7 @@
     <!-- ACTIONS -->
     <div class="actions-section">
       <div id="upgrade-btn-wrap" style="display:none;">
-        <a href="/plan.html" class="btn-upgrade" id="upgrade-link">⚡ Upgrade to keep training →</a>
+        <button onclick="upgradeNow()" class="btn-upgrade" id="upgrade-link">⚡ Upgrade to keep training — $20/mo</button>
       </div>
       <button class="btn-danger" onclick="logOut()">Log out of irontri</button>
     </div>
@@ -186,6 +186,29 @@
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('profile-content').style.display = 'block';
+  }
+
+  async function upgradeNow() {
+    const btn = document.getElementById('upgrade-link');
+    if (btn) { btn.textContent = 'Redirecting to checkout...'; btn.disabled = true; }
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { window.location.href = '/auth.html'; return; }
+      const { data: plans } = await sb.from('plans').select('id').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1);
+      const planId = plans?.[0]?.id;
+      const r = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: session.user.id, email: session.user.email, planId })
+      });
+      const d = await r.json();
+      if (d.url) { window.location.href = d.url; }
+      else { alert('Something went wrong. Please try again.'); }
+    } catch(e) {
+      console.error('Upgrade error:', e);
+      alert('Something went wrong. Please try again.');
+    }
+    if (btn) { btn.textContent = '⚡ Upgrade to keep training — $20/mo'; btn.disabled = false; }
   }
 
   async function logOut() {
