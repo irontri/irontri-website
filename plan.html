@@ -1748,6 +1748,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const loadId = urlParams.get('load');
   if (loadId) window.currentPlanId = loadId;
+
+  // Handle Stripe redirect
+  const paymentStatus = urlParams.get('payment');
+  if (paymentStatus === 'success') {
+    setTimeout(() => showIronToast('🎉 Payment successful! Welcome to irontri.', '#4ade80'), 1500);
+  }
+
   if (loadId) {
     try {
       document.getElementById('quiz-wrap').style.display = 'none';
@@ -1763,6 +1770,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const { data: plan, error } = await sb2.from('plans').select('*').eq('id', loadId).single();
       if (!error && plan) {
+
+        // ── PAYWALL CHECK ────────────────────────────────────────────────────
+        const isFounding = plan.is_founding_member === true;
+        const isPaid = plan.is_paid === true;
+        const createdAt = plan.created_at ? new Date(plan.created_at) : new Date();
+        const daysSinceSignup = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+        const trialDaysLeft = Math.max(0, 30 - daysSinceSignup);
+        window._isPaid = isPaid;
+        window._isFounding = isFounding;
+        window._trialDaysLeft = trialDaysLeft;
+        window._planId = loadId;
+
+        // Show trial banner for free users still in trial
+        if (!isFounding && !isPaid && trialDaysLeft > 0) {
+          const banner = document.getElementById('trial-banner');
+          if (banner) {
+            document.getElementById('trial-days-left').textContent = trialDaysLeft;
+            banner.style.display = 'flex';
+          }
+        }
+
+        // Trial expired — show paywall, stop loading
+        if (!isFounding && !isPaid && trialDaysLeft === 0) {
+          document.getElementById('gen').style.display = 'none';
+          document.getElementById('quiz-wrap').style.display = 'none';
+          document.querySelector('.prog-wrap').style.display = 'none';
+          showPaywall();
+          return;
+        }
+        // ── END PAYWALL CHECK ────────────────────────────────────────────────
+
         let txt = plan.plan_data || '';
         txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
         planData = JSON.parse(txt);
@@ -2355,6 +2393,32 @@ function renderRoadmap(){if(!planData||!planData.weeks)return;const el=document.
   var pbc=document.getElementById("pdf-download-btn");if(total>=tw&&pbc){pbc.disabled=false;pbc.textContent="✅ Download Full Plan PDF";pbc.style.cssText="background:rgba(74,222,128,0.15);border:2px solid #4ade80;color:#4ade80;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;";}
 }
 function downloadPDF(){if(!planData||!planData.weeks)return;const race=planData.raceDate||A.date||"",name=A.name||localStorage.getItem("irontri_user_name")||"Athlete";let html="<html><head><meta charset=\"UTF-8\"><style>body{font-family:Arial,sans-serif;font-size:12px;color:#111;max-width:800px;margin:0 auto;padding:20px;}h2{font-size:15px;color:#1E90FF;border-bottom:2px solid #1E90FF;padding-bottom:4px;margin:18px 0 6px;}.s{margin-bottom:8px;padding:8px 10px;border-left:3px solid #ccc;background:#f9f9f9;}.swim{border-color:#38bdf8;}.bike{border-color:#fb923c;}.run{border-color:#4ade80;}.brick{border-color:#a78bfa;}</style></head><body>";html+="<h1>"+name+"'s "+(A.race||planData.race||"Training Plan")+"</h1><p>"+planData.weeks.length+" weeks"+(race?" · Race: "+new Date(race+"T00:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"long",year:"numeric"}):"")+"</p>";planData.weeks.forEach((wk,wi)=>{const tm=wk.days.reduce((a,d)=>a+(d.duration||0),0);html+="<h2>Week "+(wi+1)+" — "+(wk.phase||"")+" · "+fmtDur(tm)+"</h2>";if(wk.weeklyNarrative)html+="<p style=\"font-style:italic;font-size:11px;color:#555;\">"+ wk.weeklyNarrative+"</p>";wk.days.forEach(d=>{const t=(d.type||"Rest").toLowerCase();if(t==="rest")return;html+="<div class=\"s "+t+"\"><strong>"+(d.name||d.type)+"</strong> · "+fmtDur(d.duration||0)+(d.effort?" · RPE "+d.effort+"/10":"")+"<br>"+(d.mainset?"<span style=\"font-size:11px;\">"+ d.mainset+"</span><br>":"")+(d.coachNote?"<em style=\"font-size:10px;color:#666;\">"+ d.coachNote+"</em>":"")+"</div>";});});html+="</body></html>";const blob=new Blob([html],{type:"text/html"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name.replace(/[^a-z0-9]/gi,"_")+"_Training_Plan.html";a.click();}
+async function startCheckout() {
+  const btn = document.getElementById('checkout-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Redirecting...'; }
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (!session) { window.location.href = '/auth.html'; return; }
+    const r = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: session.user.id, email: session.user.email })
+    });
+    const d = await r.json();
+    if (d.url) { window.location.href = d.url; }
+    else { alert('Something went wrong. Please try again.'); }
+  } catch(e) {
+    console.error('Checkout error:', e);
+    alert('Something went wrong. Please try again.');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Continue my plan — $20/month'; }
+}
+
+function showPaywall() {
+  const el = document.getElementById('paywall-modal');
+  if (el) el.style.display = 'flex';
+}
+
 async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadmap();const pid=new URLSearchParams(location.search).get("load")||window.currentPlanId;let fails=0;while(planData.weeks.length<tw&&fails<3){const built=planData.weeks.length,bs=built+1,be=Math.min(built+2,tw),near=be>=tw-3;const bT=document.getElementById("roadmap-building-text");const ph=near?"Taper":built<tw*0.3?"Base":built<tw*0.65?"Build":"Peak";if(bT)bT.textContent="Building weeks "+bs+"-"+be+" of "+tw+" ("+ph+")...";const lw=planData.weeks.slice(-2).map(w=>({phase:w.phase,focus:w.focus}));const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(planData.raceDate||A.date||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". "+(near?"TAPER: reduce volume, race week=30-45min easy.":"Progressive overload.")+" JSON only: {\"weeks\":[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}}
 
 </script>
@@ -2385,6 +2449,35 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
   </div>
 </div>
 
+
+<!-- TRIAL BANNER -->
+<div id="trial-banner" style="display:none;position:fixed;top:68px;left:0;right:0;z-index:90;background:rgba(30,144,255,0.12);border-bottom:1px solid rgba(30,144,255,0.25);padding:10px 20px;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
+  <span style="font-size:13px;color:rgba(255,255,255,0.8);font-family:'Inter',sans-serif;">⏳ <strong style="color:#fff"><span id="trial-days-left">30</span> days</strong> left on your free trial</span>
+  <button onclick="showPaywall()" style="background:#1E90FF;border:none;color:#fff;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Upgrade now</button>
+</div>
+<!-- END TRIAL BANNER -->
+
+<!-- PAYWALL MODAL -->
+<div id="paywall-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);">
+  <div style="background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:36px 28px;max-width:420px;width:100%;text-align:center;animation:fu 0.3s ease both;">
+    <div style="font-size:40px;margin-bottom:16px;">🏊‍♂️🚴‍♂️🏃‍♂️</div>
+    <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px;">Your free trial has ended</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:28px;">Keep training with your personalised plan — every session, every week, all the way to race day.</div>
+    <div style="background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:14px;padding:20px;margin-bottom:24px;">
+      <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#1E90FF;">$20<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.5)">/month</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;">Cancel anytime</div>
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;text-align:left;">
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Full plan to race day</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ AI-adaptive coaching</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Strava sync</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Swim, bike & run sessions</div>
+      </div>
+    </div>
+    <button id="checkout-btn" onclick="startCheckout()" style="width:100%;padding:16px;background:#1E90FF;border:none;color:#fff;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:12px;">Continue my plan — $20/month</button>
+    <a href="/dashboard.html" style="display:block;font-size:13px;color:rgba(255,255,255,0.35);text-decoration:none;">Go to dashboard</a>
+  </div>
+</div>
+<!-- END PAYWALL MODAL -->
 
 <!-- BOTTOM TAB BAR -->
 <nav style="position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,0.08);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);">
