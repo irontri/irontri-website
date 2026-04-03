@@ -30,6 +30,14 @@ SESSION QUALITY RULES (apply to every session):
 - day field: day name e.g. "Monday" not a number
 - type field: MUST be EXACTLY one of: "Swim", "Bike", "Run", "Brick", "Strength", "Rest" — NO other values allowed. Never use "Recovery", "Threshold", "Endurance", "Vo2max" or any other custom type.
 
+PHASE ASSIGNMENT RULES (critical — must follow exactly):
+- phase field MUST be one of: "Base", "Build", "Peak", "Taper", "Race Week"
+- For a plan of N total weeks: Base = first 30%, Build = next 35%, Peak = next 20%, Taper = last 12%, Race Week = final 1 week
+- Example 36-week plan: Base weeks 1-11, Build weeks 12-23, Peak weeks 24-29, Taper weeks 30-35, Race Week 36
+- Example 20-week plan: Base weeks 1-6, Build weeks 7-13, Peak weeks 14-17, Taper weeks 18-19, Race Week 20
+- Never assign "Base" to more than 35% of total weeks
+- Recovery weeks within a phase keep the current phase label (e.g. a recovery week during Build is still "Build")
+
 REALISTIC PACE TARGETS BY LEVEL:
 - Beginner cyclist: ${isImperial ? '12-18 mph' : '20-28 km/h'}. Do NOT exceed ${isImperial ? '20 mph' : '30 km/h'} for beginners.
 - Intermediate cyclist: ${isImperial ? '18-22 mph' : '28-34 km/h'}
