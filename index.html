@@ -11,6 +11,23 @@
   <link rel="manifest" href="/manifest.json" />
   <link rel="apple-touch-icon" href="/irontri_logo.png" />
   <title>irontri — Personalised Triathlon Training Plans</title>
+  <meta name="description" content="irontri builds your personalised triathlon training plan around your race date, your schedule and your fitness. Sprint to Full Ironman. Auto-syncs with Strava." />
+  <meta name="keywords" content="triathlon training plan, ironman training plan, 70.3 training plan, personalised triathlon coaching, strava triathlon, swim bike run plan" />
+  <meta name="author" content="irontri" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.irontriapp.com/" />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="irontri" />
+  <meta property="og:title" content="irontri — Your Race. Your Plan. No Guesswork." />
+  <meta property="og:description" content="Personalised triathlon training plans built backwards from your race date. Every session explained. Auto-tracked on Strava." />
+  <meta property="og:url" content="https://www.irontriapp.com/" />
+  <meta property="og:image" content="https://www.irontriapp.com/irontri_og.png" />
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="irontri — Your Race. Your Plan. No Guesswork." />
+  <meta name="twitter:description" content="Personalised triathlon training plans built backwards from your race date. Every session explained. Auto-tracked on Strava." />
+  <meta name="twitter:image" content="https://www.irontriapp.com/irontri_og.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
@@ -1024,20 +1041,3 @@ window.addEventListener('load', function() {
 <script>
 function toggleMobileNav(){
   var ham = document.getElementById('nav-ham');
-  var menu = document.getElementById('nav-mobile');
-  if (!ham || !menu) return;
-  ham.classList.toggle('open');
-  menu.classList.toggle('open');
-}
-document.addEventListener('DOMContentLoaded', function(){
-  document.querySelectorAll('.nav-mobile-menu a').forEach(function(a){
-    a.addEventListener('click', function(){ 
-      var ham = document.getElementById('nav-ham');
-      var menu = document.getElementById('nav-mobile');
-      if (ham) ham.classList.remove('open');
-      if (menu) menu.classList.remove('open');
-    });
-  });
-});
-</script></body>
-</html>
