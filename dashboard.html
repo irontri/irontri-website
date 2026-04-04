@@ -224,6 +224,18 @@
       <button onclick="document.getElementById('install-banner').style.display='none';localStorage.setItem('irontri_install_dismissed','1');" style="background:transparent;border:none;color:rgba(255,255,255,0.3);font-size:18px;cursor:pointer;padding:4px;line-height:1;">✕</button>
     </div>
     <!-- END INSTALL APP BANNER -->
+
+    <!-- NOTIFICATION BANNER -->
+    <div id="notif-banner" style="display:none;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:14px;padding:14px 16px;margin-bottom:16px;align-items:center;gap:12px;">
+      <span style="font-size:26px;">🔔</span>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:2px;">Get your daily training reminder</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.45);">We'll remind you each morning with today's session.</div>
+      </div>
+      <button onclick="subscribeToNotifications()" style="background:#4ade80;color:#000;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Allow</button>
+      <button onclick="document.getElementById('notif-banner').style.display='none';localStorage.setItem('irontri_notif_dismissed','1');" style="background:transparent;border:none;color:rgba(255,255,255,0.3);font-size:18px;cursor:pointer;padding:4px;line-height:1;">✕</button>
+    </div>
+    <!-- END NOTIFICATION BANNER -->
       <h1 id="welcome-title">Welcome back! 👋</h1>
       <p id="welcome-sub">Here's your training overview</p>
     </div>
@@ -991,6 +1003,66 @@ async function goToMyPlan(e) {
     if (plans?.length) window.location.href = '/plan.html?load=' + plans[0].id;
     else window.location.href = '/plan.html';
   } catch(e) { window.location.href = '/plan.html'; }
+}
+
+
+// ── Web Push Notifications ──────────────────────────────────────────
+const VAPID_PUBLIC_KEY = 'BLDulV6YtyFQ3PdF6qN6M6vyjGvWq2x_TSIMgP3opeALGY9UkL61T7KRlTsZSFYul4OU4AM5n1UBAwnDt7f55Mg';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function subscribeToNotifications() {
+  document.getElementById('notif-banner').style.display = 'none';
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      localStorage.setItem('irontri_notif_dismissed', '1');
+      return;
+    }
+    const reg = await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+    const sub = existing || await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    // Save subscription to Supabase
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    await fetch(SUPABASE_URL + '/rest/v1/push_subscriptions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + session.access_token,
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ user_id: session.user.id, subscription: sub.toJSON() })
+    });
+    localStorage.setItem('irontri_notif_subscribed', '1');
+  } catch(e) {
+    console.log('Notification subscribe error:', e);
+  }
+}
+
+// Register service worker and show notification banner if appropriate
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(e => console.log('SW reg error:', e));
+  window.addEventListener('load', function() {
+    const dismissed = localStorage.getItem('irontri_notif_dismissed');
+    const subscribed = localStorage.getItem('irontri_notif_subscribed');
+    const supported = 'PushManager' in window && 'Notification' in window;
+    if (!dismissed && !subscribed && supported && Notification.permission !== 'denied') {
+      setTimeout(function() {
+        const banner = document.getElementById('notif-banner');
+        if (banner) banner.style.display = 'flex';
+      }, 3000); // show after 3s so dashboard loads first
+    }
+  });
 }
 
 init();
