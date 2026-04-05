@@ -285,7 +285,7 @@
 <!-- HERO -->
 <section class="hero" style="max-width:1200px;margin:0 auto;padding:80px 56px 60px;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;">
   <div>
-    <div class="hero-badge"><span class="badge-dot"></span><span id="hero-counter">231</span> athletes · Sprint to Full Ironman</div>
+    <div class="hero-badge"><span class="badge-dot"></span><span id="hero-counter">238</span> athletes · Sprint to Full Ironman</div>
     <h1 style="font-family:'Syne',sans-serif;font-size:clamp(36px,5vw,62px);font-weight:800;line-height:1.05;letter-spacing:-2.5px;margin-bottom:24px;">Train Smarter.<br>Race <span class="accent">Stronger.</span></h1>
     <p class="hero-sub">Built for triathletes who want more than just a running app — irontri builds your personalised swim, bike and run plan backwards from your race date, with every session explained and auto-tracked on Strava.</p>
     <div class="hero-cta">
@@ -386,7 +386,7 @@
       <div style="flex:0 0 220px;text-align:center;">
         <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
   <div style="text-align:center;">
-    <div style="font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:#fff;line-height:1;" id="live-counter">231</div>
+    <div style="font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:#fff;line-height:1;" id="live-counter">238</div>
     <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:6px;">athletes &amp; counting</div>
   <div style="display:flex;align-items:center;gap:8px;margin-top:10px;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:8px 12px;">
     <span style="font-size:13px;color:#4ade80;font-weight:600;">&#10003; 100 founding spots filled</span>
@@ -435,7 +435,7 @@
 <!-- TRUST BAR UPGRADED -->
 <div class="trust-bar">
   <div class="trust-item">
-    <div class="trust-num" id="trust-counter">231</div>
+    <div class="trust-num" id="trust-counter">238</div>
     <div class="trust-label">Athletes training now</div>
   </div>
   <div class="trust-item">
@@ -1020,7 +1020,6 @@ window.addEventListener('load', function() {
       'Content-Type': 'application/json',
       'Cache-Control': 'no-cache'
     },
-    body: '{}'
   }).then(function(r) { return r.json(); }).then(function(count) {
     if (count > 0) {
       var el = document.getElementById('live-counter');
