@@ -508,9 +508,25 @@
         <button class="db fifo-roster-btn" onclick="pickRoster(this,'2/1')" style="flex:1;min-width:80px;padding:10px 6px;font-size:13px;">2/1</button>
         <button class="db fifo-roster-btn" onclick="pickRoster(this,'2/2')" style="flex:1;min-width:80px;padding:10px 6px;font-size:13px;">2/2</button>
       </div>
-      <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">When did your current roster cycle start?</div>
-      <p style="font-size:12px;color:rgba(255,255,255,0.45);margin:0 0 10px;">This is the Monday of your first work week in your current swing. We use this to know exactly which week you'll be on-site vs home for every week of your plan.</p>
-      <input type="date" id="fifo-cycle-start" oninput="A.fifoCycleStart=this.value" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px 14px;color:#fff;font-size:14px;width:100%;box-sizing:border-box;margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">What day do you fly out to work?</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Monday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Mon</button>
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Tuesday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Tue</button>
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Wednesday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Wed</button>
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Thursday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Thu</button>
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Friday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Fri</button>
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Saturday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Sat</button>
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Sunday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Sun</button>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Right now, are you at work or at home?</div>
+      <div style="display:flex;gap:10px;margin-bottom:8px;">
+        <button class="db fifo-now-btn" onclick="pickFifoNow(this,'work')" style="flex:1;padding:10px;font-size:13px;">🏗️ At work</button>
+        <button class="db fifo-now-btn" onclick="pickFifoNow(this,'home')" style="flex:1;padding:10px;font-size:13px;">🏠 At home</button>
+      </div>
+      <div id="fifo-week-detail" style="display:none;margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin:10px 0 8px;">Which week of your swing are you in?</div>
+        <div id="fifo-week-btns" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
       <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">What can you NOT do when you're at work?</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
         <button class="db fifo-restrict-btn" onclick="toggleRestrict(this,'No swimming')" style="flex:1;min-width:90px;padding:9px 6px;font-size:13px;">🏊 No swim</button>
@@ -793,7 +809,7 @@ function toggleFifo(yes){
   document.getElementById('fifo-yes').classList.toggle('sel',yes);
   document.getElementById('fifo-no').classList.toggle('sel',!yes);
   document.getElementById('fifo-details').style.display=yes?'block':'none';
-  if(!yes){A.fifoRoster=null;A.fifoRestrictions=[];A.fifoHours=null;A.fifoCycleStart=null;}
+  if(!yes){A.fifoRoster=null;A.fifoRestrictions=[];A.fifoHours=null;A.fifoFlyoutDay=null;A.fifoCurrentStatus=null;A.fifoCurrentWeek=null;}
 }
 function pickRoster(btn,val){
   document.querySelectorAll('.fifo-roster-btn').forEach(b=>b.classList.remove('sel'));
@@ -805,6 +821,43 @@ function toggleRestrict(btn,val){
   if(!A.fifoRestrictions)A.fifoRestrictions=[];
   if(btn.classList.contains('sel'))A.fifoRestrictions.push(val);
   else A.fifoRestrictions=A.fifoRestrictions.filter(r=>r!==val);
+}
+function pickFlyout(btn,val){
+  document.querySelectorAll('.fifo-flyout-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  A.fifoFlyoutDay=val;
+}
+function pickFifoNow(btn,val){
+  document.querySelectorAll('.fifo-now-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  A.fifoCurrentStatus=val;
+  // Show week detail for multi-week rosters
+  var detail=document.getElementById('fifo-week-detail');
+  var btns=document.getElementById('fifo-week-btns');
+  var roster=A.fifoRoster||'';
+  var weeks=roster==='2/1'?{work:2,home:1}:roster==='2/2'?{work:2,home:2}:null;
+  if(weeks){
+    var count=val==='work'?weeks.work:weeks.home;
+    if(count>1){
+      btns.innerHTML='';
+      for(var i=1;i<=count;i++){
+        var w=i;
+        btns.innerHTML+='<button class="db fifo-weeknum-btn" onclick="pickFifoWeekNum(this,'+w+')" style="flex:1;min-width:60px;padding:9px 6px;font-size:13px;">Week '+w+'</button>';
+      }
+      detail.style.display='block';
+    } else {
+      detail.style.display='none';
+      A.fifoCurrentWeek=1;
+    }
+  } else {
+    detail.style.display='none';
+    A.fifoCurrentWeek=1;
+  }
+}
+function pickFifoWeekNum(btn,val){
+  document.querySelectorAll('.fifo-weeknum-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  A.fifoCurrentWeek=val;
 }
 function pickFifoHours(btn,val){
   document.querySelectorAll('.fifo-hours-btn').forEach(b=>b.classList.remove('sel'));
@@ -834,7 +887,7 @@ function showSum(){
     {l:'Goal time',v:A.goaltimeText||'Just finish'},
     {l:'Experience',v:A.exp.split(' — ')[0]||A.exp},{l:'Age group',v:A.age},
     {l:'Plan starts',v:A.startDate ? new Date(A.startDate).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : 'ASAP'},
-    {l:'Weekly training',v:A.hours+' hours'},{l:'Training days',v:A.days.join(', ')},(A.fifo?{l:'Roster',v:(A.fifoRoster||'FIFO')+(A.fifoCycleStart?' (cycle from '+new Date(A.fifoCycleStart).toLocaleDateString('en-AU',{day:'numeric',month:'short'})+')':'')}:null),(A.fifo&&A.fifoRestrictions&&A.fifoRestrictions.length?{l:'On-site restrictions',v:A.fifoRestrictions.join(', ')}:null),(A.fifo&&A.fifoHours?{l:'Max session at work',v:A.fifoHours+' per day'}:null),
+    {l:'Weekly training',v:A.hours+' hours'},{l:'Training days',v:A.days.join(', ')},(A.fifo?{l:'Roster',v:(A.fifoRoster||'FIFO')+(A.fifoFlyoutDay?' — flies out '+A.fifoFlyoutDay:'')+(A.fifoCurrentStatus?' — currently '+(A.fifoCurrentStatus==='work'?'at work':'at home')+(A.fifoCurrentWeek?' (week '+A.fifoCurrentWeek+')':''):'')}:null),(A.fifo&&A.fifoRestrictions&&A.fifoRestrictions.length?{l:'On-site restrictions',v:A.fifoRestrictions.join(', ')}:null),(A.fifo&&A.fifoHours?{l:'Max session at work',v:A.fifoHours+' per day'}:null),
     {l:'Focus',v:A.weak.split(' — ')[0]||A.weak}
   ];
   document.getElementById('sg').innerHTML=items.filter(i=>i&&i.l&&i.v).map(i=>`<div class="sc"><div class="sl">${i.l}</div><div class="sv">${i.v}</div></div>`).join('');
@@ -1165,7 +1218,7 @@ async function buildPlan(){
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
   const startDayName = A.startDate ? ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(A.startDate+"T00:00:00").getDay()] : "Monday";
-  const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.units==="imperial"?", UNITS: imperial (use miles, yards, min/mile, min/100yd, mph)":"")+(A.fifo?", FIFO ROSTER: "+A.fifoRoster+" (cycle started: "+(A.fifoCycleStart||"unknown")+"). Use this date + roster pattern to calculate which weeks of the plan are work weeks vs home weeks — alternate correctly from plan start date. "+". ON-SITE RESTRICTIONS: "+(A.fifoRestrictions&&A.fifoRestrictions.length?A.fifoRestrictions.join(", "):"none")+". MAX SESSION TIME ON SITE: "+(A.fifoHours||"unknown")+" per day — every session during work weeks MUST be at or under this duration. CRITICAL: Alternate weekly pattern — during work weeks only schedule "+((A.fifoRestrictions&&A.fifoRestrictions.length)?"available sports ("+['Swim','Bike','Run','Strength'].filter(s=>!A.fifoRestrictions.some(r=>r.toLowerCase().includes(s.toLowerCase()))).join(",")+")":"all sports")+" with sessions capped at "+A.fifoHours+" per session. During home weeks schedule full training at "+A.hours+" hrs/week with all disciplines available.":"")+". Plan: "+w+" weeks, start date: "+(A.startDate||"soon")+" ("+startDayName+"), race date: "+(A.date||"TBD")+". IMPORTANT: Week 1 starts on "+startDayName+". TAPER: ONLY week "+w+" = race week (easy 30-45min only). Week "+(w-1)+" = -50% taper. Week "+(w-2)+" = -30% taper. Week "+(w-3)+" = peak. Do NOT create race week content in any other week.\n\n";
+  const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.units==="imperial"?", UNITS: imperial (use miles, yards, min/mile, min/100yd, mph)":"")+(A.fifo?", FIFO ROSTER: "+A.fifoRoster+". Fly-out day: "+(A.fifoFlyoutDay||"unknown")+". Currently: "+(A.fifoCurrentStatus||"unknown")+(A.fifoCurrentWeek?" week "+A.fifoCurrentWeek:"")+". Use fly-out day + roster + current status to calculate exact on-site vs home pattern from plan start date. "+". ON-SITE RESTRICTIONS: "+(A.fifoRestrictions&&A.fifoRestrictions.length?A.fifoRestrictions.join(", "):"none")+". MAX SESSION TIME ON SITE: "+(A.fifoHours||"unknown")+" per day — every session during work weeks MUST be at or under this duration. CRITICAL: Alternate weekly pattern — during work weeks only schedule "+((A.fifoRestrictions&&A.fifoRestrictions.length)?"available sports ("+['Swim','Bike','Run','Strength'].filter(s=>!A.fifoRestrictions.some(r=>r.toLowerCase().includes(s.toLowerCase()))).join(",")+")":"all sports")+" with sessions capped at "+A.fifoHours+" per session. During home weeks schedule full training at "+A.hours+" hrs/week with all disciplines available.":"")+". Plan: "+w+" weeks, start date: "+(A.startDate||"soon")+" ("+startDayName+"), race date: "+(A.date||"TBD")+". IMPORTANT: Week 1 starts on "+startDayName+". TAPER: ONLY week "+w+" = race week (easy 30-45min only). Week "+(w-1)+" = -50% taper. Week "+(w-2)+" = -30% taper. Week "+(w-3)+" = peak. Do NOT create race week content in any other week.\n\n";
   try{
         const prompt1 = prompt + '\n\nGenerate ONLY weeks 1 and 2. Return JSON with keys: intro, weeks (array of 2 weeks only).';
     const prompt2 = prompt + '\n\nGenerate ONLY weeks 3 and 4 (Build and Peak phases). Return JSON with keys: weeks (array of 2 weeks only, weekNumber starting at 3). No intro needed.';
