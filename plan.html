@@ -1217,9 +1217,9 @@ async function buildPlan(){
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
   const startDayName = A.startDate ? ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(A.startDate+"T00:00:00").getDay()] : "Monday";
+  // ── FIFO schedule calculation ──────────────────────────────
   var fifoBlock = "";
   if(A.fifo){
-    var forbidden = (A.fifoRestrictions&&A.fifoRestrictions.length)?A.fifoRestrictions.join(", "):"none";
     var forbiddenTypes = [];
     if(A.fifoRestrictions){
       if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("swim"))) forbiddenTypes.push("Swim");
@@ -1227,7 +1227,48 @@ async function buildPlan(){
       if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("run"))) forbiddenTypes.push("Run");
       if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("gym")||r.toLowerCase().includes("strength")||r.toLowerCase().includes("weight"))) forbiddenTypes.push("Strength");
     }
-    fifoBlock = "\n\n=== FIFO WORKER — MANDATORY SCHEDULING RULES ===\nRoster: "+A.fifoRoster+". Fly-out day: "+(A.fifoFlyoutDay||"unknown")+". Currently: "+(A.fifoCurrentStatus||"unknown")+(A.fifoCurrentWeek?" week "+(A.fifoCurrentWeek):"")+"\nUse fly-out day + roster pattern + current status to identify which plan weeks are WORK weeks vs HOME weeks.\n\nWORK WEEKS — ABSOLUTE RULES:\n1. BANNED SESSION TYPES: "+( forbiddenTypes.length?forbiddenTypes.join(", ")+" — these types MUST NOT appear in ANY day of a work week. Use Rest instead.":"none")+"\n2. MAX SESSION DURATION: "+(A.fifoHours||"unknown")+" — no session duration may exceed this.\n3. Only use available sports: "+(forbiddenTypes.length?"anything except "+forbiddenTypes.join(", "):"all sports")+"\n\nHOME WEEKS — NORMAL RULES:\nAll disciplines available. Full "+A.hours+" hrs/week. Standard sessions.\n\nThis is a physical constraint — the athlete has no access to restricted equipment on site. Violating these rules makes the plan unusable.\n=================================================";
+
+    // Parse roster into cycle: array of "work" or "home" per week
+    var rosterCycle = [];
+    if(A.fifoRoster==="1/1") rosterCycle=["work","home"];
+    else if(A.fifoRoster==="2/1") rosterCycle=["work","work","home"];
+    else if(A.fifoRoster==="2/2") rosterCycle=["work","work","home","home"];
+    else rosterCycle=["work","home"];
+
+    // Figure out which position in cycle the plan starts at
+    // A.fifoCurrentStatus = "work" or "home", A.fifoCurrentWeek = 1 or 2
+    var currentWeek = parseInt(A.fifoCurrentWeek)||1;
+    var currentStatus = A.fifoCurrentStatus||"work";
+    // Find position in cycle
+    var cyclePos = 0;
+    var found = 0;
+    for(var ci=0;ci<rosterCycle.length;ci++){
+      if(rosterCycle[ci]===currentStatus){ found++; if(found===currentWeek){cyclePos=ci;break;} }
+    }
+    // Plan start relative to current: same week = position 0
+    // Build week schedule for all w weeks
+    var weekSchedule = [];
+    for(var wi=0;wi<w;wi++){
+      weekSchedule.push(rosterCycle[(cyclePos+wi)%rosterCycle.length]);
+    }
+
+    // Build explicit week list
+    var workWeeks = [], homeWeeks = [];
+    weekSchedule.forEach(function(s,i){ if(s==="work") workWeeks.push(i+1); else homeWeeks.push(i+1); });
+
+    var maxMins = A.fifoHours==="30min-1hr"?60:A.fifoHours==="1-2hrs"?120:A.fifoHours==="2-3hrs"?180:240;
+
+    fifoBlock = "\n\n=== FIFO WORKER SCHEDULE — FOLLOW EXACTLY ==="+
+      "\nWORK WEEKS (restricted): "+workWeeks.join(", ")+
+      "\nHOME WEEKS (normal): "+homeWeeks.join(", ")+
+      "\n\nRULES FOR WORK WEEKS (weeks "+workWeeks.join(",")+"):"+
+      "\n- BANNED session types: "+(forbiddenTypes.length?forbiddenTypes.join(", "):"none")+" — if banned, replace with Rest or an allowed sport"+
+      "\n- MAX session duration: "+maxMins+" minutes — no session may be longer than this"+
+      "\n- Allowed types only: "+(forbiddenTypes.length?["Swim","Bike","Run","Strength","Brick"].filter(t=>!forbiddenTypes.includes(t)).concat(["Rest"]).join(", "):"all")+
+      "\n\nRULES FOR HOME WEEKS (weeks "+homeWeeks.join(",")+"):"+
+      "\n- All disciplines available, normal duration, "+A.hours+" hrs/week target"+
+      "\n\nThis is a hard physical constraint. Do not put banned types in work weeks under any circumstances."+
+      "\n=============================================";
   }
   const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.units==="imperial"?", UNITS: imperial (use miles, yards, min/mile, min/100yd, mph)":"")+". Plan: "+w+" weeks, start date: "+(A.startDate||"soon")+" ("+startDayName+"), race date: "+(A.date||"TBD")+". IMPORTANT: Week 1 starts on "+startDayName+". TAPER: ONLY week "+w+" = race week (easy 30-45min only). Week "+(w-1)+" = -50% taper. Week "+(w-2)+" = -30% taper. Week "+(w-3)+" = peak. Do NOT create race week content in any other week."+fifoBlock+"\n\n";
   try{
