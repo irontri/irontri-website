@@ -2638,7 +2638,38 @@ function showPaywall() {
   if (el) el.style.display = 'flex';
 }
 
-async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadmap();const pid=new URLSearchParams(location.search).get("load")||window.currentPlanId;let fails=0;while(planData.weeks.length<tw&&fails<3){const built=planData.weeks.length,bs=built+1,be=Math.min(built+2,tw),near=be>=tw-3;const bT=document.getElementById("roadmap-building-text");const ph=near?"Taper":built<tw*0.3?"Base":built<tw*0.65?"Build":"Peak";if(bT)bT.textContent="Building weeks "+bs+"-"+be+" of "+tw+" ("+ph+")...";const lw=planData.weeks.slice(-2).map(w=>({phase:w.phase,focus:w.focus}));const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(planData.raceDate||A.date||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". "+(near?"TAPER: reduce volume, race week=30-45min easy.":"Progressive overload.")+" JSON only: {\"weeks\":[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}}
+async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadmap();const pid=new URLSearchParams(location.search).get("load")||window.currentPlanId;let fails=0;while(planData.weeks.length<tw&&fails<3){const built=planData.weeks.length,bs=built+1,be=Math.min(built+2,tw),near=be>=tw-3;const bT=document.getElementById("roadmap-building-text");const ph=near?"Taper":built<tw*0.3?"Base":built<tw*0.65?"Build":"Peak";if(bT)bT.textContent="Building weeks "+bs+"-"+be+" of "+tw+" ("+ph+")...";const lw=planData.weeks.slice(-2).map(w=>({phase:w.phase,focus:w.focus}));// Build FIFO block for autoGen
+    var autoFifoBlock = "";
+    if(A.fifo){
+      var aForbidden=[];
+      if(A.fifoRestrictions){
+        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("swim")))aForbidden.push("Swim");
+        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("cycl")||r.toLowerCase().includes("bike")))aForbidden.push("Bike");
+        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("run")))aForbidden.push("Run");
+        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("gym")||r.toLowerCase().includes("strength")||r.toLowerCase().includes("weight")))aForbidden.push("Strength");
+      }
+      var aRoster=[];
+      if(A.fifoRoster==="1/1")aRoster=["work","home"];
+      else if(A.fifoRoster==="2/1")aRoster=["work","work","home"];
+      else if(A.fifoRoster==="2/2")aRoster=["work","work","home","home"];
+      else aRoster=["work","home"];
+      var aCyclePos=0,aFound=0,aCurStatus=A.fifoCurrentStatus||"work",aCurWeek=parseInt(A.fifoCurrentWeek)||1;
+      for(var aci=0;aci<aRoster.length;aci++){if(aRoster[aci]===aCurStatus){aFound++;if(aFound===aCurWeek){aCyclePos=aci;break;}}}
+      var aWorkWeeks=[],aHomeWeeks=[];
+      for(var awi=0;awi<tw;awi++){if(aRoster[(aCyclePos+awi)%aRoster.length]==="work")aWorkWeeks.push(awi+1);else aHomeWeeks.push(awi+1);}
+      var aMaxMins=A.fifoHours==="30min-1hr"?60:A.fifoHours==="1-2hrs"?120:A.fifoHours==="2-3hrs"?180:240;
+      // Only include work weeks in the range being generated
+      var rangeWorkWeeks=aWorkWeeks.filter(function(wn){return wn>=bs&&wn<=be;});
+      var rangeHomeWeeks=aHomeWeeks.filter(function(wn){return wn>=bs&&wn<=be;});
+      if(rangeWorkWeeks.length||rangeHomeWeeks.length){
+        autoFifoBlock=" === FIFO RULES FOR THIS BATCH ==="+
+          " WORK WEEKS in this batch: "+(rangeWorkWeeks.length?rangeWorkWeeks.join(","):"none")+
+          " HOME WEEKS in this batch: "+(rangeHomeWeeks.length?rangeHomeWeeks.join(","):"none")+
+          (rangeWorkWeeks.length?" BANNED types on work weeks: "+(aForbidden.length?aForbidden.join(","):"none")+". MAX duration: "+aMaxMins+"min. Allowed: "+["Swim","Bike","Run","Strength","Brick"].filter(t=>!aForbidden.includes(t)).concat(["Rest"]).join(",")+" ONLY.":"")+
+          " ===";
+      }
+    }
+    const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(planData.raceDate||A.date||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". "+(near?"TAPER: reduce volume, race week=30-45min easy.":"Progressive overload.")+autoFifoBlock+" JSON only: {\"weeks\":[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}}
 
 </script>
 
