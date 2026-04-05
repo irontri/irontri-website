@@ -1013,14 +1013,9 @@ if ('serviceWorker' in navigator) {
 
 <script>
 window.addEventListener('load', function() {
-  fetch('https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/rpc/get_user_count?_=' + Date.now(), {
+  fetch('https://aezfxagplaxlmovqbmfd.supabase.co/rest/v1/rpc/get_user_count?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU&_=' + Date.now(), {
     method: 'POST',
-    headers: {
-      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU',
-      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU',
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-cache'
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: '{}'
   }).then(function(r) { return r.json(); }).then(function(count) {
     if (count > 0) {
