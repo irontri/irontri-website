@@ -61,7 +61,7 @@ JSON structure for weeks:
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
-        max_tokens: 8000,
+        max_tokens: 16000,
         system: systemPrompt,
         messages: [{ role: 'user', content: prompt }]
       })
