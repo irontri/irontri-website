@@ -489,9 +489,13 @@ async function loadPlans() {
   loadStreakAndRing();
 
   // ── TRIAL / PAID BANNER ─────────────────────────────────────────────────
+  // Check founding member status from user profile, not just the plan
+  const { data: userProfile } = await sb.from('users').select('is_founding_member').eq('id', currentUser.id).single();
+  const isFoundingUser = userProfile && userProfile.is_founding_member === true;
+
   if (plans && plans.length > 0) {
     const plan = plans[0];
-    const isFounding = plan.is_founding_member === true;
+    const isFounding = isFoundingUser || plan.is_founding_member === true;
     const isPaid = plan.is_paid === true;
     const createdAt = new Date(plan.created_at);
     const daysSince = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
