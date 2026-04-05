@@ -948,16 +948,18 @@ function fmtDur(mins) {
 function correctPhases(weeks) {
   if (!weeks || weeks.length === 0) return;
   const total = weeks.length;
-  // Check if phases are wrong (e.g. more than 35% Base)
-  const baseCount = weeks.filter(w => w.phase === 'Base').length;
-  if (baseCount / total <= 0.35) return; // phases look fine
-  // Reassign phases based on position
+  // Always enforce correct phase distribution
+  // Base=30%, Build=35%, Peak=20%, Taper=12%, Race Week=final week
+  const raceWeekCount = 1;
+  const taperCount = Math.max(1, Math.round(total * 0.12));
+  const peakCount = Math.max(1, Math.round(total * 0.20));
+  const buildCount = Math.max(1, Math.round(total * 0.35));
+  const baseCount = total - raceWeekCount - taperCount - peakCount - buildCount;
   weeks.forEach((w, i) => {
-    const pct = (i + 1) / total;
     if (i === total - 1) w.phase = 'Race Week';
-    else if (pct > 0.88) w.phase = 'Taper';
-    else if (pct > 0.68) w.phase = 'Peak';
-    else if (pct > 0.30) w.phase = 'Build';
+    else if (i >= total - 1 - taperCount) w.phase = 'Taper';
+    else if (i >= total - 1 - taperCount - peakCount) w.phase = 'Peak';
+    else if (i >= baseCount) w.phase = 'Build';
     else w.phase = 'Base';
   });
 }
