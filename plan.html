@@ -2733,3 +2733,60 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
       <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
       <span style="font-size:12px;color:rgba(255,255,255,0.3);">or enter days</span>
       <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
+    </div>
+    <input type="number" id="pause-days-input" min="1" max="90" placeholder="e.g. 10" style="width:100%;padding:13px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;margin-bottom:12px;">
+    <div id="pause-preview" style="display:none;background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;">
+      <span id="pause-preview-text"></span>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closePauseModal()" style="flex:1;padding:13px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.6);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">Cancel</button>
+      <button onclick="confirmPause()" style="flex:2;padding:13px;background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.3);border-radius:10px;color:#fb923c;font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;">⏸️ Pause plan</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- TRIAL BANNER -->
+<div id="trial-banner" style="display:none;position:fixed;top:68px;left:0;right:0;z-index:90;background:rgba(30,144,255,0.12);border-bottom:1px solid rgba(30,144,255,0.25);padding:10px 20px;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
+  <span style="font-size:13px;color:rgba(255,255,255,0.8);font-family:'Inter',sans-serif;">⏳ <strong style="color:#fff"><span id="trial-days-left">30</span> days</strong> left on your free trial</span>
+  <button onclick="showPaywall()" style="background:#1E90FF;border:none;color:#fff;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Upgrade now</button>
+</div>
+<!-- END TRIAL BANNER -->
+
+<!-- PAYWALL MODAL -->
+<div id="paywall-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);">
+  <div style="background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:36px 28px;max-width:420px;width:100%;text-align:center;animation:fu 0.3s ease both;">
+    <div style="font-size:40px;margin-bottom:16px;">🏊‍♂️🚴‍♂️🏃‍♂️</div>
+    <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px;">Your free trial has ended</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:28px;">Keep training with your personalised plan — every session, every week, all the way to race day.</div>
+    <div style="background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:14px;padding:20px;margin-bottom:24px;">
+      <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#1E90FF;">$20<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.5)">/month</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;">Cancel anytime</div>
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;text-align:left;">
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Full plan to race day</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ AI-adaptive coaching</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Strava sync</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Swim, bike & run sessions</div>
+      </div>
+    </div>
+    <button id="checkout-btn" onclick="startCheckout()" style="width:100%;padding:16px;background:#1E90FF;border:none;color:#fff;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:12px;">Continue my plan — $20/month</button>
+    <a href="/dashboard.html" style="display:block;font-size:13px;color:rgba(255,255,255,0.35);text-decoration:none;">Go to dashboard</a>
+  </div>
+</div>
+<!-- END PAYWALL MODAL -->
+
+<!-- BOTTOM TAB BAR -->
+<nav style="position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,0.08);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);">
+  <a href="/dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
+    <span style="font-size:20px;">📅</span>Today
+  </a>
+  <a href="#" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:#1E90FF;font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
+    <span style="font-size:20px;">🗓️</span>My Plan
+  </a>
+  <a href="/feedback.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
+    <span style="font-size:20px;">💬</span>Feedback
+  </a>
+</nav>
+<!-- END BOTTOM TAB BAR -->
+</body>
+</html>
