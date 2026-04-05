@@ -494,6 +494,40 @@
     <button class="db" onclick="td(this,'Saturday')">Sat</button>
     <button class="db" onclick="td(this,'Sunday')">Sun</button>
   </div>
+  <!-- FIFO toggle -->
+  <div style="margin-top:20px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.08);">
+    <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:10px;">Do you work FIFO or a rotating roster?</div>
+    <div style="display:flex;gap:10px;margin-bottom:14px;">
+      <button class="db" id="fifo-yes" onclick="toggleFifo(true)" style="flex:1;padding:10px;">Yes</button>
+      <button class="db" id="fifo-no" onclick="toggleFifo(false)" style="flex:1;padding:10px;">No</button>
+    </div>
+    <div id="fifo-details" style="display:none;margin-top:4px;">
+      <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">What is your roster?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="db fifo-roster-btn" onclick="pickRoster(this,'1/1')" style="flex:1;min-width:80px;padding:10px 6px;font-size:13px;">1/1</button>
+        <button class="db fifo-roster-btn" onclick="pickRoster(this,'2/1')" style="flex:1;min-width:80px;padding:10px 6px;font-size:13px;">2/1</button>
+        <button class="db fifo-roster-btn" onclick="pickRoster(this,'2/2')" style="flex:1;min-width:80px;padding:10px 6px;font-size:13px;">2/2</button>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">When did your current roster cycle start?</div>
+      <p style="font-size:12px;color:rgba(255,255,255,0.45);margin:0 0 10px;">This is the Monday of your first work week in your current swing. We use this to know exactly which week you'll be on-site vs home for every week of your plan.</p>
+      <input type="date" id="fifo-cycle-start" oninput="A.fifoCycleStart=this.value" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px 14px;color:#fff;font-size:14px;width:100%;box-sizing:border-box;margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">What can you NOT do when you're at work?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="db fifo-restrict-btn" onclick="toggleRestrict(this,'No swimming')" style="flex:1;min-width:90px;padding:9px 6px;font-size:13px;">🏊 No swim</button>
+        <button class="db fifo-restrict-btn" onclick="toggleRestrict(this,'No cycling')" style="flex:1;min-width:90px;padding:9px 6px;font-size:13px;">🚴 No bike</button>
+        <button class="db fifo-restrict-btn" onclick="toggleRestrict(this,'No running')" style="flex:1;min-width:90px;padding:9px 6px;font-size:13px;">🏃 No run</button>
+        <button class="db fifo-restrict-btn" onclick="toggleRestrict(this,'No gym/weights')" style="flex:1;min-width:90px;padding:9px 6px;font-size:13px;">💪 No gym</button>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Max training time per day while at work?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="db fifo-hours-btn" onclick="pickFifoHours(this,'30 minutes')" style="flex:1;min-width:55px;padding:9px 4px;font-size:13px;">30m</button>
+        <button class="db fifo-hours-btn" onclick="pickFifoHours(this,'45 minutes')" style="flex:1;min-width:55px;padding:9px 4px;font-size:13px;">45m</button>
+        <button class="db fifo-hours-btn" onclick="pickFifoHours(this,'1 hour')" style="flex:1;min-width:55px;padding:9px 4px;font-size:13px;">1h</button>
+        <button class="db fifo-hours-btn" onclick="pickFifoHours(this,'1.5 hours')" style="flex:1;min-width:55px;padding:9px 4px;font-size:13px;">1.5h</button>
+        <button class="db fifo-hours-btn" onclick="pickFifoHours(this,'2+ hours')" style="flex:1;min-width:55px;padding:9px 4px;font-size:13px;">2h+</button>
+      </div>
+    </div>
+  </div>
   <div class="qnav"><button class="bb" onclick="go(7)">← Back</button><button class="bn" id="n8" onclick="go(9)">Continue →</button></div>
 </div>
 
@@ -754,6 +788,29 @@ function updateGoalTime(){
 function pg(el,key,val){el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
 function setH(v){A.hours=parseInt(v);document.getElementById('hv').innerHTML=v+' <span>hours/week</span>';const h={3:'Light — great for beginners',5:'Good starting point',7:'Solid volume',8:'Good balance for most',10:'Strong commitment',12:'Serious training load',15:'High performance',18:'Elite volume',20:'Maximum load'};const k=Object.keys(h).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);document.getElementById('hh').textContent=h[k]||'';}
 function td(btn,day){btn.classList.toggle('sel');if(btn.classList.contains('sel'))A.days.push(day);else A.days=A.days.filter(d=>d!==day);document.getElementById('n8').disabled=A.days.length===0;}
+function toggleFifo(yes){
+  A.fifo=yes;
+  document.getElementById('fifo-yes').classList.toggle('sel',yes);
+  document.getElementById('fifo-no').classList.toggle('sel',!yes);
+  document.getElementById('fifo-details').style.display=yes?'block':'none';
+  if(!yes){A.fifoRoster=null;A.fifoRestrictions=[];A.fifoHours=null;A.fifoCycleStart=null;}
+}
+function pickRoster(btn,val){
+  document.querySelectorAll('.fifo-roster-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  A.fifoRoster=val;
+}
+function toggleRestrict(btn,val){
+  btn.classList.toggle('sel');
+  if(!A.fifoRestrictions)A.fifoRestrictions=[];
+  if(btn.classList.contains('sel'))A.fifoRestrictions.push(val);
+  else A.fifoRestrictions=A.fifoRestrictions.filter(r=>r!==val);
+}
+function pickFifoHours(btn,val){
+  document.querySelectorAll('.fifo-hours-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  A.fifoHours=val;
+}
 function cf(){
   A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
   A.email = '';
@@ -777,10 +834,10 @@ function showSum(){
     {l:'Goal time',v:A.goaltimeText||'Just finish'},
     {l:'Experience',v:A.exp.split(' — ')[0]||A.exp},{l:'Age group',v:A.age},
     {l:'Plan starts',v:A.startDate ? new Date(A.startDate).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : 'ASAP'},
-    {l:'Weekly training',v:A.hours+' hours'},{l:'Training days',v:A.days.join(', ')},
+    {l:'Weekly training',v:A.hours+' hours'},{l:'Training days',v:A.days.join(', ')},(A.fifo?{l:'Roster',v:(A.fifoRoster||'FIFO')+(A.fifoCycleStart?' (cycle from '+new Date(A.fifoCycleStart).toLocaleDateString('en-AU',{day:'numeric',month:'short'})+')':''')}:null),(A.fifo&&A.fifoRestrictions&&A.fifoRestrictions.length?{l:'On-site restrictions',v:A.fifoRestrictions.join(', ')}:null),(A.fifo&&A.fifoHours?{l:'Max session at work',v:A.fifoHours+' per day'}:null),
     {l:'Focus',v:A.weak.split(' — ')[0]||A.weak}
   ];
-  document.getElementById('sg').innerHTML=items.map(i=>`<div class="sc"><div class="sl">${i.l}</div><div class="sv">${i.v}</div></div>`).join('');
+  document.getElementById('sg').innerHTML=items.filter(i=>i&&i.l&&i.v).map(i=>`<div class="sc"><div class="sl">${i.l}</div><div class="sv">${i.v}</div></div>`).join('');
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -1108,7 +1165,7 @@ async function buildPlan(){
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
   const startDayName = A.startDate ? ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(A.startDate+"T00:00:00").getDay()] : "Monday";
-  const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.units==="imperial"?", UNITS: imperial (use miles, yards, min/mile, min/100yd, mph)":"")+". Plan: "+w+" weeks, start date: "+(A.startDate||"soon")+" ("+startDayName+"), race date: "+(A.date||"TBD")+". IMPORTANT: Week 1 starts on "+startDayName+". TAPER: ONLY week "+w+" = race week (easy 30-45min only). Week "+(w-1)+" = -50% taper. Week "+(w-2)+" = -30% taper. Week "+(w-3)+" = peak. Do NOT create race week content in any other week.\n\n";
+  const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.units==="imperial"?", UNITS: imperial (use miles, yards, min/mile, min/100yd, mph)":"")+(A.fifo?", FIFO ROSTER: "+A.fifoRoster+" (cycle started: "+(A.fifoCycleStart||"unknown")+"). Use this date + roster pattern to calculate which weeks of the plan are work weeks vs home weeks — alternate correctly from plan start date. "+". ON-SITE RESTRICTIONS: "+(A.fifoRestrictions&&A.fifoRestrictions.length?A.fifoRestrictions.join(", "):"none")+". MAX SESSION TIME ON SITE: "+(A.fifoHours||"unknown")+" per day — every session during work weeks MUST be at or under this duration. CRITICAL: Alternate weekly pattern — during work weeks only schedule "+((A.fifoRestrictions&&A.fifoRestrictions.length)?"available sports ("+['Swim','Bike','Run','Strength'].filter(s=>!A.fifoRestrictions.some(r=>r.toLowerCase().includes(s.toLowerCase()))).join(",")+")":"all sports")+" with sessions capped at "+A.fifoHours+" per session. During home weeks schedule full training at "+A.hours+" hrs/week with all disciplines available.":"")+". Plan: "+w+" weeks, start date: "+(A.startDate||"soon")+" ("+startDayName+"), race date: "+(A.date||"TBD")+". IMPORTANT: Week 1 starts on "+startDayName+". TAPER: ONLY week "+w+" = race week (easy 30-45min only). Week "+(w-1)+" = -50% taper. Week "+(w-2)+" = -30% taper. Week "+(w-3)+" = peak. Do NOT create race week content in any other week.\n\n";
   try{
         const prompt1 = prompt + '\n\nGenerate ONLY weeks 1 and 2. Return JSON with keys: intro, weeks (array of 2 weeks only).';
     const prompt2 = prompt + '\n\nGenerate ONLY weeks 3 and 4 (Build and Peak phases). Return JSON with keys: weeks (array of 2 weeks only, weekNumber starting at 3). No intro needed.';
@@ -2494,60 +2551,3 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
       <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
       <span style="font-size:12px;color:rgba(255,255,255,0.3);">or enter days</span>
       <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
-    </div>
-    <input type="number" id="pause-days-input" min="1" max="90" placeholder="e.g. 10" style="width:100%;padding:13px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;margin-bottom:12px;">
-    <div id="pause-preview" style="display:none;background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;">
-      <span id="pause-preview-text"></span>
-    </div>
-    <div style="display:flex;gap:10px;">
-      <button onclick="closePauseModal()" style="flex:1;padding:13px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.6);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">Cancel</button>
-      <button onclick="confirmPause()" style="flex:2;padding:13px;background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.3);border-radius:10px;color:#fb923c;font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;">⏸️ Pause plan</button>
-    </div>
-  </div>
-</div>
-
-
-<!-- TRIAL BANNER -->
-<div id="trial-banner" style="display:none;position:fixed;top:68px;left:0;right:0;z-index:90;background:rgba(30,144,255,0.12);border-bottom:1px solid rgba(30,144,255,0.25);padding:10px 20px;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
-  <span style="font-size:13px;color:rgba(255,255,255,0.8);font-family:'Inter',sans-serif;">⏳ <strong style="color:#fff"><span id="trial-days-left">30</span> days</strong> left on your free trial</span>
-  <button onclick="showPaywall()" style="background:#1E90FF;border:none;color:#fff;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Upgrade now</button>
-</div>
-<!-- END TRIAL BANNER -->
-
-<!-- PAYWALL MODAL -->
-<div id="paywall-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);">
-  <div style="background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:36px 28px;max-width:420px;width:100%;text-align:center;animation:fu 0.3s ease both;">
-    <div style="font-size:40px;margin-bottom:16px;">🏊‍♂️🚴‍♂️🏃‍♂️</div>
-    <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px;">Your free trial has ended</div>
-    <div style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:28px;">Keep training with your personalised plan — every session, every week, all the way to race day.</div>
-    <div style="background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:14px;padding:20px;margin-bottom:24px;">
-      <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#1E90FF;">$20<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.5)">/month</span></div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;">Cancel anytime</div>
-      <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;text-align:left;">
-        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Full plan to race day</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ AI-adaptive coaching</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Strava sync</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Swim, bike & run sessions</div>
-      </div>
-    </div>
-    <button id="checkout-btn" onclick="startCheckout()" style="width:100%;padding:16px;background:#1E90FF;border:none;color:#fff;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:12px;">Continue my plan — $20/month</button>
-    <a href="/dashboard.html" style="display:block;font-size:13px;color:rgba(255,255,255,0.35);text-decoration:none;">Go to dashboard</a>
-  </div>
-</div>
-<!-- END PAYWALL MODAL -->
-
-<!-- BOTTOM TAB BAR -->
-<nav style="position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,0.08);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);">
-  <a href="/dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
-    <span style="font-size:20px;">📅</span>Today
-  </a>
-  <a href="#" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:#1E90FF;font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
-    <span style="font-size:20px;">🗓️</span>My Plan
-  </a>
-  <a href="/feedback.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
-    <span style="font-size:20px;">💬</span>Feedback
-  </a>
-</nav>
-<!-- END BOTTOM TAB BAR -->
-</body>
-</html>
