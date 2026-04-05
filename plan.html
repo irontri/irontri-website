@@ -1305,6 +1305,7 @@ async function buildPlan(){
     // Merge: take intro from p1, combine weeks
     planData = p1;
     planData.weeks = [...(p1.weeks||[]), ...(p2.weeks||[])];
+    if(A.fifo) fixFifoViolations(planData.weeks);
 
     // Fix week numbers in case AI got them wrong
     planData.weeks.forEach((wk,i) => { wk.weekNumber = i+1; });
@@ -2638,6 +2639,51 @@ function showPaywall() {
   if (el) el.style.display = 'flex';
 }
 
+function fixFifoViolations(weeks) {
+  if(!A.fifo||!A.fifoRestrictions||!A.fifoRestrictions.length) return;
+  // Rebuild forbidden types
+  var forbidden = [];
+  if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("swim"))) forbidden.push("Swim");
+  if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("cycl")||r.toLowerCase().includes("bike"))) forbidden.push("Bike");
+  if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("run"))) forbidden.push("Run");
+  if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("gym")||r.toLowerCase().includes("strength")||r.toLowerCase().includes("weight"))) forbidden.push("Strength");
+  if(!forbidden.length) return;
+  // Rebuild work week list
+  var roster=[];
+  if(A.fifoRoster==="1/1")roster=["work","home"];
+  else if(A.fifoRoster==="2/1")roster=["work","work","home"];
+  else if(A.fifoRoster==="2/2")roster=["work","work","home","home"];
+  else roster=["work","home"];
+  var cyclePos=0,found=0,curStatus=A.fifoCurrentStatus||"work",curWeek=parseInt(A.fifoCurrentWeek)||1;
+  for(var ci=0;ci<roster.length;ci++){if(roster[ci]===curStatus){found++;if(found===curWeek){cyclePos=ci;break;}}}
+  var maxMins=A.fifoHours==="30min-1hr"?60:A.fifoHours==="1-2hrs"?120:A.fifoHours==="2-3hrs"?180:240;
+  // Allowed types for work weeks
+  var allTypes=["Swim","Bike","Run","Strength","Brick"];
+  var allowed=allTypes.filter(t=>!forbidden.includes(t));
+  if(!allowed.length) allowed=["Run"];
+  weeks.forEach(function(week,idx){
+    var isWork = roster[(cyclePos+idx)%roster.length]==="work";
+    if(!isWork) return;
+    week.days && week.days.forEach(function(day){
+      if(day.type==="Rest") return;
+      var typeViolation = forbidden.includes(day.type);
+      var durationViolation = day.duration > maxMins;
+      if(typeViolation){
+        // Replace with first allowed type
+        var replacement = allowed[0];
+        day.type = replacement;
+        day.name = replacement + " Session";
+        day.purpose = "Work week session — adjusted for on-site availability";
+        day.warmup = "10 min easy warm up";
+        day.mainset = "Main " + replacement.toLowerCase() + " effort — see coach note";
+        day.cooldown = "5 min cool down";
+        day.coachNote = "Original session converted to " + replacement + " — you cannot access restricted equipment on site this week.";
+      }
+      if(day.duration > maxMins) day.duration = maxMins;
+    });
+  });
+}
+
 async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadmap();const pid=new URLSearchParams(location.search).get("load")||window.currentPlanId;let fails=0;while(planData.weeks.length<tw&&fails<3){const built=planData.weeks.length,bs=built+1,be=Math.min(built+2,tw),near=be>=tw-3;const bT=document.getElementById("roadmap-building-text");const ph=near?"Taper":built<tw*0.3?"Base":built<tw*0.65?"Build":"Peak";if(bT)bT.textContent="Building weeks "+bs+"-"+be+" of "+tw+" ("+ph+")...";const lw=planData.weeks.slice(-2).map(w=>({phase:w.phase,focus:w.focus}));// Build FIFO block for autoGen
     var autoFifoBlock = "";
     if(A.fifo){
@@ -2669,7 +2715,7 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
           " ===";
       }
     }
-    const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(planData.raceDate||A.date||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". "+(near?"TAPER: reduce volume, race week=30-45min easy.":"Progressive overload.")+autoFifoBlock+" JSON only: {\"weeks\":[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}}
+    const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(planData.raceDate||A.date||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". "+(near?"TAPER: reduce volume, race week=30-45min easy.":"Progressive overload.")+autoFifoBlock+" JSON only: {\"weeks\":[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});if(A.fifo)fixFifoViolations(planData.weeks);if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}}
 
 </script>
 
