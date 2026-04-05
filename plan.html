@@ -834,7 +834,7 @@ function showSum(){
     {l:'Goal time',v:A.goaltimeText||'Just finish'},
     {l:'Experience',v:A.exp.split(' — ')[0]||A.exp},{l:'Age group',v:A.age},
     {l:'Plan starts',v:A.startDate ? new Date(A.startDate).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : 'ASAP'},
-    {l:'Weekly training',v:A.hours+' hours'},{l:'Training days',v:A.days.join(', ')},(A.fifo?{l:'Roster',v:(A.fifoRoster||'FIFO')+(A.fifoCycleStart?' (cycle from '+new Date(A.fifoCycleStart).toLocaleDateString('en-AU',{day:'numeric',month:'short'})+')':''')}:null),(A.fifo&&A.fifoRestrictions&&A.fifoRestrictions.length?{l:'On-site restrictions',v:A.fifoRestrictions.join(', ')}:null),(A.fifo&&A.fifoHours?{l:'Max session at work',v:A.fifoHours+' per day'}:null),
+    {l:'Weekly training',v:A.hours+' hours'},{l:'Training days',v:A.days.join(', ')},(A.fifo?{l:'Roster',v:(A.fifoRoster||'FIFO')+(A.fifoCycleStart?' (cycle from '+new Date(A.fifoCycleStart).toLocaleDateString('en-AU',{day:'numeric',month:'short'})+')':'')}:null),(A.fifo&&A.fifoRestrictions&&A.fifoRestrictions.length?{l:'On-site restrictions',v:A.fifoRestrictions.join(', ')}:null),(A.fifo&&A.fifoHours?{l:'Max session at work',v:A.fifoHours+' per day'}:null),
     {l:'Focus',v:A.weak.split(' — ')[0]||A.weak}
   ];
   document.getElementById('sg').innerHTML=items.filter(i=>i&&i.l&&i.v).map(i=>`<div class="sc"><div class="sl">${i.l}</div><div class="sv">${i.v}</div></div>`).join('');
