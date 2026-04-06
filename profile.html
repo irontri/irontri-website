@@ -58,6 +58,8 @@
     .btn-danger:hover{background:rgba(239,68,68,0.12);}
     .btn-upgrade{width:100%;padding:16px;background:rgba(30,144,255,0.08);border:none;border-top:1px solid rgba(30,144,255,0.15);color:#1E90FF;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s;text-align:center;display:block;text-decoration:none;}
     .btn-upgrade:hover{background:rgba(30,144,255,0.15);}
+    .btn-manage{width:100%;padding:16px;background:rgba(74,222,128,0.06);border:none;border-top:1px solid rgba(74,222,128,0.15);color:#4ade80;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s;text-align:center;display:block;text-decoration:none;}
+    .btn-manage:hover{background:rgba(74,222,128,0.12);}
 
     .loading{text-align:center;padding:80px;color:var(--muted);}
 
@@ -114,6 +116,9 @@
       <div id="upgrade-btn-wrap" style="display:none;">
         <button onclick="upgradeNow()" class="btn-upgrade" id="upgrade-link">⚡ Upgrade to keep training — $20/mo</button>
       </div>
+      <div id="manage-sub-wrap" style="display:none;">
+        <button onclick="manageSubscription()" class="btn-manage" id="manage-sub-btn">⚙️ Manage subscription</button>
+      </div>
       <button class="btn-danger" onclick="logOut()">Log out of irontri</button>
     </div>
 
@@ -162,6 +167,7 @@
     } else if (isPaid) {
       planStatus.textContent = 'Active — $20/month';
       planStatus.style.color = '#1E90FF';
+      document.getElementById('manage-sub-wrap').style.display = 'block';
     } else if (daysLeft > 0) {
       planStatus.textContent = 'Free trial — ' + daysLeft + ' days left';
       planStatus.style.color = daysLeft <= 3 ? '#fb923c' : 'rgba(255,255,255,0.6)';
@@ -210,13 +216,7 @@
     if (btn) { btn.textContent = '⚡ Upgrade to keep training — $20/mo'; btn.disabled = false; }
   }
 
-  async function logOut() {
-    await sb.auth.signOut();
-    localStorage.removeItem('irontri_user_name');
-    window.location.href = 'index.html';
-  }
-
-  loadProfile();
-</script>
-</body>
-</html>
+  async function manageSubscription() {
+    const btn = document.getElementById('manage-sub-btn');
+    if (btn) { btn.textContent = 'Opening portal...'; btn.disabled = true; }
+    try {
