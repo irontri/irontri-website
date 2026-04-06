@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
   <style>
     :root{--blue:#1E90FF;--bg:#0d0d0d;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.08);--text:#fff;--muted:rgba(255,255,255,0.5);--faint:rgba(255,255,255,0.2);}
     *{margin:0;padding:0;box-sizing:border-box;}
@@ -124,17 +125,14 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
 <script>
-  const sb = window.supabase.createClient('https://aezfxagplaxlmovqbmfd.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU', { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } });
+  const sb = window.supabase.createClient(
+    'https://aezfxagplaxlmovqbmfd.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU'
+  );
 
   async function loadProfile() {
-    let { data: { session } } = await sb.auth.getSession();
-    // If no session, try refreshing from stored token
-    if (!session) {
-      const stored = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
-      if (stored) { await sb.auth.refreshSession(); const r = await sb.auth.getSession(); session = r.data.session; }
-    }
+    const { data: { session } } = await sb.auth.getSession();
     if (!session) { window.location.href = 'auth.html'; return; }
 
     const user = session.user;
@@ -155,8 +153,7 @@
     // Fetch plan
     const { data: plans, count } = await sb.from('plans').select('*', { count:'exact' }).eq('user_id', user.id).order('created_at', { ascending: false });
     const plan = plans && plans.length > 0 ? plans[0] : null;
-    const isFounding = (user.user_metadata && user.user_metadata.is_founding_member === true) ||
-      (plan && plan.is_founding_member === true);
+    const isFounding = (user.user_metadata && user.user_metadata.is_founding_member === true) || (plan && plan.is_founding_member === true);
     const isPaid = plan && plan.is_paid === true;
     const createdAt = new Date(user.created_at);
     const daysSince = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
@@ -189,7 +186,7 @@
       const completionData = completionResult.data || [];
       sessions = completionData.length;
       weeks = new Set(completionData.map(c => c.week_num)).size;
-    } catch(e) { /* completions table may not exist yet */ }
+    } catch(e) {}
 
     document.getElementById('s-plans').textContent = count || 0;
     document.getElementById('s-sessions').textContent = sessions;
