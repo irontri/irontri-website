@@ -248,8 +248,4 @@
     window.location.href = 'index.html';
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadProfile);
-  } else {
-    loadProfile();
-  }
+  loadProfile();
