@@ -2672,7 +2672,7 @@ function fixFifoViolations(weeks) {
     if(!isWork) return;
     week.days && week.days.forEach(function(day){
       if(day.type==="Rest") return;
-      var typeViolation = forbidden.includes(day.type);
+      var typeViolation = forbidden.some(f=>f.toLowerCase()===(day.type||"").toLowerCase());
       var durationViolation = day.duration > maxMins;
       if(typeViolation){
         // Replace with first allowed type
