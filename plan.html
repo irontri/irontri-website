@@ -950,34 +950,26 @@ function correctPhases(weeks, targetWeeks) {
   const total = weeks.length;
   const tw = targetWeeks || window._targetWeeks || total;
   const isPlanComplete = total >= tw;
-  // Always enforce correct phase distribution
-  // Base=30%, Build=35%, Peak=20%, Taper=12%, Race Week=final week
   const raceWeekCount = 1;
   const taperCount = Math.max(1, Math.round(tw * 0.12));
   const peakCount = Math.max(1, Math.round(tw * 0.20));
   const buildCount = Math.max(1, Math.round(tw * 0.35));
   const baseCount = tw - raceWeekCount - taperCount - peakCount - buildCount;
   weeks.forEach((w, i) => {
-    // Only label final week as Race Week when plan is complete
     if (isPlanComplete && i === total - 1) w.phase = 'Race Week';
     else if (i >= baseCount + buildCount + peakCount) w.phase = 'Taper';
     else if (i >= baseCount + buildCount) w.phase = 'Peak';
     else if (i >= baseCount) w.phase = 'Build';
     else w.phase = 'Base';
   });
-  // Guard: strip Race Week phase from any week that isn't the final week of a complete plan
   if (!isPlanComplete) {
     weeks.forEach(w => { if (w.phase === 'Race Week') w.phase = 'Taper'; });
   }
-  // Guard: strip Race type sessions from non-final weeks
   weeks.forEach((w, i) => {
     const isFinalWeek = isPlanComplete && i === total - 1;
     if (!isFinalWeek && w.days) {
       w.days.forEach(d => {
-        if ((d.type || '').toLowerCase() === 'race') {
-          d.type = 'Run';
-          d.name = d.name || 'Run Session';
-        }
+        if ((d.type || '').toLowerCase() === 'race') { d.type = 'Run'; d.name = d.name || 'Run Session'; }
       });
     }
   });
@@ -1963,9 +1955,13 @@ async function checkAndSavePlan(planText) {
         const { error } = await sb2.from('plans').update({plan_data: planText, race: A.race || 'Triathlon'}).eq('id', window.currentPlanId).eq('user_id', session.user.id);
         if (!error) { const b = document.getElementById('saved-banner'); if(b) b.style.display='block'; }
       } else {
-        // Copy founding member status from user profile to new plan
-        const { data: uProfile } = await sb2.from('users').select('is_founding_member').eq('id', session.user.id).single();
-        const foundingFlag = uProfile && uProfile.is_founding_member === true;
+        // Copy founding member status — check auth metadata first, then existing plans
+        const foundingMeta = session.user.user_metadata && session.user.user_metadata.is_founding_member === true;
+        let foundingFlag = foundingMeta;
+        if (!foundingFlag) {
+          const { data: existingPlans } = await sb2.from('plans').select('is_founding_member').eq('user_id', session.user.id).eq('is_founding_member', true).limit(1);
+          foundingFlag = existingPlans && existingPlans.length > 0;
+        }
         const { data: inserted, error } = await sb2.from('plans').insert({user_id: session.user.id, plan_data: planText, race: A.race || 'Triathlon', is_founding_member: foundingFlag}).select('id').single();
         if (!error && inserted) { window.currentPlanId = inserted.id; const b = document.getElementById('saved-banner'); if(b) b.style.display='block'; }
         else { localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race})); const b = document.getElementById('save-banner'); if(b) b.style.display='block'; }
