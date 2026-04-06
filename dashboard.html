@@ -489,9 +489,9 @@ async function loadPlans() {
   loadStreakAndRing();
 
   // ── TRIAL / PAID BANNER ─────────────────────────────────────────────────
-  // Check founding member status from user profile, not just the plan
-  const { data: userProfile } = await sb.from('users').select('is_founding_member').eq('id', currentUser.id).single();
-  const isFoundingUser = userProfile && userProfile.is_founding_member === true;
+  // Check founding member status — auth metadata first, then any existing plan
+  const isFoundingUser = (currentUser.user_metadata && currentUser.user_metadata.is_founding_member === true) ||
+    (plan && plan.is_founding_member === true);
 
   if (plans && plans.length > 0) {
     const plan = plans[0];
