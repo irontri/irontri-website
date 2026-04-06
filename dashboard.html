@@ -489,7 +489,7 @@ async function loadPlans() {
   loadStreakAndRing();
 
   // ── TRIAL / PAID BANNER ─────────────────────────────────────────────────
-  // Check founding member status — auth metadata first, then any existing plan
+  // Check founding member status from auth metadata (persists across plans)
   const isFoundingUser = (currentUser.user_metadata && currentUser.user_metadata.is_founding_member === true);
 
   if (plans && plans.length > 0) {
