@@ -182,10 +182,13 @@
       if (plan) document.getElementById('upgrade-link').setAttribute('data-plan-id', plan.id);
     }
 
-    const completionResult = await sb.from('completions').select('week_num').eq('user_id', user.id);
-    const completionData = completionResult.data || [];
-    const sessions = completionData.length;
-    const weeks = new Set(completionData.map(c => c.week_num)).size;
+    let sessions = 0, weeks = 0;
+    try {
+      const completionResult = await sb.from('completions').select('week_num').eq('user_id', user.id);
+      const completionData = completionResult.data || [];
+      sessions = completionData.length;
+      weeks = new Set(completionData.map(c => c.week_num)).size;
+    } catch(e) { /* completions table may not exist yet */ }
 
     document.getElementById('s-plans').textContent = count || 0;
     document.getElementById('s-sessions').textContent = sessions;
