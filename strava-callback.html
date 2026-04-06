@@ -17,7 +17,6 @@
     p{font-size:14px;color:var(--muted);}
     .icon{font-size:48px;margin-bottom:16px;}
   </style>
-<!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -32,25 +31,21 @@
   <h2>Connecting Strava...</h2>
   <p>Just a moment while we link your account.</p>
 </div>
-
 <script>
 const sb = window.supabase.createClient(
   'https://aezfxagplaxlmovqbmfd.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU',
+  { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } }
 );
-
 async function handleCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
   const error = params.get('error');
-
   if (error || !code) {
     showError('Strava connection was cancelled.');
     return;
   }
-
   try {
-    // Exchange code for tokens via our serverless function
     const r = await fetch('/api/strava-exchange', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -58,36 +53,30 @@ async function handleCallback() {
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Token exchange failed');
-
-    // Get current irontri user
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { window.location.href = 'auth.html'; return; }
-
-    // Save Strava tokens to Supabase users table
+    // Save Strava tokens + enable auto-tag by default
     const { error: dbErr } = await sb.from('users').upsert({
       id: session.user.id,
       strava_athlete_id: data.athlete?.id,
       strava_access_token: data.access_token,
       strava_refresh_token: data.refresh_token,
       strava_token_expires_at: data.expires_at,
+      strava_auto_tag: true,
     }, { onConflict: 'id' });
-
     if (dbErr) throw new Error(dbErr.message);
-
     showSuccess(data.athlete?.firstname || 'Athlete');
     setTimeout(() => window.location.href = 'dashboard.html', 2000);
   } catch (e) {
     showError(e.message);
   }
 }
-
 function showSuccess(name) {
   document.getElementById('card').innerHTML = `
     <div class="icon">🎉</div>
     <h2>Strava connected!</h2>
     <p>Welcome ${name} — your activities will now sync automatically. Taking you to your dashboard...</p>`;
 }
-
 function showError(msg) {
   document.getElementById('card').innerHTML = `
     <div class="icon">❌</div>
@@ -95,7 +84,6 @@ function showError(msg) {
     <p>${msg}</p>
     <br><a href="dashboard.html" style="color:#1E90FF;">Back to dashboard</a>`;
 }
-
 handleCallback();
 </script>
 </body>
