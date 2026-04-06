@@ -126,10 +126,11 @@
 </div>
 
 <script>
-  const sb = window.supabase.createClient(
-    'https://aezfxagplaxlmovqbmfd.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU'
-  );
+  const _sbUrl = 'https://aezfxagplaxlmovqbmfd.supabase.co';
+  const _sbKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
+  const sb = window.supabase.createClient(_sbUrl, _sbKey, {
+    auth: { persistSession: true, autoRefreshToken: true, storageKey: 'irontri-auth' }
+  });
 
   async function loadProfile() {
     const { data: { session } } = await sb.auth.getSession();
@@ -221,3 +222,31 @@
     const btn = document.getElementById('manage-sub-btn');
     if (btn) { btn.textContent = 'Opening portal...'; btn.disabled = true; }
     try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { window.location.href = '/auth.html'; return; }
+      const r = await fetch('/api/create-portal-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: session.user.email })
+      });
+      const d = await r.json();
+      if (d.url) { window.location.href = d.url; }
+      else { alert('Could not open portal. Please try again.'); }
+    } catch(e) {
+      console.error('Portal error:', e);
+      alert('Something went wrong. Please try again.');
+    }
+    if (btn) { btn.textContent = '⚙️ Manage subscription'; btn.disabled = false; }
+  }
+
+  async function logOut() {
+    await sb.auth.signOut();
+    localStorage.removeItem('irontri_user_name');
+    window.location.href = 'index.html';
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadProfile);
+  } else {
+    loadProfile();
+  }
