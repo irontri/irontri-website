@@ -403,19 +403,17 @@ async function loadStravaSection() {
     return;
   }
   // Load auto-tag preference
-  const { data: autoTagData } = await sb.from('users').select('strava_auto_tag').eq('id', currentUser.id).single();
-  const autoTagOn = autoTagData ? autoTagData.strava_auto_tag !== false : true;
-  section.innerHTML = `<div class="strava-connected"><div class="strava-connected-top"><div style="font-size:28px;">🟠</div><div class="strava-connected-info"><h3>Strava connected</h3><div class="strava-status"><div class="strava-dot"></div>Syncing automatically</div></div><button class="btn-disconnect" onclick="disconnectStrava()">Disconnect</button></div>
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid rgba(255,255,255,0.06);margin-bottom:12px;">
-    <div>
-      <div style="font-size:13px;font-weight:500;color:#fff;">🏷️ Auto-tag irontri on activities</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">Adds "Trained with irontri — irontriapp.com" to your Strava activities</div>
-    </div>
-    <button onclick="toggleAutoTag(this)" data-on="${autoTagOn}" style="width:44px;height:24px;border-radius:100px;border:none;cursor:pointer;transition:background 0.2s;background:${autoTagOn ? '#1E90FF' : 'rgba(255,255,255,0.15)'};position:relative;flex-shrink:0;">
-      <span style="position:absolute;top:3px;left:${autoTagOn ? '23px' : '3px'};width:18px;height:18px;border-radius:50%;background:#fff;transition:left 0.2s;"></span>
-    </button>
-  </div>
-  <div class="section-title" style="margin-bottom:12px;font-size:15px;">Recent activities</div><div class="activity-feed" id="activity-feed"><div class="feed-loading">Loading your activities...</div></div></div>`;
+  const { data: _atData } = await sb.from('users').select('strava_auto_tag').eq('id', currentUser.id).single();
+  const _autoTag = _atData ? _atData.strava_auto_tag !== false : true;
+  const _toggleBg = _autoTag ? '#1E90FF' : 'rgba(255,255,255,0.15)';
+  const _toggleLeft = _autoTag ? '23px' : '3px';
+  section.innerHTML = '<div class="strava-connected"><div class="strava-connected-top"><div style="font-size:28px;">🟠</div><div class="strava-connected-info"><h3>Strava connected</h3><div class="strava-status"><div class="strava-dot"></div>Syncing automatically</div></div><button class="btn-disconnect" onclick="disconnectStrava()">Disconnect</button></div>'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid rgba(255,255,255,0.06);margin-bottom:12px;">'
+    + '<div><div style="font-size:13px;font-weight:500;color:#fff;">🏷️ Auto-tag irontri on activities</div>'
+    + '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">Adds trained with irontri to your Strava activities</div></div>'
+    + '<button onclick="toggleAutoTag(this)" data-on="' + _autoTag + '" style="width:44px;height:24px;border-radius:100px;border:none;cursor:pointer;transition:background 0.2s;background:' + _toggleBg + ';position:relative;flex-shrink:0;">'
+    + '<span style="position:absolute;top:3px;left:' + _toggleLeft + ';width:18px;height:18px;border-radius:50%;background:#fff;transition:left 0.2s;"></span></button></div>'
+    + '<div class="section-title" style="margin-bottom:12px;font-size:15px;">Recent activities</div><div class="activity-feed" id="activity-feed"><div class="feed-loading">Loading your activities...</div></div></div>';
   loadActivities(accessToken);
 }
 
@@ -449,15 +447,6 @@ function fmtTime(secs) {
   const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;
   if(h>0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   return `${m}:${String(s).padStart(2,'0')}`;
-}
-
-async function toggleAutoTag(btn) {
-  const isOn = btn.getAttribute('data-on') === 'true';
-  const newVal = !isOn;
-  btn.setAttribute('data-on', newVal);
-  btn.style.background = newVal ? '#1E90FF' : 'rgba(255,255,255,0.15)';
-  btn.querySelector('span').style.left = newVal ? '23px' : '3px';
-  await sb.from('users').update({ strava_auto_tag: newVal }).eq('id', currentUser.id);
 }
 
 async function disconnectStrava() {
