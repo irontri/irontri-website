@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>irontri Blog — Triathlon Training Guides & Tips</title>
+  <meta name="description" content="Real triathlon training guides from a real age grouper. FIFO training, Ironman prep, 70.3 tips, and more from irontri." />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #1E90FF;
+      --blue-dark: #1670cc;
+      --bg: #0a0a0a;
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.5);
+      --faint: rgba(255,255,255,0.25);
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: #fff; font-family: 'DM Sans', sans-serif; font-weight: 300; line-height: 1.6; }
+
+    /* NAV */
+    nav { position: sticky; top: 0; z-index: 100; background: var(--blue); padding: 0 56px; height: 52px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -0.5px; }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: #fff; }
+    .nav-cta { background: #fff; color: var(--blue); padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; transition: opacity 0.2s; }
+    .nav-cta:hover { opacity: 0.9; }
+
+    /* HERO */
+    .blog-hero { padding: 80px 56px 60px; border-bottom: 1px solid var(--border); }
+    .blog-hero-inner { max-width: 860px; }
+    .blog-label { font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--blue); margin-bottom: 16px; }
+    .blog-title { font-family: 'Syne', sans-serif; font-size: clamp(36px, 5vw, 64px); font-weight: 800; letter-spacing: -2px; line-height: 1.05; margin-bottom: 20px; }
+    .blog-sub { font-size: 18px; color: var(--muted); max-width: 540px; line-height: 1.7; }
+
+    /* POSTS GRID */
+    .posts-section { padding: 64px 56px; max-width: 1200px; margin: 0 auto; }
+    .posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; margin-top: 48px; }
+    .post-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; padding: 32px; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; display: flex; flex-direction: column; gap: 12px; }
+    .post-card:hover { border-color: rgba(30,144,255,0.4); transform: translateY(-2px); }
+    .post-tag { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--blue); }
+    .post-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; line-height: 1.2; letter-spacing: -0.5px; }
+    .post-excerpt { font-size: 14px; color: var(--muted); line-height: 1.7; flex: 1; }
+    .post-meta { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--faint); margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .post-read { font-size: 13px; color: var(--blue); font-weight: 600; margin-top: 4px; }
+
+    /* FEATURED POST */
+    .post-card.featured { grid-column: 1 / -1; flex-direction: row; gap: 48px; padding: 40px; background: rgba(30,144,255,0.05); border-color: rgba(30,144,255,0.2); }
+    .post-card.featured .post-content { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+    .post-card.featured .post-title { font-size: clamp(24px, 3vw, 36px); }
+    .post-card.featured .post-excerpt { font-size: 16px; }
+    .post-badge { background: var(--blue); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; display: inline-block; width: fit-content; }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 40px 56px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .footer-copy { font-size: 13px; color: var(--faint); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--faint); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--muted); }
+
+    @media(max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .blog-hero { padding: 48px 20px 40px; }
+      .posts-section { padding: 40px 20px; }
+      .post-card.featured { flex-direction: column; gap: 20px; }
+      footer { padding: 32px 20px; flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">irontri</a>
+  <ul class="nav-links">
+    <li><a href="/#strava">How it works</a></li>
+    <li><a href="/#features">Features</a></li>
+    <li><a href="/#pricing-plans">Pricing</a></li>
+    <li><a href="/blog">Blog</a></li>
+  </ul>
+  <a href="/auth.html" class="nav-cta">Get my free plan →</a>
+</nav>
+
+<div class="blog-hero">
+  <div class="blog-hero-inner">
+    <div class="blog-label">irontri blog</div>
+    <h1 class="blog-title">Train smarter.<br>Race stronger.</h1>
+    <p class="blog-sub">Real guides from a real age grouper. No fluff, no generic advice — just what actually works for time-poor triathletes.</p>
+  </div>
+</div>
+
+<div class="posts-section">
+  <div class="blog-label">Latest articles</div>
+  <div class="posts-grid">
+
+    <!-- FEATURED POST -->
+    <a href="/blog/fifo-ironman-training.html" class="post-card featured">
+      <div class="post-content">
+        <span class="post-badge">New</span>
+        <div class="post-tag">FIFO · Ironman Training</div>
+        <div class="post-title">How to Train for a Full Ironman on a FIFO Roster</div>
+        <div class="post-excerpt">Working a fly-in fly-out roster and training for an Ironman sounds impossible. It's not — but it requires a completely different approach to planning, session selection, and managing the mental load of inconsistency. Here's what actually works.</div>
+        <div class="post-meta">
+          <span>By Dean · irontri founder</span>
+          <span>·</span>
+          <span>8 min read</span>
+        </div>
+        <div class="post-read">Read article →</div>
+      </div>
+    </a>
+
+    <!-- COMING SOON CARDS -->
+    <div class="post-card" style="opacity:0.4;cursor:default;">
+      <div class="post-tag">Race Prep</div>
+      <div class="post-title">Ironman Busselton: Everything You Need to Know</div>
+      <div class="post-excerpt">Course breakdown, transition tips, pacing strategy, and what I learned from two 70.3s and a Full Ironman DNF on that course.</div>
+      <div class="post-meta"><span>Coming soon</span></div>
+    </div>
+
+    <div class="post-card" style="opacity:0.4;cursor:default;">
+      <div class="post-tag">Training</div>
+      <div class="post-title">70.3 Training in 8 Hours a Week — Is It Possible?</div>
+      <div class="post-excerpt">Short answer: yes. Long answer: here's exactly how to structure your week when life doesn't leave much room for training.</div>
+      <div class="post-meta"><span>Coming soon</span></div>
+    </div>
+
+    <div class="post-card" style="opacity:0.4;cursor:default;">
+      <div class="post-tag">DNF Story</div>
+      <div class="post-title">I DNF'd Ironman Busselton 2024 — Here's What I'm Doing Differently</div>
+      <div class="post-excerpt">Pulling out of a race you've trained months for is brutal. But it sharpened everything. This is what I changed.</div>
+      <div class="post-meta"><span>Coming soon</span></div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <p class="footer-copy">© 2026 irontri. All rights reserved.</p>
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/about.html">About Dean</a>
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
+  </div>
+</footer>
+
+</body>
+</html>
