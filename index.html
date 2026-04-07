@@ -913,6 +913,24 @@
 
 <!-- DEVICES -->
 
+<!-- BUILT BY DEAN -->
+<section style="padding:80px 56px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(255,255,255,0.01);">
+  <div style="max-width:780px;margin:0 auto;display:flex;align-items:center;gap:48px;flex-wrap:wrap;">
+    <img src="https://www.irontriapp.com/about-photo.jpg" onerror="this.style.display='none'" alt="Dean" style="width:120px;height:120px;border-radius:50%;object-fit:cover;object-position:top center;border:2px solid rgba(30,144,255,0.4);flex-shrink:0;" />
+    <div style="flex:1;min-width:260px;">
+      <div style="font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:12px;">Built by a real triathlete</div>
+      <div style="font-family:'Syne',sans-serif;font-size:clamp(22px,3vw,32px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:16px;">I built it because I needed it.</div>
+      <p style="font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:16px;">I'm Dean — 2x 70.3 Busselton finisher, Busso 100 veteran (4:24), and Full Ironman DNF who's going back for more. I built irontri because I couldn't find a plan that fit my life. Now <span id="dean-counter" style="color:#fff;font-weight:600;">302</span> athletes train on it.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+        <span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 12px;font-size:12px;color:rgba(255,255,255,0.7);">🔥 2x 70.3 Busselton</span>
+        <span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 12px;font-size:12px;color:rgba(255,255,255,0.7);">💯 Busso 100 · 4:24</span>
+        <span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 12px;font-size:12px;color:rgba(255,255,255,0.7);">🎯 Full Ironman Dec 2026</span>
+      </div>
+      <a href="/about.html" style="font-size:14px;color:var(--blue);text-decoration:none;font-weight:600;">Read my story →</a>
+    </div>
+  </div>
+</section>
+
 <!-- PRICING SECTION -->
 <section id="pricing-plans" style="scroll-margin-top:80px;padding:80px 56px;max-width:900px;margin:0 auto;">
   <div style="text-align:center;margin-bottom:48px;">
@@ -1093,6 +1111,8 @@ setTimeout(function() {
         if (tc) tc.textContent = count;
         var hc = document.getElementById('hero-counter');
         if (hc) hc.textContent = count;
+        var dc = document.getElementById('dean-counter');
+        if (dc) dc.textContent = count;
       }
     })
     .catch(function(e) { console.log('Counter error:', e); });
