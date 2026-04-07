@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to Train for a Full Ironman on a FIFO Roster | irontri</title>
+  <meta name="description" content="Working fly-in fly-out and training for an Ironman? Here's exactly how to structure your training around a FIFO roster — from a triathlete who does it." />
+  <meta name="keywords" content="FIFO triathlon training, Ironman FIFO, fly in fly out training plan, triathlon shift worker, FIFO athlete" />
+  <link rel="canonical" href="https://www.irontriapp.com/blog/fifo-ironman-training" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #1E90FF;
+      --bg: #0a0a0a;
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+      --faint: rgba(255,255,255,0.25);
+    }
+    body { background: var(--bg); color: #fff; font-family: 'DM Sans', sans-serif; font-weight: 300; line-height: 1.8; }
+
+    /* NAV */
+    nav { position: sticky; top: 0; z-index: 100; background: var(--blue); padding: 0 56px; height: 52px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -0.5px; }
+    .nav-back { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .nav-back:hover { color: #fff; }
+    .nav-cta { background: #fff; color: var(--blue); padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; }
+
+    /* ARTICLE LAYOUT */
+    .article-wrap { max-width: 720px; margin: 0 auto; padding: 64px 24px 100px; }
+
+    /* HEADER */
+    .article-tag { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--blue); margin-bottom: 16px; }
+    .article-title { font-family: 'Syne', sans-serif; font-size: clamp(32px, 5vw, 54px); font-weight: 800; letter-spacing: -2px; line-height: 1.05; margin-bottom: 24px; }
+    .article-meta { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--faint); margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .article-meta strong { color: rgba(255,255,255,0.6); }
+
+    /* BODY CONTENT */
+    .article-body h2 { font-family: 'Syne', sans-serif; font-size: clamp(22px, 3vw, 30px); font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; margin: 48px 0 16px; }
+    .article-body h3 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin: 32px 0 12px; color: rgba(255,255,255,0.9); }
+    .article-body p { font-size: 17px; color: rgba(255,255,255,0.75); margin-bottom: 20px; line-height: 1.8; }
+    .article-body strong { color: #fff; font-weight: 600; }
+    .article-body em { font-style: italic; color: var(--muted); }
+    .article-body ul, .article-body ol { margin: 16px 0 24px 24px; }
+    .article-body li { font-size: 17px; color: rgba(255,255,255,0.75); margin-bottom: 10px; line-height: 1.7; padding-left: 8px; }
+
+    /* CALLOUT BOXES */
+    .callout { background: rgba(30,144,255,0.08); border: 1px solid rgba(30,144,255,0.25); border-radius: 12px; padding: 24px 28px; margin: 32px 0; }
+    .callout-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--blue); margin-bottom: 8px; }
+    .callout p { font-size: 15px; color: rgba(255,255,255,0.7); margin: 0; }
+    .callout strong { color: #fff; }
+
+    /* WEEK TABLE */
+    .week-table { width: 100%; border-collapse: collapse; margin: 24px 0 32px; font-size: 14px; }
+    .week-table th { text-align: left; padding: 10px 14px; background: rgba(255,255,255,0.05); color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    .week-table td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); color: rgba(255,255,255,0.7); vertical-align: top; }
+    .week-table tr:last-child td { border-bottom: none; }
+    .day-label { font-weight: 600; color: #fff; white-space: nowrap; }
+    .tag-swim { color: #38bdf8; }
+    .tag-bike { color: #fb923c; }
+    .tag-run { color: #4ade80; }
+    .tag-rest { color: var(--faint); }
+    .tag-strength { color: #c084fc; }
+
+    /* CTA BLOCK */
+    .article-cta { background: rgba(30,144,255,0.08); border: 1px solid rgba(30,144,255,0.25); border-radius: 16px; padding: 40px; margin: 56px 0 0; text-align: center; }
+    .article-cta h3 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .article-cta p { font-size: 15px; color: var(--muted); margin-bottom: 24px; }
+    .article-cta a { display: inline-block; background: var(--blue); color: #fff; padding: 14px 32px; border-radius: 10px; font-size: 15px; font-weight: 600; text-decoration: none; transition: opacity 0.2s; }
+    .article-cta a:hover { opacity: 0.9; }
+    .article-cta-note { font-size: 12px; color: var(--faint); margin-top: 12px; }
+
+    /* AUTHOR */
+    .author-block { display: flex; align-items: center; gap: 20px; padding: 32px 0; border-top: 1px solid var(--border); margin-top: 56px; }
+    .author-avatar { width: 56px; height: 56px; border-radius: 50%; background: rgba(30,144,255,0.2); border: 2px solid rgba(30,144,255,0.4); flex-shrink: 0; object-fit: cover; }
+    .author-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+    .author-bio { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 32px 56px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .footer-copy { font-size: 13px; color: var(--faint); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--faint); text-decoration: none; }
+
+    @media(max-width: 768px) {
+      nav { padding: 0 20px; }
+      .article-wrap { padding: 40px 20px 80px; }
+      footer { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
+      .week-table { font-size: 13px; }
+      .week-table th, .week-table td { padding: 10px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">irontri</a>
+  <a href="/blog" class="nav-back">← Blog</a>
+  <a href="/auth.html" class="nav-cta">Build my plan →</a>
+</nav>
+
+<div class="article-wrap">
+
+  <div class="article-tag">FIFO · Ironman Training</div>
+  <h1 class="article-title">How to Train for a Full Ironman on a FIFO Roster</h1>
+  <div class="article-meta">
+    <strong>By Dean</strong>
+    <span>·</span>
+    <span>irontri founder & triathlete</span>
+    <span>·</span>
+    <span>8 min read</span>
+    <span>·</span>
+    <span>April 2026</span>
+  </div>
+
+  <div class="article-body">
+
+    <p>Let me guess. You've signed up for an Ironman, you're genuinely pumped about it, and then the reality of your roster hits you. Two weeks away, two weeks home. Or 1/1. Maybe 2/1. And you're staring at a training plan that assumes you'll be home every week with a pool down the road.</p>
+
+    <p>I've been there. I work FIFO as an underground jumbo operator in the mining industry in Western Australia. I've done two 70.3 Busselton events, the Busso 100, and attempted a Full Ironman. The training challenge isn't fitness — it's logistics. How do you build a consistent 20+ week plan when half your weeks look completely different to the other half?</p>
+
+    <p>This is what I've figured out. It's not perfect, but it works.</p>
+
+    <div class="callout">
+      <div class="callout-label">Quick context</div>
+      <p>This guide assumes a <strong>2/1 or 1/1 FIFO roster</strong> (2 weeks on site, 1 week home — or equal split). The principles apply to any roster but you'll need to adjust the specifics to your own pattern.</p>
+    </div>
+
+    <h2>The core problem with standard training plans</h2>
+
+    <p>Every training plan on the market is built around a fixed week. Monday swim, Tuesday bike, Wednesday run, Thursday swim, Friday rest. That's fine when you're home every week. When you're FIFO, your "weeks" alternate between two completely different environments.</p>
+
+    <p>On site, you might have: limited pool access, no safe cycling roads, a gym with basic equipment, and shift work eating into your recovery. At home, you have full access to everything — pool, open water, roads, your own bed, and a social life that's been on pause for two weeks.</p>
+
+    <p>Trying to run the same plan through both is what burns FIFO athletes out. You end up skipping half the sessions, feeling guilty, and questioning whether the race is even realistic.</p>
+
+    <p>The fix is simple: <strong>treat your work week and your home week as two separate training environments, and plan specifically for each.</strong></p>
+
+    <h2>The two-environment approach</h2>
+
+    <h3>Work week — the maintenance block</h3>
+
+    <p>Your work week isn't where you make fitness gains. It's where you maintain them and protect your base. Think of it as your "minimum effective dose" phase.</p>
+
+    <p>What's typically available on site:</p>
+    <ul>
+      <li>A gym (usually with treadmills, weights, maybe a spin bike)</li>
+      <li>Space to run — whether that's around camp or on a treadmill</li>
+      <li>A pool, if you're lucky — but don't count on it</li>
+    </ul>
+
+    <p>Underground work adds another layer to this. Operating a jumbo drill means long shifts underground, physical and mental fatigue from the environment, and no natural light — which absolutely wrecks your circadian rhythm if you let it. Your body doesn't recover underground the same way it does above ground. Factor that in.</p>
+
+    <p>So your work week sessions should be built around what's reliably available. That means:</p>
+
+    <ul>
+      <li><strong>Running:</strong> Your primary discipline. Easy aerobic runs 3–4x per week. Keep them controlled — your body is already under the stress of shift work and poor sleep.</li>
+      <li><strong>Strength:</strong> This is actually your best friend on site. Time in the gym building single-leg strength, hip stability, and core is banked for the home weeks.</li>
+      <li><strong>Indoor bike:</strong> If there's a spin bike, use it for 1–2 easy to moderate sessions. Nothing heroic.</li>
+      <li><strong>Swimming:</strong> If no pool, skip it entirely. Don't stress. Two weeks off swimming won't kill your Ironman. It's recoverable.</li>
+    </ul>
+
+    <p>The golden rule of your work week: <strong>do less than you think you should.</strong> The work itself is taxing. Sleep is disrupted. Nutrition is harder to control. Showing up home week fresh is worth more than cramming extra sessions in while running on empty.</p>
+
+    <h3>Home week — the training block</h3>
+
+    <p>This is where you do the real work. Your home week carries the load for both environments. Structure it knowing that the next two weeks will be lower volume.</p>
+
+    <p>A sample home week for a 70.3–Full Ironman build:</p>
+
+    <table class="week-table">
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>Session</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="day-label">Monday</td>
+          <td class="tag-rest">Rest / mobility</td>
+          <td>Recover from travel day</td>
+        </tr>
+        <tr>
+          <td class="day-label">Tuesday</td>
+          <td><span class="tag-swim">Swim</span> + <span class="tag-run">Easy run</span></td>
+          <td>Technique focus in pool, 30–40 min run PM</td>
+        </tr>
+        <tr>
+          <td class="day-label">Wednesday</td>
+          <td><span class="tag-bike">Long ride</span></td>
+          <td>Your biggest aerobic session of the week</td>
+        </tr>
+        <tr>
+          <td class="day-label">Thursday</td>
+          <td><span class="tag-swim">Swim</span> + <span class="tag-strength">Strength</span></td>
+          <td>Interval swim, light strength session</td>
+        </tr>
+        <tr>
+          <td class="day-label">Friday</td>
+          <td><span class="tag-run">Run</span></td>
+          <td>Tempo or threshold effort</td>
+        </tr>
+        <tr>
+          <td class="day-label">Saturday</td>
+          <td><span class="tag-bike">Ride</span> + <span class="tag-run">Brick run</span></td>
+          <td>Key session — simulate race fatigue</td>
+        </tr>
+        <tr>
+          <td class="day-label">Sunday</td>
+          <td><span class="tag-swim">Open water swim</span> or rest</td>
+          <td>Low intensity, race-feel practice</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>You'll notice Monday is rest. That's intentional. The travel day is genuinely fatiguing, and trying to train through it on day one home usually just creates a crappy session and a tired Tuesday. Give yourself Monday to decompress.</p>
+
+    <h2>Managing the mental side</h2>
+
+    <p>This is the bit nobody talks about. The hardest part of FIFO training isn't the physical sessions. It's the guilt.</p>
+
+    <p>You'll miss sessions on site because your shift ran long. You'll get home and feel behind. You'll see athletes on Strava training every single day and wonder if you're doing enough. You're not behind. You're just running a different system.</p>
+
+    <p>A few things that help:</p>
+
+    <ul>
+      <li><strong>Plan your work week sessions in advance.</strong> Know exactly what you're doing on site before you get there. Three runs and two gym sessions. That's it. Pre-decided, no guilt if that's all you get through.</li>
+      <li><strong>Track effort, not volume.</strong> On site, you're not trying to match your home week mileage. You're trying to stay consistent. A 40 minute easy run at 6am before shift is a win.</li>
+      <li><strong>Tell your family.</strong> Coming home and immediately logging a 3 hour ride on Day 1 creates tension. Communicate your training schedule for home week so everyone's on the same page.</li>
+      <li><strong>Use the drive/flight home as mental prep.</strong> I use the travel time to mentally plan my home week. By the time I arrive, I know exactly what I'm doing and when.</li>
+    </ul>
+
+    <h2>Nutrition on site</h2>
+
+    <p>Crib food is usually fine for volume but terrible for quality. High carb, high sodium, not much variety. A few things that make a real difference:</p>
+
+    <ul>
+      <li>Bring your own protein — a bag of whey or a box of Greek yoghurt goes a long way</li>
+      <li>Prioritise sleep over early morning sessions when you're genuinely exhausted</li>
+      <li>Hydrate more than you think you need — dry mining environments dehydrate you faster than you realise</li>
+      <li>Don't try to cut weight on site. Maintain. The time for body composition work is the home week.</li>
+    </ul>
+
+    <h2>What to do in the 4 weeks before race day</h2>
+
+    <p>If your taper falls during a work week — which it often will because rosters don't care about your race calendar — lean into it. Reduced volume is exactly what taper calls for anyway. Your work week becomes your taper week.</p>
+
+    <p>The week before your race should be a home week if at all possible. If it's not, talk to your employer. Most FIFO operations have some flexibility for personal events — use it.</p>
+
+    <div class="callout">
+      <div class="callout-label">The irontri FIFO feature</div>
+      <p>irontri is the only training app built with FIFO rosters in mind. Tell it your roster pattern — 1/1, 2/1, or 2/2 — your fly-out day, and what equipment you have on site. Your plan automatically <strong>adjusts every week</strong>: lower volume on work weeks, fuller sessions at home. No manual rescheduling required.</p>
+    </div>
+
+    <h2>The bottom line</h2>
+
+    <p>Training for an Ironman on a FIFO roster is genuinely harder than training from home. Not because the fitness is impossible — it's not — but because the mental discipline required to work a different system is real.</p>
+
+    <p>The athletes I've seen struggle most are the ones who try to match a standard plan session-for-session and burn themselves out in the guilt of falling short. The ones who succeed are the ones who accept that their training looks different, plan specifically for each environment, and protect their home weeks fiercely.</p>
+
+    <p>You're not at a disadvantage. You're just playing a different game. And honestly? The discipline required to train FIFO tends to produce some of the toughest athletes on race day. The finish line doesn't know your roster.</p>
+
+    <p><strong>Now go build your plan.</strong></p>
+
+  </div>
+
+  <!-- AUTHOR -->
+  <div class="author-block">
+    <img src="/about-photo.jpg" alt="Dean" class="author-avatar" onerror="this.style.background='rgba(30,144,255,0.3)'" />
+    <div>
+      <div class="author-name">Dean</div>
+      <div class="author-bio">Founder of irontri. Underground jumbo operator working FIFO in WA, 2x 70.3 Busselton finisher, Busso 100 veteran, and Full Ironman DNF with a redemption plan for December 2026. Built irontri because he needed it.</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="article-cta">
+    <h3>Train smarter around your roster.</h3>
+    <p>irontri builds your Ironman plan around your FIFO schedule — automatically adjusting every week based on whether you're on site or at home.</p>
+    <a href="/auth.html">Build my free plan →</a>
+    <div class="article-cta-note">Free for 30 days · No credit card required</div>
+  </div>
+
+</div>
+
+<footer>
+  <p class="footer-copy">© 2026 irontri. All rights reserved.</p>
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/blog">Blog</a>
+    <a href="/about.html">About Dean</a>
+  </div>
+</footer>
+
+</body>
+</html>
