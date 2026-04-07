@@ -2581,8 +2581,15 @@ async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
     const tooHard = rating >= 4;
     if (!tooEasy && !tooHard) return;
 
-    const prompt = 'You are an elite triathlon coach. A athlete just rated a ' + sportType + ' session RPE ' + rating + '/5 (' + (tooEasy ? 'too easy' : 'too hard') + ').' +
-      ' Rewrite the NEXT 3 ' + sportType + ' sessions to be ' + (tooEasy ? '10-15% harder' : '10-15% easier') + '.' +
+    // Find the current session to get its pace target for context
+    const currentSession = planData.weeks[fromWeek]?.days[fromDay];
+    const currentPace = currentSession?.paceTarget || 'not specified';
+    const currentDuration = currentSession?.duration || 'not specified';
+
+    const prompt = 'You are an elite triathlon coach. An athlete just rated a ' + sportType + ' session RPE ' + rating + '/5 (' + (tooEasy ? 'too easy' : 'too hard') + ').' +
+      ' The session had a pace target of ' + currentPace + ' and duration of ' + currentDuration + ' minutes.' +
+      ' Rewrite the NEXT 3 ' + sportType + ' sessions to be ' + (tooEasy ? '10-15% harder with faster pace targets' : '10-15% easier with slower pace targets') + '.' +
+      ' IMPORTANT: You MUST adjust the paceTarget field specifically — make it ' + (tooEasy ? 'faster' : 'slower') + ' than ' + currentPace + '.' +
       ' Return ONLY a JSON array of 3 session objects with keys: name, duration, effort, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone.' +
       ' No other text.';
 
@@ -2599,12 +2606,16 @@ async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
     const newSessions = JSON.parse(txt.slice(s, e+1));
 
     let replaced = 0;
+    // fromWeek is curWeek (0-based week index into planData.weeks array)
     for (let w = fromWeek; w < planData.weeks.length && replaced < 3; w++) {
-      for (let d2 = (w === fromWeek ? fromDay + 1 : 0); d2 < planData.weeks[w].days.length && replaced < 3; d2++) {
+      const startDay = (w === fromWeek) ? fromDay + 1 : 0;
+      for (let d2 = startDay; d2 < planData.weeks[w].days.length && replaced < 3; d2++) {
         const day = planData.weeks[w].days[d2];
-        if (day.type === sportType) {
-          Object.assign(day, newSessions[replaced]);
-          day.type = sportType;
+        if (day.type === sportType && day.type !== 'Rest') {
+          const adapted = newSessions[replaced];
+          Object.assign(day, adapted);
+          day.type = sportType; // preserve type
+          day.adapted = true; // flag so we know it was changed
           replaced++;
         }
       }
