@@ -16,6 +16,47 @@
   <meta name="author" content="irontri" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.irontriapp.com/" />
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+
+  <!-- Schema: SoftwareApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "irontri",
+    "applicationCategory": "SportsApplication",
+    "operatingSystem": "Web, iOS, Android",
+    "description": "Personalised triathlon training plans built backwards from your race date. Every session explained. Auto-tracked on Strava. Sprint to Full Ironman.",
+    "url": "https://www.irontriapp.com",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "AUD",
+      "description": "30-day free trial, then $20/month"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "302"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Dean",
+      "description": "FIFO underground jumbo operator and triathlete from Western Australia"
+    }
+  }
+  </script>
+
+  <!-- Schema: WebSite -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "irontri",
+    "url": "https://www.irontriapp.com",
+    "description": "Personalised triathlon training plans for every distance and every athlete. Syncs with Strava."
+  }
+  </script>
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="irontri" />
@@ -169,7 +210,7 @@
     .devices{padding:80px 56px;background:rgba(255,255,255,0.02);border-top:1px solid var(--border);}
     .devices-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:64px;flex-wrap:wrap;}
     .devices-text{flex:1;min-width:280px;}
-    .devices-logos{flex:1;min-width:280px;display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:320px;}
+    .devices-logos{flex:1;min-width:280px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
     .device-pill{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;font-size:13px;font-weight:500;color:var(--muted);transition:all 0.2s;}
     .device-pill:hover{border-color:rgba(30,144,255,0.3);color:#fff;}
     .device-pill.strava-pill{border-color:rgba(252,76,2,0.3);color:rgba(252,76,2,0.9);}
