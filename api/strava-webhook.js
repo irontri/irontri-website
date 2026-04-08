@@ -103,9 +103,9 @@ export default async function handler(req, res) {
       body: JSON.stringify({ description: newDescription })
     });
 
-    return res.status(200).json({ ok: true, tagged: true });
-  } catch (e) {
-    console.error('Webhook error:', e);
-    return res.status(200).json({ ok: true }); // Always 200 to Strava
-  }
-}
+    // ── AUTO-COMPLETE SESSION IN IRONTRI ─────────────────────────────────────
+    // Map Strava activity type to irontri session type
+    const typeMap = {
+      'Run': 'Run', 'TrailRun': 'Run', 'Walk': 'Run',
+      'Ride': 'Bike', 'VirtualRide': 'Bike', 'EBikeRide': 'Bike',
+      'Swim': 'Swim', 'OpenWaterSwim': 'Swim'
