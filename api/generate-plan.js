@@ -1,4 +1,4 @@
-export const config = { maxDuration: 300 };
+export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
@@ -29,6 +29,7 @@ SESSION QUALITY RULES (apply to every session):
 - weeklyNarrative: 2 sentences on the week's purpose
 - day field: day name e.g. "Monday" not a number
 - type field: MUST be EXACTLY one of: "Swim", "Bike", "Run", "Brick", "Strength", "Rest" — NO other values allowed. Never use "Recovery", "Threshold", "Endurance", "Vo2max" or any other custom type.
+- BRICK SESSIONS: Include at least 1 Brick session per week from Build phase onwards. A Brick session is a bike ride immediately followed by a run. Format mainset as: "Bike X km at [pace/watts], then immediately run Y km at [pace]. No rest between disciplines." Brick sessions are critical for race preparation and must appear consistently throughout the Build, Peak and Taper phases.
 
 PHASE ASSIGNMENT RULES (critical — must follow exactly):
 - phase field MUST be one of: "Base", "Build", "Peak", "Taper", "Race Week"
@@ -98,4 +99,3 @@ JSON structure for weeks:
     console.error('Handler error:', e);
     return res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
-}
