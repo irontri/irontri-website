@@ -99,3 +99,4 @@ JSON structure for weeks:
     console.error('Handler error:', e);
     return res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
+}
