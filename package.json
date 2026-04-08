@@ -1,6 +1,7 @@
 {
   "name": "irontri-website",
   "version": "1.0.0",
+  "type": "module",
   "dependencies": {
     "stripe": "^14.0.0",
     "@supabase/supabase-js": "^2.49.1",
