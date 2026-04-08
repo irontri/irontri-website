@@ -1333,10 +1333,10 @@ async function buildPlan(){
       "\n=============================================";
   }
   const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.units==="imperial"?", UNITS: imperial (use miles, yards, min/mile, min/100yd, mph)":"")+
-  (A.stravaFitness ? "\n\nSTRAVA FITNESS DATA (use these exact values for all targets):\n" +
-    (A.stravaFitness.run ? "- Run: avg pace "+A.stravaFitness.run.avgPace+"/km, threshold pace "+A.stravaFitness.run.thresholdPace+"/km, max HR "+A.stravaFitness.run.maxHR+"bpm, weekly volume "+A.stravaFitness.run.weeklyDistanceKm+"km\n" : "") +
-    (A.stravaFitness.bike ? "- Bike: avg speed "+A.stravaFitness.bike.avgSpeedKmh+"km/h"+(A.stravaFitness.bike.ftpEstimate?", FTP ~"+A.stravaFitness.bike.ftpEstimate+"w":"")+", weekly volume "+A.stravaFitness.bike.weeklyDistanceKm+"km\n" : "") +
-    (A.stravaFitness.swim ? "- Swim: avg pace "+A.stravaFitness.swim.avgPacePer100m+"/100m, weekly volume "+A.stravaFitness.swim.weeklyDistanceKm+"km\n" : "") +
+  (A.stravaFitness && typeof A.stravaFitness === 'object' ? "\n\nSTRAVA FITNESS DATA (use these exact values for all targets):\n" +
+    (A.stravaFitness.run ? "- Run: avg pace "+(A.stravaFitness.run.avgPace||'?')+"/km, threshold pace "+(A.stravaFitness.run.thresholdPace||'?')+"/km, max HR "+(A.stravaFitness.run.maxHR||'?')+"bpm, weekly volume "+(A.stravaFitness.run.weeklyDistanceKm||'?')+"km\n" : "") +
+    (A.stravaFitness.bike ? "- Bike: avg speed "+(A.stravaFitness.bike.avgSpeedKmh||'?')+"km/h"+(A.stravaFitness.bike.ftpEstimate?", FTP ~"+A.stravaFitness.bike.ftpEstimate+"w":"")+", weekly volume "+(A.stravaFitness.bike.weeklyDistanceKm||'?')+"km\n" : "") +
+    (A.stravaFitness.swim ? "- Swim: avg pace "+(A.stravaFitness.swim.avgPacePer100m||'?')+"/100m, weekly volume "+(A.stravaFitness.swim.weeklyDistanceKm||'?')+"km\n" : "") +
     (A.stravaFitness.hrZones ? "- HR Zones: Z1 "+A.stravaFitness.hrZones.zone1.min+"-"+A.stravaFitness.hrZones.zone1.max+"bpm, Z2 "+A.stravaFitness.hrZones.zone2.min+"-"+A.stravaFitness.hrZones.zone2.max+"bpm, Z3 "+A.stravaFitness.hrZones.zone3.min+"-"+A.stravaFitness.hrZones.zone3.max+"bpm, Z4 "+A.stravaFitness.hrZones.zone4.min+"-"+A.stravaFitness.hrZones.zone4.max+"bpm, Z5 "+A.stravaFitness.hrZones.zone5.min+"-"+A.stravaFitness.hrZones.zone5.max+"bpm\n" : "") +
     "CRITICAL: Use exact pace targets, HR zones and power numbers above."
   : "") +
@@ -2834,3 +2834,130 @@ function fixFifoViolations(weeks) {
   if(!allowed.length) allowed=["Run"];
   weeks.forEach(function(week,idx){
     var isWork = roster[(cyclePos+idx)%roster.length]==="work";
+    if(!isWork) return;
+    week.days && week.days.forEach(function(day){
+      if(day.type==="Rest") return;
+      var typeViolation = forbidden.some(f=>f.toLowerCase()===(day.type||"").toLowerCase());
+      var durationViolation = day.duration > maxMins;
+      if(typeViolation){
+        // Replace with first allowed type
+        var replacement = allowed[0];
+        day.type = replacement;
+        day.name = replacement + " Session";
+        day.purpose = "Work week session — adjusted for on-site availability";
+        day.warmup = "10 min easy warm up";
+        day.mainset = "Main " + replacement.toLowerCase() + " effort — see coach note";
+        day.cooldown = "5 min cool down";
+        day.coachNote = "Original session converted to " + replacement + " — you cannot access restricted equipment on site this week.";
+      }
+      if(day.duration > maxMins) day.duration = maxMins;
+    });
+  });
+}
+
+async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadmap();const pid=new URLSearchParams(location.search).get("load")||window.currentPlanId;let fails=0;while(planData.weeks.length<tw&&fails<3){const built=planData.weeks.length,bs=built+1,be=Math.min(built+2,tw),near=be>=tw-3;const bT=document.getElementById("roadmap-building-text");const ph=near?"Taper":built<tw*0.3?"Base":built<tw*0.65?"Build":"Peak";if(bT)bT.textContent="Building weeks "+bs+"-"+be+" of "+tw+" ("+ph+")...";const lw=planData.weeks.slice(-2).map(w=>({phase:w.phase,focus:w.focus}));// Build FIFO block for autoGen
+    var autoFifoBlock = "";
+    if(A.fifo){
+      var aForbidden=[];
+      if(A.fifoRestrictions){
+        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("swim")))aForbidden.push("Swim");
+        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("cycl")||r.toLowerCase().includes("bike")))aForbidden.push("Bike");
+        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("run")))aForbidden.push("Run");
+        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("gym")||r.toLowerCase().includes("strength")||r.toLowerCase().includes("weight")))aForbidden.push("Strength");
+      }
+      var aRoster=[];
+      if(A.fifoRoster==="1/1")aRoster=["work","home"];
+      else if(A.fifoRoster==="2/1")aRoster=["work","work","home"];
+      else if(A.fifoRoster==="2/2")aRoster=["work","work","home","home"];
+      else aRoster=["work","home"];
+      var aCyclePos=0,aFound=0,aCurStatus=A.fifoCurrentStatus||"work",aCurWeek=parseInt(A.fifoCurrentWeek)||1;
+      for(var aci=0;aci<aRoster.length;aci++){if(aRoster[aci]===aCurStatus){aFound++;if(aFound===aCurWeek){aCyclePos=aci;break;}}}
+      var aWorkWeeks=[],aHomeWeeks=[];
+      for(var awi=0;awi<tw;awi++){if(aRoster[(aCyclePos+awi)%aRoster.length]==="work")aWorkWeeks.push(awi+1);else aHomeWeeks.push(awi+1);}
+      var aMaxMins=A.fifoHours==="30min-1hr"?60:A.fifoHours==="1-2hrs"?120:A.fifoHours==="2-3hrs"?180:240;
+      // Only include work weeks in the range being generated
+      var rangeWorkWeeks=aWorkWeeks.filter(function(wn){return wn>=bs&&wn<=be;});
+      var rangeHomeWeeks=aHomeWeeks.filter(function(wn){return wn>=bs&&wn<=be;});
+      if(rangeWorkWeeks.length||rangeHomeWeeks.length){
+        autoFifoBlock=" === FIFO RULES FOR THIS BATCH ==="+
+          " WORK WEEKS in this batch: "+(rangeWorkWeeks.length?rangeWorkWeeks.join(","):"none")+
+          " HOME WEEKS in this batch: "+(rangeHomeWeeks.length?rangeHomeWeeks.join(","):"none")+
+          (rangeWorkWeeks.length?" BANNED types on work weeks: "+(aForbidden.length?aForbidden.join(","):"none")+". MAX duration: "+aMaxMins+"min. Allowed: "+["Swim","Bike","Run","Strength","Brick"].filter(t=>!aForbidden.includes(t)).concat(["Rest"]).join(",")+" ONLY.":"")+
+          " ===";
+      }
+    }
+    const _rd=planData.raceDate||A.date;const _rdName=_rd?["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(_rd+"T00:00:00").getDay()]:"Sunday";const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(_rd||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". "+(near?"TAPER: reduce volume, race week=30-45min easy sessions only. CRITICAL: The race falls on a "+_rdName+" — place the Race type session ONLY on "+_rdName+", all other days are Rest or easy 20-30min shakeout. Do NOT place the race on any other day.":"Progressive overload.")+autoFifoBlock+" Focus descriptions must be plain English, inspiring and athlete-friendly — never use terms like 'constraint', 'adaptation', 'modality' or corporate language. JSON only: {\"weeks\":[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});if(A.fifo)fixFifoViolations(planData.weeks);correctPhases(planData.weeks);if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}}
+
+</script>
+
+<!-- PAUSE MODAL -->
+<div id="pause-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);">
+  <div style="background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:28px;max-width:420px;width:100%;animation:fu 0.3s ease both;">
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px;">⏸️ Pause your plan</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Your sessions shift forward — nothing gets lost.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <button class="pause-opt" onclick="selectPauseDays(3,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">3 days</button>
+      <button class="pause-opt" onclick="selectPauseDays(7,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">1 week</button>
+      <button class="pause-opt" onclick="selectPauseDays(14,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">2 weeks</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
+      <span style="font-size:12px;color:rgba(255,255,255,0.3);">or enter days</span>
+      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
+    </div>
+    <input type="number" id="pause-days-input" min="1" max="90" placeholder="e.g. 10" style="width:100%;padding:13px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;margin-bottom:12px;">
+    <div id="pause-preview" style="display:none;background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;">
+      <span id="pause-preview-text"></span>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closePauseModal()" style="flex:1;padding:13px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.6);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">Cancel</button>
+      <button onclick="confirmPause()" style="flex:2;padding:13px;background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.3);border-radius:10px;color:#fb923c;font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;">⏸️ Pause plan</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- TRIAL BANNER -->
+<div id="trial-banner" style="display:none;position:fixed;top:68px;left:0;right:0;z-index:90;background:rgba(30,144,255,0.12);border-bottom:1px solid rgba(30,144,255,0.25);padding:10px 20px;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
+  <span style="font-size:13px;color:rgba(255,255,255,0.8);font-family:'Inter',sans-serif;">⏳ <strong style="color:#fff"><span id="trial-days-left">30</span> days</strong> left on your free trial</span>
+  <button onclick="showPaywall()" style="background:#1E90FF;border:none;color:#fff;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Upgrade now</button>
+</div>
+<!-- END TRIAL BANNER -->
+
+<!-- PAYWALL MODAL -->
+<div id="paywall-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);">
+  <div style="background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:36px 28px;max-width:420px;width:100%;text-align:center;animation:fu 0.3s ease both;">
+    <div style="font-size:40px;margin-bottom:16px;">🏊‍♂️🚴‍♂️🏃‍♂️</div>
+    <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px;">Your free trial has ended</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:28px;">Keep training with your personalised plan — every session, every week, all the way to race day.</div>
+    <div style="background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:14px;padding:20px;margin-bottom:24px;">
+      <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#1E90FF;">$20<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.5)">/month</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;">Cancel anytime</div>
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;text-align:left;">
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Full plan to race day</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ AI-adaptive coaching</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Strava sync</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Swim, bike & run sessions</div>
+      </div>
+    </div>
+    <button id="checkout-btn" onclick="startCheckout()" style="width:100%;padding:16px;background:#1E90FF;border:none;color:#fff;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:12px;">Continue my plan — $20/month</button>
+    <a href="/dashboard.html" style="display:block;font-size:13px;color:rgba(255,255,255,0.35);text-decoration:none;">Go to dashboard</a>
+  </div>
+</div>
+<!-- END PAYWALL MODAL -->
+
+<!-- BOTTOM TAB BAR -->
+<nav style="position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,0.08);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);">
+  <a href="/dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
+    <span style="font-size:20px;">📅</span>Today
+  </a>
+  <a href="#" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:#1E90FF;font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
+    <span style="font-size:20px;">🗓️</span>My Plan
+  </a>
+  <a href="/feedback.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
+    <span style="font-size:20px;">💬</span>Feedback
+  </a>
+</nav>
+<!-- END BOTTOM TAB BAR -->
+</body>
+</html>
