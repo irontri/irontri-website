@@ -1333,10 +1333,10 @@ async function buildPlan(){
       "\n=============================================";
   }
   const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.units==="imperial"?", UNITS: imperial (use miles, yards, min/mile, min/100yd, mph)":"")+
-  (A.stravaFitness && typeof A.stravaFitness === 'object' ? "\n\nSTRAVA FITNESS DATA (use these exact values for all targets):\n" +
-    (A.stravaFitness.run ? "- Run: avg pace "+(A.stravaFitness.run.avgPace||'?')+"/km, threshold pace "+(A.stravaFitness.run.thresholdPace||'?')+"/km, max HR "+(A.stravaFitness.run.maxHR||'?')+"bpm, weekly volume "+(A.stravaFitness.run.weeklyDistanceKm||'?')+"km\n" : "") +
-    (A.stravaFitness.bike ? "- Bike: avg speed "+(A.stravaFitness.bike.avgSpeedKmh||'?')+"km/h"+(A.stravaFitness.bike.ftpEstimate?", FTP ~"+A.stravaFitness.bike.ftpEstimate+"w":"")+", weekly volume "+(A.stravaFitness.bike.weeklyDistanceKm||'?')+"km\n" : "") +
-    (A.stravaFitness.swim ? "- Swim: avg pace "+(A.stravaFitness.swim.avgPacePer100m||'?')+"/100m, weekly volume "+(A.stravaFitness.swim.weeklyDistanceKm||'?')+"km\n" : "") +
+  (A.stravaFitness ? "\n\nSTRAVA FITNESS DATA (use these exact values for all targets):\n" +
+    (A.stravaFitness.run ? "- Run: avg pace "+A.stravaFitness.run.avgPace+"/km, threshold pace "+A.stravaFitness.run.thresholdPace+"/km, max HR "+A.stravaFitness.run.maxHR+"bpm, weekly volume "+A.stravaFitness.run.weeklyDistanceKm+"km\n" : "") +
+    (A.stravaFitness.bike ? "- Bike: avg speed "+A.stravaFitness.bike.avgSpeedKmh+"km/h"+(A.stravaFitness.bike.ftpEstimate?", FTP ~"+A.stravaFitness.bike.ftpEstimate+"w":"")+", weekly volume "+A.stravaFitness.bike.weeklyDistanceKm+"km\n" : "") +
+    (A.stravaFitness.swim ? "- Swim: avg pace "+A.stravaFitness.swim.avgPacePer100m+"/100m, weekly volume "+A.stravaFitness.swim.weeklyDistanceKm+"km\n" : "") +
     (A.stravaFitness.hrZones ? "- HR Zones: Z1 "+A.stravaFitness.hrZones.zone1.min+"-"+A.stravaFitness.hrZones.zone1.max+"bpm, Z2 "+A.stravaFitness.hrZones.zone2.min+"-"+A.stravaFitness.hrZones.zone2.max+"bpm, Z3 "+A.stravaFitness.hrZones.zone3.min+"-"+A.stravaFitness.hrZones.zone3.max+"bpm, Z4 "+A.stravaFitness.hrZones.zone4.min+"-"+A.stravaFitness.hrZones.zone4.max+"bpm, Z5 "+A.stravaFitness.hrZones.zone5.min+"-"+A.stravaFitness.hrZones.zone5.max+"bpm\n" : "") +
     "CRITICAL: Use exact pace targets, HR zones and power numbers above."
   : "") +
@@ -1408,6 +1408,7 @@ async function buildPlan(){
     renderRoadmap();
     loadCompletions().then(() => { renderWeek(); syncStravaActivities(); });
     if(A.date){planData.raceDate=A.date;}
+    if(A.units){planData.units=A.units;}
     if(A.stravaFitness){planData.stravaFitness=JSON.stringify(A.stravaFitness);}
     checkAndSavePlan(JSON.stringify(planData));
     if(A.date&&planData.weeks.length<w){const _bt=document.createElement('div');_bt.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1E90FF;color:#fff;padding:14px 20px;border-radius:12px;font-size:13px;font-family:Inter,sans-serif;text-align:center;z-index:9999;max-width:340px;line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.4);';_bt.innerHTML='<strong>Your first 4 weeks are ready!</strong><br>Building your full '+w+'-week plan to race day in the background.';document.body.appendChild(_bt);setTimeout(()=>{if(_bt.parentNode)_bt.remove();},8000);setTimeout(()=>autoGenerateRemainingWeeks(w),5000);}
@@ -2134,35 +2135,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => showIronToast('🎉 Payment successful! Welcome to irontri.', '#4ade80'), 1500);
   }
 
-  // Handle Strava OAuth callback from quiz fitness flow
-  if (urlParams.get('strava_connected') === '1' && urlParams.get('quiz_step') === '7') {
-    const accessToken = urlParams.get('access_token');
-    const refreshToken = urlParams.get('refresh_token');
-    const expiresAt = urlParams.get('expires_at');
-    const athleteId = urlParams.get('athlete_id');
-    if (accessToken && sb2) {
-      try {
-        const { data: { session } } = await sb2.auth.getSession();
-        if (session) {
-          await sb2.from('users').upsert({
-            id: session.user.id,
-            strava_access_token: accessToken,
-            strava_refresh_token: refreshToken,
-            strava_token_expires_at: parseInt(expiresAt),
-            strava_athlete_id: athleteId
-          }, { onConflict: 'id' });
-          // Clean URL and jump to Q7
-          window.history.replaceState({}, '', '/plan.html');
-          go(7);
-          showIronToast('Strava connected! Analysing your training data...', '#FC4C02');
-        }
-      } catch(e) {
-        console.log('Strava quiz connect error:', e);
-        go(7);
-      }
-    }
-  }
-
   if (loadId) {
     try {
       document.getElementById('quiz-wrap').style.display = 'none';
@@ -2219,6 +2191,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
         A.startDate = (()=>{ try { const ov=JSON.parse(localStorage.getItem('irontri_start_override')||'{}'); return ov[loadId] || planData.startDate || ''; } catch(e){ return planData.startDate || ''; } })();
         A.date = planData.raceDate || A.date || '';
+        // Restore units from saved plan
+        if(planData.units === 'imperial') { setUnits('imperial'); }
 
         document.getElementById('gen').style.display = 'none';
         document.getElementById('plan').style.display = 'block';
@@ -2915,7 +2889,7 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
           " ===";
       }
     }
-    const _rd=planData.raceDate||A.date;const _rdName=_rd?["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(_rd+"T00:00:00").getDay()]:"Sunday";const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(_rd||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". "+(near?"TAPER: reduce volume, race week=30-45min easy sessions only. CRITICAL: The race falls on a "+_rdName+" — place the Race type session ONLY on "+_rdName+", all other days are Rest or easy 20-30min shakeout. Do NOT place the race on any other day.":"Progressive overload.")+autoFifoBlock+" Focus descriptions must be plain English, inspiring and athlete-friendly — never use terms like 'constraint', 'adaptation', 'modality' or corporate language. JSON only: {\"weeks\":[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});if(A.fifo)fixFifoViolations(planData.weeks);correctPhases(planData.weeks);if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}}
+    const _rd=planData.raceDate||A.date;const _rdName=_rd?["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(_rd+"T00:00:00").getDay()]:"Sunday";const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(_rd||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". "+((planData.units||A.units)==="imperial"?"UNITS: imperial — use miles, yards, min/mile, min/100yd, mph for ALL paces and distances. ":"")+(near?"TAPER: reduce volume, race week=30-45min easy sessions only. CRITICAL: The race falls on a "+_rdName+" — place the Race type session ONLY on "+_rdName+", all other days are Rest or easy 20-30min shakeout. Do NOT place the race on any other day.":"Progressive overload.")+autoFifoBlock+" Focus descriptions must be plain English, inspiring and athlete-friendly — never use terms like 'constraint', 'adaptation', 'modality' or corporate language. JSON only: {\"weeks\":[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});if(A.fifo)fixFifoViolations(planData.weeks);correctPhases(planData.weeks);if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}}
 
 </script>
 
