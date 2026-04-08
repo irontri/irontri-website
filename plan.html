@@ -301,14 +301,14 @@
 
 <!-- Q1 -->
 <div class="q active" id="q1">
-  <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-      <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);letter-spacing:0.5px;text-transform:uppercase;">Your units</div>
-      <div style="display:flex;align-items:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:3px;gap:2px;">
-        <button id="q1-btn-metric" onclick="setUnits('metric')" style="padding:6px 16px;border-radius:6px;border:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;background:#1E90FF;color:#fff;transition:all 0.15s;">km / m</button>
-        <button id="q1-btn-imperial" onclick="setUnits('imperial')" style="padding:6px 16px;border-radius:6px;border:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;">mi / yd</button>
-      </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.35);">Your plan will use these units</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding:12px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;">
+    <div>
+      <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:2px;">📏 First, pick your units</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.45);">All distances and paces in your plan will use these</div>
+    </div>
+    <div style="display:flex;align-items:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:3px;gap:2px;">
+      <button id="q1-btn-metric" onclick="setUnits('metric')" style="padding:6px 16px;border-radius:6px;border:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;background:#1E90FF;color:#fff;transition:all 0.15s;">km / m</button>
+      <button id="q1-btn-imperial" onclick="setUnits('imperial')" style="padding:6px 16px;border-radius:6px;border:none;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;">mi / yd</button>
     </div>
   </div>
   <div class="qlbl">Your goal</div><div class="qtitle">What do you want to achieve?</div>
@@ -414,6 +414,53 @@
     <input type="range" min="3" max="20" value="8" step="1" oninput="setH(this.value)">
     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:6px;"><span>3 hrs</span><span>20 hrs</span></div>
   </div>
+  <!-- STRAVA FITNESS CARD — shown if already connected -->
+  <div id="strava-fitness-card" style="display:none;margin-top:20px;background:rgba(252,76,2,0.08);border:1px solid rgba(252,76,2,0.3);border-radius:14px;padding:18px 20px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <svg viewBox="0 0 24 24" style="width:22px;height:22px;flex-shrink:0;" fill="#FC4C02"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#fff;">We found your Strava data</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);">Build your plan using your last 8 weeks of real training data</div>
+      </div>
+    </div>
+    <div id="strava-fitness-preview" style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:14px;line-height:1.6;"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button onclick="applyStravaFitness()" style="flex:1;background:#FC4C02;color:#fff;border:none;border-radius:10px;padding:11px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">
+        ✓ Yes, use my Strava data
+      </button>
+      <button onclick="dismissStravaFitness()" style="flex:1;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
+        No, I'll enter manually
+      </button>
+    </div>
+  </div>
+
+  <!-- CONNECT STRAVA CARD — shown if NOT connected -->
+  <div id="strava-connect-card" style="display:none;margin-top:20px;background:rgba(252,76,2,0.06);border:1px solid rgba(252,76,2,0.2);border-radius:14px;padding:18px 20px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <svg viewBox="0 0 24 24" style="width:22px;height:22px;flex-shrink:0;" fill="#FC4C02"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#fff;">Want a smarter plan?</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);">Connect Strava and we'll use your real HR zones, pace and power data</div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:rgba(255,255,255,0.45);margin:0 0 14px 0;line-height:1.6;">Instead of guessing your fitness level, irontri will read your last 8 weeks of Strava activities and set exact pace targets, heart rate zones and power zones based on your real data.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button onclick="connectStravaForFitness()" style="flex:1;background:#FC4C02;color:#fff;border:none;border-radius:10px;padding:11px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;" fill="#fff"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+        Connect Strava to auto-fill →
+      </button>
+      <button onclick="document.getElementById('strava-connect-card').style.display='none'" style="flex:1;background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.4);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:11px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
+        Skip — enter manually
+      </button>
+    </div>
+  </div>
+
+  <!-- STRAVA FITNESS APPLIED BADGE -->
+  <div id="strava-fitness-applied" style="display:none;margin-top:16px;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:10px;padding:12px 16px;">
+    <div style="font-size:13px;color:#4ade80;font-weight:600;">✅ Plan will be built using your real Strava fitness data</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:3px;">HR zones, pace targets and power zones are pre-filled below</div>
+  </div>
+
   <div style="margin-top:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
       <div style="font-size:12px;font-weight:500;color:var(--blue);letter-spacing:1px;text-transform:uppercase;">🎯 Your threshold data — optional</div>
@@ -493,6 +540,55 @@
     <button class="db" onclick="td(this,'Friday')">Fri</button>
     <button class="db" onclick="td(this,'Saturday')">Sat</button>
     <button class="db" onclick="td(this,'Sunday')">Sun</button>
+  </div>
+  <!-- FIFO toggle -->
+  <div style="margin-top:20px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.08);">
+    <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:10px;">Do you work FIFO or a rotating roster?</div>
+    <div style="display:flex;gap:10px;margin-bottom:14px;">
+      <button class="db" id="fifo-yes" onclick="toggleFifo(true)" style="flex:1;padding:10px;">Yes</button>
+      <button class="db" id="fifo-no" onclick="toggleFifo(false)" style="flex:1;padding:10px;">No</button>
+    </div>
+    <div id="fifo-details" style="display:none;margin-top:4px;">
+      <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">What is your roster?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="db fifo-roster-btn" onclick="pickRoster(this,'1/1')" style="flex:1;min-width:80px;padding:10px 6px;font-size:13px;">1/1</button>
+        <button class="db fifo-roster-btn" onclick="pickRoster(this,'2/1')" style="flex:1;min-width:80px;padding:10px 6px;font-size:13px;">2/1</button>
+        <button class="db fifo-roster-btn" onclick="pickRoster(this,'2/2')" style="flex:1;min-width:80px;padding:10px 6px;font-size:13px;">2/2</button>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">What day do you fly out to work?</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Monday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Mon</button>
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Tuesday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Tue</button>
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Wednesday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Wed</button>
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Thursday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Thu</button>
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Friday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Fri</button>
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Saturday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Sat</button>
+        <button class="db fifo-flyout-btn" onclick="pickFlyout(this,'Sunday')" style="flex:1;min-width:40px;padding:8px 4px;font-size:12px;">Sun</button>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Right now, are you at work or at home?</div>
+      <div style="display:flex;gap:10px;margin-bottom:8px;">
+        <button class="db fifo-now-btn" onclick="pickFifoNow(this,'work')" style="flex:1;padding:10px;font-size:13px;">🏗️ At work</button>
+        <button class="db fifo-now-btn" onclick="pickFifoNow(this,'home')" style="flex:1;padding:10px;font-size:13px;">🏠 At home</button>
+      </div>
+      <div id="fifo-week-detail" style="display:none;margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin:10px 0 8px;">Which week of your swing are you in?</div>
+        <div id="fifo-week-btns" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">What can you NOT do when you're at work?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="db fifo-restrict-btn" onclick="toggleRestrict(this,'No swimming')" style="flex:1;min-width:90px;padding:9px 6px;font-size:13px;">🏊 No swim</button>
+        <button class="db fifo-restrict-btn" onclick="toggleRestrict(this,'No cycling')" style="flex:1;min-width:90px;padding:9px 6px;font-size:13px;">🚴 No bike</button>
+        <button class="db fifo-restrict-btn" onclick="toggleRestrict(this,'No running')" style="flex:1;min-width:90px;padding:9px 6px;font-size:13px;">🏃 No run</button>
+        <button class="db fifo-restrict-btn" onclick="toggleRestrict(this,'No gym/weights')" style="flex:1;min-width:90px;padding:9px 6px;font-size:13px;">💪 No gym</button>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Max training time per day while at work?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="db fifo-hours-btn" onclick="pickFifoHours(this,'30min-1hr')" style="flex:1;min-width:65px;padding:9px 4px;font-size:12px;">30min–1hr</button>
+        <button class="db fifo-hours-btn" onclick="pickFifoHours(this,'1-2hrs')" style="flex:1;min-width:65px;padding:9px 4px;font-size:12px;">1–2hrs</button>
+        <button class="db fifo-hours-btn" onclick="pickFifoHours(this,'2-3hrs')" style="flex:1;min-width:65px;padding:9px 4px;font-size:12px;">2–3hrs</button>
+        <button class="db fifo-hours-btn" onclick="pickFifoHours(this,'3hrs+')" style="flex:1;min-width:65px;padding:9px 4px;font-size:12px;">3hrs+</button>
+      </div>
+    </div>
   </div>
   <div class="qnav"><button class="bb" onclick="go(7)">← Back</button><button class="bn" id="n8" onclick="go(9)">Continue →</button></div>
 </div>
@@ -720,7 +816,7 @@ let curDay=null;
 let completions = new Set();
 
 function prog(n){const p=Math.round(n/T*100);document.getElementById('pf').style.width=p+'%';document.getElementById('pt').textContent='Question '+n+' of '+T;document.getElementById('pp').textContent=p+'%';}
-function go(n){document.querySelectorAll('.q').forEach(q=>q.classList.remove('active'));const t=document.getElementById('q'+n);if(t){t.classList.add('active');prog(n);}window.scrollTo({top:0,behavior:'smooth'});}
+function go(n){document.querySelectorAll('.q').forEach(q=>q.classList.remove('active'));const t=document.getElementById('q'+n);if(t){t.classList.add('active');prog(n);}window.scrollTo({top:0,behavior:'smooth'});if(n===7){loadStravaFitness();}}
 function pick(el,key,val){el.closest('.opts').querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={goal:'n1',exp:'n4',fitness:'n5',weak:'n6',pool:'n9',injury:'n10'};if(m[key])document.getElementById(m[key]).disabled=false;
   if(key==='goaltime'){
     const box=document.getElementById('goaltime-input');
@@ -753,7 +849,67 @@ function updateGoalTime(){
 }
 function pg(el,key,val){el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
 function setH(v){A.hours=parseInt(v);document.getElementById('hv').innerHTML=v+' <span>hours/week</span>';const h={3:'Light — great for beginners',5:'Good starting point',7:'Solid volume',8:'Good balance for most',10:'Strong commitment',12:'Serious training load',15:'High performance',18:'Elite volume',20:'Maximum load'};const k=Object.keys(h).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);document.getElementById('hh').textContent=h[k]||'';}
-function td(btn,day){btn.classList.toggle('sel');if(btn.classList.contains('sel'))A.days.push(day);else A.days=A.days.filter(d=>d!==day);document.getElementById('n8').disabled=A.days.length===0;}
+function td(btn,day){btn.classList.toggle('sel');if(btn.classList.contains('sel')){if(!A.days.includes(day))A.days.push(day);}else A.days=A.days.filter(d=>d!==day);document.getElementById('n8').disabled=A.days.length===0;}
+function toggleFifo(yes){
+  A.fifo=yes;
+  document.getElementById('fifo-yes').classList.toggle('sel',yes);
+  document.getElementById('fifo-no').classList.toggle('sel',!yes);
+  document.getElementById('fifo-details').style.display=yes?'block':'none';
+  if(!yes){A.fifoRoster=null;A.fifoRestrictions=[];A.fifoHours=null;A.fifoFlyoutDay=null;A.fifoCurrentStatus=null;A.fifoCurrentWeek=null;}
+}
+function pickRoster(btn,val){
+  document.querySelectorAll('.fifo-roster-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  A.fifoRoster=val;
+}
+function toggleRestrict(btn,val){
+  btn.classList.toggle('sel');
+  if(!A.fifoRestrictions)A.fifoRestrictions=[];
+  if(btn.classList.contains('sel'))A.fifoRestrictions.push(val);
+  else A.fifoRestrictions=A.fifoRestrictions.filter(r=>r!==val);
+}
+function pickFlyout(btn,val){
+  document.querySelectorAll('.fifo-flyout-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  A.fifoFlyoutDay=val;
+}
+function pickFifoNow(btn,val){
+  document.querySelectorAll('.fifo-now-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  A.fifoCurrentStatus=val;
+  // Show week detail for multi-week rosters
+  var detail=document.getElementById('fifo-week-detail');
+  var btns=document.getElementById('fifo-week-btns');
+  var roster=A.fifoRoster||'';
+  var weeks=roster==='2/1'?{work:2,home:1}:roster==='2/2'?{work:2,home:2}:null;
+  if(weeks){
+    var count=val==='work'?weeks.work:weeks.home;
+    if(count>1){
+      btns.innerHTML='';
+      for(var i=1;i<=count;i++){
+        var w=i;
+        btns.innerHTML+='<button class="db fifo-weeknum-btn" onclick="pickFifoWeekNum(this,'+w+')" style="flex:1;min-width:60px;padding:9px 6px;font-size:13px;">Week '+w+'</button>';
+      }
+      detail.style.display='block';
+    } else {
+      detail.style.display='none';
+      A.fifoCurrentWeek=1;
+    }
+  } else {
+    detail.style.display='none';
+    A.fifoCurrentWeek=1;
+  }
+}
+function pickFifoWeekNum(btn,val){
+  document.querySelectorAll('.fifo-weeknum-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  A.fifoCurrentWeek=val;
+}
+function pickFifoHours(btn,val){
+  document.querySelectorAll('.fifo-hours-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  A.fifoHours=val;
+}
 function cf(){
   A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
   A.email = '';
@@ -777,10 +933,10 @@ function showSum(){
     {l:'Goal time',v:A.goaltimeText||'Just finish'},
     {l:'Experience',v:A.exp.split(' — ')[0]||A.exp},{l:'Age group',v:A.age},
     {l:'Plan starts',v:A.startDate ? new Date(A.startDate).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : 'ASAP'},
-    {l:'Weekly training',v:A.hours+' hours'},{l:'Training days',v:A.days.join(', ')},
+    {l:'Weekly training',v:A.hours+' hours'},{l:'Training days',v:A.days.join(', ')},(A.fifo?{l:'Roster',v:(A.fifoRoster||'FIFO')+(A.fifoFlyoutDay?' — flies out '+A.fifoFlyoutDay:'')+(A.fifoCurrentStatus?' — currently '+(A.fifoCurrentStatus==='work'?'at work':'at home')+(A.fifoCurrentWeek?' (week '+A.fifoCurrentWeek+')':''):'')}:null),(A.fifo&&A.fifoRestrictions&&A.fifoRestrictions.length?{l:'On-site restrictions',v:A.fifoRestrictions.join(', ')}:null),(A.fifo&&A.fifoHours?{l:'Max session at work',v:A.fifoHours+' per day'}:null),
     {l:'Focus',v:A.weak.split(' — ')[0]||A.weak}
   ];
-  document.getElementById('sg').innerHTML=items.map(i=>`<div class="sc"><div class="sl">${i.l}</div><div class="sv">${i.v}</div></div>`).join('');
+  document.getElementById('sg').innerHTML=items.filter(i=>i&&i.l&&i.v).map(i=>`<div class="sc"><div class="sl">${i.l}</div><div class="sv">${i.v}</div></div>`).join('');
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -795,14 +951,37 @@ const HR_ZONES = {
 
 // ── TYPE INFO — single source of truth for colours, icons, labels ──
 const typeInfo={
-  'Swim':    {icon:'🏊', cls:'type-swim',     color:'#38bdf8', label:'Swim'},
-  'Bike':    {icon:'🚴', cls:'type-bike',     color:'#fb923c', label:'Bike'},
-  'Run':     {icon:'🏃', cls:'type-run',      color:'#4ade80', label:'Run'},
-  'Brick':   {icon:'🔥', cls:'type-brick',    color:'#a78bfa', label:'Brick'},
-  'Strength':{icon:'💪', cls:'type-strength', color:'#fbbf24', label:'Strength'},
-  'Rest':    {icon:'😴', cls:'type-rest',     color:'rgba(255,255,255,0.3)', label:'Rest'},
-  'Race':    {icon:'🏁', cls:'type-race',     color:'#f87171', label:'Race'}
+  'Swim':         {icon:'🏊', cls:'type-swim',     color:'#38bdf8', label:'Swim'},
+  'Bike':         {icon:'🚴', cls:'type-bike',     color:'#fb923c', label:'Bike'},
+  'Run':          {icon:'🏃', cls:'type-run',      color:'#4ade80', label:'Run'},
+  'Brick':        {icon:'🔥', cls:'type-brick',    color:'#a78bfa', label:'Brick'},
+  'Strength':     {icon:'💪', cls:'type-strength', color:'#fbbf24', label:'Strength'},
+  'Rest':         {icon:'😴', cls:'type-rest',     color:'rgba(255,255,255,0.3)', label:'Rest'},
+  'Race':         {icon:'🏁', cls:'type-race',     color:'#f87171', label:'Race'},
 };
+
+function resolveType(rawType, name, warmup, mainset) {
+  if (!rawType) return typeInfo['Rest'];
+  if (typeInfo[rawType]) return typeInfo[rawType];
+  // Combine all text for keyword detection
+  const combined = ((name||'')+' '+(warmup||'')+' '+(mainset||'')).toLowerCase();
+  // Check run first (most specific keywords like /km, spm)
+  if (combined.includes('/km') || combined.includes('spm') || combined.includes('min/km') || combined.includes('easy run') || combined.includes('easy jog') || (combined.includes('run') && !combined.includes('running drills'))) return typeInfo['Run'];
+  // Check swim
+  if (combined.includes('swim') || combined.includes('/100m') || combined.includes('kick') || combined.includes('stroke') || combined.includes('drill') || combined.includes('pool') || combined.includes('open water') || combined.includes('css')) return typeInfo['Swim'];
+  // Check bike
+  if (combined.includes('bike') || combined.includes('rpm') || combined.includes('watt') || combined.includes('km/h') || combined.includes('cadence') || combined.includes('spin') || combined.includes('ride') || combined.includes('cycl') || combined.includes('ftp')) return typeInfo['Bike'];
+  // Fall back to type keyword matching
+  const lower = rawType.toLowerCase();
+  if (lower.includes('swim')) return typeInfo['Swim'];
+  if (lower.includes('bike') || lower.includes('cycl') || lower.includes('ride')) return typeInfo['Bike'];
+  if (lower.includes('run') || lower.includes('jog') || lower.includes('tempo') || lower.includes('interval') || lower.includes('threshold') || lower.includes('vo2') || lower.includes('recovery') || lower.includes('easy') || lower.includes('endur')) return typeInfo['Run'];
+  if (lower.includes('brick') || lower.includes('transition')) return typeInfo['Brick'];
+  if (lower.includes('strength') || lower.includes('gym')) return typeInfo['Strength'];
+  if (lower.includes('race')) return typeInfo['Race'];
+  if (lower.includes('rest') || lower.includes('off') || lower.includes('mobility')) return typeInfo['Rest'];
+  return typeInfo['Rest'];
+}
 
 
 function fmtDur(mins) {
@@ -811,6 +990,36 @@ function fmtDur(mins) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return m > 0 ? h + 'h ' + m + 'm' : h + 'h';
+}
+
+function correctPhases(weeks, targetWeeks) {
+  if (!weeks || weeks.length === 0) return;
+  const total = weeks.length;
+  const tw = targetWeeks || window._targetWeeks || total;
+  const isPlanComplete = total >= tw;
+  const raceWeekCount = 1;
+  const taperCount = Math.max(1, Math.round(tw * 0.12));
+  const peakCount = Math.max(1, Math.round(tw * 0.20));
+  const buildCount = Math.max(1, Math.round(tw * 0.35));
+  const baseCount = tw - raceWeekCount - taperCount - peakCount - buildCount;
+  weeks.forEach((w, i) => {
+    if (isPlanComplete && i === total - 1) w.phase = 'Race Week';
+    else if (i >= baseCount + buildCount + peakCount) w.phase = 'Taper';
+    else if (i >= baseCount + buildCount) w.phase = 'Peak';
+    else if (i >= baseCount) w.phase = 'Build';
+    else w.phase = 'Base';
+  });
+  if (!isPlanComplete) {
+    weeks.forEach(w => { if (w.phase === 'Race Week') w.phase = 'Taper'; });
+  }
+  weeks.forEach((w, i) => {
+    const isFinalWeek = isPlanComplete && i === total - 1;
+    if (!isFinalWeek && w.days) {
+      w.days.forEach(d => {
+        if ((d.type || '').toLowerCase() === 'race') { d.type = 'Run'; d.name = d.name || 'Run Session'; }
+      });
+    }
+  });
 }
 
 function renderWeek(){
@@ -843,7 +1052,7 @@ function renderWeek(){
   }
 
   const sessions=w.days.filter(d=>d.type!=='Rest').length;
-  const totalMin=w.days.reduce((a,d)=>a+(d.duration||0),0);
+  const totalMin=w.days.reduce((a,d)=>{ const dur=typeof d.duration==='string'?parseFloat(d.duration)||0:(d.duration||0); return a+dur; },0);
   const hrs=Math.floor(totalMin/60);
   const mins=totalMin%60;
   document.getElementById('wsummary').innerHTML=`
@@ -853,11 +1062,27 @@ function renderWeek(){
 
   let easyMin=0, modMin=0, hardMin=0;
   w.days.forEach(d=>{
-    if(d.type==='Rest'||!d.duration)return;
-    const e=d.effort||5;
-    if(e<=6) easyMin+=d.duration;
-    else if(e<=7) modMin+=d.duration;
-    else hardMin+=d.duration;
+    if(d.type==='Rest')return;
+    // Parse duration — handle both number and string like "45min"
+    let dur=d.duration;
+    if(typeof dur==='string') dur=parseFloat(dur)||0;
+    if(!dur)return;
+    // Parse effort — handle both number and string like "Hard"
+    let e=d.effort;
+    if(typeof e==='string'){
+      const el=e.toLowerCase();
+      if(el.includes('very hard')||el.includes('maximum')||el.includes('max'))e=9;
+      else if(el.includes('hard')||el.includes('high'))e=8;
+      else if(el.includes('moderate-hard')||el.includes('mod-hard'))e=7;
+      else if(el.includes('moderate')||el.includes('medium'))e=6;
+      else if(el.includes('easy-moderate')||el.includes('easy mod'))e=5;
+      else if(el.includes('easy')||el.includes('low'))e=4;
+      else e=5;
+    }
+    e=Number(e)||5;
+    if(e<=6) easyMin+=dur;
+    else if(e<=7) modMin+=dur;
+    else hardMin+=dur;
   });
   const totalIntMin=easyMin+modMin+hardMin||1;
   const easyPct=Math.round(easyMin/totalIntMin*100);
@@ -883,7 +1108,7 @@ function renderWeek(){
   const allDaysFull=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('cal').innerHTML=w.days.map((d,i)=>{
-    const t=typeInfo[d.type]||typeInfo['Rest'];
+    const t=resolveType(d.type, d.name, d.warmup, d.mainset);
     const isActive=curDay===i;
     const isComplete=completions.has(`${curWeek}-${i}`);
     const dayDate = new Date(planStartDate);
@@ -911,7 +1136,7 @@ function selectDay(i){
   curDay=i;
   const w=planData.weeks[curWeek];
   const d=w.days[i];
-  const t=typeInfo[d.type]||typeInfo['Rest'];
+  const t=resolveType(d.type, d.name, d.warmup, d.mainset);
   const sd=document.getElementById('sd');
 
   document.querySelectorAll('.cal-day').forEach((el,idx)=>{
@@ -934,7 +1159,7 @@ function selectDay(i){
         <div class="sd-icon">😴</div>
         <div class="sd-info">
           <div class="sd-title">Rest Day</div>
-          <div class="sd-meta">${fullDays[i]}</div>
+          <div class="sd-meta">${fullDateStr}</div>
         </div>
       </div>
       <div class="sd-body">
@@ -1052,7 +1277,68 @@ async function buildPlan(){
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
   const startDayName = A.startDate ? ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(A.startDate+"T00:00:00").getDay()] : "Monday";
-  const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.units==="imperial"?", UNITS: imperial (use miles, yards, min/mile, min/100yd, mph)":"")+". Plan: "+w+" weeks, start date: "+(A.startDate||"soon")+" ("+startDayName+"), race date: "+(A.date||"TBD")+". IMPORTANT: Week 1 starts on "+startDayName+". TAPER: ONLY week "+w+" = race week (easy 30-45min only). Week "+(w-1)+" = -50% taper. Week "+(w-2)+" = -30% taper. Week "+(w-3)+" = peak. Do NOT create race week content in any other week.\n\n";
+  // ── FIFO schedule calculation ──────────────────────────────
+  var fifoBlock = "";
+  if(A.fifo){
+    var forbiddenTypes = [];
+    if(A.fifoRestrictions){
+      if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("swim"))) forbiddenTypes.push("Swim");
+      if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("cycl")||r.toLowerCase().includes("bike"))) forbiddenTypes.push("Bike");
+      if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("run"))) forbiddenTypes.push("Run");
+      if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("gym")||r.toLowerCase().includes("strength")||r.toLowerCase().includes("weight"))) forbiddenTypes.push("Strength");
+    }
+
+    // Parse roster into cycle: array of "work" or "home" per week
+    var rosterCycle = [];
+    if(A.fifoRoster==="1/1") rosterCycle=["work","home"];
+    else if(A.fifoRoster==="2/1") rosterCycle=["work","work","home"];
+    else if(A.fifoRoster==="2/2") rosterCycle=["work","work","home","home"];
+    else rosterCycle=["work","home"];
+
+    // Figure out which position in cycle the plan starts at
+    // A.fifoCurrentStatus = "work" or "home", A.fifoCurrentWeek = 1 or 2
+    var currentWeek = parseInt(A.fifoCurrentWeek)||1;
+    var currentStatus = A.fifoCurrentStatus||"work";
+    // Find position in cycle
+    var cyclePos = 0;
+    var found = 0;
+    for(var ci=0;ci<rosterCycle.length;ci++){
+      if(rosterCycle[ci]===currentStatus){ found++; if(found===currentWeek){cyclePos=ci;break;} }
+    }
+    // Plan start relative to current: same week = position 0
+    // Build week schedule for all w weeks
+    var weekSchedule = [];
+    for(var wi=0;wi<w;wi++){
+      weekSchedule.push(rosterCycle[(cyclePos+wi)%rosterCycle.length]);
+    }
+
+    // Build explicit week list
+    var workWeeks = [], homeWeeks = [];
+    weekSchedule.forEach(function(s,i){ if(s==="work") workWeeks.push(i+1); else homeWeeks.push(i+1); });
+
+    var maxMins = A.fifoHours==="30min-1hr"?60:A.fifoHours==="1-2hrs"?120:A.fifoHours==="2-3hrs"?180:240;
+
+    fifoBlock = "\n\n=== FIFO WORKER SCHEDULE — FOLLOW EXACTLY ==="+
+      "\nWORK WEEKS (restricted): "+workWeeks.join(", ")+
+      "\nHOME WEEKS (normal): "+homeWeeks.join(", ")+
+      "\n\nRULES FOR WORK WEEKS (weeks "+workWeeks.join(",")+"):"+
+      "\n- BANNED session types: "+(forbiddenTypes.length?forbiddenTypes.join(", "):"none")+" — if banned, replace with Rest or an allowed sport"+
+      "\n- MAX session duration: "+maxMins+" minutes — no session may be longer than this"+
+      "\n- Allowed types only: "+(forbiddenTypes.length?["Swim","Bike","Run","Strength","Brick"].filter(t=>!forbiddenTypes.includes(t)).concat(["Rest"]).join(", "):"all")+
+      "\n\nRULES FOR HOME WEEKS (weeks "+homeWeeks.join(",")+"):"+
+      "\n- All disciplines available, normal duration, "+A.hours+" hrs/week target"+
+      "\n\nThis is a hard physical constraint. Do not put banned types in work weeks under any circumstances."+
+      "\n=============================================";
+  }
+  const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.units==="imperial"?", UNITS: imperial (use miles, yards, min/mile, min/100yd, mph)":"")+
+  (A.stravaFitness ? "\n\nSTRAVA FITNESS DATA (use these exact values for all targets):\n" +
+    (A.stravaFitness.run ? "- Run: avg pace "+A.stravaFitness.run.avgPace+"/km, threshold pace "+A.stravaFitness.run.thresholdPace+"/km, max HR "+A.stravaFitness.run.maxHR+"bpm, weekly volume "+A.stravaFitness.run.weeklyDistanceKm+"km\n" : "") +
+    (A.stravaFitness.bike ? "- Bike: avg speed "+A.stravaFitness.bike.avgSpeedKmh+"km/h" + (A.stravaFitness.bike.ftpEstimate ? ", FTP ~"+A.stravaFitness.bike.ftpEstimate+"w" : "") + ", weekly volume "+A.stravaFitness.bike.weeklyDistanceKm+"km\n" : "") +
+    (A.stravaFitness.swim ? "- Swim: avg pace "+A.stravaFitness.swim.avgPacePer100m+"/100m, weekly volume "+A.stravaFitness.swim.weeklyDistanceKm+"km\n" : "") +
+    (A.stravaFitness.hrZones ? "- HR Zones: Z1 "+A.stravaFitness.hrZones.zone1.min+"-"+A.stravaFitness.hrZones.zone1.max+"bpm (Recovery), Z2 "+A.stravaFitness.hrZones.zone2.min+"-"+A.stravaFitness.hrZones.zone2.max+"bpm (Aerobic), Z3 "+A.stravaFitness.hrZones.zone3.min+"-"+A.stravaFitness.hrZones.zone3.max+"bpm (Tempo), Z4 "+A.stravaFitness.hrZones.zone4.min+"-"+A.stravaFitness.hrZones.zone4.max+"bpm (Threshold), Z5 "+A.stravaFitness.hrZones.zone5.min+"-"+A.stravaFitness.hrZones.zone5.max+"bpm (VO2 Max)\n" : "") +
+    "CRITICAL: Use the exact pace targets, HR zones and power numbers above. Do NOT use generic beginner/intermediate targets."
+  : "") +
+  ". Plan: "+w+" weeks, start date: "+(A.startDate||"soon")+" ("+startDayName+"), race date: "+(A.date||"TBD")+". IMPORTANT: Week 1 starts on "+startDayName+". TAPER: ONLY week "+w+" = race week (easy 30-45min only). Week "+(w-1)+" = -50% taper. Week "+(w-2)+" = -30% taper. Week "+(w-3)+" = peak. Do NOT create race week content in any other week. CRITICAL: These first 4 weeks are Base phase ONLY — phase must be Base for all weeks in this batch. Never use Race Week, Taper or Peak phase labels in these first 4 weeks."+fifoBlock+"\n\n";
   try{
         const prompt1 = prompt + '\n\nGenerate ONLY weeks 1 and 2. Return JSON with keys: intro, weeks (array of 2 weeks only).';
     const prompt2 = prompt + '\n\nGenerate ONLY weeks 3 and 4 (Build and Peak phases). Return JSON with keys: weeks (array of 2 weeks only, weekNumber starting at 3). No intro needed.';
@@ -1087,9 +1373,11 @@ async function buildPlan(){
     // Merge: take intro from p1, combine weeks
     planData = p1;
     planData.weeks = [...(p1.weeks||[]), ...(p2.weeks||[])];
+    if(A.fifo) fixFifoViolations(planData.weeks);
 
     // Fix week numbers in case AI got them wrong
     planData.weeks.forEach((wk,i) => { wk.weekNumber = i+1; });
+    correctPhases(planData.weeks);
 
     if(!planData.weeks || planData.weeks.length === 0) throw new Error('No weeks in plan');
 
@@ -1574,11 +1862,13 @@ async function saveRpe(dayIndex, rating, btnEl) {
     }
 
     // ── RPE ADAPTATION ──────────────────────────────────────────────────────
-    // If too easy (1-2) or too hard (4-5), adapt remaining sessions of same type
+    // Delay adaptation by 3 seconds so coach advice stays visible before renderWeek rebuilds DOM
     if (rating === 1 || rating === 2 || rating === 4 || rating === 5) {
       const sessionType = planData.weeks[curWeek]?.days[dayIndex]?.type;
       if (sessionType && sessionType !== 'Rest' && sessionType !== 'Brick' && sessionType !== 'Strength') {
-        await adaptFutureSessions(sessionType, rating, curWeek, dayIndex);
+        setTimeout(async () => {
+          await adaptFutureSessions(sessionType, rating, curWeek, dayIndex);
+        }, 3000);
       }
     }
     // ── END RPE ADAPTATION ──────────────────────────────────────────────────
@@ -1587,7 +1877,119 @@ async function saveRpe(dayIndex, rating, btnEl) {
     console.log('RPE save error:', e);
   }
 }
-// ── END RPE ──────────────────────────────────────────────────────────────────
+// ── STRAVA FITNESS DATA ───────────────────────────────────────────────────────
+let stravaFitnessData = null;
+
+async function loadStravaFitness() {
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (!session) return;
+
+    // Check if user has Strava connected
+    const { data: user } = await sb2.from('users').select('strava_athlete_id').eq('id', session.user.id).single();
+
+    if (!user || !user.strava_athlete_id) {
+      // Not connected — show the connect card
+      document.getElementById('strava-connect-card').style.display = 'block';
+      return;
+    }
+
+    // Connected — show fitness card while loading
+    document.getElementById('strava-fitness-card').style.display = 'block';
+    document.getElementById('strava-fitness-preview').textContent = 'Analysing your last 8 weeks of training...';
+
+    const res = await fetch('/api/strava-fitness', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: session.user.id })
+    });
+    const data = await res.json();
+
+    if (!data.connected || !data.hasData) {
+      document.getElementById('strava-fitness-card').style.display = 'none';
+      return;
+    }
+
+    stravaFitnessData = data;
+
+    // Build preview text
+    const lines = [];
+    if (data.run) lines.push('🏃 Run: avg pace ' + (data.run.avgPace || '—') + '/km · max HR ' + (data.run.maxHR || '—') + 'bpm');
+    if (data.bike) {
+      const bikeStr = data.bike.hasPowerMeter
+        ? '🚴 Bike: ' + (data.bike.avgSpeedKmh || '—') + 'km/h · FTP ~' + (data.bike.ftpEstimate || '—') + 'w'
+        : '🚴 Bike: avg ' + (data.bike.avgSpeedKmh || '—') + 'km/h';
+      lines.push(bikeStr);
+    }
+    if (data.swim) lines.push('🏊 Swim: avg ' + (data.swim.avgPacePer100m || '—') + '/100m');
+    if (data.hrZones) lines.push('❤️ HR zones: Z1 ' + data.hrZones.zone1.min + '-' + data.hrZones.zone1.max + ' · Z2 ' + data.hrZones.zone2.min + '-' + data.hrZones.zone2.max + ' · Z4 ' + data.hrZones.zone4.min + '-' + data.hrZones.zone4.max + 'bpm');
+    lines.push('📊 ' + data.activitiesAnalysed + ' activities analysed over 8 weeks');
+
+    document.getElementById('strava-fitness-preview').innerHTML = lines.join('<br>');
+
+  } catch (e) {
+    console.log('Strava fitness load error:', e);
+    document.getElementById('strava-fitness-card').style.display = 'none';
+  }
+}
+
+function connectStravaForFitness() {
+  // Save quiz state to sessionStorage so we can resume after OAuth
+  sessionStorage.setItem('irontri_quiz_state', JSON.stringify(A));
+  sessionStorage.setItem('irontri_quiz_step', '7');
+  // Redirect to Strava OAuth — same flow as dashboard connect
+  const clientId = '216800';
+  const redirect = encodeURIComponent(window.location.origin + '/api/strava-exchange');
+  const scope = 'read,activity:read_all,activity:write';
+  window.location.href = 'https://www.strava.com/oauth/authorize?client_id=' + clientId + '&response_type=code&redirect_uri=' + redirect + '&approval_prompt=auto&scope=' + scope + '&state=quiz_fitness';
+}
+
+function applyStravaFitness() {
+  if (!stravaFitnessData) return;
+  const d = stravaFitnessData;
+
+  // Pre-fill FTP
+  if (d.bike && d.bike.ftpEstimate) {
+    const ftpEl = document.getElementById('iftp');
+    if (ftpEl) { ftpEl.value = d.bike.ftpEstimate; A.ftp = d.bike.ftpEstimate; }
+  }
+
+  // Pre-fill run threshold pace
+  if (d.run && d.run.thresholdPaceMin) {
+    const minEl = document.getElementById('irtp-min');
+    const secEl = document.getElementById('irtp-sec');
+    if (minEl && secEl) {
+      minEl.value = d.run.thresholdPaceMin;
+      secEl.value = String(d.run.thresholdPaceSec || 0).padStart(2, '0');
+      updateRTP();
+    }
+  }
+
+  // Pre-fill swim CSS
+  if (d.swim && d.swim.avgPaceSecs) {
+    const cssMin = Math.floor(d.swim.avgPaceSecs / 60);
+    const cssSec = Math.round(d.swim.avgPaceSecs % 60);
+    const cssMinEl = document.getElementById('icss-min');
+    const cssSecEl = document.getElementById('icss-sec');
+    if (cssMinEl && cssSecEl) {
+      cssMinEl.value = cssMin;
+      cssSecEl.value = String(cssSec).padStart(2, '0');
+      updateCSS();
+    }
+  }
+
+  // Store fitness data for prompt
+  A.stravaFitness = d;
+
+  // Update UI
+  document.getElementById('strava-fitness-card').style.display = 'none';
+  document.getElementById('strava-fitness-applied').style.display = 'block';
+}
+
+function dismissStravaFitness() {
+  document.getElementById('strava-fitness-card').style.display = 'none';
+}
+// ── END STRAVA FITNESS ────────────────────────────────────────────────────────
 
 async function toggleComplete(dayIndex) {
   const key = `${curWeek}-${dayIndex}`;
@@ -1722,7 +2124,14 @@ async function checkAndSavePlan(planText) {
         const { error } = await sb2.from('plans').update({plan_data: planText, race: A.race || 'Triathlon'}).eq('id', window.currentPlanId).eq('user_id', session.user.id);
         if (!error) { const b = document.getElementById('saved-banner'); if(b) b.style.display='block'; }
       } else {
-        const { data: inserted, error } = await sb2.from('plans').insert({user_id: session.user.id, plan_data: planText, race: A.race || 'Triathlon'}).select('id').single();
+        // Copy founding member status — check auth metadata first, then existing plans
+        const foundingMeta = session.user.user_metadata && session.user.user_metadata.is_founding_member === true;
+        let foundingFlag = foundingMeta;
+        if (!foundingFlag) {
+          const { data: existingPlans } = await sb2.from('plans').select('is_founding_member').eq('user_id', session.user.id).eq('is_founding_member', true).limit(1);
+          foundingFlag = existingPlans && existingPlans.length > 0;
+        }
+        const { data: inserted, error } = await sb2.from('plans').insert({user_id: session.user.id, plan_data: planText, race: A.race || 'Triathlon', is_founding_member: foundingFlag}).select('id').single();
         if (!error && inserted) { window.currentPlanId = inserted.id; const b = document.getElementById('saved-banner'); if(b) b.style.display='block'; }
         else { localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race})); const b = document.getElementById('save-banner'); if(b) b.style.display='block'; }
       }
@@ -1772,7 +2181,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!error && plan) {
 
         // ── PAYWALL CHECK ────────────────────────────────────────────────────
-        const isFounding = plan.is_founding_member === true;
+        const { data: { session: _s } } = await sb2.auth.getSession();
+        const isFounding = plan.is_founding_member === true || (_s && _s.user.user_metadata && _s.user.user_metadata.is_founding_member === true);
         const isPaid = plan.is_paid === true;
         const createdAt = plan.created_at ? new Date(plan.created_at) : new Date();
         const daysSinceSignup = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
@@ -1805,6 +2215,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
         planData = JSON.parse(txt);
         if(planData.weeks){const _dn=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];planData.weeks.forEach(wk=>{if(wk.days)wk.days.forEach((d,i)=>{if(d.type)d.type=d.type.charAt(0).toUpperCase()+d.type.slice(1).toLowerCase();if(typeof d.day==='number')d.day=_dn[d.day-1]||_dn[i]||'Monday';});});}
+        correctPhases(planData.weeks);
         A.race = plan.race || planData.race || 'Triathlon';
         A.name = localStorage.getItem('irontri_user_name') || 'Athlete';
         A.startDate = (()=>{ try { const ov=JSON.parse(localStorage.getItem('irontri_start_override')||'{}'); return ov[loadId] || planData.startDate || ''; } catch(e){ return planData.startDate || ''; } })();
@@ -2325,8 +2736,15 @@ async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
     const tooHard = rating >= 4;
     if (!tooEasy && !tooHard) return;
 
-    const prompt = 'You are an elite triathlon coach. A athlete just rated a ' + sportType + ' session RPE ' + rating + '/5 (' + (tooEasy ? 'too easy' : 'too hard') + ').' +
-      ' Rewrite the NEXT 3 ' + sportType + ' sessions to be ' + (tooEasy ? '10-15% harder' : '10-15% easier') + '.' +
+    // Find the current session to get its pace target for context
+    const currentSession = planData.weeks[fromWeek]?.days[fromDay];
+    const currentPace = currentSession?.paceTarget || 'not specified';
+    const currentDuration = currentSession?.duration || 'not specified';
+
+    const prompt = 'You are an elite triathlon coach. An athlete just rated a ' + sportType + ' session RPE ' + rating + '/5 (' + (tooEasy ? 'too easy' : 'too hard') + ').' +
+      ' The session had a pace target of ' + currentPace + ' and duration of ' + currentDuration + ' minutes.' +
+      ' Rewrite the NEXT 3 ' + sportType + ' sessions to be ' + (tooEasy ? '10-15% harder with faster pace targets' : '10-15% easier with slower pace targets') + '.' +
+      ' IMPORTANT: You MUST adjust the paceTarget field specifically — make it ' + (tooEasy ? 'faster' : 'slower') + ' than ' + currentPace + '.' +
       ' Return ONLY a JSON array of 3 session objects with keys: name, duration, effort, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone.' +
       ' No other text.';
 
@@ -2344,11 +2762,14 @@ async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
 
     let replaced = 0;
     for (let w = fromWeek; w < planData.weeks.length && replaced < 3; w++) {
-      for (let d2 = (w === fromWeek ? fromDay + 1 : 0); d2 < planData.weeks[w].days.length && replaced < 3; d2++) {
+      const startDay = (w === fromWeek) ? fromDay + 1 : 0;
+      for (let d2 = startDay; d2 < planData.weeks[w].days.length && replaced < 3; d2++) {
         const day = planData.weeks[w].days[d2];
-        if (day.type === sportType) {
-          Object.assign(day, newSessions[replaced]);
+        if (day.type === sportType && day.type !== 'Rest') {
+          const adapted = newSessions[replaced];
+          Object.assign(day, adapted);
           day.type = sportType;
+          day.adapted = true;
           replaced++;
         }
       }
@@ -2402,7 +2823,7 @@ async function startCheckout() {
     const r = await fetch('/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: session.user.id, email: session.user.email })
+      body: JSON.stringify({ userId: session.user.id, email: session.user.email, planId: new URLSearchParams(location.search).get('load') })
     });
     const d = await r.json();
     if (d.url) { window.location.href = d.url; }
@@ -2419,7 +2840,83 @@ function showPaywall() {
   if (el) el.style.display = 'flex';
 }
 
-async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadmap();const pid=new URLSearchParams(location.search).get("load")||window.currentPlanId;let fails=0;while(planData.weeks.length<tw&&fails<3){const built=planData.weeks.length,bs=built+1,be=Math.min(built+2,tw),near=be>=tw-3;const bT=document.getElementById("roadmap-building-text");const ph=near?"Taper":built<tw*0.3?"Base":built<tw*0.65?"Build":"Peak";if(bT)bT.textContent="Building weeks "+bs+"-"+be+" of "+tw+" ("+ph+")...";const lw=planData.weeks.slice(-2).map(w=>({phase:w.phase,focus:w.focus}));const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(planData.raceDate||A.date||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". "+(near?"TAPER: reduce volume, race week=30-45min easy.":"Progressive overload.")+" JSON only: {\"weeks\":[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}}
+function fixFifoViolations(weeks) {
+  if(!A.fifo||!A.fifoRestrictions||!A.fifoRestrictions.length) return;
+  // Rebuild forbidden types
+  var forbidden = [];
+  if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("swim"))) forbidden.push("Swim");
+  if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("cycl")||r.toLowerCase().includes("bike"))) forbidden.push("Bike");
+  if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("run"))) forbidden.push("Run");
+  if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("gym")||r.toLowerCase().includes("strength")||r.toLowerCase().includes("weight"))) forbidden.push("Strength");
+  if(!forbidden.length) return;
+  // Rebuild work week list
+  var roster=[];
+  if(A.fifoRoster==="1/1")roster=["work","home"];
+  else if(A.fifoRoster==="2/1")roster=["work","work","home"];
+  else if(A.fifoRoster==="2/2")roster=["work","work","home","home"];
+  else roster=["work","home"];
+  var cyclePos=0,found=0,curStatus=A.fifoCurrentStatus||"work",curWeek=parseInt(A.fifoCurrentWeek)||1;
+  for(var ci=0;ci<roster.length;ci++){if(roster[ci]===curStatus){found++;if(found===curWeek){cyclePos=ci;break;}}}
+  var maxMins=A.fifoHours==="30min-1hr"?60:A.fifoHours==="1-2hrs"?120:A.fifoHours==="2-3hrs"?180:240;
+  // Allowed types for work weeks
+  var allTypes=["Swim","Bike","Run","Strength","Brick"];
+  var allowed=allTypes.filter(t=>!forbidden.includes(t));
+  if(!allowed.length) allowed=["Run"];
+  weeks.forEach(function(week,idx){
+    var isWork = roster[(cyclePos+idx)%roster.length]==="work";
+    if(!isWork) return;
+    week.days && week.days.forEach(function(day){
+      if(day.type==="Rest") return;
+      var typeViolation = forbidden.some(f=>f.toLowerCase()===(day.type||"").toLowerCase());
+      var durationViolation = day.duration > maxMins;
+      if(typeViolation){
+        // Replace with first allowed type
+        var replacement = allowed[0];
+        day.type = replacement;
+        day.name = replacement + " Session";
+        day.purpose = "Work week session — adjusted for on-site availability";
+        day.warmup = "10 min easy warm up";
+        day.mainset = "Main " + replacement.toLowerCase() + " effort — see coach note";
+        day.cooldown = "5 min cool down";
+        day.coachNote = "Original session converted to " + replacement + " — you cannot access restricted equipment on site this week.";
+      }
+      if(day.duration > maxMins) day.duration = maxMins;
+    });
+  });
+}
+
+async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadmap();const pid=new URLSearchParams(location.search).get("load")||window.currentPlanId;let fails=0;while(planData.weeks.length<tw&&fails<3){const built=planData.weeks.length,bs=built+1,be=Math.min(built+2,tw),near=be>=tw-3;const bT=document.getElementById("roadmap-building-text");const ph=near?"Taper":built<tw*0.3?"Base":built<tw*0.65?"Build":"Peak";if(bT)bT.textContent="Building weeks "+bs+"-"+be+" of "+tw+" ("+ph+")...";const lw=planData.weeks.slice(-2).map(w=>({phase:w.phase,focus:w.focus}));// Build FIFO block for autoGen
+    var autoFifoBlock = "";
+    if(A.fifo){
+      var aForbidden=[];
+      if(A.fifoRestrictions){
+        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("swim")))aForbidden.push("Swim");
+        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("cycl")||r.toLowerCase().includes("bike")))aForbidden.push("Bike");
+        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("run")))aForbidden.push("Run");
+        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("gym")||r.toLowerCase().includes("strength")||r.toLowerCase().includes("weight")))aForbidden.push("Strength");
+      }
+      var aRoster=[];
+      if(A.fifoRoster==="1/1")aRoster=["work","home"];
+      else if(A.fifoRoster==="2/1")aRoster=["work","work","home"];
+      else if(A.fifoRoster==="2/2")aRoster=["work","work","home","home"];
+      else aRoster=["work","home"];
+      var aCyclePos=0,aFound=0,aCurStatus=A.fifoCurrentStatus||"work",aCurWeek=parseInt(A.fifoCurrentWeek)||1;
+      for(var aci=0;aci<aRoster.length;aci++){if(aRoster[aci]===aCurStatus){aFound++;if(aFound===aCurWeek){aCyclePos=aci;break;}}}
+      var aWorkWeeks=[],aHomeWeeks=[];
+      for(var awi=0;awi<tw;awi++){if(aRoster[(aCyclePos+awi)%aRoster.length]==="work")aWorkWeeks.push(awi+1);else aHomeWeeks.push(awi+1);}
+      var aMaxMins=A.fifoHours==="30min-1hr"?60:A.fifoHours==="1-2hrs"?120:A.fifoHours==="2-3hrs"?180:240;
+      // Only include work weeks in the range being generated
+      var rangeWorkWeeks=aWorkWeeks.filter(function(wn){return wn>=bs&&wn<=be;});
+      var rangeHomeWeeks=aHomeWeeks.filter(function(wn){return wn>=bs&&wn<=be;});
+      if(rangeWorkWeeks.length||rangeHomeWeeks.length){
+        autoFifoBlock=" === FIFO RULES FOR THIS BATCH ==="+
+          " WORK WEEKS in this batch: "+(rangeWorkWeeks.length?rangeWorkWeeks.join(","):"none")+
+          " HOME WEEKS in this batch: "+(rangeHomeWeeks.length?rangeHomeWeeks.join(","):"none")+
+          (rangeWorkWeeks.length?" BANNED types on work weeks: "+(aForbidden.length?aForbidden.join(","):"none")+". MAX duration: "+aMaxMins+"min. Allowed: "+["Swim","Bike","Run","Strength","Brick"].filter(t=>!aForbidden.includes(t)).concat(["Rest"]).join(",")+" ONLY.":"")+
+          " ===";
+      }
+    }
+    const _rd=planData.raceDate||A.date;const _rdName=_rd?["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(_rd+"T00:00:00").getDay()]:"Sunday";const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(_rd||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". "+(near?"TAPER: reduce volume, race week=30-45min easy sessions only. CRITICAL: The race falls on a "+_rdName+" — place the Race type session ONLY on "+_rdName+", all other days are Rest or easy 20-30min shakeout. Do NOT place the race on any other day.":"Progressive overload.")+autoFifoBlock+" Focus descriptions must be plain English, inspiring and athlete-friendly — never use terms like 'constraint', 'adaptation', 'modality' or corporate language. JSON only: {\"weeks\":[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});if(A.fifo)fixFifoViolations(planData.weeks);correctPhases(planData.weeks);if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}}
 
 </script>
 
