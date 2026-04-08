@@ -1883,13 +1883,17 @@ let stravaFitnessData = null;
 async function loadStravaFitness() {
   try {
     const { data: { session } } = await sb2.auth.getSession();
-    if (!session) return;
+    if (!session) {
+      // Not logged in — show connect card by default
+      document.getElementById('strava-connect-card').style.display = 'block';
+      return;
+    }
 
     // Check if user has Strava connected
     const { data: user } = await sb2.from('users').select('strava_athlete_id').eq('id', session.user.id).single();
 
     if (!user || !user.strava_athlete_id) {
-      // Not connected — show the connect card
+      // Logged in but no Strava — show connect card
       document.getElementById('strava-connect-card').style.display = 'block';
       return;
     }
