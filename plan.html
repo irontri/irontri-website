@@ -2134,6 +2134,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => showIronToast('🎉 Payment successful! Welcome to irontri.', '#4ade80'), 1500);
   }
 
+  // Handle Strava OAuth callback from quiz fitness flow
+  if (urlParams.get('strava_connected') === '1' && urlParams.get('quiz_step') === '7') {
+    const accessToken = urlParams.get('access_token');
+    const refreshToken = urlParams.get('refresh_token');
+    const expiresAt = urlParams.get('expires_at');
+    const athleteId = urlParams.get('athlete_id');
+    if (accessToken && sb2) {
+      try {
+        const { data: { session } } = await sb2.auth.getSession();
+        if (session) {
+          await sb2.from('users').upsert({
+            id: session.user.id,
+            strava_access_token: accessToken,
+            strava_refresh_token: refreshToken,
+            strava_token_expires_at: parseInt(expiresAt),
+            strava_athlete_id: athleteId
+          }, { onConflict: 'id' });
+          // Clean URL and jump to Q7
+          window.history.replaceState({}, '', '/plan.html');
+          go(7);
+          showIronToast('Strava connected! Analysing your training data...', '#FC4C02');
+        }
+      } catch(e) {
+        console.log('Strava quiz connect error:', e);
+        go(7);
+      }
+    }
+  }
+
   if (loadId) {
     try {
       document.getElementById('quiz-wrap').style.display = 'none';
