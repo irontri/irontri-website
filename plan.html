@@ -2696,12 +2696,24 @@ async function confirmPause() {
 async function resumePlan() {
   if (!confirm('Resume your plan now? Remaining paused time will be cancelled.')) return;
 
-  // Shift startDate back to today
+  // Calculate how many days remain of the pause
+  const pausedUntil = planData.pausedUntil ? new Date(planData.pausedUntil + 'T00:00:00') : null;
+  const today = new Date();
+  today.setHours(0,0,0,0);
 
-  // Set plan start date back to today
-  const today = new Date().toISOString().split('T')[0];
-  planData.startDate = today;
+  // Shift startDate back by the remaining pause days (don't just set to today)
+  if (pausedUntil && pausedUntil > today) {
+    const remainingDays = Math.round((pausedUntil - today) / 86400000);
+    const currentStart = new Date(planData.startDate + 'T00:00:00');
+    currentStart.setDate(currentStart.getDate() - remainingDays);
+    planData.startDate = currentStart.toISOString().split('T')[0];
+  } else {
+    // Pause already expired — just clear it, don't touch startDate
+  }
+
+  // Never touch raceDate — preserve it exactly as set
   delete planData.pausedUntil;
+  delete planData.pausedDays;
 
   // Save
   try {
@@ -2964,3 +2976,23 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
       </div>
     </div>
     <button id="checkout-btn" onclick="startCheckout()" style="width:100%;padding:16px;background:#1E90FF;border:none;color:#fff;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:12px;">Continue my plan — $20/month</button>
+    <a href="/dashboard.html" style="display:block;font-size:13px;color:rgba(255,255,255,0.35);text-decoration:none;">Go to dashboard</a>
+  </div>
+</div>
+<!-- END PAYWALL MODAL -->
+
+<!-- BOTTOM TAB BAR -->
+<nav style="position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,0.08);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);">
+  <a href="/dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
+    <span style="font-size:20px;">📅</span>Today
+  </a>
+  <a href="#" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:#1E90FF;font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
+    <span style="font-size:20px;">🗓️</span>My Plan
+  </a>
+  <a href="/feedback.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
+    <span style="font-size:20px;">💬</span>Feedback
+  </a>
+</nav>
+<!-- END BOTTOM TAB BAR -->
+</body>
+</html>
