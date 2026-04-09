@@ -154,7 +154,7 @@
     .race-countdown{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:12px;padding:14px 20px;margin-bottom:16px;display:none;align-items:center;gap:14px;}
     .race-countdown.show{display:flex;}
     .rc-days{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:#f87171;line-height:1;}
-    .rc-label{font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;}
+    .rc-label{font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px;}
     .rc-text{font-size:14px;color:rgba(255,255,255,0.7);}
     .rc-race{font-weight:600;color:#fff;}
     .pace-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:none;}
@@ -183,8 +183,8 @@
     .finish-card-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(30,144,255,0.8);font-weight:600;margin-bottom:10px;}
     .finish-card-top{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
     .finish-total{font-family:'Syne',sans-serif;font-size:42px;font-weight:800;color:#fff;letter-spacing:-2px;line-height:1;}
-    .finish-range{font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;}
-    .finish-race-label{font-size:12px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);padding:4px 12px;border-radius:20px;white-space:nowrap;}
+    .finish-range{font-size:12px;color:rgba(255,255,255,0.65);margin-top:4px;}
+    .finish-race-label{font-size:12px;color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);padding:4px 12px;border-radius:20px;white-space:nowrap;}
     .finish-splits{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
     .finish-split{border-radius:10px;padding:10px 8px;text-align:center;}
     .finish-split.swim{background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.2);}
@@ -197,7 +197,7 @@
     .finish-split.bike .finish-split-lbl{color:rgba(251,146,60,0.7);}
     .finish-split.run .finish-split-lbl{color:rgba(74,222,128,0.7);}
     .finish-split.trans .finish-split-lbl{color:rgba(255,255,255,0.35);}
-    .finish-confidence{font-size:11px;color:rgba(255,255,255,0.3);padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);}
+    .finish-confidence{font-size:11px;color:rgba(255,255,255,0.6);padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);}
     @media(max-width:600px){.finish-splits{grid-template-columns:repeat(2,1fr);}.finish-total{font-size:32px;}}
   </style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
@@ -1064,7 +1064,7 @@ async function loadPaceImprovement() {
     const card = document.getElementById('pace-card');
     const rowsEl = document.getElementById('pace-rows');
     card.style.display = 'block';
-    rowsEl.innerHTML = rows.map(r => `<div class="pace-row"><div class="pace-sport">${r.meta.icon}</div><div class="pace-label">${r.meta.label}</div><div class="pace-bar-wrap"><div class="pace-bar" style="width:${r.barPct}%;background:${r.improved?r.meta.color:'rgba(255,255,255,0.15)'}"></div></div><div class="pace-values"><span class="pace-from">${r.fromStr}</span><span style="color:rgba(255,255,255,0.2);font-size:11px;">→</span><span class="pace-to">${r.toStr}</span><span class="pace-delta ${r.same?'same':r.improved?'better':'worse'}">${r.same?'no change':r.deltaStr}</span></div></div>`).join('');
+    rowsEl.innerHTML = rows.map(r => `<div class="pace-row"><div class="pace-sport">${r.meta.icon}</div><div class="pace-label">${r.meta.label}</div><div class="pace-bar-wrap"><div class="pace-bar" style="width:${r.barPct}%;background:${r.improved?r.meta.color:'rgba(255,255,255,0.15)'}"></div></div><div class="pace-values"><span class="pace-from">${r.fromStr}</span><span style="color:rgba(255,255,255,0.45);font-size:11px;">→</span><span class="pace-to">${r.toStr}</span><span class="pace-delta ${r.same?'same':r.improved?'better':'worse'}">${r.same?'no change':r.deltaStr}</span></div></div>`).join('');
     if (dashUnits === 'imperial') setDashUnits('imperial');
     else { const m=document.getElementById('dash-metric'); if(m){m.style.background='#1E90FF';m.style.color='#fff';} }
   } catch(e) { console.log('Pace tracker error:', e); }
