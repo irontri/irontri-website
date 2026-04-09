@@ -176,6 +176,17 @@
     /* ── FITNESS UPDATE CARD ── */
     .fitness-update-card{background:rgba(252,76,2,0.06);border:1px solid rgba(252,76,2,0.2);border-radius:12px;padding:16px 18px;margin-top:12px;display:none;}
     .fitness-update-card.due{background:rgba(30,144,255,0.08);border-color:rgba(30,144,255,0.3);}
+
+    /* ── PREDICTED FINISH TIME CARD ── */
+    .finish-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:none;animation:fadeUp 0.4s ease both;}
+    .finish-card-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(30,144,255,0.7);font-weight:600;margin-bottom:14px;}
+    .finish-total{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:#fff;letter-spacing:-1px;line-height:1;}
+    .finish-range{font-size:12px;color:var(--muted);margin-top:3px;margin-bottom:16px;}
+    .finish-splits{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+    .finish-split{flex:1;min-width:80px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;text-align:center;}
+    .finish-split-val{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+    .finish-split-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+    .finish-confidence{font-size:11px;color:var(--faint);padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);}
   </style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
 <script>
@@ -250,6 +261,15 @@
     <div class="rc-text">Until your <span class="rc-race" id="rc-race-name">race</span> 🏁</div>
   </div>
   
+  <!-- PREDICTED FINISH TIME -->
+  <div class="finish-card" id="finish-card">
+    <div class="finish-card-label">🏁 Predicted finish time</div>
+    <div class="finish-total" id="finish-total">—</div>
+    <div class="finish-range" id="finish-range"></div>
+    <div class="finish-splits" id="finish-splits"></div>
+    <div class="finish-confidence" id="finish-confidence"></div>
+  </div>
+
   <!-- PACE IMPROVEMENT -->
   <div class="pace-card" id="pace-card">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
@@ -878,6 +898,7 @@ async function loadTodaySession() {
     const startOverrides = JSON.parse(localStorage.getItem('irontri_start_override') || '{}');
     const resolvedStart = startOverrides[plan.id] || planData.startDate || plan.created_at?.split('T')[0];
     if (!planData.weeks || !resolvedStart) return;
+    calcFinishTime(planData);
     planData.startDate = resolvedStart;
     const raceDate = planData.raceDate;
     if (raceDate) {
@@ -1028,6 +1049,122 @@ async function loadPaceImprovement() {
 
 loadTodaySession();
 loadPaceImprovement();
+
+function calcFinishTime(planData) {
+  try {
+    const race = (planData.raceDistance || planData.goalRace || planData.race || '').toLowerCase();
+    const isHalf = /70\.3|half ironman|1\.9km swim|olympic/i.test(race);
+    const isFull = /140\.6|full ironman|ironman|3\.8km swim/i.test(race);
+    if (!isHalf && !isFull) return;
+
+    // Race distances (metric)
+    const swimKm  = isFull ? 3.8  : 1.9;
+    const bikeKm  = isFull ? 180  : 90;
+    const runKm   = isFull ? 42.2 : 21.1;
+
+    // Pull fitness from stravaFitness if available, else fall back to week 1 pace targets
+    let fitness = null;
+    if (planData.stravaFitness) {
+      try { fitness = JSON.parse(planData.stravaFitness); } catch(e) {}
+    }
+
+    let swimPaceSec = null; // secs per 100m
+    let bikeSpeedKmh = null;
+    let runPaceSec = null;  // secs per km
+
+    if (fitness) {
+      swimPaceSec  = fitness.swim?.avgPaceSecs  || null;
+      bikeSpeedKmh = fitness.bike?.avgSpeedKmh  || null;
+      runPaceSec   = fitness.run?.avgPaceSecs   || null;
+    }
+
+    // Fallback: parse week 1 paceTargets from the plan
+    if (!swimPaceSec || !bikeSpeedKmh || !runPaceSec) {
+      const week1 = planData.weeks?.[0];
+      if (week1?.days) {
+        for (const d of week1.days) {
+          if (!d.paceTarget || d.paceTarget === 'N/A') continue;
+          if (!swimPaceSec && d.type === 'Swim') {
+            const m = d.paceTarget.match(/(\d+):(\d+)\s*\/\s*100m/i);
+            if (m) swimPaceSec = parseInt(m[1]) * 60 + parseInt(m[2]);
+          }
+          if (!bikeSpeedKmh && (d.type === 'Bike' || d.type === 'Brick')) {
+            const m = d.paceTarget.match(/([\d.]+)\s*km\/h/i);
+            if (m) bikeSpeedKmh = parseFloat(m[1]);
+          }
+          if (!runPaceSec && (d.type === 'Run' || d.type === 'Brick')) {
+            const m = d.paceTarget.match(/(\d+):(\d+)\s*\/\s*km/i);
+            if (m) runPaceSec = parseInt(m[1]) * 60 + parseInt(m[2]);
+          }
+        }
+      }
+    }
+
+    // Need at least two disciplines to show anything meaningful
+    const disciplinesFound = [swimPaceSec, bikeSpeedKmh, runPaceSec].filter(Boolean).length;
+    if (disciplinesFound < 2) return;
+
+    // Apply race-effort factors (triathletes race at a % of training pace)
+    const SWIM_FACTOR = 0.95;
+    const BIKE_FACTOR = isFull ? 0.76 : 0.82;
+    const RUN_FACTOR  = isFull ? 0.88 : 0.92;
+
+    // T1/T2 estimates in seconds
+    const T1 = isFull ? 420 : 300;
+    const T2 = isFull ? 240 : 180;
+
+    function secsToHMS(s) {
+      s = Math.round(s);
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = s % 60;
+      if (h > 0) return h + ':' + String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+      return m + ':' + String(sec).padStart(2,'0');
+    }
+
+    let totalSecs = T1 + T2;
+    let hasAll = true;
+    const splits = [];
+
+    if (swimPaceSec) {
+      const swimSecs = (swimPaceSec / SWIM_FACTOR) * (swimKm * 10);
+      totalSecs += swimSecs;
+      splits.push({ label: '🏊 Swim', val: secsToHMS(swimSecs) });
+    } else { hasAll = false; }
+
+    if (bikeSpeedKmh) {
+      const bikeSecs = (bikeKm / (bikeSpeedKmh * BIKE_FACTOR)) * 3600;
+      totalSecs += bikeSecs;
+      splits.push({ label: '🚴 Bike', val: secsToHMS(bikeSecs) });
+    } else { hasAll = false; }
+
+    splits.push({ label: '⏱ T1+T2', val: secsToHMS(T1 + T2) });
+
+    if (runPaceSec) {
+      const runSecs = (runPaceSec / RUN_FACTOR) * runKm;
+      totalSecs += runSecs;
+      splits.push({ label: '🏃 Run', val: secsToHMS(runSecs) });
+    } else { hasAll = false; }
+
+    // Range: ±7% for full, ±5% for half
+    const spread = isFull ? 0.07 : 0.05;
+    const fastSecs = totalSecs * (1 - spread);
+    const slowSecs = totalSecs * (1 + spread);
+
+    const confidence = fitness
+      ? '⚡ Based on your Strava fitness data' + (hasAll ? '' : ' · Some splits estimated')
+      : '📋 Based on your plan targets — connect Strava for a more accurate estimate';
+
+    const card = document.getElementById('finish-card');
+    card.style.display = 'block';
+    document.getElementById('finish-total').textContent = secsToHMS(totalSecs);
+    document.getElementById('finish-range').textContent = 'Estimated range: ' + secsToHMS(fastSecs) + ' – ' + secsToHMS(slowSecs);
+    document.getElementById('finish-splits').innerHTML = splits.map(s =>
+      `<div class="finish-split"><div class="finish-split-val">${s.val}</div><div class="finish-split-lbl">${s.label}</div></div>`
+    ).join('');
+    document.getElementById('finish-confidence').textContent = confidence;
+  } catch(e) { console.log('Finish time calc error:', e); }
+}
 
 async function goToMyPlan(e) {
   e.preventDefault();
