@@ -454,34 +454,140 @@ async function runFitnessUpdate(btn) {
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return;
+
+    // Step 1: Pull fresh Strava fitness data
     const res = await fetch('/api/strava-fitness', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: session.user.id })
     });
-    const data = await res.json();
-    if (!data.connected || !data.hasData) {
-      btn.textContent = 'No data found';
+    const newFitness = await res.json();
+    if (!newFitness.connected || !newFitness.hasData) {
+      btn.textContent = 'No Strava data found';
+      btn.disabled = false;
       return;
     }
-    // Save updated timestamp
-    await sb.from('users').update({ strava_fitness_updated_at: new Date().toISOString() }).eq('id', currentUser.id);
 
-    // Show what improved
+    btn.textContent = 'Updating plan...';
+
+    // Step 2: Load active plan
+    const { data: plans } = await sb.from('plans')
+      .select('id, plan_data')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (!plans || plans.length === 0) throw new Error('No plan found');
+
+    const plan = plans[0];
+    let planData;
+    try {
+      let txt = plan.plan_data || '';
+      txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1);
+      planData = JSON.parse(txt);
+    } catch(e) { throw new Error('Could not parse plan'); }
+
+    // Step 3: Calculate improvement ratios from old vs new fitness
+    const oldFitness = planData.stravaFitness ? JSON.parse(planData.stravaFitness) : null;
+
+    // Build pace adjustment ratios (new/old — for pace, lower is faster so ratio < 1 = improvement)
+    const runRatio = (oldFitness?.run?.avgPaceSecs && newFitness?.run?.avgPaceSecs)
+      ? newFitness.run.avgPaceSecs / oldFitness.run.avgPaceSecs
+      : 1;
+    const swimRatio = (oldFitness?.swim?.avgPaceSecs && newFitness?.swim?.avgPaceSecs)
+      ? newFitness.swim.avgPaceSecs / oldFitness.swim.avgPaceSecs
+      : 1;
+    const bikeRatio = (oldFitness?.bike?.avgSpeedKmh && newFitness?.bike?.avgSpeedKmh)
+      ? newFitness.bike.avgSpeedKmh / oldFitness.bike.avgSpeedKmh
+      : 1;
+
+    // Only apply if improvement is meaningful (>2%) and not too dramatic (<20%)
+    const shouldUpdateRun  = runRatio  < 0.98 && runRatio  > 0.80;
+    const shouldUpdateSwim = swimRatio < 0.98 && swimRatio > 0.80;
+    const shouldUpdateBike = bikeRatio > 1.02 && bikeRatio < 1.20;
+
+    // Step 4: Update pace targets in every session
+    let sessionsUpdated = 0;
+
+    if (planData.weeks) {
+      planData.weeks = planData.weeks.map(week => {
+        if (!week.days) return week;
+        week.days = week.days.map(day => {
+          if (!day.paceTarget || day.paceTarget === 'N/A' || day.type === 'Rest') return day;
+
+          // Update run pace
+          if (day.type === 'Run' && shouldUpdateRun) {
+            const match = day.paceTarget.match(/(\d+):(\d+)\s*\/\s*km/i);
+            if (match) {
+              const oldSecs = parseInt(match[1]) * 60 + parseInt(match[2]);
+              const newSecs = Math.round(oldSecs * runRatio);
+              const m = Math.floor(newSecs / 60);
+              const s = newSecs % 60;
+              day.paceTarget = day.paceTarget.replace(match[0], m + ':' + String(s).padStart(2,'0') + '/km');
+              sessionsUpdated++;
+            }
+          }
+
+          // Update swim pace
+          if (day.type === 'Swim' && shouldUpdateSwim) {
+            const match = day.paceTarget.match(/(\d+):(\d+)\s*\/\s*100m/i);
+            if (match) {
+              const oldSecs = parseInt(match[1]) * 60 + parseInt(match[2]);
+              const newSecs = Math.round(oldSecs * swimRatio);
+              const m = Math.floor(newSecs / 60);
+              const s = newSecs % 60;
+              day.paceTarget = day.paceTarget.replace(match[0], m + ':' + String(s).padStart(2,'0') + '/100m');
+              sessionsUpdated++;
+            }
+          }
+
+          // Update bike speed
+          if ((day.type === 'Bike' || day.type === 'Brick') && shouldUpdateBike) {
+            const match = day.paceTarget.match(/([\d.]+)\s*km\/h/i);
+            if (match) {
+              const newSpeed = (parseFloat(match[1]) * bikeRatio).toFixed(1);
+              day.paceTarget = day.paceTarget.replace(match[0], newSpeed + ' km/h');
+              sessionsUpdated++;
+            }
+          }
+
+          return day;
+        });
+        return week;
+      });
+    }
+
+    // Step 5: Save updated fitness data and plan back to Supabase
+    planData.stravaFitness = JSON.stringify(newFitness);
+    await Promise.all([
+      sb.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', plan.id),
+      sb.from('users').update({
+        strava_fitness: JSON.stringify(newFitness),
+        strava_fitness_updated_at: new Date().toISOString()
+      }).eq('id', currentUser.id)
+    ]);
+
+    // Step 6: Show results
     const card = document.getElementById('fitness-update-card');
-    const lines = [];
-    if (data.run) lines.push('🏃 Run: avg pace ' + data.run.avgPace + '/km · max HR ' + data.run.maxHR + 'bpm');
-    if (data.bike) lines.push('🚴 Bike: ' + data.bike.avgSpeedKmh + 'km/h' + (data.bike.ftpEstimate ? ' · FTP ~' + data.bike.ftpEstimate + 'w' : ''));
-    if (data.swim) lines.push('🏊 Swim: avg ' + data.swim.avgPacePer100m + '/100m');
-    if (data.hrZones) lines.push('❤️ Z2: ' + data.hrZones.zone2.min + '-' + data.hrZones.zone2.max + 'bpm · Z4: ' + data.hrZones.zone4.min + '-' + data.hrZones.zone4.max + 'bpm');
+    const improvements = [];
+    if (shouldUpdateRun && newFitness.run) improvements.push('🏃 Run pace: ' + newFitness.run.avgPace + '/km');
+    if (shouldUpdateBike && newFitness.bike) improvements.push('🚴 Bike: ' + newFitness.bike.avgSpeedKmh + 'km/h' + (newFitness.bike.ftpEstimate ? ' · FTP ~' + newFitness.bike.ftpEstimate + 'w' : ''));
+    if (shouldUpdateSwim && newFitness.swim) improvements.push('🏊 Swim pace: ' + newFitness.swim.avgPacePer100m + '/100m');
+    if (newFitness.hrZones) improvements.push('❤️ Z2: ' + newFitness.hrZones.zone2.min + '-' + newFitness.hrZones.zone2.max + 'bpm · Z4: ' + newFitness.hrZones.zone4.min + '-' + newFitness.hrZones.zone4.max + 'bpm');
 
     if (card) {
       card.classList.remove('due');
-      card.innerHTML = '<div style="font-size:13px;font-weight:600;color:#4ade80;margin-bottom:8px;">✅ Fitness targets updated!</div>'
-        + '<div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.8;">' + lines.join('<br>') + '</div>'
-        + '<div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:8px;">Rebuild your plan to apply these targets to your sessions.</div>';
+      if (sessionsUpdated > 0) {
+        card.innerHTML = '<div style="font-size:13px;font-weight:600;color:#4ade80;margin-bottom:8px;">✅ ' + sessionsUpdated + ' sessions updated with your latest fitness data!</div>'
+          + (improvements.length ? '<div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.8;margin-bottom:6px;">' + improvements.join('<br>') + '</div>' : '')
+          + '<div style="font-size:11px;color:rgba(255,255,255,0.3);">Your plan pace targets have been automatically updated. Open your plan to see the changes.</div>';
+      } else {
+        card.innerHTML = '<div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:6px;">✅ Fitness data refreshed</div>'
+          + '<div style="font-size:12px;color:rgba(255,255,255,0.4);">No significant pace improvement detected yet — keep training! Your targets will update when improvement exceeds 2%.</div>';
+      }
     }
+
   } catch(e) {
+    console.log('Fitness update error:', e);
     btn.textContent = 'Update failed — try again';
     btn.disabled = false;
   }
