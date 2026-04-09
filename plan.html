@@ -1054,7 +1054,7 @@ function renderWeek(){
 
   let easyMin=0, modMin=0, hardMin=0;
   w.days.forEach(d=>{
-    if(d.type==='Rest')return;
+    if(d.type==='Rest'||d.type==='Race')return; // Exclude rest and race from intensity split
     // Parse duration — handle both number and string like "45min"
     let dur=d.duration;
     if(typeof dur==='string') dur=parseFloat(dur)||0;
@@ -1080,11 +1080,14 @@ function renderWeek(){
   const easyPct=Math.round(easyMin/totalIntMin*100);
   const modPct=Math.round(modMin/totalIntMin*100);
   const hardPct=Math.round(hardMin/totalIntMin*100);
+  // Check if this is race week (has a Race session)
+  const isRaceWeek = w.days.some(d=>d.type==='Race');
   document.getElementById('vol-breakdown').innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <span style="font-size:13px;font-weight:500;">Weekly intensity split</span>
-      <span style="font-size:11px;color:var(--faint);">80/20 principle</span>
+      <span style="font-size:11px;color:var(--faint);">${isRaceWeek?'🏁 Race week':'80/20 principle'}</span>
     </div>
+    ${isRaceWeek && totalIntMin<=1 ? `<div style="font-size:12px;color:rgba(255,255,255,0.4);padding:8px 0;">Race week — stay fresh, trust your training.</div>` : `
     <div style="display:flex;height:8px;border-radius:100px;overflow:hidden;gap:2px;margin-bottom:12px;">
       <div style="width:${easyPct}%;background:#4ade80;border-radius:100px;transition:width 0.5s;"></div>
       <div style="width:${modPct}%;background:#fbbf24;border-radius:100px;transition:width 0.5s;"></div>
@@ -1095,7 +1098,7 @@ function renderWeek(){
       <div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#fbbf24;flex-shrink:0;"></div><span style="font-size:12px;color:var(--muted);">Moderate <strong style="color:#fff;">${modPct}%</strong></span></div>
       <div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#f87171;flex-shrink:0;"></div><span style="font-size:12px;color:var(--muted);">Hard <strong style="color:#fff;">${hardPct}%</strong></span></div>
       <div style="margin-left:auto;font-size:11px;color:var(--faint);">${Math.round(easyMin/60*10)/10}h easy · ${Math.round(modMin/60*10)/10}h mod · ${Math.round(hardMin/60*10)/10}h hard</div>
-    </div>`;
+    </div>`}`;
 
   const allDaysFull=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
