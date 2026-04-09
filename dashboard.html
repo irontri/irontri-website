@@ -898,7 +898,7 @@ async function loadTodaySession() {
     const startOverrides = JSON.parse(localStorage.getItem('irontri_start_override') || '{}');
     const resolvedStart = startOverrides[plan.id] || planData.startDate || plan.created_at?.split('T')[0];
     if (!planData.weeks || !resolvedStart) return;
-    calcFinishTime(planData);
+    calcFinishTime(planData, plan.race || '');
     planData.startDate = resolvedStart;
     const raceDate = planData.raceDate;
     if (raceDate) {
@@ -1050,9 +1050,9 @@ async function loadPaceImprovement() {
 loadTodaySession();
 loadPaceImprovement();
 
-function calcFinishTime(planData) {
+function calcFinishTime(planData, planRace) {
   try {
-    const race = (planData.raceDistance || planData.goalRace || planData.race || '').toLowerCase();
+    const race = (planRace || planData.raceDistance || planData.goalRace || planData.race || '').toLowerCase();
     const isHalf = /70\.3|half ironman|1\.9km swim|olympic/i.test(race);
     const isFull = /140\.6|full ironman|ironman|3\.8km swim/i.test(race);
     if (!isHalf && !isFull) return;
