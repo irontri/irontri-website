@@ -1,4 +1,4 @@
-export const config = { maxDuration: 300 };
+export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
@@ -30,6 +30,15 @@ SESSION QUALITY RULES (apply to every session):
 - day field: day name e.g. "Monday" not a number
 - type field: MUST be EXACTLY one of: "Swim", "Bike", "Run", "Brick", "Strength", "Rest" — NO other values allowed. Never use "Recovery", "Threshold", "Endurance", "Vo2max" or any other custom type.
 - BRICK SESSIONS: Include at least 1 Brick session per week from Build phase onwards. A Brick session is a bike ride immediately followed by a run. Format mainset as: "Bike X km at [pace/watts], then immediately run Y km at [pace]. No rest between disciplines." Brick sessions are critical for race preparation and must appear consistently throughout the Build, Peak and Taper phases.
+- BRICK REALISM: Brick session distances must be realistic for age groupers. The combined brick duration must NEVER exceed 40% of total weekly training hours. Run off the bike should be 6-16km for 70.3 builds and 10-25km for Full Ironman builds — NEVER a full marathon distance in training. Pace targets for the run off the bike must be 15-30 seconds per km SLOWER than standalone run pace to account for fatigue.
+
+BASE PHASE RULES (critical — strictly enforced):
+- During Base phase ALL sessions must be Zone 2 aerobic ONLY — effort 4-6/10, heartRateZone "Zone 2"
+- ZERO threshold work, ZERO intervals, ZERO speedwork, ZERO VO2max efforts during Base phase
+- Base swim: long continuous aerobic sets only — NO sprint sets, NO race-pace efforts, NO short hard intervals
+- Base bike: steady aerobic riding at 55-65% FTP only — NO FTP intervals, NO over-unders, NO hard efforts
+- Base run: easy conversational pace only — NO tempo runs, NO strides, NO track sessions, NO speed work
+- Speedwork, threshold intervals and race-pace efforts begin ONLY from Build phase onwards — never before
 
 PHASE ASSIGNMENT RULES (critical — must follow exactly):
 - phase field MUST be one of: "Base", "Build", "Peak", "Taper", "Race Week"
