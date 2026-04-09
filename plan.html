@@ -2195,7 +2195,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isPaid = plan.is_paid === true;
         const createdAt = plan.created_at ? new Date(plan.created_at) : new Date();
         const daysSinceSignup = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
-        const trialDaysLeft = Math.max(0, 30 - daysSinceSignup);
+        const trialDays = createdAt >= new Date('2026-04-09') ? 7 : 30;
+        const trialDaysLeft = Math.max(0, trialDays - daysSinceSignup);
         window._isPaid = isPaid;
         window._isFounding = isFounding;
         window._trialDaysLeft = trialDaysLeft;
@@ -2982,7 +2983,7 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
 
 <!-- TRIAL BANNER -->
 <div id="trial-banner" style="display:none;position:fixed;top:68px;left:0;right:0;z-index:90;background:rgba(30,144,255,0.12);border-bottom:1px solid rgba(30,144,255,0.25);padding:10px 20px;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
-  <span style="font-size:13px;color:rgba(255,255,255,0.8);font-family:'Inter',sans-serif;">⏳ <strong style="color:#fff"><span id="trial-days-left">30</span> days</strong> left on your free trial</span>
+  <span style="font-size:13px;color:rgba(255,255,255,0.8);font-family:'Inter',sans-serif;">⏳ <strong style="color:#fff"><span id="trial-days-left">7</span> days</strong> left on your free trial</span>
   <button onclick="showPaywall()" style="background:#1E90FF;border:none;color:#fff;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Upgrade now</button>
 </div>
 <!-- END TRIAL BANNER -->
