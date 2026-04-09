@@ -2,6 +2,7 @@ export const config = { maxDuration: 30 };
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 const STRAVA_VERIFY_TOKEN = process.env.STRAVA_WEBHOOK_VERIFY_TOKEN || 'irontri_strava_webhook';
 const AUTO_TAG_TEXT = '\n\nTrained with irontri - irontriapp.com';
 
@@ -13,12 +14,14 @@ const TYPE_MAP = {
 
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
+// Use service role key to bypass RLS for webhook operations
 async function sbFetch(path, options) {
+  const key = SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY;
   return fetch(SUPABASE_URL + path, {
     ...options,
     headers: {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'apikey': key,
+      'Authorization': 'Bearer ' + key,
       'Content-Type': 'application/json',
       ...(options && options.headers)
     }
@@ -164,6 +167,3 @@ export default async function handler(req, res) {
 
   } catch (e) {
     console.error('Webhook error:', e);
-    return res.status(200).json({ ok: true });
-  }
-}
