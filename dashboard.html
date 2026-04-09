@@ -178,15 +178,27 @@
     .fitness-update-card.due{background:rgba(30,144,255,0.08);border-color:rgba(30,144,255,0.3);}
 
     /* ── PREDICTED FINISH TIME CARD ── */
-    .finish-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:none;animation:fadeUp 0.4s ease both;}
-    .finish-card-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(30,144,255,0.7);font-weight:600;margin-bottom:14px;}
-    .finish-total{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:#fff;letter-spacing:-1px;line-height:1;}
-    .finish-range{font-size:12px;color:var(--muted);margin-top:3px;margin-bottom:16px;}
-    .finish-splits{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
-    .finish-split{flex:1;min-width:80px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;text-align:center;}
-    .finish-split-val{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
-    .finish-split-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
-    .finish-confidence{font-size:11px;color:var(--faint);padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);}
+    .finish-card{background:linear-gradient(135deg,rgba(30,144,255,0.1),rgba(168,85,247,0.08));border:1px solid rgba(30,144,255,0.3);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:none;animation:fadeUp 0.4s ease both;position:relative;overflow:hidden;}
+    .finish-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#1E90FF,#a855f7,#1E90FF);opacity:0.8;}
+    .finish-card-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(30,144,255,0.8);font-weight:600;margin-bottom:10px;}
+    .finish-card-top{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+    .finish-total{font-family:'Syne',sans-serif;font-size:42px;font-weight:800;color:#fff;letter-spacing:-2px;line-height:1;}
+    .finish-range{font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;}
+    .finish-race-label{font-size:12px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);padding:4px 12px;border-radius:20px;white-space:nowrap;}
+    .finish-splits{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+    .finish-split{border-radius:10px;padding:10px 8px;text-align:center;}
+    .finish-split.swim{background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.2);}
+    .finish-split.bike{background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.2);}
+    .finish-split.run{background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);}
+    .finish-split.trans{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);}
+    .finish-split-val{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#fff;}
+    .finish-split-lbl{font-size:10px;margin-top:3px;}
+    .finish-split.swim .finish-split-lbl{color:rgba(56,189,248,0.7);}
+    .finish-split.bike .finish-split-lbl{color:rgba(251,146,60,0.7);}
+    .finish-split.run .finish-split-lbl{color:rgba(74,222,128,0.7);}
+    .finish-split.trans .finish-split-lbl{color:rgba(255,255,255,0.35);}
+    .finish-confidence{font-size:11px;color:rgba(255,255,255,0.3);padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);}
+    @media(max-width:600px){.finish-splits{grid-template-columns:repeat(2,1fr);}.finish-total{font-size:32px;}}
   </style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
 <script>
@@ -264,8 +276,13 @@
   <!-- PREDICTED FINISH TIME -->
   <div class="finish-card" id="finish-card">
     <div class="finish-card-label">🏁 Predicted finish time</div>
-    <div class="finish-total" id="finish-total">—</div>
-    <div class="finish-range" id="finish-range"></div>
+    <div class="finish-card-top">
+      <div>
+        <div class="finish-total" id="finish-total">—</div>
+        <div class="finish-range" id="finish-range"></div>
+      </div>
+      <div class="finish-race-label" id="finish-race-label"></div>
+    </div>
     <div class="finish-splits" id="finish-splits"></div>
     <div class="finish-confidence" id="finish-confidence"></div>
   </div>
@@ -1053,14 +1070,39 @@ loadPaceImprovement();
 function calcFinishTime(planData, planRace) {
   try {
     const race = (planRace || planData.raceDistance || planData.goalRace || planData.race || '').toLowerCase();
-    const isHalf = /70\.3|half ironman|1\.9km swim|olympic/i.test(race);
-    const isFull = /140\.6|full ironman|ironman|3\.8km swim/i.test(race);
-    if (!isHalf && !isFull) return;
 
-    // Race distances (metric)
-    const swimKm  = isFull ? 3.8  : 1.9;
-    const bikeKm  = isFull ? 180  : 90;
-    const runKm   = isFull ? 42.2 : 21.1;
+    // Detect race type and set distances
+    let swimKm, bikeKm, runKm, raceLabel;
+    let BIKE_FACTOR, RUN_FACTOR;
+
+    if (/full ironman|140\.6/i.test(race)) {
+      swimKm = 3.8; bikeKm = 180; runKm = 42.2; raceLabel = 'Full Ironman';
+      BIKE_FACTOR = 0.76; RUN_FACTOR = 0.88;
+    } else if (/half ironman|70\.3/i.test(race)) {
+      swimKm = 1.9; bikeKm = 90; runKm = 21.1; raceLabel = 'Half Ironman 70.3';
+      BIKE_FACTOR = 0.82; RUN_FACTOR = 0.92;
+    } else if (/t100/i.test(race)) {
+      swimKm = 1.9; bikeKm = 80; runKm = 18; raceLabel = 'T100';
+      BIKE_FACTOR = 0.84; RUN_FACTOR = 0.93;
+    } else if (/olympic/i.test(race)) {
+      swimKm = 1.5; bikeKm = 40; runKm = 10; raceLabel = 'Olympic Triathlon';
+      BIKE_FACTOR = 0.88; RUN_FACTOR = 0.95;
+    } else if (/sprint/i.test(race)) {
+      swimKm = 0.75; bikeKm = 20; runKm = 5; raceLabel = 'Sprint Triathlon';
+      BIKE_FACTOR = 0.92; RUN_FACTOR = 0.97;
+    } else if (/triathlon/i.test(race)) {
+      // Legacy fallback — treat as Olympic
+      swimKm = 1.5; bikeKm = 40; runKm = 10; raceLabel = 'Triathlon';
+      BIKE_FACTOR = 0.88; RUN_FACTOR = 0.95;
+    } else {
+      return; // Unknown race type — don't show card
+    }
+
+    const SWIM_FACTOR = 0.95;
+
+    // T1/T2 estimates — longer for longer races
+    const T1 = swimKm >= 3 ? 420 : swimKm >= 1.5 ? 300 : 180;
+    const T2 = swimKm >= 3 ? 240 : swimKm >= 1.5 ? 180 : 90;
 
     // Pull fitness from stravaFitness if available, else fall back to week 1 pace targets
     let fitness = null;
@@ -1104,15 +1146,6 @@ function calcFinishTime(planData, planRace) {
     const disciplinesFound = [swimPaceSec, bikeSpeedKmh, runPaceSec].filter(Boolean).length;
     if (disciplinesFound < 2) return;
 
-    // Apply race-effort factors (triathletes race at a % of training pace)
-    const SWIM_FACTOR = 0.95;
-    const BIKE_FACTOR = isFull ? 0.76 : 0.82;
-    const RUN_FACTOR  = isFull ? 0.88 : 0.92;
-
-    // T1/T2 estimates in seconds
-    const T1 = isFull ? 420 : 300;
-    const T2 = isFull ? 240 : 180;
-
     function secsToHMS(s) {
       s = Math.round(s);
       const h = Math.floor(s / 3600);
@@ -1129,25 +1162,25 @@ function calcFinishTime(planData, planRace) {
     if (swimPaceSec) {
       const swimSecs = (swimPaceSec / SWIM_FACTOR) * (swimKm * 10);
       totalSecs += swimSecs;
-      splits.push({ label: '🏊 Swim', val: secsToHMS(swimSecs) });
+      splits.push({ label: '🏊 Swim', val: secsToHMS(swimSecs), cls: 'swim' });
     } else { hasAll = false; }
 
     if (bikeSpeedKmh) {
       const bikeSecs = (bikeKm / (bikeSpeedKmh * BIKE_FACTOR)) * 3600;
       totalSecs += bikeSecs;
-      splits.push({ label: '🚴 Bike', val: secsToHMS(bikeSecs) });
+      splits.push({ label: '🚴 Bike', val: secsToHMS(bikeSecs), cls: 'bike' });
     } else { hasAll = false; }
 
-    splits.push({ label: '⏱ T1+T2', val: secsToHMS(T1 + T2) });
+    splits.push({ label: '⏱ T1+T2', val: secsToHMS(T1 + T2), cls: 'trans' });
 
     if (runPaceSec) {
       const runSecs = (runPaceSec / RUN_FACTOR) * runKm;
       totalSecs += runSecs;
-      splits.push({ label: '🏃 Run', val: secsToHMS(runSecs) });
+      splits.push({ label: '🏃 Run', val: secsToHMS(runSecs), cls: 'run' });
     } else { hasAll = false; }
 
-    // Range: ±7% for full, ±5% for half
-    const spread = isFull ? 0.07 : 0.05;
+    // Range: varies by race length
+    const spread = swimKm >= 3 ? 0.07 : swimKm >= 1.5 ? 0.05 : 0.04;
     const fastSecs = totalSecs * (1 - spread);
     const slowSecs = totalSecs * (1 + spread);
 
@@ -1158,9 +1191,10 @@ function calcFinishTime(planData, planRace) {
     const card = document.getElementById('finish-card');
     card.style.display = 'block';
     document.getElementById('finish-total').textContent = secsToHMS(totalSecs);
-    document.getElementById('finish-range').textContent = 'Estimated range: ' + secsToHMS(fastSecs) + ' – ' + secsToHMS(slowSecs);
+    document.getElementById('finish-range').textContent = 'Range: ' + secsToHMS(fastSecs) + ' – ' + secsToHMS(slowSecs);
+    document.getElementById('finish-race-label').textContent = raceLabel;
     document.getElementById('finish-splits').innerHTML = splits.map(s =>
-      `<div class="finish-split"><div class="finish-split-val">${s.val}</div><div class="finish-split-lbl">${s.label}</div></div>`
+      `<div class="finish-split ${s.cls}"><div class="finish-split-val">${s.val}</div><div class="finish-split-lbl">${s.label}</div></div>`
     ).join('');
     document.getElementById('finish-confidence').textContent = confidence;
   } catch(e) { console.log('Finish time calc error:', e); }
