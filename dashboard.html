@@ -13,14 +13,12 @@
   <meta name="author" content="irontri" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.irontriapp.com/dashboard.html" />
-  <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="irontri" />
   <meta property="og:title" content="irontri Dashboard" />
   <meta property="og:description" content="View your personalised triathlon training plans and today's session." />
   <meta property="og:url" content="https://www.irontriapp.com/dashboard.html" />
   <meta property="og:image" content="https://www.irontriapp.com/irontri_og.png" />
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="irontri Dashboard" />
   <meta name="twitter:description" content="View your personalised triathlon training plans and today's session." />
@@ -123,11 +121,7 @@
       .dash{padding:16px 14px;}
       .activity-stats{display:none;}
       .strava-banner{flex-direction:column;align-items:flex-start;}
-
-      /* Stats — 2x2 */
       .stats-row{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
-
-      /* Pace card — hide overflow elements, simplify */
       .pace-card{padding:14px 16px;}
       .pace-bar-wrap{display:none;}
       .pace-from{display:none;}
@@ -137,19 +131,13 @@
       .pace-delta{font-size:11px;}
       .pace-sport{font-size:16px;width:22px;}
       .pace-label{font-size:12px;width:34px;}
-
-      /* Today card — stack vertically */
       .today-card{padding:16px;}
       .today-card-inner{flex-direction:column;align-items:flex-start;gap:10px;}
       .today-go{width:100%;text-align:center;padding:13px;}
       .today-name{font-size:17px;}
-
-      /* Race countdown */
       .race-countdown{padding:12px 14px;}
       .rc-days{font-size:26px;}
     }
-  
-    /* ── TODAY'S SESSION CARD ── */
     .today-card{background:linear-gradient(135deg,rgba(30,144,255,0.12),rgba(30,144,255,0.06));border:1px solid rgba(30,144,255,0.3);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:none;animation:fadeUp 0.4s ease both;}
     @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
     .today-card-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(30,144,255,0.8);font-weight:600;margin-bottom:10px;}
@@ -169,8 +157,6 @@
     .rc-label{font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;}
     .rc-text{font-size:14px;color:rgba(255,255,255,0.7);}
     .rc-race{font-weight:600;color:#fff;}
-  
-    /* ── PACE IMPROVEMENT ── */
     .pace-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:none;}
     .pace-card-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:16px;}
     .pace-rows{display:flex;flex-direction:column;gap:10px;}
@@ -186,6 +172,10 @@
     .pace-delta.better{background:rgba(74,222,128,0.15);color:#4ade80;}
     .pace-delta.same{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.35);}
     .pace-delta.worse{background:rgba(248,113,113,0.15);color:#f87171;}
+
+    /* ── FITNESS UPDATE CARD ── */
+    .fitness-update-card{background:rgba(252,76,2,0.06);border:1px solid rgba(252,76,2,0.2);border-radius:12px;padding:16px 18px;margin-top:12px;display:none;}
+    .fitness-update-card.due{background:rgba(30,144,255,0.08);border-color:rgba(30,144,255,0.3);}
   </style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
 <script>
@@ -223,7 +213,6 @@
       </div>
       <button onclick="document.getElementById('install-banner').style.display='none';localStorage.setItem('irontri_install_dismissed','1');" style="background:transparent;border:none;color:rgba(255,255,255,0.3);font-size:18px;cursor:pointer;padding:4px;line-height:1;">✕</button>
     </div>
-    <!-- END INSTALL APP BANNER -->
 
     <!-- NOTIFICATION BANNER -->
     <div id="notif-banner" style="display:none;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:14px;padding:14px 16px;margin-bottom:16px;align-items:center;gap:12px;">
@@ -235,7 +224,7 @@
       <button onclick="subscribeToNotifications()" style="background:#4ade80;color:#000;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Allow</button>
       <button onclick="document.getElementById('notif-banner').style.display='none';localStorage.setItem('irontri_notif_dismissed','1');" style="background:transparent;border:none;color:rgba(255,255,255,0.3);font-size:18px;cursor:pointer;padding:4px;line-height:1;">✕</button>
     </div>
-    <!-- END NOTIFICATION BANNER -->
+
       <h1 id="welcome-title">Welcome back! 👋</h1>
       <p id="welcome-sub">Here's your training overview</p>
     </div>
@@ -248,14 +237,12 @@
       </div>
       <button id="trial-upgrade-btn" onclick="upgradeNow()" style="background:#1E90FF;color:#fff;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;font-family:'DM Sans',sans-serif;border:none;cursor:pointer;">Upgrade — $20/mo</button>
     </div>
-    <!-- END TRIAL BANNER -->
 
-    <!-- MANAGE SUBSCRIPTION BANNER (paid users) -->
+    <!-- MANAGE SUBSCRIPTION BANNER -->
     <div id="manage-sub-banner" style="display:none;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:14px;padding:14px 20px;margin-bottom:20px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
       <div style="font-size:13px;color:rgba(255,255,255,0.6);">✅ Active subscription</div>
       <button onclick="manageSubscription()" style="background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);padding:7px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">Manage subscription</button>
     </div>
-    <!-- END MANAGE SUBSCRIPTION BANNER -->
 
   <!-- TODAY'S SESSION -->
   <div class="race-countdown" id="race-countdown">
@@ -274,6 +261,7 @@
   </div>
     <div class="pace-rows" id="pace-rows"></div>
   </div>
+
   <div class="today-card" id="today-card">
     <div class="today-card-label">📅 Today's session</div>
     <div id="today-card-inner"></div>
@@ -308,8 +296,6 @@
 
     <div id="strava-section"></div>
     <div class="section-title">Your training plans</div>
-
-    
     <div id="plans-list"></div>
     <div style="margin-top:24px;">
       <a href="/plan.html" class="btn-create">+ Build a new plan</a>
@@ -317,7 +303,6 @@
   </div>
 </div>
 <script>
-
 
 const SUPABASE_URL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
@@ -338,11 +323,8 @@ const SPORT = {
 
 function pinPlan(id) {
   var current = localStorage.getItem('irontri_pinned_plan');
-  if (current === String(id)) {
-    localStorage.removeItem('irontri_pinned_plan');
-  } else {
-    localStorage.setItem('irontri_pinned_plan', String(id));
-  }
+  if (current === String(id)) { localStorage.removeItem('irontri_pinned_plan'); }
+  else { localStorage.setItem('irontri_pinned_plan', String(id)); }
   loadPlans();
   loadTodaySession();
 }
@@ -355,11 +337,8 @@ document.addEventListener('click', function(e) {
   var id = btn.getAttribute('data-planid');
   if (!id) return;
   var current = localStorage.getItem('irontri_pinned_plan');
-  if (current === id) {
-    localStorage.removeItem('irontri_pinned_plan');
-  } else {
-    localStorage.setItem('irontri_pinned_plan', id);
-  }
+  if (current === id) { localStorage.removeItem('irontri_pinned_plan'); }
+  else { localStorage.setItem('irontri_pinned_plan', id); }
   if (currentUser) loadPlans();
 }, true);
 
@@ -386,7 +365,7 @@ async function init() {
 
 async function loadStravaSection() {
   const { data: userData } = await sb.from('users')
-    .select('strava_access_token, strava_refresh_token, strava_token_expires_at, strava_athlete_id')
+    .select('strava_access_token, strava_refresh_token, strava_token_expires_at, strava_athlete_id, strava_auto_tag, strava_auto_update_fitness, strava_fitness, strava_fitness_updated_at')
     .eq('id', currentUser.id).single();
   const section = document.getElementById('strava-section');
   if (!userData?.strava_access_token) {
@@ -402,24 +381,110 @@ async function loadStravaSection() {
     section.innerHTML = `<div class="strava-banner"><div class="strava-logo">🟠</div><div class="strava-text"><h3>Strava needs reconnecting</h3><p>Your connection expired.</p></div><a href="https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=https://irontriapp.com/strava-callback.html&approval_prompt=force&scope=activity:read_all,activity:write" class="btn-strava">Reconnect →</a></div>`;
     return;
   }
-  // Load auto-tag preference
-  const { data: _atd } = await sb.from('users').select('strava_auto_tag').eq('id', currentUser.id).single();
-  const _at = _atd ? _atd.strava_auto_tag !== false : true;
-  var _bg = _at ? '#1E90FF' : 'rgba(255,255,255,0.15)';
-  var _lft = _at ? '23px' : '3px';
+
+  // Auto-tag preference
+  const _at = userData ? userData.strava_auto_tag !== false : true;
+  var _atBg = _at ? '#1E90FF' : 'rgba(255,255,255,0.15)';
+  var _atLft = _at ? '23px' : '3px';
+
+  // Auto-update fitness preference
+  const _auf = userData ? userData.strava_auto_update_fitness !== false : true;
+  var _aufBg = _auf ? '#FC4C02' : 'rgba(255,255,255,0.15)';
+  var _aufLft = _auf ? '23px' : '3px';
+
+  // Check if fitness update is due (last updated > 28 days ago or never)
+  const lastUpdated = userData?.strava_fitness_updated_at ? new Date(userData.strava_fitness_updated_at) : null;
+  const daysSinceUpdate = lastUpdated ? Math.floor((Date.now() - lastUpdated.getTime()) / 86400000) : 999;
+  const updateDue = daysSinceUpdate >= 28;
+  const lastUpdatedStr = lastUpdated ? lastUpdated.toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'numeric'}) : 'Never';
+
   section.innerHTML = '<div class="strava-connected">'
     + '<div class="strava-connected-top"><div style="font-size:28px;">🟠</div>'
     + '<div class="strava-connected-info"><h3>Strava connected</h3>'
     + '<div class="strava-status"><div class="strava-dot"></div>Syncing automatically</div></div>'
     + '<button class="btn-disconnect" onclick="disconnectStrava()">Disconnect</button></div>'
-    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid rgba(255,255,255,0.06);margin-bottom:12px;">'
+
+    // Auto-tag toggle
+    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid rgba(255,255,255,0.06);">'
     + '<div><div style="font-size:13px;font-weight:500;color:#fff;">🏷️ Auto-tag irontri on activities</div>'
-    + '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">Adds trained with irontri — irontriapp.com to your Strava activities</div></div>'
-    + '<button onclick="toggleAutoTag(this)" data-on="' + _at + '" style="width:44px;height:24px;border-radius:100px;border:none;cursor:pointer;background:' + _bg + ';position:relative;flex-shrink:0;">'
-    + '<span style="position:absolute;top:3px;left:' + _lft + ';width:18px;height:18px;border-radius:50%;background:#fff;"></span></button></div>'
-    + '<div class="section-title" style="margin-bottom:12px;font-size:15px;">Recent activities</div>'
+    + '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">Adds "trained with irontri — irontriapp.com" to your Strava activities</div></div>'
+    + '<button onclick="toggleAutoTag(this)" data-on="' + _at + '" style="width:44px;height:24px;border-radius:100px;border:none;cursor:pointer;background:' + _atBg + ';position:relative;flex-shrink:0;">'
+    + '<span style="position:absolute;top:3px;left:' + _atLft + ';width:18px;height:18px;border-radius:50%;background:#fff;transition:left 0.2s;"></span></button></div>'
+
+    // Auto-update fitness toggle
+    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid rgba(255,255,255,0.06);">'
+    + '<div><div style="font-size:13px;font-weight:500;color:#fff;">⚡ Auto-update fitness targets</div>'
+    + '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">Every 4 weeks irontri re-analyses your Strava data and updates pace, HR zones and FTP if you\'ve improved</div></div>'
+    + '<button onclick="toggleAutoUpdateFitness(this)" data-on="' + _auf + '" style="width:44px;height:24px;border-radius:100px;border:none;cursor:pointer;background:' + _aufBg + ';position:relative;flex-shrink:0;">'
+    + '<span style="position:absolute;top:3px;left:' + _aufLft + ';width:18px;height:18px;border-radius:50%;background:#fff;transition:left 0.2s;"></span></button></div>'
+
+    // Fitness update card — shows when update is due
+    + '<div class="fitness-update-card ' + (updateDue ? 'due' : '') + '" id="fitness-update-card" style="display:' + (_auf ? 'block' : 'none') + ';">'
+    + (updateDue
+        ? '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">'
+          + '<div><div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:3px;">🔄 Your fitness targets are due for an update</div>'
+          + '<div style="font-size:12px;color:rgba(255,255,255,0.5);">Last analysed: ' + lastUpdatedStr + ' · It\'s been ' + (daysSinceUpdate === 999 ? 'a while' : daysSinceUpdate + ' days') + '</div></div>'
+          + '<button onclick="runFitnessUpdate(this)" style="background:#1E90FF;color:#fff;border:none;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif;white-space:nowrap;">Update now →</button>'
+          + '</div>'
+        : '<div style="font-size:12px;color:rgba(255,255,255,0.45);">✅ Fitness targets up to date · Last analysed: ' + lastUpdatedStr + '</div>'
+      )
+    + '</div>'
+
+    + '<div class="section-title" style="margin-bottom:12px;font-size:15px;margin-top:16px;">Recent activities</div>'
     + '<div class="activity-feed" id="activity-feed"><div class="feed-loading">Loading your activities...</div></div></div>';
+
   loadActivities(accessToken);
+}
+
+async function toggleAutoUpdateFitness(btn) {
+  var isOn = btn.getAttribute('data-on') === 'true';
+  var newVal = !isOn;
+  btn.setAttribute('data-on', String(newVal));
+  btn.style.background = newVal ? '#FC4C02' : 'rgba(255,255,255,0.15)';
+  btn.querySelector('span').style.left = newVal ? '23px' : '3px';
+  // Show/hide the fitness update card
+  const card = document.getElementById('fitness-update-card');
+  if (card) card.style.display = newVal ? 'block' : 'none';
+  await sb.from('users').update({ strava_auto_update_fitness: newVal }).eq('id', currentUser.id);
+}
+
+async function runFitnessUpdate(btn) {
+  btn.textContent = 'Analysing...';
+  btn.disabled = true;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const res = await fetch('/api/strava-fitness', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: session.user.id })
+    });
+    const data = await res.json();
+    if (!data.connected || !data.hasData) {
+      btn.textContent = 'No data found';
+      return;
+    }
+    // Save updated timestamp
+    await sb.from('users').update({ strava_fitness_updated_at: new Date().toISOString() }).eq('id', currentUser.id);
+
+    // Show what improved
+    const card = document.getElementById('fitness-update-card');
+    const lines = [];
+    if (data.run) lines.push('🏃 Run: avg pace ' + data.run.avgPace + '/km · max HR ' + data.run.maxHR + 'bpm');
+    if (data.bike) lines.push('🚴 Bike: ' + data.bike.avgSpeedKmh + 'km/h' + (data.bike.ftpEstimate ? ' · FTP ~' + data.bike.ftpEstimate + 'w' : ''));
+    if (data.swim) lines.push('🏊 Swim: avg ' + data.swim.avgPacePer100m + '/100m');
+    if (data.hrZones) lines.push('❤️ Z2: ' + data.hrZones.zone2.min + '-' + data.hrZones.zone2.max + 'bpm · Z4: ' + data.hrZones.zone4.min + '-' + data.hrZones.zone4.max + 'bpm');
+
+    if (card) {
+      card.classList.remove('due');
+      card.innerHTML = '<div style="font-size:13px;font-weight:600;color:#4ade80;margin-bottom:8px;">✅ Fitness targets updated!</div>'
+        + '<div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.8;">' + lines.join('<br>') + '</div>'
+        + '<div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:8px;">Rebuild your plan to apply these targets to your sessions.</div>';
+    }
+  } catch(e) {
+    btn.textContent = 'Update failed — try again';
+    btn.disabled = false;
+  }
 }
 
 async function refreshStravaToken(refreshToken) {
@@ -512,11 +577,7 @@ async function loadPlans() {
   document.getElementById('loading').style.display='none';
   document.getElementById('content').style.display='block';
   loadStreakAndRing();
-
-  // ── TRIAL / PAID BANNER ─────────────────────────────────────────────────
-  // Check founding member status from auth metadata (persists across plans)
   const isFoundingUser = (currentUser.user_metadata && currentUser.user_metadata.is_founding_member === true);
-
   if (plans && plans.length > 0) {
     const plan = plans[0];
     const isFounding = isFoundingUser || plan.is_founding_member === true;
@@ -524,19 +585,9 @@ async function loadPlans() {
     const createdAt = new Date(plan.created_at);
     const daysSince = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
     const daysLeft = Math.max(0, 30 - daysSince);
-
-    if (isPaid) {
-      const el = document.getElementById('manage-sub-banner');
-      if (el) el.style.display = 'flex';
-    } else if (!isFounding && daysLeft > 0) {
-      const el = document.getElementById('trial-banner');
-      const dl = document.getElementById('trial-days-left');
-      const upgradeBtn = document.getElementById('trial-upgrade-btn');
-      if (el && dl) { dl.textContent = daysLeft; el.style.display = 'flex'; }
-      if (upgradeBtn) upgradeBtn.href = '/plan.html?load=' + plan.id;
-    }
+    if (isPaid) { const el = document.getElementById('manage-sub-banner'); if (el) el.style.display = 'flex'; }
+    else if (!isFounding && daysLeft > 0) { const el = document.getElementById('trial-banner'); const dl = document.getElementById('trial-days-left'); const upgradeBtn = document.getElementById('trial-upgrade-btn'); if (el && dl) { dl.textContent = daysLeft; el.style.display = 'flex'; } if (upgradeBtn) upgradeBtn.href = '/plan.html?load=' + plan.id; }
   }
-  // ── END TRIAL / PAID BANNER ──────────────────────────────────────────────
   if (error || !plans || plans.length===0) {
     document.getElementById('s-plans').textContent='0';
     document.getElementById('plans-list').innerHTML=`<div class="empty"><div class="empty-icon">🏊🚴🏃</div><h3>No plans yet</h3><p>Build your first personalised triathlon training plan — it only takes 2 minutes.</p><a href="/plan.html" class="btn-create">Build my first plan →</a></div>`;
@@ -551,7 +602,6 @@ async function loadPlans() {
     let planObj = null;
     try { planObj = JSON.parse(p.plan_data); } catch(e) {}
     let weeks = planObj?.weeks?.length || '—';
-    // Always re-count from raw plan_data to get accurate week count after extending
     try { const fresh = JSON.parse(p.plan_data); weeks = fresh?.weeks?.length || weeks; } catch(e) {}
     const savedNames = JSON.parse(localStorage.getItem('irontri_plan_names') || '{}');
     const displayName = savedNames[p.id] || p.name || planObj?.planName || p.race || 'Training Plan';
@@ -578,10 +628,10 @@ async function loadPlans() {
         <div class="plan-card-actions">
           <button class="btn-view" onclick="event.stopPropagation();viewPlan('${p.id}')">View plan →</button>
           <button class="btn-date" onclick="event.stopPropagation();showStartDateEditor('${p.id}', '${planObj?.startDate || ''}')" >📅 Change date</button>
-          ${planIndex > 0 ? `<button onclick="event.stopPropagation();pinPlan('${p.id}')" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">📌 Move to top</button>` : ''}<button class="btn-delete" onclick="event.stopPropagation();deletePlan('${p.id}')">Delete</button>
+          ${planIndex > 0 ? `<button onclick="event.stopPropagation();pinPlan('${p.id}')" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">📌 Move to top</button>` : ''}
+          <button class="btn-delete" onclick="event.stopPropagation();deletePlan('${p.id}')">Delete</button>
         </div>
-        <div id="start-date-editor-${p.id}" style="display:none;" onclick="event.stopPropagation()"></div
-        </div>
+        <div id="start-date-editor-${p.id}" style="display:none;" onclick="event.stopPropagation()"></div>
       </div>`;
   }).join('');
 }
@@ -596,18 +646,11 @@ async function upgradeNow() {
     if (!session) { window.location.href = '/auth.html'; return; }
     const { data: plans } = await sb.from('plans').select('id').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1);
     const planId = plans?.[0]?.id;
-    const r = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: session.user.id, email: session.user.email, planId })
-    });
+    const r = await fetch('/api/create-checkout-session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: session.user.id, email: session.user.email, planId }) });
     const d = await r.json();
     if (d.url) { window.location.href = d.url; }
     else { alert('Something went wrong. Please try again.'); }
-  } catch(e) {
-    console.error('Upgrade error:', e);
-    alert('Something went wrong. Please try again.');
-  }
+  } catch(e) { console.error('Upgrade error:', e); alert('Something went wrong. Please try again.'); }
   if (btn) { btn.textContent = 'Upgrade — $20/mo'; btn.disabled = false; }
 }
 
@@ -616,18 +659,11 @@ async function manageSubscription() {
   btn.textContent = 'Loading...';
   btn.disabled = true;
   try {
-    const r = await fetch('/api/customer-portal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: currentUser.id })
-    });
+    const r = await fetch('/api/customer-portal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser.id }) });
     const d = await r.json();
     if (d.url) { window.location.href = d.url; }
     else { alert('Could not open billing portal. Please try again.'); }
-  } catch(e) {
-    console.error('Portal error:', e);
-    alert('Something went wrong. Please try again.');
-  }
+  } catch(e) { console.error('Portal error:', e); alert('Something went wrong. Please try again.'); }
   btn.textContent = 'Manage subscription';
   btn.disabled = false;
 }
@@ -640,9 +676,7 @@ function startRename(id) {
   input.select();
 }
 
-function cancelRename(id) {
-  document.getElementById('rename-form-' + id).style.display = 'none';
-}
+function cancelRename(id) { document.getElementById('rename-form-' + id).style.display = 'none'; }
 
 async function saveRename(id) {
   const input = document.getElementById('rename-input-' + id);
@@ -652,26 +686,15 @@ async function saveRename(id) {
   saveBtn.textContent = 'Saving...';
   saveBtn.disabled = true;
   try {
-    // Save to Supabase name column
-    const { error } = await sb
-      .from('plans')
-      .update({ name: newName })
-      .eq('id', id);
-
-    // Always save to localStorage as reliable fallback
+    await sb.from('plans').update({ name: newName }).eq('id', id);
     const names = JSON.parse(localStorage.getItem('irontri_plan_names') || '{}');
     names[id] = newName;
     localStorage.setItem('irontri_plan_names', JSON.stringify(names));
-
     document.getElementById('name-display-' + id).textContent = newName;
     document.getElementById('rename-form-' + id).style.display = 'none';
     saveBtn.textContent = 'Save';
     saveBtn.disabled = false;
-  } catch(e) {
-    saveBtn.textContent = 'Save';
-    saveBtn.disabled = false;
-    alert('Could not save: ' + e.message);
-  }
+  } catch(e) { saveBtn.textContent = 'Save'; saveBtn.disabled = false; alert('Could not save: ' + e.message); }
 }
 
 async function deletePlan(id) {
@@ -717,15 +740,14 @@ async function saveNewStartDate(planId) {
   } catch(e) { saveBtn.textContent = 'Save'; saveBtn.disabled = false; alert('Could not update start date: ' + e.message); }
 }
 
-// ── TODAY'S SESSION ──────────────────────────────────────────────────────────
 const TYPE_INFO = {
-  'Swim':    {icon:'🏊', color:'#38bdf8', label:'Swim'},
-  'Bike':    {icon:'🚴', color:'#fb923c', label:'Bike'},
-  'Run':     {icon:'🏃', color:'#4ade80', label:'Run'},
-  'Brick':   {icon:'🔥', color:'#a78bfa', label:'Brick'},
-  'Strength':{icon:'💪', color:'#fbbf24', label:'Strength'},
-  'Rest':    {icon:'😴', color:'rgba(255,255,255,0.3)', label:'Rest'},
-  'Race':    {icon:'🏁', color:'#f87171', label:'Race'}
+  'Swim':{icon:'🏊',color:'#38bdf8',label:'Swim'},
+  'Bike':{icon:'🚴',color:'#fb923c',label:'Bike'},
+  'Run':{icon:'🏃',color:'#4ade80',label:'Run'},
+  'Brick':{icon:'🔥',color:'#a78bfa',label:'Brick'},
+  'Strength':{icon:'💪',color:'#fbbf24',label:'Strength'},
+  'Rest':{icon:'😴',color:'rgba(255,255,255,0.3)',label:'Rest'},
+  'Race':{icon:'🏁',color:'#f87171',label:'Race'}
 };
 function fmtDurD(mins){if(!mins)return '';if(mins<60)return mins+'m';const h=Math.floor(mins/60),m=mins%60;return m>0?h+'h '+m+'m':h+'h';}
 
@@ -734,8 +756,6 @@ async function loadTodaySession() {
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return;
-
-    // Get pinned plan first, fall back to most recently created
     const pinnedPlanId = localStorage.getItem('irontri_pinned_plan');
     let plan = null;
     if (pinnedPlanId) {
@@ -748,19 +768,11 @@ async function loadTodaySession() {
       plan = plans[0];
     }
     let planData;
-    try {
-      let txt = plan.plan_data || '';
-      txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
-      planData = JSON.parse(txt);
-    } catch(e) { return; }
-
-    // Check localStorage override first (set by change date feature)
+    try { let txt = plan.plan_data || ''; txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1); planData = JSON.parse(txt); } catch(e) { return; }
     const startOverrides = JSON.parse(localStorage.getItem('irontri_start_override') || '{}');
     const resolvedStart = startOverrides[plan.id] || planData.startDate || plan.created_at?.split('T')[0];
     if (!planData.weeks || !resolvedStart) return;
     planData.startDate = resolvedStart;
-
-    // Race countdown
     const raceDate = planData.raceDate;
     if (raceDate) {
       const daysToRace = Math.ceil((new Date(raceDate) - new Date()) / 86400000);
@@ -770,56 +782,35 @@ async function loadTodaySession() {
         document.getElementById('race-countdown').classList.add('show');
       }
     }
-
-    // Calculate today's position in the plan
     const today = new Date();
     today.setHours(0,0,0,0);
     const start = new Date(planData.startDate + 'T00:00:00');
     start.setHours(0,0,0,0);
     const diffDays = Math.round((today - start) / 86400000);
-
     if (diffDays < 0) {
-      // Plan hasn't started yet
       const daysUntil = Math.abs(diffDays);
       document.getElementById('today-card').style.display = 'block';
-      document.getElementById('today-card-inner').innerHTML = `
-        <div class="today-rest">
-          <div style="font-size:18px;margin-bottom:6px;">🗓️ Your plan starts in <strong style="color:#fff;">${daysUntil} day${daysUntil===1?'':'s'}</strong></div>
-          <div style="font-size:13px;color:rgba(255,255,255,0.45);">Rest up and get ready — your first session is ${new Date(planData.startDate).toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'})}.</div>
-        </div>`;
+      document.getElementById('today-card-inner').innerHTML = `<div class="today-rest"><div style="font-size:18px;margin-bottom:6px;">🗓️ Your plan starts in <strong style="color:#fff;">${daysUntil} day${daysUntil===1?'':'s'}</strong></div><div style="font-size:13px;color:rgba(255,255,255,0.45);">Rest up and get ready — your first session is ${new Date(planData.startDate).toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'})}.</div></div>`;
       return;
     }
-
     const weekIdx = Math.floor(diffDays / 7);
     const dayIdx = diffDays % 7;
-
     if (weekIdx >= planData.weeks.length) {
-      // Plan finished
       document.getElementById('today-card').style.display = 'block';
       document.getElementById('today-card-inner').innerHTML = `<div class="today-rest">🏁 <strong style="color:#fff;">Plan complete!</strong> Time to build your next training block.</div>`;
       return;
     }
-
     const week = planData.weeks[weekIdx];
     const day = week?.days?.[dayIdx];
     if (!day) return;
-
     const t = TYPE_INFO[day.type] || TYPE_INFO['Rest'];
     const card = document.getElementById('today-card');
     card.style.display = 'block';
-
     if (day.type === 'Rest') {
-      document.getElementById('today-card-inner').innerHTML = `
-        <div class="today-icon">😴</div>
-        <div class="today-info">
-          <div class="today-name">Rest Day</div>
-          <div class="today-rest" style="margin-top:6px;">Recovery is where fitness is built. Stretch, eat well, sleep.</div>
-        </div>`;
+      document.getElementById('today-card-inner').innerHTML = `<div class="today-icon">😴</div><div class="today-info"><div class="today-name">Rest Day</div><div class="today-rest" style="margin-top:6px;">Recovery is where fitness is built. Stretch, eat well, sleep.</div></div>`;
     } else {
-      // Check if already completed today
       const { data: comp } = await sb.from('completions').select('id').eq('user_id', session.user.id).eq('week_num', weekIdx).eq('day', String(dayIdx)).limit(1);
       const done = comp && comp.length > 0;
-
       document.getElementById('today-card-inner').innerHTML = `
         <div class="today-icon">${done ? '✅' : t.icon}</div>
         <div class="today-info">
@@ -837,8 +828,6 @@ async function loadTodaySession() {
   } catch(e) { console.log('Today session error:', e); }
 }
 
-
-// ── DASHBOARD UNIT TOGGLE ────────────────────────────────────────────────────
 let dashUnits = localStorage.getItem('irontri_units') || 'metric';
 let _paceRowsCache = [];
 
@@ -871,43 +860,19 @@ function renderDashPaceRows(units) {
     const meta = sportMeta[r.sport];
     const fromDisp = convertPaceStr(r.fromStr, units);
     const toDisp = convertPaceStr(r.toStr, units);
-    return `<div class="pace-row">
-      <div class="pace-sport">${meta.icon}</div>
-      <div class="pace-label">${meta.label}</div>
-      <div class="pace-bar-wrap"><div class="pace-bar" style="width:${r.barPct}%;background:${r.improved?meta.color:'rgba(255,255,255,0.15)'}"></div></div>
-      <div class="pace-values">
-        <span class="pace-from">${fromDisp}</span>
-        <span style="color:rgba(255,255,255,0.2);font-size:11px;">→</span>
-        <span class="pace-to">${toDisp}</span>
-        <span class="pace-delta ${r.same?'same':r.improved?'better':'worse'}">${r.same?'no change':r.deltaStr}</span>
-      </div>
-    </div>`;
+    return `<div class="pace-row"><div class="pace-sport">${meta.icon}</div><div class="pace-label">${meta.label}</div><div class="pace-bar-wrap"><div class="pace-bar" style="width:${r.barPct}%;background:${r.improved?meta.color:'rgba(255,255,255,0.15)'}"></div></div><div class="pace-values"><span class="pace-from">${fromDisp}</span><span style="color:rgba(255,255,255,0.2);font-size:11px;">→</span><span class="pace-to">${toDisp}</span><span class="pace-delta ${r.same?'same':r.improved?'better':'worse'}">${r.same?'no change':r.deltaStr}</span></div></div>`;
   }).join('');
 }
-// ── END DASHBOARD UNIT TOGGLE ─────────────────────────────────────────────────
 
-// ── PACE IMPROVEMENT TRACKER ─────────────────────────────────────────────────
 function extractPaceSeconds(paceStr) {
   if (!paceStr || paceStr === 'N/A') return null;
-  // /100m format: "1:45/100m" -> seconds per 100m
   const swim = paceStr.match(/(\d+):(\d+)\s*\/\s*100m/i);
   if (swim) return parseInt(swim[1]) * 60 + parseInt(swim[2]);
-  // /km format: "5:30/km" -> seconds per km
   const run = paceStr.match(/(\d+):(\d+)\s*\/\s*km/i);
   if (run) return parseInt(run[1]) * 60 + parseInt(run[2]);
-  // km/h format: "28 km/h" or "28.5km/h" -> float
   const bike = paceStr.match(/([\d.]+)\s*km\/h/i);
-  if (bike) return parseFloat(bike[1]); // store as float, higher = better
+  if (bike) return parseFloat(bike[1]);
   return null;
-}
-
-function fmtPace(val, type) {
-  if (val === null) return '—';
-  if (type === 'Bike') return val.toFixed(1) + ' km/h';
-  const m = Math.floor(val / 60);
-  const s = Math.round(val % 60);
-  const unit = type === 'Swim' ? '/100m' : '/km';
-  return m + ':' + String(s).padStart(2,'0') + unit;
 }
 
 async function loadPaceImprovement() {
@@ -915,112 +880,48 @@ async function loadPaceImprovement() {
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return;
-
-    const { data: plans } = await sb.from('plans')
-      .select('plan_data,race,created_at')
-      .eq('user_id', session.user.id)
-      .order('created_at', { ascending: false })
-      .limit(1);
+    const { data: plans } = await sb.from('plans').select('plan_data,race,created_at').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1);
     if (!plans?.length) return;
-
     let planData;
-    try {
-      let txt = plans[0].plan_data || '';
-      txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
-      planData = JSON.parse(txt);
-    } catch(e) { return; }
-
+    try { let txt = plans[0].plan_data || ''; txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1); planData = JSON.parse(txt); } catch(e) { return; }
     if (!planData.weeks || planData.weeks.length < 2) return;
-
-    // Only show if user has completed at least 1 week 1 session
-    const { data: week1Completions } = await sb.from('completions')
-      .select('id').eq('user_id', session.user.id).eq('week_num', 0);
+    const { data: week1Completions } = await sb.from('completions').select('id').eq('user_id', session.user.id).eq('week_num', 0);
     if (!week1Completions || week1Completions.length < 1) return;
-
-    // Build pace maps: week1 and latest week (or current week)
     const sports = ['Swim', 'Bike', 'Run'];
-    const sportMeta = {
-      Swim: { icon: '🏊', label: 'Swim', color: '#38bdf8', higherBetter: false },
-      Bike: { icon: '🚴', label: 'Bike', color: '#fb923c', higherBetter: true },
-      Run:  { icon: '🏃', label: 'Run',  color: '#4ade80', higherBetter: false },
-    };
-
-    // Get pace from week 1 and the most recent week
+    const sportMeta = { Swim:{icon:'🏊',label:'Swim',color:'#38bdf8',higherBetter:false}, Bike:{icon:'🚴',label:'Bike',color:'#fb923c',higherBetter:true}, Run:{icon:'🏃',label:'Run',color:'#4ade80',higherBetter:false} };
     const week1 = planData.weeks[0];
     const latestWeek = planData.weeks[planData.weeks.length - 1];
-
-    const getPace = (week, sport) => {
-      const day = week?.days?.find(d => d.type === sport && d.paceTarget && d.paceTarget !== 'N/A');
-      return day?.paceTarget || null;
-    };
-
+    const getPace = (week, sport) => { const day = week?.days?.find(d => d.type === sport && d.paceTarget && d.paceTarget !== 'N/A'); return day?.paceTarget || null; };
     const rows = [];
     for (const sport of sports) {
       const fromStr = getPace(week1, sport);
-      const toStr   = getPace(latestWeek, sport);
+      const toStr = getPace(latestWeek, sport);
       if (!fromStr || !toStr) continue;
-
       const fromVal = extractPaceSeconds(fromStr);
-      const toVal   = extractPaceSeconds(toStr);
+      const toVal = extractPaceSeconds(toStr);
       if (fromVal === null || toVal === null) continue;
-
       const meta = sportMeta[sport];
-      // Improvement: for swim/run lower is better, for bike higher is better
       const improved = meta.higherBetter ? (toVal > fromVal) : (toVal < fromVal);
       const same = fromVal === toVal;
-
-      // Delta label
       let deltaStr = '';
-      if (sport === 'Bike') {
-        const diff = (toVal - fromVal).toFixed(1);
-        deltaStr = (diff > 0 ? '+' : '') + diff + ' km/h';
-      } else {
-        const diffSec = Math.round(Math.abs(toVal - fromVal));
-        const sign = improved ? '-' : '+';
-        const m = Math.floor(diffSec / 60);
-        const s = diffSec % 60;
-        deltaStr = sign + (m > 0 ? m + 'm ' : '') + s + 's';
-      }
-
-      // Bar fill: 100% = from pace, fill shows relative improvement
+      if (sport === 'Bike') { const diff = (toVal - fromVal).toFixed(1); deltaStr = (diff > 0 ? '+' : '') + diff + ' km/h'; }
+      else { const diffSec = Math.round(Math.abs(toVal - fromVal)); const sign = improved ? '-' : '+'; const m = Math.floor(diffSec / 60); const s = diffSec % 60; deltaStr = sign + (m > 0 ? m + 'm ' : '') + s + 's'; }
       const barPct = same ? 50 : improved ? Math.min(95, 50 + 45) : Math.max(5, 50 - 30);
-
       rows.push({ sport, meta, fromStr, toStr, fromVal, toVal, improved, same, deltaStr, barPct });
     }
-
     if (rows.length === 0) return;
     _paceRowsCache = rows;
-
     const card = document.getElementById('pace-card');
     const rowsEl = document.getElementById('pace-rows');
     card.style.display = 'block';
-
-    rowsEl.innerHTML = rows.map(r => `
-      <div class="pace-row">
-        <div class="pace-sport">${r.meta.icon}</div>
-        <div class="pace-label">${r.meta.label}</div>
-        <div class="pace-bar-wrap">
-          <div class="pace-bar" style="width:${r.barPct}%;background:${r.improved ? r.meta.color : 'rgba(255,255,255,0.15)'}"></div>
-        </div>
-        <div class="pace-values">
-          <span class="pace-from">${r.fromStr}</span>
-          <span style="color:rgba(255,255,255,0.2);font-size:11px;">→</span>
-          <span class="pace-to">${r.toStr}</span>
-          <span class="pace-delta ${r.same ? 'same' : r.improved ? 'better' : 'worse'}">${r.same ? 'no change' : r.deltaStr}</span>
-        </div>
-      </div>`).join('');
-
+    rowsEl.innerHTML = rows.map(r => `<div class="pace-row"><div class="pace-sport">${r.meta.icon}</div><div class="pace-label">${r.meta.label}</div><div class="pace-bar-wrap"><div class="pace-bar" style="width:${r.barPct}%;background:${r.improved?r.meta.color:'rgba(255,255,255,0.15)'}"></div></div><div class="pace-values"><span class="pace-from">${r.fromStr}</span><span style="color:rgba(255,255,255,0.2);font-size:11px;">→</span><span class="pace-to">${r.toStr}</span><span class="pace-delta ${r.same?'same':r.improved?'better':'worse'}">${r.same?'no change':r.deltaStr}</span></div></div>`).join('');
     if (dashUnits === 'imperial') setDashUnits('imperial');
     else { const m=document.getElementById('dash-metric'); if(m){m.style.background='#1E90FF';m.style.color='#fff';} }
   } catch(e) { console.log('Pace tracker error:', e); }
 }
-// ── END PACE IMPROVEMENT TRACKER ─────────────────────────────────────────────
 
-// ── END TODAY'S SESSION ───────────────────────────────────────────────────────
-
-  loadTodaySession();
-  loadPaceImprovement();
-
+loadTodaySession();
+loadPaceImprovement();
 
 async function goToMyPlan(e) {
   e.preventDefault();
@@ -1033,8 +934,6 @@ async function goToMyPlan(e) {
   } catch(e) { window.location.href = '/plan.html'; }
 }
 
-
-// ── Web Push Notifications ──────────────────────────────────────────
 const VAPID_PUBLIC_KEY = 'BLDulV6YtyFQ3PdF6qN6M6vyjGvWq2x_TSIMgP3opeALGY9UkL61T7KRlTsZSFYul4OU4AM5n1UBAwnDt7f55Mg';
 
 function urlBase64ToUint8Array(base64String) {
@@ -1048,36 +947,17 @@ async function subscribeToNotifications() {
   document.getElementById('notif-banner').style.display = 'none';
   try {
     const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      localStorage.setItem('irontri_notif_dismissed', '1');
-      return;
-    }
+    if (permission !== 'granted') { localStorage.setItem('irontri_notif_dismissed', '1'); return; }
     const reg = await navigator.serviceWorker.ready;
     const existing = await reg.pushManager.getSubscription();
-    const sub = existing || await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-    });
-    // Save subscription to Supabase
+    const sub = existing || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return;
-    await fetch(SUPABASE_URL + '/rest/v1/push_subscriptions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': 'Bearer ' + session.access_token,
-        'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify({ user_id: session.user.id, subscription: sub.toJSON() })
-    });
+    await fetch(SUPABASE_URL + '/rest/v1/push_subscriptions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify({ user_id: session.user.id, subscription: sub.toJSON() }) });
     localStorage.setItem('irontri_notif_subscribed', '1');
-  } catch(e) {
-    console.log('Notification subscribe error:', e);
-  }
+  } catch(e) { console.log('Notification subscribe error:', e); }
 }
 
-// Register service worker and show notification banner if appropriate
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').catch(e => console.log('SW reg error:', e));
   window.addEventListener('load', function() {
@@ -1085,17 +965,13 @@ if ('serviceWorker' in navigator) {
     const subscribed = localStorage.getItem('irontri_notif_subscribed');
     const supported = 'PushManager' in window && 'Notification' in window;
     if (!dismissed && !subscribed && supported && Notification.permission !== 'denied') {
-      setTimeout(function() {
-        const banner = document.getElementById('notif-banner');
-        if (banner) banner.style.display = 'flex';
-      }, 3000); // show after 3s so dashboard loads first
+      setTimeout(function() { const banner = document.getElementById('notif-banner'); if (banner) banner.style.display = 'flex'; }, 3000);
     }
   });
 }
 
 init();
 
-// Show install banner on mobile if not dismissed and not already installed
 (function() {
   const dismissed = localStorage.getItem('irontri_install_dismissed');
   const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
@@ -1124,7 +1000,5 @@ init();
     <span style="font-size:20px;">💬</span>Feedback
   </a>
 </nav>
-<!-- END BOTTOM TAB BAR -->
 </body>
 </html>
-    
