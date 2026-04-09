@@ -1410,6 +1410,16 @@ async function buildPlan(){
     if(A.date){planData.raceDate=A.date;}
     if(A.units){planData.units=A.units;}
     if(A.stravaFitness){planData.stravaFitness=JSON.stringify(A.stravaFitness);}
+    // Save FIFO settings into planData so they survive plan reloads and pauses
+    if(A.fifo){
+      planData.fifo=true;
+      planData.fifoRoster=A.fifoRoster||null;
+      planData.fifoRestrictions=A.fifoRestrictions||[];
+      planData.fifoHours=A.fifoHours||null;
+      planData.fifoFlyoutDay=A.fifoFlyoutDay||null;
+      planData.fifoCurrentStatus=A.fifoCurrentStatus||null;
+      planData.fifoCurrentWeek=A.fifoCurrentWeek||null;
+    }
     checkAndSavePlan(JSON.stringify(planData));
     if(A.date&&planData.weeks.length<w){const _bt=document.createElement('div');_bt.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1E90FF;color:#fff;padding:14px 20px;border-radius:12px;font-size:13px;font-family:Inter,sans-serif;text-align:center;z-index:9999;max-width:340px;line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.4);';_bt.innerHTML='<strong>Your first 4 weeks are ready!</strong><br>Building your full '+w+'-week plan to race day in the background.';document.body.appendChild(_bt);setTimeout(()=>{if(_bt.parentNode)_bt.remove();},8000);setTimeout(()=>autoGenerateRemainingWeeks(w),5000);}
     window.scrollTo({top:0,behavior:'smooth'});
@@ -2193,6 +2203,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         A.date = planData.raceDate || A.date || '';
         // Restore units from saved plan
         if(planData.units === 'imperial') { setUnits('imperial'); }
+        // Restore FIFO settings from planData so fixFifoViolations works after pause/reload
+        if(planData.fifo){
+          A.fifo = true;
+          A.fifoRoster = planData.fifoRoster || A.fifoRoster || null;
+          A.fifoRestrictions = planData.fifoRestrictions || A.fifoRestrictions || [];
+          A.fifoHours = planData.fifoHours || A.fifoHours || null;
+          A.fifoFlyoutDay = planData.fifoFlyoutDay || A.fifoFlyoutDay || null;
+          A.fifoCurrentStatus = planData.fifoCurrentStatus || A.fifoCurrentStatus || null;
+          A.fifoCurrentWeek = planData.fifoCurrentWeek || A.fifoCurrentWeek || null;
+        }
 
         document.getElementById('gen').style.display = 'none';
         document.getElementById('plan').style.display = 'block';
@@ -2944,23 +2964,3 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
       </div>
     </div>
     <button id="checkout-btn" onclick="startCheckout()" style="width:100%;padding:16px;background:#1E90FF;border:none;color:#fff;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:12px;">Continue my plan — $20/month</button>
-    <a href="/dashboard.html" style="display:block;font-size:13px;color:rgba(255,255,255,0.35);text-decoration:none;">Go to dashboard</a>
-  </div>
-</div>
-<!-- END PAYWALL MODAL -->
-
-<!-- BOTTOM TAB BAR -->
-<nav style="position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,0.08);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);">
-  <a href="/dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
-    <span style="font-size:20px;">📅</span>Today
-  </a>
-  <a href="#" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:#1E90FF;font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
-    <span style="font-size:20px;">🗓️</span>My Plan
-  </a>
-  <a href="/feedback.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
-    <span style="font-size:20px;">💬</span>Feedback
-  </a>
-</nav>
-<!-- END BOTTOM TAB BAR -->
-</body>
-</html>
