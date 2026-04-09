@@ -142,10 +142,10 @@
     .cal-day:hover{border-color:rgba(30,144,255,0.3);}
     .cal-day.active{border-color:var(--blue);background:rgba(30,144,255,0.1);}
     .cal-day.rest{opacity:0.5;}
-    .cal-day-name{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+    .cal-day-name{font-size:10px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
     .cal-day-icon{font-size:20px;margin-bottom:4px;}
     .cal-day-type{font-size:9px;font-weight:600;padding:2px 6px;border-radius:100px;display:inline-block;letter-spacing:0.3px;}
-    .cal-day-dur{font-size:10px;color:var(--faint);margin-top:4px;}
+    .cal-day-dur{font-size:10px;color:rgba(255,255,255,0.65);margin-top:4px;}
 
     /* ── SESSION TYPE COLOURS (calendar + pills + borders) ── */
     .type-swim    {background:rgba(56,189,248,0.18);color:#38bdf8;}
@@ -1113,7 +1113,7 @@ function renderWeek(){
   document.getElementById('vol-breakdown').innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <span style="font-size:13px;font-weight:500;">Weekly intensity split</span>
-      <span style="font-size:11px;color:var(--faint);">${isRaceWeek?'🏁 Race week':'80/20 principle'}</span>
+      <span style="font-size:11px;color:rgba(255,255,255,0.55);">${isRaceWeek?'🏁 Race week':'80/20 principle'}</span>
     </div>
     ${isRaceWeek && totalIntMin<=1 ? `<div style="font-size:12px;color:rgba(255,255,255,0.4);padding:8px 0;">Race week — stay fresh, trust your training.</div>` : `
     <div style="display:flex;height:8px;border-radius:100px;overflow:hidden;gap:2px;margin-bottom:12px;">
@@ -1125,7 +1125,7 @@ function renderWeek(){
       <div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;"></div><span style="font-size:12px;color:var(--muted);">Easy <strong style="color:#fff;">${easyPct}%</strong></span></div>
       <div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#fbbf24;flex-shrink:0;"></div><span style="font-size:12px;color:var(--muted);">Moderate <strong style="color:#fff;">${modPct}%</strong></span></div>
       <div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#f87171;flex-shrink:0;"></div><span style="font-size:12px;color:var(--muted);">Hard <strong style="color:#fff;">${hardPct}%</strong></span></div>
-      <div style="margin-left:auto;font-size:11px;color:var(--faint);">${Math.round(easyMin/60*10)/10}h easy · ${Math.round(modMin/60*10)/10}h mod · ${Math.round(hardMin/60*10)/10}h hard</div>
+      <div style="margin-left:auto;font-size:11px;color:rgba(255,255,255,0.6);">${Math.round(easyMin/60*10)/10}h easy · ${Math.round(modMin/60*10)/10}h mod · ${Math.round(hardMin/60*10)/10}h hard</div>
     </div>`}`;
 
   const allDaysFull=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -1140,7 +1140,7 @@ function renderWeek(){
     const dayName = allDaysFull[dayDate.getDay()];
     return `<div class="cal-day${d.type==='Rest'?' rest':''}${isActive?' active':''}" data-type="${d.swapped?'Run':d.type}" onclick="selectDay(${i})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
       <div class="cal-day-name">${dayName}</div>
-      <div style="font-size:10px;color:var(--faint);margin-bottom:4px;">${dateStr}</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:4px;">${dateStr}</div>
       <div class="cal-day-icon">${isComplete ? '✅' : d.swapped ? '😓' : t.icon}</div>
       <div class="cal-day-type ${t.cls}">${d.swapped ? 'Easy' : t.label}</div>
       <div class="cal-day-dur">${d.duration?fmtDur(d.duration):''}</div>
