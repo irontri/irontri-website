@@ -238,14 +238,19 @@
     </div>
 
     <!-- NOTIFICATION BANNER -->
-    <div id="notif-banner" style="display:none;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:14px;padding:14px 16px;margin-bottom:16px;align-items:center;gap:12px;">
-      <span style="font-size:26px;">🔔</span>
-      <div style="flex:1;">
-        <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:2px;">Get your daily training reminder</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.45);">We'll remind you each morning with today's session.</div>
+    <div id="notif-banner" style="display:none;background:linear-gradient(135deg,rgba(74,222,128,0.12),rgba(30,144,255,0.08));border:1px solid rgba(74,222,128,0.35);border-radius:16px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#4ade80,#1E90FF);"></div>
+      <div style="display:flex;align-items:flex-start;gap:14px;">
+        <div style="font-size:32px;flex-shrink:0;margin-top:2px;">🔔</div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;">Never miss a training session</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:14px;line-height:1.5;">Get a daily reminder with today's session — straight to your phone. Athletes who train consistently finish faster.</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <button onclick="subscribeToNotifications()" style="background:#4ade80;color:#000;padding:10px 20px;border-radius:9px;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;">🔔 Turn on reminders</button>
+            <button onclick="dismissNotifBanner()" style="background:transparent;border:none;color:rgba(255,255,255,0.35);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;padding:4px;">Not now</button>
+          </div>
+        </div>
       </div>
-      <button onclick="subscribeToNotifications()" style="background:#4ade80;color:#000;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Allow</button>
-      <button onclick="document.getElementById('notif-banner').style.display='none';localStorage.setItem('irontri_notif_dismissed','1');" style="background:transparent;border:none;color:rgba(255,255,255,0.3);font-size:18px;cursor:pointer;padding:4px;line-height:1;">✕</button>
     </div>
 
       <h1 id="welcome-title">Welcome back! 👋</h1>
@@ -1235,14 +1240,35 @@ async function subscribeToNotifications() {
   } catch(e) { console.log('Notification subscribe error:', e); }
 }
 
+function dismissNotifBanner() {
+  document.getElementById('notif-banner').style.display = 'none';
+  // Track dismiss count — re-prompt after 3 more visits
+  const count = parseInt(localStorage.getItem('irontri_notif_dismiss_count') || '0') + 1;
+  localStorage.setItem('irontri_notif_dismiss_count', String(count));
+  localStorage.setItem('irontri_notif_dismiss_visit', String(parseInt(localStorage.getItem('irontri_visit_count') || '0')));
+}
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').catch(e => console.log('SW reg error:', e));
   window.addEventListener('load', function() {
-    const dismissed = localStorage.getItem('irontri_notif_dismissed');
     const subscribed = localStorage.getItem('irontri_notif_subscribed');
     const supported = 'PushManager' in window && 'Notification' in window;
-    if (!dismissed && !subscribed && supported && Notification.permission !== 'denied') {
-      setTimeout(function() { const banner = document.getElementById('notif-banner'); if (banner) banner.style.display = 'flex'; }, 3000);
+    if (subscribed || !supported || Notification.permission === 'denied') return;
+
+    // Track visit count
+    const visitCount = parseInt(localStorage.getItem('irontri_visit_count') || '0') + 1;
+    localStorage.setItem('irontri_visit_count', String(visitCount));
+
+    // Check if enough visits have passed since last dismiss
+    const dismissVisit = parseInt(localStorage.getItem('irontri_notif_dismiss_visit') || '0');
+    const dismissCount = parseInt(localStorage.getItem('irontri_notif_dismiss_count') || '0');
+    const visitsSinceDismiss = visitCount - dismissVisit;
+
+    // Show immediately on first visit, re-prompt every 3 visits after dismiss (max 3 re-prompts)
+    const shouldShow = dismissCount === 0 || (visitsSinceDismiss >= 3 && dismissCount < 3);
+    if (shouldShow) {
+      const banner = document.getElementById('notif-banner');
+      if (banner) banner.style.display = 'block';
     }
   });
 }
