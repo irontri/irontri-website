@@ -290,6 +290,9 @@
     </div>
     <div class="finish-splits" id="finish-splits"></div>
     <div class="finish-confidence" id="finish-confidence"></div>
+    <div style="margin-top:16px;">
+      <a id="finish-view-plan-btn" href="/plan.html" style="display:inline-block;background:#1E90FF;color:#fff;text-decoration:none;padding:11px 24px;border-radius:9px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;">View my plan →</a>
+    </div>
   </div>
 
   <!-- PACE IMPROVEMENT -->
@@ -921,7 +924,7 @@ async function loadTodaySession() {
     const startOverrides = JSON.parse(localStorage.getItem('irontri_start_override') || '{}');
     const resolvedStart = startOverrides[plan.id] || planData.startDate || plan.created_at?.split('T')[0];
     if (!planData.weeks || !resolvedStart) return;
-    calcFinishTime(planData, plan.race || '');
+    calcFinishTime(planData, plan.race || '', plan.id);
     planData.startDate = resolvedStart;
     const raceDate = planData.raceDate;
     if (raceDate) {
@@ -1073,7 +1076,7 @@ async function loadPaceImprovement() {
 loadTodaySession();
 loadPaceImprovement();
 
-function calcFinishTime(planData, planRace) {
+function calcFinishTime(planData, planRace, planId) {
   try {
     const race = (planRace || planData.raceDistance || planData.goalRace || planData.race || '').toLowerCase();
 
@@ -1196,6 +1199,8 @@ function calcFinishTime(planData, planRace) {
 
     const card = document.getElementById('finish-card');
     card.style.display = 'block';
+    const viewBtn = document.getElementById('finish-view-plan-btn');
+    if (viewBtn && planId) viewBtn.href = '/plan.html?load=' + planId;
     document.getElementById('finish-total').textContent = secsToHMS(totalSecs);
     document.getElementById('finish-range').textContent = 'Range: ' + secsToHMS(fastSecs) + ' – ' + secsToHMS(slowSecs);
     document.getElementById('finish-race-label').textContent = raceLabel;
