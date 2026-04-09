@@ -752,9 +752,10 @@
     <button class="wbtn" id="wnext" onclick="changeWeek(1)">→</button>
   </div>
 
-  <!-- LOAD MORE WEEKS -->
+  <!-- LOAD MORE WEEKS / RACE WEEK MESSAGE -->
   <div id="load-more-wrap" style="display:none;margin:32px 0;">
-    <div style="background:rgba(30,144,255,0.06);border:1px solid rgba(30,144,255,0.25);border-radius:16px;padding:28px;text-align:center;">
+    <!-- Load more button (non-race weeks) -->
+    <div id="load-more-inner" style="background:rgba(30,144,255,0.06);border:1px solid rgba(30,144,255,0.25);border-radius:16px;padding:28px;text-align:center;">
       <div style="font-size:28px;margin-bottom:10px;">🗓️</div>
       <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">Your plan continues beyond week 4</div>
       <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:20px;max-width:420px;margin-left:auto;margin-right:auto;">Generate your next training block — picks up exactly where week 4 left off with progressive overload built in.</div>
@@ -762,6 +763,18 @@
         Load weeks 5–8 →
       </button>
       <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:12px;">Free · Takes about 30 seconds</p>
+    </div>
+    <!-- Race week motivational message -->
+    <div id="race-week-message" style="display:none;background:linear-gradient(135deg,rgba(248,113,113,0.1),rgba(251,146,60,0.08));border:1px solid rgba(248,113,113,0.3);border-radius:16px;padding:32px;text-align:center;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#f87171,#fb923c,#f87171);opacity:0.8;"></div>
+      <div style="font-size:40px;margin-bottom:12px;">🏁</div>
+      <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:-0.5px;margin-bottom:10px;color:#fff;">This is what you trained for.</div>
+      <div style="font-size:15px;color:rgba(255,255,255,0.6);line-height:1.7;max-width:440px;margin:0 auto 20px;">Months of early mornings, tired legs and long sessions have led to this moment. Your fitness is built. Your body is ready. Trust the process — and go race.</div>
+      <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;">
+        <div style="text-align:center;"><div style="font-size:22px;">🏊</div><div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;">Start easy</div></div>
+        <div style="text-align:center;"><div style="font-size:22px;">🚴</div><div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;">Ride smart</div></div>
+        <div style="text-align:center;"><div style="font-size:22px;">🏃</div><div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;">Leave it all out there</div></div>
+      </div>
     </div>
   </div>
 
@@ -1034,11 +1047,24 @@ function renderWeek(){
 
   const isLastWeek = curWeek === planData.weeks.length - 1;
   const loadWrap = document.getElementById('load-more-wrap');
+  const loadInner = document.getElementById('load-more-inner');
+  const raceMsg = document.getElementById('race-week-message');
+  const isRaceWeek = w.days.some(d => d.type === 'Race');
+
   if (isLastWeek) {
-    const nextStart = planData.weeks.length + 1;
-    const nextEnd = planData.weeks.length + 4;
-    document.getElementById('load-more-btn').textContent = `Load weeks ${nextStart}–${nextEnd} →`;
     loadWrap.style.display = 'block';
+    if (isRaceWeek) {
+      // Show motivational message, hide load button
+      if (loadInner) loadInner.style.display = 'none';
+      if (raceMsg) raceMsg.style.display = 'block';
+    } else {
+      // Show load button, hide race message
+      if (loadInner) loadInner.style.display = 'block';
+      if (raceMsg) raceMsg.style.display = 'none';
+      const nextStart = planData.weeks.length + 1;
+      const nextEnd = planData.weeks.length + 4;
+      document.getElementById('load-more-btn').textContent = `Load weeks ${nextStart}–${nextEnd} →`;
+    }
   } else {
     loadWrap.style.display = 'none';
   }
@@ -1080,8 +1106,7 @@ function renderWeek(){
   const easyPct=Math.round(easyMin/totalIntMin*100);
   const modPct=Math.round(modMin/totalIntMin*100);
   const hardPct=Math.round(hardMin/totalIntMin*100);
-  // Check if this is race week (has a Race session)
-  const isRaceWeek = w.days.some(d=>d.type==='Race');
+  // isRaceWeek already declared above
   document.getElementById('vol-breakdown').innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <span style="font-size:13px;font-weight:500;">Weekly intensity split</span>
