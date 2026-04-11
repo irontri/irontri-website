@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { planId, userId, basePrompt: bodyPrompt } = req.body;
+  const { planId, userId } = req.body;
   if (!planId || !userId) return res.status(400).json({ error: 'Missing planId or userId' });
 
   try {
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
 
     const builtSoFar = planData.weeks?.length || 0;
     const totalNeeded = planData.totalWeeksPlanned || 0;
-    const basePrompt = planData.basePrompt || bodyPrompt || '';
+    const basePrompt = planData.basePrompt || '';
 
     console.log('builtSoFar:', builtSoFar, 'totalNeeded:', totalNeeded, 'hasPrompt:', !!basePrompt);
 
@@ -48,7 +48,10 @@ export default async function handler(req, res) {
 
     const startWk = builtSoFar + 1;
     const endWk = Math.min(builtSoFar + 2, totalNeeded);
-    const prompt = basePrompt + `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro.`;
+
+    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest. Never use workouts, details, intensity, discipline or any other field names.`;
+
+    const prompt = basePrompt + structureInstructions;
 
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
