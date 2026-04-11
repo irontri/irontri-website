@@ -1,4 +1,4 @@
-export const config = { maxDuration: 120 };
+export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
@@ -57,6 +57,28 @@ REALISTIC PACE TARGETS BY LEVEL:
 - Beginner swimmer: ${isImperial ? '2:10-2:45 /100yd' : '2:00-2:30 /100m'}
 - Intermediate swimmer: ${isImperial ? '1:50-2:10 /100yd' : '1:40-2:00 /100m'}
 PROGRESSIVE OVERLOAD: Max 2-3% improvement per week. Week 1 targets must match current fitness, NOT goal race pace.
+
+RACE-SPECIFIC VOLUME RULES (critical — apply based on race distance in prompt):
+
+FULL IRONMAN (140.6) LONG SESSION REQUIREMENTS:
+- Long ride peak volume: 5-6 hours (${isImperial ? '100-120 miles' : '160-180 km'}) in Peak phase. Build progressively from 2.5h in Base to 5-6h at peak.
+- Long run peak volume: 2-2.5 hours (${isImperial ? '16-20 miles' : '25-32 km'}) in Peak phase. Build from 60 min in Base.
+- Weekly bike volume: 6-10 hours total at peak. Never less than 3 hours in any non-taper week.
+- Never cap long ride at under 3.5 hours in Build or Peak phase for Full Ironman.
+
+HALF IRONMAN (70.3) LONG SESSION REQUIREMENTS:
+- Long ride peak: 3-4 hours (${isImperial ? '55-75 miles' : '90-120 km'}) in Peak phase.
+- Long run peak: 1.5-2 hours (${isImperial ? '12-16 miles' : '18-24 km'}) in Peak phase.
+
+OLYMPIC TRIATHLON LONG SESSION REQUIREMENTS:
+- Long ride peak: 2-2.5 hours (${isImperial ? '35-50 miles' : '55-80 km'}) in Peak phase.
+- Long run peak: 60-80 min (${isImperial ? '8-12 miles' : '12-18 km'}) in Peak phase.
+
+SPRINT TRIATHLON LONG SESSION REQUIREMENTS:
+- Long ride peak: 60-90 min (${isImperial ? '18-28 miles' : '30-45 km'}) in Peak phase.
+- Long run peak: 45-60 min (${isImperial ? '5-8 miles' : '8-12 km'}) in Peak phase.
+
+TAPER RULES: Final 3 weeks before race — reduce volume by 30%, 50%, 70% respectively. Keep intensity. Never taper too early.
 
 JSON structure for weeks:
 {"weeks":[{"weekNumber":1,"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}]}`;
