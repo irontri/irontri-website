@@ -924,12 +924,28 @@ async function loadTodaySession() {
     const startOverrides = JSON.parse(localStorage.getItem('irontri_start_override') || '{}');
     const resolvedStart = startOverrides[plan.id] || planData.startDate || plan.created_at?.split('T')[0];
     if (!planData.weeks || !resolvedStart) return;
-    // Only show predicted finish time when Strava fitness data is available
-    if (planData.stravaFitness) {
+    // Show predicted finish time if Strava fitness data exists (in plan or users table)
+    const stravaFitnessInPlan = planData.stravaFitness;
+    if (stravaFitnessInPlan) {
       calcFinishTime(planData, plan.race || '', plan.id);
     } else {
-      const card = document.getElementById('finish-card');
-      if (card) card.style.display = 'none';
+      // Try fetching from users table
+      try {
+        const { data: { session: s2 } } = await sb.auth.getSession();
+        if (s2) {
+          const { data: ud } = await sb.from('users').select('strava_fitness, strava_access_token').eq('id', s2.user.id).single();
+          if (ud?.strava_fitness) {
+            planData.stravaFitness = JSON.stringify(ud.strava_fitness);
+            calcFinishTime(planData, plan.race || '', plan.id);
+          } else {
+            const card = document.getElementById('finish-card');
+            if (card) card.style.display = 'none';
+          }
+        }
+      } catch(e) {
+        const card = document.getElementById('finish-card');
+        if (card) card.style.display = 'none';
+      }
     }
     planData.startDate = resolvedStart;
     const raceDate = planData.raceDate;
