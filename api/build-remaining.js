@@ -1,5 +1,5 @@
 // api/build-remaining.js
-export const config = { maxDuration: 200 };
+export const config = { maxDuration: 300 };
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
@@ -12,11 +12,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { planId, userId } = req.body;
+  const { planId, userId, basePrompt: bodyPrompt } = req.body;
   if (!planId || !userId) return res.status(400).json({ error: 'Missing planId or userId' });
 
   try {
-    // Fetch current plan — use user_id only to avoid type mismatch on id
     const planRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?user_id=eq.${userId}&order=created_at.desc&limit=1`, {
       headers: {
         'apikey': SUPABASE_ANON_KEY,
@@ -24,10 +23,15 @@ export default async function handler(req, res) {
       }
     });
     const plans = await planRes.json();
-    if (!plans || plans.length === 0) return res.status(404).json({ error: 'Plan not found' });
 
-    // Match the correct plan by id
+    console.log('plans query result:', JSON.stringify(plans?.length), 'for userId:', userId);
+
+    if (!plans || plans.length === 0) {
+      return res.status(404).json({ error: 'Plan not found', userId });
+    }
+
     const plan = plans.find(p => String(p.id) === String(planId)) || plans[0];
+    console.log('Using plan id:', plan.id, 'requested planId:', planId);
 
     let txt = plan.plan_data || '';
     txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1);
@@ -35,9 +39,11 @@ export default async function handler(req, res) {
 
     const builtSoFar = planData.weeks?.length || 0;
     const totalNeeded = planData.totalWeeksPlanned || 0;
-    const basePrompt = planData.basePrompt || '';
+    const basePrompt = planData.basePrompt || bodyPrompt || '';
 
-    if (!basePrompt) return res.status(400).json({ error: 'No basePrompt in plan' });
+    console.log('builtSoFar:', builtSoFar, 'totalNeeded:', totalNeeded, 'hasPrompt:', !!basePrompt);
+
+    if (!basePrompt) return res.status(400).json({ error: 'No basePrompt available' });
     if (builtSoFar >= totalNeeded) return res.status(200).json({ success: true, done: true, builtSoFar, totalNeeded });
 
     const startWk = builtSoFar + 1;
@@ -60,6 +66,7 @@ export default async function handler(req, res) {
 
     if (!aiRes.ok) {
       const err = await aiRes.text();
+      console.error('AI error:', err);
       return res.status(500).json({ error: 'AI generation failed', detail: err });
     }
 
@@ -76,7 +83,7 @@ export default async function handler(req, res) {
     allWeeks.forEach((wk, i) => { wk.weekNumber = i + 1; });
 
     const updated = { ...planData, weeks: allWeeks };
-    await fetch(`${SUPABASE_URL}/rest/v1/plans?id=eq.${plan.id}`, {
+    const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?id=eq.${plan.id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -86,6 +93,8 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({ plan_data: JSON.stringify(updated) })
     });
+
+    console.log('PATCH status:', patchRes.status);
 
     const newTotal = allWeeks.length;
     return res.status(200).json({ success: true, done: newTotal >= totalNeeded, builtSoFar: newTotal, totalNeeded });
