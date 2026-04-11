@@ -924,7 +924,13 @@ async function loadTodaySession() {
     const startOverrides = JSON.parse(localStorage.getItem('irontri_start_override') || '{}');
     const resolvedStart = startOverrides[plan.id] || planData.startDate || plan.created_at?.split('T')[0];
     if (!planData.weeks || !resolvedStart) return;
-    calcFinishTime(planData, plan.race || '', plan.id);
+    // Only show predicted finish time when Strava fitness data is available
+    if (planData.stravaFitness) {
+      calcFinishTime(planData, plan.race || '', plan.id);
+    } else {
+      const card = document.getElementById('finish-card');
+      if (card) card.style.display = 'none';
+    }
     planData.startDate = resolvedStart;
     const raceDate = planData.raceDate;
     if (raceDate) {
