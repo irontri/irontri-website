@@ -12,22 +12,19 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   // ── GET: Strava OAuth callback ────────────────────────────────────────────
-  // Strava redirects here with ?code=xxx&state=xxx after user authorises
   if (req.method === 'GET') {
-    const { code, state, error } = req.query;
+    const { code, state, error, app } = req.query;
+    const isApp = app === 'true';
 
     if (error) {
-      // User denied access — redirect back
+      if (isApp) return res.redirect(302, 'irontri://strava-error?error=denied');
       const dest = state === 'quiz_fitness' ? '/plan.html' : '/dashboard.html';
       return res.redirect(302, dest + '?strava_error=denied');
     }
 
-    if (!code) {
-      return res.status(400).json({ error: 'Missing code' });
-    }
+    if (!code) return res.status(400).json({ error: 'Missing code' });
 
     try {
-      // Exchange code for tokens
       const body = new URLSearchParams({
         client_id: CLIENT_ID,
         client_secret: process.env.STRAVA_CLIENT_SECRET,
@@ -41,14 +38,27 @@ export default async function handler(req, res) {
       });
       const data = await r.json();
       if (!r.ok) {
+        if (isApp) return res.redirect(302, 'irontri://strava-error?error=' + encodeURIComponent(data.message || 'exchange_failed'));
         const dest = state === 'quiz_fitness' ? '/plan.html' : '/dashboard.html';
         return res.redirect(302, dest + '?strava_error=' + encodeURIComponent(data.message || 'exchange_failed'));
       }
 
-      // Save tokens to Supabase if we have a user session
-      // For quiz_fitness flow, we pass tokens as URL params so plan.html can save them
+      // App flow — save tokens to Supabase server-side then redirect to app
+      if (isApp) {
+        // We need the user's ID — get it from Supabase auth using the session
+        // Since we can't get the session server-side easily, redirect to app with tokens
+        // The app will save them
+        const params = new URLSearchParams({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+          expires_at: data.expires_at,
+          athlete_id: data.athlete?.id || '',
+        });
+        return res.redirect(302, 'irontri://strava-connected?' + params.toString());
+      }
+
+      // Quiz fitness flow
       if (state === 'quiz_fitness') {
-        // Redirect back to plan.html with tokens so it can save and then load fitness data
         const params = new URLSearchParams({
           strava_connected: '1',
           access_token: data.access_token,
@@ -60,7 +70,7 @@ export default async function handler(req, res) {
         return res.redirect(302, '/plan.html?' + params.toString());
       }
 
-      // Normal dashboard flow — redirect to dashboard
+      // Normal dashboard flow
       const params = new URLSearchParams({
         strava_connected: '1',
         access_token: data.access_token,
@@ -71,6 +81,7 @@ export default async function handler(req, res) {
       return res.redirect(302, '/dashboard.html?' + params.toString());
 
     } catch (e) {
+      if (isApp) return res.redirect(302, 'irontri://strava-error?error=' + encodeURIComponent(e.message));
       const dest = state === 'quiz_fitness' ? '/plan.html' : '/dashboard.html';
       return res.redirect(302, dest + '?strava_error=' + encodeURIComponent(e.message));
     }
@@ -83,17 +94,11 @@ export default async function handler(req, res) {
   const CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
 
   try {
-    // ── UPDATE ACTIVITY DESCRIPTION ─────────────────────────────────────────
     if (action === 'update_activity') {
-      if (!access_token || !activity_id) {
-        return res.status(400).json({ error: 'Missing access_token or activity_id' });
-      }
+      if (!access_token || !activity_id) return res.status(400).json({ error: 'Missing access_token or activity_id' });
       const r = await fetch(`https://www.strava.com/api/v3/activities/${activity_id}`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${access_token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ description }),
       });
       const data = await r.json();
@@ -101,35 +106,25 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, activity_id: data.id });
     }
 
-    // ── TOKEN REFRESH ───────────────────────────────────────────────────────
     if (action === 'refresh') {
       const body = new URLSearchParams({
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,
-        grant_type: 'refresh_token',
-        refresh_token,
+        client_id: CLIENT_ID, client_secret: CLIENT_SECRET,
+        grant_type: 'refresh_token', refresh_token,
       });
       const r = await fetch('https://www.strava.com/oauth/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body,
+        method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body,
       });
       const data = await r.json();
       if (!r.ok) return res.status(400).json({ error: data.message || 'Strava error' });
       return res.status(200).json(data);
     }
 
-    // ── INITIAL CODE EXCHANGE ───────────────────────────────────────────────
     const body = new URLSearchParams({
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-      code,
-      grant_type: 'authorization_code',
+      client_id: CLIENT_ID, client_secret: CLIENT_SECRET,
+      code, grant_type: 'authorization_code',
     });
     const r = await fetch('https://www.strava.com/oauth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body,
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body,
     });
     const data = await r.json();
     if (!r.ok) return res.status(400).json({ error: data.message || 'Strava error' });
