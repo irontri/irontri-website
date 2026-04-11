@@ -1,8 +1,5 @@
 // api/build-remaining.js
-// Generates ONE batch of 2 weeks for an existing plan and saves to Supabase.
-// Called repeatedly by PlanScreen's runBuildLoop until all weeks are built.
-
-export const config = { maxDuration: 60 };
+export const config = { maxDuration: 200 };
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
@@ -19,14 +16,20 @@ export default async function handler(req, res) {
   if (!planId || !userId) return res.status(400).json({ error: 'Missing planId or userId' });
 
   try {
-    // Fetch current plan from Supabase
-    const planRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?id=eq.${planId}&user_id=eq.${userId}&select=plan_data`, {
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
+    // Fetch current plan — use user_id only to avoid type mismatch on id
+    const planRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?user_id=eq.${userId}&order=created_at.desc&limit=1`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      }
     });
     const plans = await planRes.json();
     if (!plans || plans.length === 0) return res.status(404).json({ error: 'Plan not found' });
 
-    let txt = plans[0].plan_data || '';
+    // Match the correct plan by id
+    const plan = plans.find(p => String(p.id) === String(planId)) || plans[0];
+
+    let txt = plan.plan_data || '';
     txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1);
     const planData = JSON.parse(txt);
 
@@ -37,7 +40,6 @@ export default async function handler(req, res) {
     if (!basePrompt) return res.status(400).json({ error: 'No basePrompt in plan' });
     if (builtSoFar >= totalNeeded) return res.status(200).json({ success: true, done: true, builtSoFar, totalNeeded });
 
-    // Generate next 2 weeks
     const startWk = builtSoFar + 1;
     const endWk = Math.min(builtSoFar + 2, totalNeeded);
     const prompt = basePrompt + `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro.`;
@@ -74,7 +76,7 @@ export default async function handler(req, res) {
     allWeeks.forEach((wk, i) => { wk.weekNumber = i + 1; });
 
     const updated = { ...planData, weeks: allWeeks };
-    await fetch(`${SUPABASE_URL}/rest/v1/plans?id=eq.${planId}`, {
+    await fetch(`${SUPABASE_URL}/rest/v1/plans?id=eq.${plan.id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
