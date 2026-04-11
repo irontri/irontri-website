@@ -2,7 +2,7 @@
 export const config = { maxDuration: 300 };
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 export default async function handler(req, res) {
@@ -18,13 +18,13 @@ export default async function handler(req, res) {
   try {
     const planRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?user_id=eq.${userId}&order=created_at.desc&limit=1`, {
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
       }
     });
     const plans = await planRes.json();
 
-    console.log('plans query result:', JSON.stringify(plans?.length), 'for userId:', userId);
+    console.log('plans query result:', plans?.length, 'for userId:', userId);
 
     if (!plans || plans.length === 0) {
       return res.status(404).json({ error: 'Plan not found', userId });
@@ -65,42 +65,3 @@ export default async function handler(req, res) {
     });
 
     if (!aiRes.ok) {
-      const err = await aiRes.text();
-      console.error('AI error:', err);
-      return res.status(500).json({ error: 'AI generation failed', detail: err });
-    }
-
-    const aiData = await aiRes.json();
-    const aiText = (aiData.content || []).map(c => c.text || '').join('');
-
-    const clean = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const s = clean.indexOf('{'); const e = clean.lastIndexOf('}');
-    if (s === -1 || e === -1) return res.status(500).json({ error: 'Invalid JSON from AI' });
-    const parsed = JSON.parse(clean.slice(s, e + 1));
-    const newWeeks = parsed.weeks || [];
-
-    const allWeeks = [...(planData.weeks || []), ...newWeeks];
-    allWeeks.forEach((wk, i) => { wk.weekNumber = i + 1; });
-
-    const updated = { ...planData, weeks: allWeeks };
-    const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?id=eq.${plan.id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({ plan_data: JSON.stringify(updated) })
-    });
-
-    console.log('PATCH status:', patchRes.status);
-
-    const newTotal = allWeeks.length;
-    return res.status(200).json({ success: true, done: newTotal >= totalNeeded, builtSoFar: newTotal, totalNeeded });
-
-  } catch (e) {
-    console.error('build-remaining error:', e.message);
-    return res.status(500).json({ error: e.message });
-  }
-}
