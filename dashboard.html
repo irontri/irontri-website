@@ -1169,13 +1169,13 @@ function calcFinishTime(planData, planRace, planId) {
     const splits = [];
 
     if (swimPaceSec) {
-      const swimSecs = (swimPaceSec / SWIM_FACTOR) * (swimKm * 10);
+      const swimSecs = swimPaceSec * (swimKm * 10);
       totalSecs += swimSecs;
       splits.push({ label: '🏊 Swim', val: secsToHMS(swimSecs), cls: 'swim' });
     } else { hasAll = false; }
 
     if (bikeSpeedKmh) {
-      const bikeSecs = (bikeKm / (bikeSpeedKmh * BIKE_FACTOR)) * 3600;
+      const bikeSecs = (bikeKm / bikeSpeedKmh) * 3600;
       totalSecs += bikeSecs;
       splits.push({ label: '🚴 Bike', val: secsToHMS(bikeSecs), cls: 'bike' });
     } else { hasAll = false; }
@@ -1183,7 +1183,7 @@ function calcFinishTime(planData, planRace, planId) {
     splits.push({ label: '⏱ T1+T2', val: secsToHMS(T1 + T2), cls: 'trans' });
 
     if (runPaceSec) {
-      const runSecs = (runPaceSec / RUN_FACTOR) * runKm;
+      const runSecs = runPaceSec * runKm;
       totalSecs += runSecs;
       splits.push({ label: '🏃 Run', val: secsToHMS(runSecs), cls: 'run' });
     } else { hasAll = false; }
