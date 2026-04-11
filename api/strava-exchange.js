@@ -13,8 +13,8 @@ export default async function handler(req, res) {
 
   // ── GET: Strava OAuth callback ────────────────────────────────────────────
   if (req.method === 'GET') {
-    const { code, state, error, app } = req.query;
-    const isApp = app === 'true';
+    const { code, state, error } = req.query;
+    const isApp = state === 'app';
 
     if (error) {
       if (isApp) return res.redirect(302, 'irontri://strava-error?error=denied');
