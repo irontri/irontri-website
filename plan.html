@@ -1205,17 +1205,32 @@ function selectDay(i){
         return `<div class="targets-block">
           ${d.paceTarget && d.paceTarget !== 'N/A' ? `<div class="target-item">
             <div class="target-label">🎯 Pace target</div>
-            <div class="target-value">${d.paceTarget}</div>
+            <div class="target-value">${(() => {
+              try {
+                if (d.type === 'Bike' || d.type === 'Brick') {
+                  const sf = planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null);
+                  if (sf?.bike?.ftpEstimate) {
+                    const ftp = sf.bike.ftpEstimate;
+                    const zNum = parseInt(d.heartRateZone) || 2;
+                    const wattRanges = { 1: [Math.round(ftp*0.45), Math.round(ftp*0.55)], 2: [Math.round(ftp*0.56), Math.round(ftp*0.75)], 3: [Math.round(ftp*0.76), Math.round(ftp*0.90)], 4: [Math.round(ftp*0.91), Math.round(ftp*1.05)], 5: [Math.round(ftp*1.06), Math.round(ftp*1.20)] };
+                    const w = wattRanges[zNum] || wattRanges[2];
+                    return d.paceTarget + ' · ' + w[0] + '-' + w[1] + 'w';
+                  }
+                }
+              } catch(e) {}
+              return d.paceTarget;
+            })()}</div>
           </div>` : ''}
           ${d.heartRateZone ? `<div class="target-item">
             <div class="target-label">❤️ Heart rate zone</div>
             <div class="target-value" style="color:${z.color}">${z.label} · ${(() => {
               try {
                 const sf = planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null);
-                const zNum = parseInt(d.heartRateZone);
+                const zMatch = String(d.heartRateZone).match(/\d/);
+                const zNum = zMatch ? parseInt(zMatch[0]) : null;
                 if (sf?.hrZones && zNum >= 1 && zNum <= 5) {
                   const zone = sf.hrZones['zone' + zNum];
-                  if (zone) return zone.min + '-' + zone.max + 'bpm';
+                  if (zone) return zone.min + '-' + zone.max + ' bpm';
                 }
               } catch(e) {}
               return z.pct;
