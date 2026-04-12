@@ -1458,7 +1458,7 @@ async function buildPlan(){
     const phaseOrder=['Base','Build','Peak','Taper','Race Week'];
     const phases=[...new Set(planData.weeks.map(w=>w.phase))].sort((a,b)=>phaseOrder.indexOf(a)-phaseOrder.indexOf(b));
     document.getElementById('phases').innerHTML=phases.map((p,i)=>
-      `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="jumpToPhase('${p}')">${p} Phase</button>`
+      `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="window._userSelectedPhase='${p}';jumpToPhase('${p}')">${p} Phase</button>`
     ).join('');
 
     curWeek=0;curDay=null;
@@ -1482,7 +1482,18 @@ async function buildPlan(){
     }
     planData.totalWeeksPlanned = w;
     planData.raceDate = planData.raceDate || A.date;
-    planData.startDate = planData.startDate || A.startDate;
+    // Ensure start date is a Monday (plans run Mon-Sun)
+    const _rawStart = planData.startDate || A.startDate;
+    if (_rawStart) {
+      const _sd = new Date(_rawStart + 'T00:00:00');
+      const _dow = _sd.getDay(); // 0=Sun, 1=Mon ... 6=Sat
+      if (_dow !== 1) {
+        // Roll forward to next Monday
+        const _daysToMon = _dow === 0 ? 1 : (8 - _dow);
+        _sd.setDate(_sd.getDate() + _daysToMon);
+      }
+      planData.startDate = _sd.toISOString().split('T')[0];
+    }
     checkAndSavePlan(JSON.stringify(planData));
     if(A.date&&planData.weeks.length<w){const _bt=document.createElement('div');_bt.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1E90FF;color:#fff;padding:14px 20px;border-radius:12px;font-size:13px;font-family:Inter,sans-serif;text-align:center;z-index:9999;max-width:340px;line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.4);';_bt.innerHTML='<strong>Your first 4 weeks are ready!</strong><br>Building your full '+w+'-week plan to race day in the background.';document.body.appendChild(_bt);setTimeout(()=>{if(_bt.parentNode)_bt.remove();},8000);setTimeout(()=>autoGenerateRemainingWeeks(w),5000);}
     window.scrollTo({top:0,behavior:'smooth'});
@@ -2294,7 +2305,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const phaseOrder=['Base','Build','Peak','Taper','Race Week'];
         const phases=[...new Set(planData.weeks.map(w=>w.phase))].sort((a,b)=>phaseOrder.indexOf(a)-phaseOrder.indexOf(b));
         document.getElementById('phases').innerHTML=phases.map((p,i)=>
-          `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="jumpToPhase('${p}')">${p} Phase</button>`
+          `<button class="phase-pill${i===0?' active':''}" data-phase="${p}" onclick="window._userSelectedPhase='${p}';jumpToPhase('${p}')">${p} Phase</button>`
         ).join('');
 
         curWeek=0; curDay=null;
@@ -2735,7 +2746,7 @@ async function saveStartDate(planId) {
   } catch(e) { console.error("saveStartDate:", e); alert("Could not save: " + e.message); }
   if (bt) { bt.disabled = false; bt.textContent = "Save"; }
 }
-function renderRoadmap(){if(!planData||!planData.weeks)return;const el=document.getElementById("plan-roadmap");const _phaseOrder=['Base','Build','Peak','Taper','Race Week'];const _phases=[...new Set(planData.weeks.map(w=>w.phase))].sort((a,b)=>_phaseOrder.indexOf(a)-_phaseOrder.indexOf(b));const _phEl=document.getElementById('phases');if(_phEl){const _active=_phEl.querySelector('.phase-pill.active')?.dataset?.phase||_phases[0];_phEl.innerHTML=_phases.map((p,i)=>`<button class="phase-pill${p===_active?' active':''}" data-phase="${p}" onclick="jumpToPhase('${p}')">${p} Phase</button>`).join('');}if(!el)return;el.style.display="block";const weeks=planData.weeks,total=weeks.length,tw=window._targetWeeks||total;const pc={Base:0,Build:0,Peak:0,Taper:0};weeks.forEach(w=>{const ph=w.phase||"Base";if(pc[ph]!==undefined)pc[ph]++;else pc.Base++;});const rem=Math.max(0,tw-total),tot=tw||1;document.getElementById("roadmap-base").style.width=(pc.Base/tot*100)+"%";document.getElementById("roadmap-build").style.width=(pc.Build/tot*100)+"%";document.getElementById("roadmap-peak").style.width=(pc.Peak/tot*100)+"%";document.getElementById("roadmap-taper").style.width=(pc.Taper/tot*100)+"%";document.getElementById("roadmap-remaining").style.width=(rem/tot*100)+"%";const race=planData.raceDate||A.date||"";const rt=document.getElementById("roadmap-title");if(rt)rt.textContent=(A.race||planData.race||"Plan")+(race?" · Race "+new Date(race+"T00:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"}):"");const pt=document.getElementById("roadmap-progress-text");if(pt)pt.textContent="Week "+total+" of "+tw+" built";const bEl=document.getElementById("roadmap-building-status"),cEl=document.getElementById("roadmap-complete-status"),bT=document.getElementById("roadmap-building-text");if(total>=tw){if(bEl)bEl.style.display="none";if(cEl){cEl.style.display="block";const cw=document.getElementById("roadmap-complete-weeks");if(cw)cw.textContent=total;}}else{if(bEl)bEl.style.display="flex";if(cEl)cEl.style.display="none";if(bT)bT.textContent="Building to race day — "+total+" of "+tw+" weeks ready";
+function renderRoadmap(){if(!planData||!planData.weeks)return;const el=document.getElementById("plan-roadmap");const _phaseOrder=['Base','Build','Peak','Taper','Race Week'];const _phases=[...new Set(planData.weeks.map(w=>w.phase))].sort((a,b)=>_phaseOrder.indexOf(a)-_phaseOrder.indexOf(b));const _phEl=document.getElementById('phases');if(_phEl){const _active=_phEl.querySelector('.phase-pill.active')?.dataset?.phase||(window._userSelectedPhase)||_phases[0];const _newActive=_phases.includes(_active)?_active:_phases[0];_phEl.innerHTML=_phases.map((p,i)=>`<button class="phase-pill${p===_newActive?' active':''}" data-phase="${p}" onclick="window._userSelectedPhase='${p}';jumpToPhase('${p}')">${p} Phase</button>`).join('');}if(!el)return;el.style.display="block";const weeks=planData.weeks,total=weeks.length,tw=window._targetWeeks||total;const pc={Base:0,Build:0,Peak:0,Taper:0};weeks.forEach(w=>{const ph=w.phase||"Base";if(pc[ph]!==undefined)pc[ph]++;else pc.Base++;});const rem=Math.max(0,tw-total),tot=tw||1;document.getElementById("roadmap-base").style.width=(pc.Base/tot*100)+"%";document.getElementById("roadmap-build").style.width=(pc.Build/tot*100)+"%";document.getElementById("roadmap-peak").style.width=(pc.Peak/tot*100)+"%";document.getElementById("roadmap-taper").style.width=(pc.Taper/tot*100)+"%";document.getElementById("roadmap-remaining").style.width=(rem/tot*100)+"%";const race=planData.raceDate||A.date||"";const rt=document.getElementById("roadmap-title");if(rt)rt.textContent=(A.race||planData.race||"Plan")+(race?" · Race "+new Date(race+"T00:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"}):"");const pt=document.getElementById("roadmap-progress-text");if(pt)pt.textContent="Week "+total+" of "+tw+" built";const bEl=document.getElementById("roadmap-building-status"),cEl=document.getElementById("roadmap-complete-status"),bT=document.getElementById("roadmap-building-text");if(total>=tw){if(bEl)bEl.style.display="none";if(cEl){cEl.style.display="block";const cw=document.getElementById("roadmap-complete-weeks");if(cw)cw.textContent=total;}}else{if(bEl)bEl.style.display="flex";if(cEl)cEl.style.display="none";if(bT)bT.textContent="Building to race day — "+total+" of "+tw+" weeks ready";
     var pb=document.getElementById("pdf-download-btn");if(pb){pb.disabled=true;pb.textContent="⏳ Still building — wait before downloading";pb.style.cssText="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.3);padding:8px 16px;border-radius:8px;font-size:12px;cursor:not-allowed;font-family:Inter,sans-serif;";}}
   var pbc=document.getElementById("pdf-download-btn");if(total>=tw&&pbc){pbc.disabled=false;pbc.textContent="✅ Download Full Plan PDF";pbc.style.cssText="background:rgba(74,222,128,0.15);border:2px solid #4ade80;color:#4ade80;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;";}
 }
