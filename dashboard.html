@@ -178,6 +178,10 @@
     .fitness-update-card.due{background:rgba(30,144,255,0.08);border-color:rgba(30,144,255,0.3);}
 
     /* ── PREDICTED FINISH TIME CARD ── */
+    .strava-finish-nudge{display:none;align-items:center;justify-content:space-between;gap:12px;background:rgba(252,76,2,0.06);border:1px solid rgba(252,76,2,0.18);border-radius:12px;padding:14px 18px;margin-bottom:24px;}
+    .strava-finish-nudge span{font-size:13px;color:rgba(255,255,255,0.7);}
+    .strava-finish-nudge a{font-size:13px;font-weight:700;color:#FC4C02;text-decoration:none;white-space:nowrap;}
+    .strava-finish-nudge a:hover{text-decoration:underline;}
     .finish-card{background:linear-gradient(135deg,rgba(30,144,255,0.1),rgba(168,85,247,0.08));border:1px solid rgba(30,144,255,0.3);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:none;animation:fadeUp 0.4s ease both;position:relative;overflow:hidden;}
     .finish-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#1E90FF,#a855f7,#1E90FF);opacity:0.8;}
     .finish-card-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(30,144,255,0.8);font-weight:600;margin-bottom:10px;}
@@ -278,6 +282,12 @@
     <div class="rc-text">Until your <span class="rc-race" id="rc-race-name">race</span> 🏁</div>
   </div>
   
+  <!-- STRAVA NUDGE -->
+  <div class="strava-finish-nudge" id="strava-finish-nudge">
+    <span>🏅 Connect Strava to see your predicted finish time</span>
+    <a href="https://www.strava.com/oauth/authorize?client_id=216800&response_type=code&redirect_uri=https://irontriapp.com/strava-callback.html&approval_prompt=force&scope=activity:read_all,activity:write">Connect →</a>
+  </div>
+
   <!-- PREDICTED FINISH TIME -->
   <div class="finish-card" id="finish-card">
     <div class="finish-card-label">🏁 Predicted finish time</div>
@@ -924,28 +934,28 @@ async function loadTodaySession() {
     const startOverrides = JSON.parse(localStorage.getItem('irontri_start_override') || '{}');
     const resolvedStart = startOverrides[plan.id] || planData.startDate || plan.created_at?.split('T')[0];
     if (!planData.weeks || !resolvedStart) return;
-    // Show predicted finish time if Strava fitness data exists (in plan or users table)
-    const stravaFitnessInPlan = planData.stravaFitness;
-    if (stravaFitnessInPlan) {
-      calcFinishTime(planData, plan.race || '', plan.id);
-    } else {
-      // Try fetching from users table
-      try {
-        const { data: { session: s2 } } = await sb.auth.getSession();
-        if (s2) {
-          const { data: ud } = await sb.from('users').select('strava_fitness, strava_access_token').eq('id', s2.user.id).single();
-          if (ud?.strava_fitness) {
-            planData.stravaFitness = JSON.stringify(ud.strava_fitness);
-            calcFinishTime(planData, plan.race || '', plan.id);
-          } else {
-            const card = document.getElementById('finish-card');
-            if (card) card.style.display = 'none';
-          }
+    // Show predicted finish time — always fetch fresh from users table to get latest Strava data
+    try {
+      const { data: { session: s2 } } = await sb.auth.getSession();
+      if (s2) {
+        const { data: ud } = await sb.from('users').select('strava_fitness, strava_access_token').eq('id', s2.user.id).single();
+        if (ud?.strava_access_token && ud?.strava_fitness) {
+          // Supabase returns strava_fitness already parsed — stringify once for calcFinishTime
+          const fitnessStr = typeof ud.strava_fitness === 'string'
+            ? ud.strava_fitness
+            : JSON.stringify(ud.strava_fitness);
+          planData.stravaFitness = fitnessStr;
+          calcFinishTime(planData, plan.race || '', plan.id);
+        } else {
+          const card = document.getElementById('finish-card');
+          if (card) card.style.display = 'none';
+          const nudge = document.getElementById('strava-finish-nudge');
+          if (nudge) nudge.style.display = 'flex';
         }
-      } catch(e) {
-        const card = document.getElementById('finish-card');
-        if (card) card.style.display = 'none';
       }
+    } catch(e) {
+      const card = document.getElementById('finish-card');
+      if (card) card.style.display = 'none';
     }
     planData.startDate = resolvedStart;
     const raceDate = planData.raceDate;
