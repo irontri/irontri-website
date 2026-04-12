@@ -56,33 +56,49 @@ export default async function handler(req, res) {
     const isHalf = raceDistanceLower.includes('70.3') || raceDistanceLower.includes('half ironman');
     const isFull = raceDistanceLower.includes('140.6') || raceDistanceLower.includes('full ironman');
 
-    const raceDayDistances = isFull
-      ? '3.8km swim, 180km bike, 42.2km run'
-      : isHalf
-        ? '1.9km swim, 90km bike, 21.1km run'
-        : isOlympic
-          ? '1.5km swim, 40km bike, 10km run'
-          : '750m swim, 20km bike, 5km run';
+    const raceDayDistances = isFull ? '3.8km swim, 180km bike, 42.2km run' : isHalf ? '1.9km swim, 90km bike, 21.1km run' : isOlympic ? '1.5km swim, 40km bike, 10km run' : '750m swim, 20km bike, 5km run';
 
-    const restDayRule = isSprint
-      ? 'REST DAYS: 2 rest days per week for sprint plans.'
-      : isOlympic
-        ? 'REST DAYS: 1-2 rest days per week — 1 in build/peak, 2 in taper/recovery weeks.'
-        : isHalf
-          ? 'REST DAYS: 1 rest day per week. Never 0.'
-          : 'REST DAYS: 1 rest day per week. Never 0. Never two consecutive rest days.';
+    const restDayRule = isSprint ? 'REST DAYS: 2 rest days per week.' : isOlympic ? 'REST DAYS: 1-2 rest days per week.' : isHalf ? 'REST DAYS: 1 rest day per week. Never 0.' : 'REST DAYS: 1 rest day per week. Never 0. Never two consecutive rest days.';
 
-    const taperRule = isSprint
-      ? 'SPRINT TAPER: Final 4-5 days only — reduce volume 40-60%. No multi-week taper. Last hard session is 3 days before race day.'
-      : isOlympic
-        ? 'OLYMPIC TAPER: Final 2 weeks — reduce volume by 40% then 70%. Keep intensity sharp.'
-        : 'FULL/HALF IRONMAN TAPER: Final 3 weeks — reduce volume by 30%, 50%, 70% respectively. Keep intensity.';
+    const taperRule = isSprint ? 'SPRINT TAPER: Final 4-5 days only — reduce volume 40-60%.' : isOlympic ? 'OLYMPIC TAPER: Final 2 weeks — reduce volume by 40% then 70%.' : 'FULL/HALF IRONMAN TAPER: Final 3 weeks — reduce volume by 30%, 50%, 70% respectively. Keep intensity.';
 
-    const raceDayRule = isFinalBatch
-      ? `RACE DAY REQUIRED: Week ${totalNeeded} is the final week. The LAST day of week ${totalNeeded} MUST be a Race Day session: {"day":"Sunday","type":"Race","name":"Race Day 🏁","duration":null,"effort":9,"zone":null,"purpose":"Your race — execute your plan and enjoy every moment.","warmup":"Light warm-up as per race briefing","mainset":"${raceDayDistances} — race pace throughout. Swim smooth, bike strong, run proud.","cooldown":"Recovery walk and celebrate your achievement","coachNote":"Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.","paceTarget":"Race pace","heartRateZone":"Race"}. The day BEFORE race day must be Rest. Never end the final week on a Rest day.`
-      : '';
+    const raceDayRule = isFinalBatch ? `RACE DAY REQUIRED: The LAST day of week ${totalNeeded} MUST be a Race Day session: {"day":"Sunday","type":"Race","name":"Race Day 🏁","duration":null,"effort":9,"zone":null,"purpose":"Your race — execute your plan and enjoy every moment.","warmup":"Light warm-up as per race briefing","mainset":"${raceDayDistances} — race pace throughout.","cooldown":"Recovery walk and celebrate your achievement","coachNote":"Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.","paceTarget":"Race pace","heartRateZone":"Race"}. The day BEFORE race day must be Rest.` : '';
 
-    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. VOLUME RULES: For Full Ironman plans — long ride must build to 5-6 hours (160-180km) in Peak phase, never cap long ride under 3.5 hours in Build or Peak. Long run builds to 2.5 hours in Peak. For 70.3 — long ride peaks at 3-4 hours. Always match session volumes to the race distance in the original prompt. ${restDayRule} ${taperRule} ${raceDayRule}`;
+    // Progressive bike volume — calculated per batch so AI always gets exact targets
+    const bikeVolumeRule = (() => {
+      if (isFull) {
+        const pct = startWk / totalNeeded;
+        let longRide, weeklyBike;
+        if (pct < 0.30) {
+          const p = pct / 0.30;
+          longRide = Math.round((2 + p * 1.5) * 10) / 10;
+          weeklyBike = Math.round((3 + p * 2) * 10) / 10;
+        } else if (pct < 0.65) {
+          const p = (pct - 0.30) / 0.35;
+          longRide = Math.round((3.5 + p * 1.5) * 10) / 10;
+          weeklyBike = Math.round((5 + p * 3) * 10) / 10;
+        } else if (pct < 0.85) {
+          longRide = 5.5; weeklyBike = 9;
+        } else {
+          const p = (pct - 0.85) / 0.15;
+          longRide = Math.round((5.5 - p * 4) * 10) / 10;
+          weeklyBike = Math.round((9 - p * 7) * 10) / 10;
+        }
+        const minRide = Math.max(1.5, longRide - 0.3);
+        const maxRide = longRide + 0.3;
+        return `BIKE VOLUME FOR WEEKS ${startWk}-${endWk}: Long ride must be ${longRide}h (${Math.round(longRide*30)}-${Math.round(longRide*32)}km). NEVER shorter than ${minRide}h or longer than ${maxRide}h. Total weekly bike = ${weeklyBike}h. Each week must be slightly more than the previous. NEVER generate a short ride where a long ride is scheduled.`;
+      } else if (isHalf) {
+        const pct = startWk / totalNeeded;
+        let longRide;
+        if (pct < 0.35) longRide = Math.round((1.5 + (pct/0.35) * 1.5) * 10) / 10;
+        else if (pct < 0.75) longRide = Math.round((3 + ((pct-0.35)/0.40)) * 10) / 10;
+        else longRide = Math.round((4 - ((pct-0.75)/0.25) * 3) * 10) / 10;
+        return `BIKE VOLUME FOR WEEKS ${startWk}-${endWk}: Long ride = ${longRide}h. Never shorter than ${Math.max(1, longRide-0.5)}h or longer than ${longRide+0.5}h.`;
+      }
+      return 'Match bike volume to race distance with steady progressive overload.';
+    })();
+
+    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
 
     const prompt = basePrompt + structureInstructions;
 
