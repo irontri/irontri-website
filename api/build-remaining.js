@@ -177,16 +177,31 @@ export default async function handler(req, res) {
             (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
           );
           const currentMins = parseFloat(longestBike.duration) || 0;
-          // Only correct if significantly off (more than 20 mins)
           if (Math.abs(currentMins - targetMins) > 20) {
             longestBike.duration = targetMins;
-            // Update mainset to reflect corrected duration
-            if (longestBike.mainset) {
-              const hrs = Math.floor(targetMins / 60);
-              const mins = targetMins % 60;
-              const durationStr = hrs > 0 ? (mins > 0 ? hrs + 'h ' + mins + 'min' : hrs + 'h') : targetMins + 'min';
-              longestBike.mainset = longestBike.mainset.replace(/\d+\s*(?:hours?|hrs?|h)\s*(?:\d+\s*(?:minutes?|mins?|m))?|\d+\s*(?:minutes?|mins?|m)/gi, durationStr);
-            }
+          }
+        }
+
+        // Correct long run duration for Full Ironman
+        let targetRunMins;
+        if (pct < 0.30) {
+          targetRunMins = Math.round((60 + (pct/0.30)*30));   // Base: 60-90 min
+        } else if (pct < 0.65) {
+          targetRunMins = Math.round((90 + ((pct-0.30)/0.35)*60));  // Build: 90-150 min
+        } else if (pct < 0.85) {
+          targetRunMins = 150;  // Peak: 2.5h
+        } else {
+          targetRunMins = Math.max(30, Math.round(150 - ((pct-0.85)/0.15)*120));  // Taper: reduce
+        }
+
+        const runSessions = (wk.days || []).filter(d => d.type === 'Run');
+        if (runSessions.length > 0) {
+          const longestRun = runSessions.reduce((a, b) =>
+            (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
+          );
+          const currentRunMins = parseFloat(longestRun.duration) || 0;
+          if (currentRunMins < targetRunMins - 20 || currentRunMins > targetRunMins + 30) {
+            longestRun.duration = targetRunMins;
           }
         }
       });
@@ -195,8 +210,7 @@ export default async function handler(req, res) {
     const allWeeks = [...(planData.weeks || []), ...newWeeks];
     allWeeks.forEach((wk, i) => { wk.weekNumber = i + 1; });
 
-    // Post-process: strip Race sessions from any week that isn't the final week
-    // Also ensure race day is on the correct day in the final week
+    // Post-process: strip Race sessions and fake "Race Day" sessions from non-final weeks
     const finalWeekNum = totalNeeded;
     const raceDayNameFinal = (() => {
       const rd = planData.raceDate;
@@ -205,28 +219,89 @@ export default async function handler(req, res) {
       return days[new Date(rd + 'T00:00:00').getDay()];
     })();
 
-    allWeeks.forEach((wk, i) => {
+    // Day names in order for duration lookup
+    const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+    allWeeks.forEach((wk) => {
       if (wk.weekNumber < finalWeekNum && wk.days) {
-        wk.days = wk.days.map(d => {
-          if (d.type === 'Race') {
-            return { ...d, type: 'Rest', name: 'Rest', duration: 0, effort: 0, purpose: 'Recovery day', warmup: '', mainset: '', cooldown: '', coachNote: 'Rest and recover.' };
-          }
-          return d;
-        });
+        // Check if this week has a fake race day (type Race OR name contains "Race Day")
+        const hasFakeRaceDay = wk.days.some(d => d.type === 'Race' || (d.name && d.name.includes('Race Day')));
+
+        if (hasFakeRaceDay) {
+          // This whole week is corrupted — the AI treated it as race week
+          // Determine correct phase and rebuild session durations
+          const pct = wk.weekNumber / finalWeekNum;
+          const phase = pct < 0.30 ? 'Base' : pct < 0.65 ? 'Build' : pct < 0.85 ? 'Peak' : 'Taper';
+          const targetBikeMins = isFull ? Math.round(
+            pct < 0.30 ? (2 + (pct/0.30)*1.5)*60 :
+            pct < 0.65 ? (3.5 + ((pct-0.30)/0.35)*1.5)*60 :
+            pct < 0.85 ? 330 : Math.max(60, (5.5-((pct-0.85)/0.15)*4)*60)
+          ) : isHalf ? Math.round(pct < 0.5 ? 90 + pct*60 : 150 - (pct-0.5)*120) :
+            isOlympic ? 75 : isSprint ? 45 : 90;
+
+          wk.phase = phase;
+          wk.focus = phase + ' training — progressive overload continues.';
+          wk.weeklyNarrative = 'Continuing structured ' + phase.toLowerCase() + ' phase training with progressive overload.';
+
+          // Calculate target durations for this week based on phase position
+          const targetRunMins = isFull ? Math.round(
+            pct < 0.30 ? 60 + (pct/0.30)*30 :
+            pct < 0.65 ? 90 + ((pct-0.30)/0.35)*60 :
+            pct < 0.85 ? 150 :
+            Math.max(20, 150 - ((pct-0.85)/0.15)*120)
+          ) : isHalf ? Math.round(Math.max(30, 60 + pct*60 - pct*30)) :
+            isOlympic ? 50 : isSprint ? 30 : 45;
+          const targetSwimMins = isFull ? Math.round(
+            pct < 0.30 ? 45 + (pct/0.30)*20 :
+            pct < 0.65 ? 65 + ((pct-0.30)/0.35)*25 :
+            pct < 0.85 ? 90 :
+            Math.max(20, 90 - ((pct-0.85)/0.15)*60)
+          ) : isHalf ? 55 : isOlympic ? 40 : isSprint ? 25 : 40;
+
+          // Fix each day — remove race day sessions and restore reasonable durations
+          wk.days = wk.days.map((d, di) => {
+            if (d.type === 'Race' || (d.name && d.name.includes('Race Day'))) {
+              return { ...d, type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Recovery day', warmup: '', mainset: 'Full rest — allow your body to recover and adapt.', cooldown: '', coachNote: 'Rest is training. Use this day for sleep, nutrition and mental recovery.', paceTarget: 'N/A', heartRateZone: 'Zone 1' };
+            }
+            // Fix suspiciously short sessions or unrealistically long ones
+            if (d.type !== 'Rest') {
+              const dur = parseFloat(d.duration) || 0;
+              const defaults = { Swim: targetSwimMins, Bike: targetBikeMins, Run: targetRunMins, Brick: targetBikeMins + 30, Strength: 40 };
+              const target = defaults[d.type] || 45;
+              if (dur < 20 || dur > 300) {
+                return { ...d, duration: target };
+              }
+            }
+            return d;
+          });
+        } else {
+          // Just strip any stray Race type sessions
+          wk.days = wk.days.map(d => {
+            if (d.type === 'Race') {
+              return { ...d, type: 'Rest', name: 'Rest', duration: 0, effort: 0, purpose: 'Recovery day', warmup: '', mainset: '', cooldown: '', coachNote: 'Rest and recover.' };
+            }
+            return d;
+          });
+        }
       }
+
       // Fix race day to correct day in final week
       if (wk.weekNumber === finalWeekNum && wk.days) {
-        const raceDay = wk.days.find(d => d.type === 'Race');
-        if (raceDay && raceDay.day !== raceDayNameFinal) {
-          // Move race to correct day
-          const wrongDay = wk.days.find(d => d.type === 'Race');
-          const correctDaySession = wk.days.find(d => d.day === raceDayNameFinal);
-          if (wrongDay && correctDaySession) {
-            const wrongIdx = wk.days.indexOf(wrongDay);
-            const correctIdx = wk.days.indexOf(correctDaySession);
-            // Swap
-            wk.days[wrongIdx] = { ...correctDaySession, type: 'Rest', name: 'Rest', duration: 0, effort: 0, purpose: 'Recovery day', warmup: '', mainset: '', cooldown: '', coachNote: 'Rest and recover.' };
-            wk.days[correctIdx] = { ...wrongDay, day: raceDayNameFinal };
+        const raceDay = wk.days.find(d => d.type === 'Race' || (d.name && d.name.includes('Race Day')));
+        if (raceDay) {
+          const currentDay = raceDay.day;
+          if (currentDay !== raceDayNameFinal) {
+            const wrongIdx = wk.days.indexOf(raceDay);
+            const correctIdx = wk.days.findIndex(d => d.day === raceDayNameFinal);
+            if (wrongIdx !== -1 && correctIdx !== -1) {
+              const correctSession = wk.days[correctIdx];
+              wk.days[wrongIdx] = { ...correctSession, type: 'Rest', name: 'Rest', duration: 0, effort: 0, purpose: 'Recovery day', warmup: '', mainset: '', cooldown: '', coachNote: 'Rest and recover.' };
+              wk.days[correctIdx] = { ...raceDay, day: raceDayNameFinal, type: 'Race' };
+            }
+          } else {
+            // Ensure it's type Race
+            const idx = wk.days.indexOf(raceDay);
+            wk.days[idx] = { ...raceDay, type: 'Race' };
           }
         }
       }
