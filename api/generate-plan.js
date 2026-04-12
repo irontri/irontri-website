@@ -1,4 +1,4 @@
-export const config = { maxDuration: 300 };
+export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
@@ -21,10 +21,12 @@ UNITS: ${isImperial ? 'IMPERIAL — use miles, yards, mph, min/mile, min/100yd f
 SESSION QUALITY RULES (apply to every session):
 - Names: evocative and specific e.g. "Threshold Fortress" not "Bike Intervals"
 - Mainset: exact intervals, exact rest, exact pace/watts/cadence + one technique cue
-- Bike: always include cadence (rpm) + speed (${isImperial ? 'mph' : 'km/h'}) + power (% FTP or watts)
-- Run: always include pace (${isImperial ? 'min/mile' : '/km'}) + cadence (spm) + technique cue
+- Bike: always include cadence (rpm) + speed (${isImperial ? 'mph' : 'km/h'}) + power in ACTUAL WATTS (e.g. "210w", "195-215w") — NEVER use "% FTP" if actual FTP watts are provided in the prompt. Only use % FTP if no FTP data is available.
+- Run: always include pace (${isImperial ? 'min/mile' : '/km'}) + cadence (spm) + technique cue. Use ACTUAL BPM for heart rate zones (e.g. "130-145 bpm") — NEVER use generic "Zone 2" labels if actual HR zone BPM values are provided in the prompt.
 - Swim: always include interval distance (${isImperial ? 'yards' : 'metres'}) + rest + technique cue
 - paceTarget: MUST be in ${isImperial ? 'min/mile or min/100yd or mph' : 'min/km or min/100m or km/h'} — NEVER mix units
+- heartRateZone: When HR zone BPM data is provided, use actual BPM ranges (e.g. "130-145 bpm") not generic labels like "Zone 2". When no HR data available, use zone labels.
+- CRITICAL: If the prompt contains "STRAVA FITNESS DATA" with actual watts and BPM values — USE THOSE EXACT VALUES throughout the entire plan. Do not substitute percentages or zone labels for actual numbers.
 - coachNote: explain WHY this session exists this week
 - weeklyNarrative: 2 sentences on the week's purpose
 - day field: day name e.g. "Monday" not a number
@@ -77,13 +79,6 @@ OLYMPIC TRIATHLON LONG SESSION REQUIREMENTS:
 SPRINT TRIATHLON LONG SESSION REQUIREMENTS:
 - Long ride peak: 60-90 min (${isImperial ? '18-28 miles' : '30-45 km'}) in Peak phase.
 - Long run peak: 45-60 min (${isImperial ? '5-8 miles' : '8-12 km'}) in Peak phase.
-
-REST DAY RULES (race-distance specific — apply strictly):
-- Sprint Triathlon: 2 rest days per week. Sessions are short — recovery is fast but consistency matters.
-- Olympic Triathlon: 1-2 rest days per week. 1 in build/peak weeks, 2 in taper/recovery weeks.
-- Half Ironman (70.3): 1 rest day per week. Volume is high enough that one full rest day is essential.
-- Full Ironman (140.6): 1 rest day per week. Never 0 rest days in any week except Race Week.
-- Rest days should be spread through the week — never two consecutive rest days unless it is a recovery week.
 
 TAPER RULES (race-distance specific — apply strictly):
 - Full Ironman / Half Ironman: Final 3 weeks taper — reduce volume by 30%, 50%, 70% respectively. Keep intensity.
