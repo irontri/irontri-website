@@ -1210,11 +1210,15 @@ function selectDay(i){
                 if (d.type === 'Bike' || d.type === 'Brick') {
                   const sf = planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null);
                   if (sf?.bike?.ftpEstimate) {
-                    const ftp = sf.bike.ftpEstimate;
-                    const zNum = parseInt(d.heartRateZone) || 2;
-                    const wattRanges = { 1: [Math.round(ftp*0.45), Math.round(ftp*0.55)], 2: [Math.round(ftp*0.56), Math.round(ftp*0.75)], 3: [Math.round(ftp*0.76), Math.round(ftp*0.90)], 4: [Math.round(ftp*0.91), Math.round(ftp*1.05)], 5: [Math.round(ftp*1.06), Math.round(ftp*1.20)] };
-                    const w = wattRanges[zNum] || wattRanges[2];
-                    return d.paceTarget + ' · ' + w[0] + '-' + w[1] + 'w';
+                    const pt = d.paceTarget || '';
+                    if (!pt.toLowerCase().includes('w') && !pt.toLowerCase().includes('watt')) {
+                      const ftp = sf.bike.ftpEstimate;
+                      const zMatch = String(d.heartRateZone || '2').match(/\d/);
+                      const zNum = zMatch ? parseInt(zMatch[0]) : 2;
+                      const wattRanges = { 1: [Math.round(ftp*0.45), Math.round(ftp*0.55)], 2: [Math.round(ftp*0.56), Math.round(ftp*0.75)], 3: [Math.round(ftp*0.76), Math.round(ftp*0.90)], 4: [Math.round(ftp*0.91), Math.round(ftp*1.05)], 5: [Math.round(ftp*1.06), Math.round(ftp*1.20)] };
+                      const w = wattRanges[zNum] || wattRanges[2];
+                      return pt + ' · ' + w[0] + '-' + w[1] + 'w';
+                    }
                   }
                 }
               } catch(e) {}
