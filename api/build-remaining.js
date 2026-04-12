@@ -70,7 +70,7 @@ export default async function handler(req, res) {
       return days[new Date(rd + 'T00:00:00').getDay()];
     })();
 
-    const raceDayRule = isFinalBatch ? `RACE DAY REQUIRED: The LAST day of week ${totalNeeded} MUST be a Race Day session on ${raceDayName} (this is the actual race day): {"day":"${raceDayName}","type":"Race","name":"Race Day 🏁","duration":null,"effort":9,"zone":null,"purpose":"Your race — execute your plan and enjoy every moment.","warmup":"Light warm-up as per race briefing","mainset":"${raceDayDistances} — race pace throughout.","cooldown":"Recovery walk and celebrate your achievement","coachNote":"Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.","paceTarget":"Race pace","heartRateZone":"Race"}. The day BEFORE ${raceDayName} must be Rest. All other days can be easy shakeout or Rest.` : '';
+    const raceDayRule = isFinalBatch ? `RACE WEEK REQUIRED: Week ${totalNeeded} is race week. Generate a proper race week with SHORT activation sessions — NOT all rest days. EXACT structure required: Monday=easy 25min Swim, Tuesday=easy 30min Bike with 4x30sec surges, Wednesday=easy 20min Run with strides, Thursday=Rest, Friday=easy 15min Swim, Saturday=Rest, Sunday=Race Day. The LAST day (${raceDayName}) MUST be: {"day":"${raceDayName}","type":"Race","name":"Race Day 🏁","duration":null,"effort":9,"zone":null,"purpose":"Your race — execute your plan and enjoy every moment.","warmup":"Light warm-up as per race briefing","mainset":"${raceDayDistances} — race pace throughout. Swim smooth, bike strong, run proud.","cooldown":"Recovery walk and celebrate your achievement","coachNote":"Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.","paceTarget":"Race pace","heartRateZone":"Race"}. NEVER make all 7 days Rest — race week must have swim, bike and run activation sessions before race day.` : '';
 
     // Get last built week's bike data for continuity
     const lastBuiltWeeks = planData.weeks?.slice(-2) || [];
@@ -152,60 +152,73 @@ export default async function handler(req, res) {
     const parsed = JSON.parse(clean.slice(s, e + 1));
     const newWeeks = parsed.weeks || [];
 
-    // Post-process: correct bike volume for each new week to match expected target
-    if (isFull) {
-      newWeeks.forEach((wk) => {
-        const weekNum = (planData.weeks?.length || 0) + newWeeks.indexOf(wk) + 1;
-        const pct = weekNum / totalNeeded;
-        let targetLongRideHrs;
-        if (pct < 0.30) {
-          targetLongRideHrs = 2 + (pct / 0.30) * 1.5;
-        } else if (pct < 0.65) {
-          targetLongRideHrs = 3.5 + ((pct - 0.30) / 0.35) * 1.5;
-        } else if (pct < 0.85) {
-          targetLongRideHrs = 5.5;
-        } else {
-          targetLongRideHrs = 5.5 - ((pct - 0.85) / 0.15) * 4;
-        }
-        targetLongRideHrs = Math.max(1, Math.round(targetLongRideHrs * 10) / 10);
-        const targetMins = Math.round(targetLongRideHrs * 60);
+    // Post-process: correct bike and run volume for each new week
+    newWeeks.forEach((wk) => {
+      const weekNum = (planData.weeks?.length || 0) + newWeeks.indexOf(wk) + 1;
+      const pct = weekNum / totalNeeded;
 
-        // Find the longest bike session and correct its duration
-        const bikeSessions = (wk.days || []).filter(d => d.type === 'Bike' || d.type === 'Brick');
-        if (bikeSessions.length > 0) {
-          const longestBike = bikeSessions.reduce((a, b) => 
-            (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
-          );
-          const currentMins = parseFloat(longestBike.duration) || 0;
-          if (Math.abs(currentMins - targetMins) > 20) {
-            longestBike.duration = targetMins;
-          }
-        }
+      // Calculate target bike duration based on race distance and plan position
+      let targetBikeMins, targetRunMins, targetSwimMins;
 
-        // Correct long run duration for Full Ironman
-        let targetRunMins;
-        if (pct < 0.30) {
-          targetRunMins = Math.round((60 + (pct/0.30)*30));   // Base: 60-90 min
-        } else if (pct < 0.65) {
-          targetRunMins = Math.round((90 + ((pct-0.30)/0.35)*60));  // Build: 90-150 min
-        } else if (pct < 0.85) {
-          targetRunMins = 150;  // Peak: 2.5h
-        } else {
-          targetRunMins = Math.max(30, Math.round(150 - ((pct-0.85)/0.15)*120));  // Taper: reduce
-        }
+      if (isFull) {
+        const bikeHrs = pct < 0.30 ? 2 + (pct/0.30)*1.5 :
+                        pct < 0.65 ? 3.5 + ((pct-0.30)/0.35)*1.5 :
+                        pct < 0.85 ? 5.5 : Math.max(1, 5.5 - ((pct-0.85)/0.15)*4);
+        targetBikeMins = Math.round(bikeHrs * 60);
+        targetRunMins = pct < 0.30 ? Math.round(60 + (pct/0.30)*30) :
+                        pct < 0.65 ? Math.round(90 + ((pct-0.30)/0.35)*60) :
+                        pct < 0.85 ? 150 : Math.max(30, Math.round(150 - ((pct-0.85)/0.15)*120));
+        targetSwimMins = pct < 0.30 ? Math.round(45 + (pct/0.30)*20) :
+                         pct < 0.65 ? Math.round(65 + ((pct-0.30)/0.35)*25) :
+                         pct < 0.85 ? 90 : Math.max(20, Math.round(90 - ((pct-0.85)/0.15)*60));
+      } else if (isHalf) {
+        const bikeHrs = pct < 0.35 ? 1.5 + (pct/0.35)*1.5 :
+                        pct < 0.75 ? 3 + ((pct-0.35)/0.40) :
+                        Math.max(0.75, 4 - ((pct-0.75)/0.25)*3);
+        targetBikeMins = Math.round(bikeHrs * 60);
+        targetRunMins = pct < 0.35 ? Math.round(45 + (pct/0.35)*35) :
+                        pct < 0.75 ? Math.round(80 + ((pct-0.35)/0.40)*40) :
+                        Math.max(20, Math.round(120 - ((pct-0.75)/0.25)*90));
+        targetSwimMins = pct < 0.5 ? Math.round(40 + pct*30) : Math.max(20, Math.round(70 - (pct-0.5)*60));
+      } else if (isOlympic) {
+        targetBikeMins = Math.round(Math.min(90, 45 + pct*60));
+        targetRunMins = Math.round(Math.min(70, 30 + pct*50));
+        targetSwimMins = Math.round(Math.min(60, 30 + pct*40));
+      } else if (isSprint) {
+        targetBikeMins = Math.round(Math.min(60, 25 + pct*40));
+        targetRunMins = Math.round(Math.min(40, 20 + pct*25));
+        targetSwimMins = Math.round(Math.min(35, 20 + pct*20));
+      } else {
+        return; // Unknown distance, skip
+      }
 
-        const runSessions = (wk.days || []).filter(d => d.type === 'Run');
-        if (runSessions.length > 0) {
-          const longestRun = runSessions.reduce((a, b) =>
-            (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
-          );
-          const currentRunMins = parseFloat(longestRun.duration) || 0;
-          if (currentRunMins < targetRunMins - 20 || currentRunMins > targetRunMins + 30) {
-            longestRun.duration = targetRunMins;
-          }
-        }
-      });
-    }
+      // Apply bike correction
+      const bikeSessions = (wk.days || []).filter(d => d.type === 'Bike' || d.type === 'Brick');
+      if (bikeSessions.length > 0) {
+        const longestBike = bikeSessions.reduce((a, b) =>
+          (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
+        );
+        longestBike.duration = targetBikeMins;
+      }
+
+      // Apply run correction
+      const runSessions = (wk.days || []).filter(d => d.type === 'Run');
+      if (runSessions.length > 0) {
+        const longestRun = runSessions.reduce((a, b) =>
+          (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
+        );
+        longestRun.duration = targetRunMins;
+      }
+
+      // Apply swim correction
+      const swimSessions = (wk.days || []).filter(d => d.type === 'Swim');
+      if (swimSessions.length > 0) {
+        const longestSwim = swimSessions.reduce((a, b) =>
+          (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
+        );
+        longestSwim.duration = targetSwimMins;
+      }
+    });
 
     const allWeeks = [...(planData.weeks || []), ...newWeeks];
     allWeeks.forEach((wk, i) => { wk.weekNumber = i + 1; });
