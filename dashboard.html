@@ -383,6 +383,7 @@ function pinPlan(id, e) {
   else { localStorage.setItem('irontri_pinned_plan', String(id)); }
   loadPlans();
   loadTodaySession();
+  loadFinishTime();
 }
 
 document.addEventListener('click', function(e) {
@@ -739,7 +740,6 @@ async function loadPlans() {
   document.getElementById('loading').style.display='none';
   document.getElementById('content').style.display='block';
   loadStreakAndRing();
-  loadFinishTime();
   const isFoundingUser = (currentUser.user_metadata && currentUser.user_metadata.is_founding_member === true);
   if (plans && plans.length > 0) {
     const plan = plans[0];
