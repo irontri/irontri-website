@@ -1243,19 +1243,22 @@ function selectDay(i){
               return d.paceTarget;
             })()}</div>
           </div>` : ''}
-          ${d.heartRateZone ? `<div class="target-item">
+          ${d.heartRateZone || d.effort ? `<div class="target-item">
             <div class="target-label">❤️ Heart rate zone</div>
-            <div class="target-value" style="color:${z.color}">${z.label} · ${(() => {
+            <div class="target-value" style="color:${z.color}">${(() => {
+              const rpe = parseInt(d.effort) || 5;
+              const derivedZone = rpe <= 3 ? 1 : rpe <= 5 ? 2 : rpe <= 7 ? 3 : rpe === 8 ? 4 : 5;
+              const zoneLabels = { 1: 'Zone 1', 2: 'Zone 2', 3: 'Zone 3', 4: 'Zone 4', 5: 'Zone 5' };
+              const zonePcts = { 1: '<60%', 2: '60-70%', 3: '70-80%', 4: '80-90%', 5: '90-100%' };
+              const zLabel = zoneLabels[derivedZone];
               try {
                 const sf = planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null);
-                const zMatch = String(d.heartRateZone).match(/\d/);
-                const zNum = zMatch ? parseInt(zMatch[0]) : null;
-                if (sf?.hrZones && zNum >= 1 && zNum <= 5) {
-                  const zone = sf.hrZones['zone' + zNum];
-                  if (zone) return zone.min + '-' + zone.max + ' bpm';
+                if (sf?.hrZones) {
+                  const zone = sf.hrZones['zone' + derivedZone];
+                  if (zone) return zLabel + ' · ' + zone.min + '-' + zone.max + ' bpm';
                 }
               } catch(e) {}
-              return z.pct;
+              return zLabel + ' · ' + zonePcts[derivedZone] + '% max HR';
             })()}</div>
             <div class="target-desc">${z.desc}</div>
           </div>` : ''}
