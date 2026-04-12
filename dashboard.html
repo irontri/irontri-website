@@ -452,7 +452,7 @@ async function loadStravaSection() {
   // Check if fitness update is due (last updated > 28 days ago or never)
   const lastUpdated = userData?.strava_fitness_updated_at ? new Date(userData.strava_fitness_updated_at) : null;
   const daysSinceUpdate = lastUpdated ? Math.floor((Date.now() - lastUpdated.getTime()) / 86400000) : 999;
-  const updateDue = daysSinceUpdate >= 28;
+  const updateDue = daysSinceUpdate >= 14;
   const lastUpdatedStr = lastUpdated ? lastUpdated.toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'numeric'}) : 'Never';
 
   section.innerHTML = '<div class="strava-connected">'
@@ -471,7 +471,7 @@ async function loadStravaSection() {
     // Auto-update fitness toggle
     + '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid rgba(255,255,255,0.06);">'
     + '<div><div style="font-size:13px;font-weight:500;color:#fff;">⚡ Auto-update fitness targets</div>'
-    + '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">Every 4 weeks irontri re-analyses your Strava data and updates pace, HR zones and FTP if you\'ve improved</div></div>'
+    + '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">Every 2 weeks irontri re-analyses your Strava data and updates pace, HR zones and FTP if you\'ve improved</div></div>'
     + '<button onclick="toggleAutoUpdateFitness(this)" data-on="' + _auf + '" style="width:44px;height:24px;border-radius:100px;border:none;cursor:pointer;background:' + _aufBg + ';position:relative;flex-shrink:0;">'
     + '<span style="position:absolute;top:3px;left:' + _aufLft + ';width:18px;height:18px;border-radius:50%;background:#fff;transition:left 0.2s;"></span></button></div>'
 
