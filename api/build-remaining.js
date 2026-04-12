@@ -152,8 +152,9 @@ export default async function handler(req, res) {
     const parsed = JSON.parse(clean.slice(s, e + 1));
     const newWeeks = parsed.weeks || [];
 
-    // Post-process: correct bike and run volume for each new week
+    // Post-process: correct bike and run volume for each new week (skip race week)
     newWeeks.forEach((wk) => {
+      if (wk.phase === 'Race Week') return; // Never override race week volumes
       const weekNum = (planData.weeks?.length || 0) + newWeeks.indexOf(wk) + 1;
       const pct = weekNum / totalNeeded;
 
@@ -309,12 +310,12 @@ export default async function handler(req, res) {
             if (wrongIdx !== -1 && correctIdx !== -1) {
               const correctSession = wk.days[correctIdx];
               wk.days[wrongIdx] = { ...correctSession, type: 'Rest', name: 'Rest', duration: 0, effort: 0, purpose: 'Recovery day', warmup: '', mainset: '', cooldown: '', coachNote: 'Rest and recover.' };
-              wk.days[correctIdx] = { ...raceDay, day: raceDayNameFinal, type: 'Race' };
+              wk.days[correctIdx] = { ...raceDay, day: raceDayNameFinal, type: 'Race', duration: null };
             }
           } else {
-            // Ensure it's type Race
+            // Ensure it's type Race with null duration
             const idx = wk.days.indexOf(raceDay);
-            wk.days[idx] = { ...raceDay, type: 'Race' };
+            wk.days[idx] = { ...raceDay, type: 'Race', duration: null };
           }
         }
       }
