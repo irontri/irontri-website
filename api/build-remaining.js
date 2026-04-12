@@ -251,7 +251,7 @@ export default async function handler(req, res) {
             pct < 0.65 ? (3.5 + ((pct-0.30)/0.35)*1.5)*60 :
             pct < 0.85 ? 330 : Math.max(60, (5.5-((pct-0.85)/0.15)*4)*60)
           ) : isHalf ? Math.round(pct < 0.5 ? 90 + pct*60 : 150 - (pct-0.5)*120) :
-            isOlympic ? 75 : isSprint ? 45 : 90;
+            isOlympic ? 75 : isSprint ? Math.round(Math.min(60, 25 + pct*40)) : 90;
 
           wk.phase = phase;
           wk.focus = phase + ' training — progressive overload continues.';
@@ -264,13 +264,13 @@ export default async function handler(req, res) {
             pct < 0.85 ? 150 :
             Math.max(20, 150 - ((pct-0.85)/0.15)*120)
           ) : isHalf ? Math.round(Math.max(30, 60 + pct*60 - pct*30)) :
-            isOlympic ? 50 : isSprint ? 30 : 45;
+            isOlympic ? 50 : isSprint ? Math.round(Math.min(40, 20 + pct*25)) : 45;
           const targetSwimMins = isFull ? Math.round(
             pct < 0.30 ? 45 + (pct/0.30)*20 :
             pct < 0.65 ? 65 + ((pct-0.30)/0.35)*25 :
             pct < 0.85 ? 90 :
             Math.max(20, 90 - ((pct-0.85)/0.15)*60)
-          ) : isHalf ? 55 : isOlympic ? 40 : isSprint ? 25 : 40;
+          ) : isHalf ? 55 : isOlympic ? 40 : isSprint ? Math.round(Math.min(35, 20 + pct*20)) : 40;
 
           // Fix each day — remove race day sessions and restore reasonable durations
           wk.days = wk.days.map((d, di) => {
