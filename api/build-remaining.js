@@ -64,6 +64,18 @@ export default async function handler(req, res) {
 
     const raceDayRule = isFinalBatch ? `RACE DAY REQUIRED: The LAST day of week ${totalNeeded} MUST be a Race Day session: {"day":"Sunday","type":"Race","name":"Race Day 🏁","duration":null,"effort":9,"zone":null,"purpose":"Your race — execute your plan and enjoy every moment.","warmup":"Light warm-up as per race briefing","mainset":"${raceDayDistances} — race pace throughout.","cooldown":"Recovery walk and celebrate your achievement","coachNote":"Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.","paceTarget":"Race pace","heartRateZone":"Race"}. The day BEFORE race day must be Rest.` : '';
 
+    // Get last built week's bike data for continuity
+    const lastBuiltWeeks = planData.weeks?.slice(-2) || [];
+    const lastBikeDuration = (() => {
+      for (let i = lastBuiltWeeks.length - 1; i >= 0; i--) {
+        const w = lastBuiltWeeks[i];
+        const bikeSessions = w.days?.filter(d => d.type === 'Bike' || d.type === 'Brick') || [];
+        const longest = Math.max(...bikeSessions.map(d => parseFloat(d.duration) || 0), 0);
+        if (longest > 0) return Math.round(longest / 60 * 10) / 10;
+      }
+      return null;
+    })();
+
     // Progressive bike volume — calculated per batch so AI always gets exact targets
     const bikeVolumeRule = (() => {
       if (isFull) {
@@ -86,7 +98,8 @@ export default async function handler(req, res) {
         }
         const minRide = Math.max(1.5, longRide - 0.3);
         const maxRide = longRide + 0.3;
-        return `BIKE VOLUME FOR WEEKS ${startWk}-${endWk}: Long ride must be ${longRide}h (${Math.round(longRide*30)}-${Math.round(longRide*32)}km). NEVER shorter than ${minRide}h or longer than ${maxRide}h. Total weekly bike = ${weeklyBike}h. Each week must be slightly more than the previous. NEVER generate a short ride where a long ride is scheduled.`;
+        const continuityNote = lastBikeDuration ? ` Previous week long ride was ${lastBikeDuration}h — continue from there, do NOT drop below it.` : '';
+        return `BIKE VOLUME FOR WEEKS ${startWk}-${endWk}: Long ride must be ${longRide}h (${Math.round(longRide*30)}-${Math.round(longRide*32)}km). NEVER shorter than ${minRide}h or longer than ${maxRide}h. Total weekly bike = ${weeklyBike}h. Each week slightly more than the previous.${continuityNote} NEVER generate a short ride where a long ride is scheduled.`;
       } else if (isHalf) {
         const pct = startWk / totalNeeded;
         let longRide;
@@ -131,8 +144,61 @@ export default async function handler(req, res) {
     const parsed = JSON.parse(clean.slice(s, e + 1));
     const newWeeks = parsed.weeks || [];
 
+    // Post-process: correct bike volume for each new week to match expected target
+    if (isFull) {
+      newWeeks.forEach((wk) => {
+        const weekNum = (planData.weeks?.length || 0) + newWeeks.indexOf(wk) + 1;
+        const pct = weekNum / totalNeeded;
+        let targetLongRideHrs;
+        if (pct < 0.30) {
+          targetLongRideHrs = 2 + (pct / 0.30) * 1.5;
+        } else if (pct < 0.65) {
+          targetLongRideHrs = 3.5 + ((pct - 0.30) / 0.35) * 1.5;
+        } else if (pct < 0.85) {
+          targetLongRideHrs = 5.5;
+        } else {
+          targetLongRideHrs = 5.5 - ((pct - 0.85) / 0.15) * 4;
+        }
+        targetLongRideHrs = Math.max(1, Math.round(targetLongRideHrs * 10) / 10);
+        const targetMins = Math.round(targetLongRideHrs * 60);
+
+        // Find the longest bike session and correct its duration
+        const bikeSessions = (wk.days || []).filter(d => d.type === 'Bike' || d.type === 'Brick');
+        if (bikeSessions.length > 0) {
+          const longestBike = bikeSessions.reduce((a, b) => 
+            (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
+          );
+          const currentMins = parseFloat(longestBike.duration) || 0;
+          // Only correct if significantly off (more than 20 mins)
+          if (Math.abs(currentMins - targetMins) > 20) {
+            longestBike.duration = targetMins;
+            // Update mainset to reflect corrected duration
+            if (longestBike.mainset) {
+              const hrs = Math.floor(targetMins / 60);
+              const mins = targetMins % 60;
+              const durationStr = hrs > 0 ? (mins > 0 ? hrs + 'h ' + mins + 'min' : hrs + 'h') : targetMins + 'min';
+              longestBike.mainset = longestBike.mainset.replace(/\d+\s*(?:hours?|hrs?|h)\s*(?:\d+\s*(?:minutes?|mins?|m))?|\d+\s*(?:minutes?|mins?|m)/gi, durationStr);
+            }
+          }
+        }
+      });
+    }
+
     const allWeeks = [...(planData.weeks || []), ...newWeeks];
     allWeeks.forEach((wk, i) => { wk.weekNumber = i + 1; });
+
+    // Post-process: strip Race sessions from any week that isn't the final week
+    const finalWeekNum = totalNeeded;
+    allWeeks.forEach((wk, i) => {
+      if (wk.weekNumber < finalWeekNum && wk.days) {
+        wk.days = wk.days.map(d => {
+          if (d.type === 'Race') {
+            return { ...d, type: 'Rest', name: 'Rest', duration: 0, effort: 0, purpose: 'Recovery day', warmup: '', mainset: '', cooldown: '', coachNote: 'Rest and recover.' };
+          }
+          return d;
+        });
+      }
+    });
 
     const updated = { ...planData, weeks: allWeeks };
     const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?id=eq.${plan.id}`, {
