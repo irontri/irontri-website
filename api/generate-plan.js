@@ -78,6 +78,13 @@ SPRINT TRIATHLON LONG SESSION REQUIREMENTS:
 - Long ride peak: 60-90 min (${isImperial ? '18-28 miles' : '30-45 km'}) in Peak phase.
 - Long run peak: 45-60 min (${isImperial ? '5-8 miles' : '8-12 km'}) in Peak phase.
 
+REST DAY RULES (race-distance specific — apply strictly):
+- Sprint Triathlon: 2 rest days per week. Sessions are short — recovery is fast but consistency matters.
+- Olympic Triathlon: 1-2 rest days per week. 1 in build/peak weeks, 2 in taper/recovery weeks.
+- Half Ironman (70.3): 1 rest day per week. Volume is high enough that one full rest day is essential.
+- Full Ironman (140.6): 1 rest day per week. Never 0 rest days in any week except Race Week.
+- Rest days should be spread through the week — never two consecutive rest days unless it is a recovery week.
+
 TAPER RULES (race-distance specific — apply strictly):
 - Full Ironman / Half Ironman: Final 3 weeks taper — reduce volume by 30%, 50%, 70% respectively. Keep intensity.
 - Olympic Triathlon: Final 2 weeks taper — reduce volume by 40%, 70% respectively. Keep intensity.
