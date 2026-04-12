@@ -738,6 +738,7 @@ async function loadPlans() {
   document.getElementById('loading').style.display='none';
   document.getElementById('content').style.display='block';
   loadStreakAndRing();
+  loadFinishTime();
   const isFoundingUser = (currentUser.user_metadata && currentUser.user_metadata.is_founding_member === true);
   if (plans && plans.length > 0) {
     const plan = plans[0];
@@ -913,6 +914,39 @@ const TYPE_INFO = {
 };
 function fmtDurD(mins){if(!mins)return '';if(mins<60)return mins+'m';const h=Math.floor(mins/60),m=mins%60;return m>0?h+'h '+m+'m':h+'h';}
 
+async function loadFinishTime() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const pinnedPlanId = localStorage.getItem('irontri_pinned_plan');
+    let plan = null;
+    if (pinnedPlanId) {
+      const { data: pinnedPlans } = await sb.from('plans').select('*').eq('user_id', session.user.id).eq('id', pinnedPlanId).limit(1);
+      if (pinnedPlans && pinnedPlans.length > 0) plan = pinnedPlans[0];
+    }
+    if (!plan) {
+      const { data: plans } = await sb.from('plans').select('*').eq('user_id', session.user.id).order('created_at', {ascending: false}).limit(1);
+      if (!plans || plans.length === 0) return;
+      plan = plans[0];
+    }
+    let planData;
+    try { let txt = plan.plan_data || ''; txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1); planData = JSON.parse(txt); } catch(e) { return; }
+    const { data: ud } = await sb.from('users').select('strava_fitness, strava_access_token').eq('id', session.user.id).single();
+    if (ud?.strava_access_token && ud?.strava_fitness) {
+      const fitnessStr = typeof ud.strava_fitness === 'string' ? ud.strava_fitness : JSON.stringify(ud.strava_fitness);
+      planData.stravaFitness = fitnessStr;
+      const nudge = document.getElementById('strava-finish-nudge');
+      if (nudge) nudge.style.display = 'none';
+      calcFinishTime(planData, plan.race || '', plan.id);
+    } else {
+      const card = document.getElementById('finish-card');
+      if (card) card.style.display = 'none';
+      const nudge = document.getElementById('strava-finish-nudge');
+      if (nudge) nudge.style.display = 'flex';
+    }
+  } catch(e) {}
+}
+
 async function loadTodaySession() {
   if (!sb) return;
   try {
@@ -934,29 +968,7 @@ async function loadTodaySession() {
     const startOverrides = JSON.parse(localStorage.getItem('irontri_start_override') || '{}');
     const resolvedStart = startOverrides[plan.id] || planData.startDate || plan.created_at?.split('T')[0];
     if (!planData.weeks || !resolvedStart) return;
-    // Show predicted finish time — always fetch fresh from users table to get latest Strava data
-    try {
-      const { data: { session: s2 } } = await sb.auth.getSession();
-      if (s2) {
-        const { data: ud } = await sb.from('users').select('strava_fitness, strava_access_token').eq('id', s2.user.id).single();
-        if (ud?.strava_access_token && ud?.strava_fitness) {
-          // Supabase returns strava_fitness already parsed — stringify once for calcFinishTime
-          const fitnessStr = typeof ud.strava_fitness === 'string'
-            ? ud.strava_fitness
-            : JSON.stringify(ud.strava_fitness);
-          planData.stravaFitness = fitnessStr;
-          calcFinishTime(planData, plan.race || '', plan.id);
-        } else {
-          const card = document.getElementById('finish-card');
-          if (card) card.style.display = 'none';
-          const nudge = document.getElementById('strava-finish-nudge');
-          if (nudge) nudge.style.display = 'flex';
-        }
-      }
-    } catch(e) {
-      const card = document.getElementById('finish-card');
-      if (card) card.style.display = 'none';
-    }
+    await loadFinishTime();
     planData.startDate = resolvedStart;
     const raceDate = planData.raceDate;
     if (raceDate) {
