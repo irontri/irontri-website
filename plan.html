@@ -1023,8 +1023,10 @@ function renderWeek(){
   if(!w)return;
 
   // For the final week, anchor dates to raceDate so race day is always correct
-  const _isFinalWeek = curWeek === planData.weeks.length - 1;
-  const _raceDate = planData.raceDate || A.date;
+  window._isFinalWeek = curWeek === planData.weeks.length - 1;
+  window._raceDate = planData.raceDate || A.date;
+  const _isFinalWeek = window._isFinalWeek;
+  const _raceDate = window._raceDate;
   let planStartDate, planStartDate2, endDate;
   if (_isFinalWeek && _raceDate) {
     endDate = new Date(_raceDate + 'T00:00:00');
