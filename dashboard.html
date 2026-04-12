@@ -376,7 +376,8 @@ const SPORT = {
   Workout:{icon:'💪',label:'Workout',color:'#fbbf24'},
 };
 
-function pinPlan(id) {
+function pinPlan(id, e) {
+  if (e) { e.stopPropagation(); e.preventDefault(); }
   var current = localStorage.getItem('irontri_pinned_plan');
   if (current === String(id)) { localStorage.removeItem('irontri_pinned_plan'); }
   else { localStorage.setItem('irontri_pinned_plan', String(id)); }
@@ -791,7 +792,7 @@ async function loadPlans() {
         <div class="plan-card-actions">
           <button class="btn-view" onclick="event.stopPropagation();viewPlan('${p.id}')">View plan →</button>
           <button class="btn-date" onclick="event.stopPropagation();showStartDateEditor('${p.id}', '${planObj?.startDate || ''}')" >📅 Change date</button>
-          ${planIndex > 0 ? `<button onclick="event.stopPropagation();pinPlan('${p.id}')" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">📌 Move to top</button>` : ''}
+          ${planIndex > 0 ? `<button onclick="pinPlan('${p.id}', event)" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">📌 Move to top</button>` : ''}
           <button class="btn-delete" onclick="event.stopPropagation();deletePlan('${p.id}')">Delete</button>
         </div>
         <div id="start-date-editor-${p.id}" style="display:none;" onclick="event.stopPropagation()"></div>
