@@ -1022,13 +1022,21 @@ function renderWeek(){
   const w=planData.weeks[curWeek];
   if(!w)return;
 
-  const planStartDate = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
-  planStartDate.setDate(planStartDate.getDate() + (curWeek * 7));
-
-  const planStartDate2 = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
-  planStartDate2.setDate(planStartDate2.getDate() + (curWeek * 7));
-  const endDate = new Date(planStartDate2);
-  endDate.setDate(planStartDate2.getDate() + 6);
+  // For the final week, anchor dates to raceDate so race day is always correct
+  const _isFinalWeek = curWeek === planData.weeks.length - 1;
+  const _raceDate = planData.raceDate || A.date;
+  let planStartDate, planStartDate2, endDate;
+  if (_isFinalWeek && _raceDate) {
+    endDate = new Date(_raceDate + 'T00:00:00');
+    planStartDate = new Date(endDate); planStartDate.setDate(endDate.getDate() - 6);
+    planStartDate2 = new Date(planStartDate);
+  } else {
+    planStartDate = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
+    planStartDate.setDate(planStartDate.getDate() + (curWeek * 7));
+    planStartDate2 = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
+    planStartDate2.setDate(planStartDate2.getDate() + (curWeek * 7));
+    endDate = new Date(planStartDate2); endDate.setDate(planStartDate2.getDate() + 6);
+  }
   const months2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const dateRange = planStartDate2.getDate()+' '+months2[planStartDate2.getMonth()]+' – '+endDate.getDate()+' '+months2[endDate.getMonth()];
   document.getElementById('wlabel').textContent='Week '+(curWeek+1);
@@ -1157,8 +1165,14 @@ function selectDay(i){
   // Set the coloured left border on the session card
   sd.setAttribute('data-type', d.type||'Rest');
 
-  const dayDate2 = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
-  dayDate2.setDate(dayDate2.getDate() + (curWeek * 7) + i);
+  // For final week anchor to raceDate so race day shows correct date
+  let dayDate2;
+  if (_isFinalWeek && _raceDate) {
+    dayDate2 = new Date(_raceDate + 'T00:00:00'); dayDate2.setDate(dayDate2.getDate() - 6 + i);
+  } else {
+    dayDate2 = A.startDate ? new Date(A.startDate + 'T00:00:00') : new Date();
+    dayDate2.setDate(dayDate2.getDate() + (curWeek * 7) + i);
+  }
   const months3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const fullDayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const fullDateStr = fullDayNames[dayDate2.getDay()]+' '+dayDate2.getDate()+' '+months3[dayDate2.getMonth()];
@@ -1337,9 +1351,7 @@ async function buildPlan(){
   });
   ['gs1','gs2','gs3','gs4','gs5','gs6'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('done'),i*2800));
 
-  // Force start date to Monday so race day lands correctly
-  if (A.startDate) { const _sd=new Date(A.startDate+'T00:00:00'); const _dow=_sd.getDay(); if(_dow!==1){_sd.setDate(_sd.getDate()+(_dow===0?1:8-_dow));A.startDate=_sd.toISOString().split('T')[0];} }
-  const startDayName = "Monday";
+  const startDayName = A.startDate ? ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(A.startDate+'T00:00:00').getDay()] : 'Monday';
   // ── FIFO schedule calculation ──────────────────────────────
   var fifoBlock = "";
   if(A.fifo){
@@ -1485,17 +1497,7 @@ async function buildPlan(){
     planData.totalWeeksPlanned = w;
     planData.raceDate = planData.raceDate || A.date;
     // Ensure start date is a Monday (plans run Mon-Sun)
-    const _rawStart = planData.startDate || A.startDate;
-    if (_rawStart) {
-      const _sd = new Date(_rawStart + 'T00:00:00');
-      const _dow = _sd.getDay(); // 0=Sun, 1=Mon ... 6=Sat
-      if (_dow !== 1) {
-        // Roll forward to next Monday
-        const _daysToMon = _dow === 0 ? 1 : (8 - _dow);
-        _sd.setDate(_sd.getDate() + _daysToMon);
-      }
-      planData.startDate = _sd.toISOString().split('T')[0];
-    }
+    planData.startDate = planData.startDate || A.startDate;
     checkAndSavePlan(JSON.stringify(planData));
     if(A.date&&planData.weeks.length<w){const _bt=document.createElement('div');_bt.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1E90FF;color:#fff;padding:14px 20px;border-radius:12px;font-size:13px;font-family:Inter,sans-serif;text-align:center;z-index:9999;max-width:340px;line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.4);';_bt.innerHTML='<strong>Your first 4 weeks are ready!</strong><br>Building your full '+w+'-week plan to race day in the background.';document.body.appendChild(_bt);setTimeout(()=>{if(_bt.parentNode)_bt.remove();},8000);setTimeout(()=>autoGenerateRemainingWeeks(w),5000);}
     window.scrollTo({top:0,behavior:'smooth'});
