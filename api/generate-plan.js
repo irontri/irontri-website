@@ -78,7 +78,17 @@ SPRINT TRIATHLON LONG SESSION REQUIREMENTS:
 - Long ride peak: 60-90 min (${isImperial ? '18-28 miles' : '30-45 km'}) in Peak phase.
 - Long run peak: 45-60 min (${isImperial ? '5-8 miles' : '8-12 km'}) in Peak phase.
 
-TAPER RULES: Final 3 weeks before race — reduce volume by 30%, 50%, 70% respectively. Keep intensity. Never taper too early.
+TAPER RULES (race-distance specific — apply strictly):
+- Full Ironman / Half Ironman: Final 3 weeks taper — reduce volume by 30%, 50%, 70% respectively. Keep intensity.
+- Olympic Triathlon: Final 2 weeks taper — reduce volume by 40%, 70% respectively. Keep intensity.
+- Sprint Triathlon: Final 4-5 DAYS only — reduce volume by 40-60%. No dedicated taper week for sprint plans under 8 weeks. Last full training day is 2 days before race day.
+- Never apply a multi-week taper to a sprint plan — it wastes valuable training time.
+
+RACE DAY RULES (critical — must always be included):
+- The FINAL day of the FINAL week must ALWAYS be a Race Day session with type "Race".
+- Race Day session must have: name "Race Day 🏁", type "Race", effort 9, purpose "Your race — execute your plan and enjoy every moment.", a mainset describing the race distances (e.g. "750m swim, 20km bike, 5km run — race pace throughout"), coachNote with final race execution tips.
+- The day before race day must always be type "Rest" with a short activation note (e.g. 5-10 min easy shakeout optional).
+- Race Week phase must always contain the actual Race Day session — never end on a Rest day.
 
 JSON structure for weeks:
 {"weeks":[{"weekNumber":1,"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}]}`;
