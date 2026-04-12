@@ -1207,20 +1207,38 @@ function selectDay(i){
             <div class="target-label">🎯 Pace target</div>
             <div class="target-value">${(() => {
               try {
+                const sf = planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null);
+
+                // BIKE — always show km/h · watts
                 if (d.type === 'Bike' || d.type === 'Brick') {
-                  const sf = planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null);
+                  const zMatch = String(d.heartRateZone || d.zone || '2').match(/\d/);
+                  const zNum = zMatch ? parseInt(zMatch[0]) : 2;
+                  // Extract km/h from paceTarget
+                  const speedMatch = d.paceTarget.match(/([\d.]+(?:-[\d.]+)?)\s*km\/h/i);
+                  const speedStr = speedMatch ? speedMatch[1] + ' km/h' : d.paceTarget;
+                  // Calculate watts from FTP if available
                   if (sf?.bike?.ftpEstimate) {
-                    const pt = d.paceTarget || '';
-                    if (!pt.toLowerCase().includes('w') && !pt.toLowerCase().includes('watt')) {
-                      const ftp = sf.bike.ftpEstimate;
-                      const zMatch = String(d.heartRateZone || '2').match(/\d/);
-                      const zNum = zMatch ? parseInt(zMatch[0]) : 2;
-                      const wattRanges = { 1: [Math.round(ftp*0.45), Math.round(ftp*0.55)], 2: [Math.round(ftp*0.56), Math.round(ftp*0.75)], 3: [Math.round(ftp*0.76), Math.round(ftp*0.90)], 4: [Math.round(ftp*0.91), Math.round(ftp*1.05)], 5: [Math.round(ftp*1.06), Math.round(ftp*1.20)] };
-                      const w = wattRanges[zNum] || wattRanges[2];
-                      return pt + ' · ' + w[0] + '-' + w[1] + 'w';
-                    }
+                    const ftp = sf.bike.ftpEstimate;
+                    const wattRanges = { 1: [Math.round(ftp*0.45), Math.round(ftp*0.55)], 2: [Math.round(ftp*0.56), Math.round(ftp*0.75)], 3: [Math.round(ftp*0.76), Math.round(ftp*0.90)], 4: [Math.round(ftp*0.91), Math.round(ftp*1.05)], 5: [Math.round(ftp*1.06), Math.round(ftp*1.20)] };
+                    const w = wattRanges[zNum] || wattRanges[2];
+                    return speedStr + ' · ' + w[0] + '-' + w[1] + 'w';
                   }
+                  return speedStr;
                 }
+
+                // SWIM — always show just pace per 100m
+                if (d.type === 'Swim') {
+                  if (sf?.swim?.avgPacePer100m) return sf.swim.avgPacePer100m + ' /100m';
+                  const swimMatch = d.paceTarget.match(/(\d+:\d+)\s*(?:\/\s*100m)?/i);
+                  return swimMatch ? swimMatch[1] + ' /100m' : d.paceTarget;
+                }
+
+                // RUN — just the pace per km
+                if (d.type === 'Run') {
+                  const runMatch = d.paceTarget.match(/(\d+:\d+)\s*(?:\/\s*km)?/i);
+                  return runMatch ? runMatch[1] + ' /km' : d.paceTarget;
+                }
+
               } catch(e) {}
               return d.paceTarget;
             })()}</div>
