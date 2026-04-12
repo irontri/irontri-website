@@ -681,21 +681,9 @@
         <div class="plan-title" id="ptitle">Your Training Plan</div>
         <div class="plan-subtitle" id="psub">Personalised for you</div>
       </div>
-      <div style='display:flex;gap:8px;'><button id='strava-sync-btn' onclick='manualStravaSync()' style='display:none;background:rgba(252,76,2,0.1);border:1px solid rgba(252,76,2,0.3);color:#FC4C02;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;'>🟠 Sync Strava</button><button onclick='openPauseModal()' id='pause-btn' style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">⏸️ Pause plan</button></div>
+      <div style='display:flex;gap:8px;'><button id='strava-sync-btn' onclick='manualStravaSync()' style='display:none;background:rgba(252,76,2,0.1);border:1px solid rgba(252,76,2,0.3);color:#FC4C02;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;'>🟠 Sync Strava</button></div>
     </div>
-    <!-- PAUSE BANNER -->
-    <div id="pause-banner" style="display:none;background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.3);border-radius:12px;padding:14px 18px;margin-bottom:12px;display:none;align-items:center;justify-content:space-between;gap:12px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:20px;">⏸️</span>
-        <div>
-          <div style="font-size:14px;font-weight:600;color:#fb923c;">Plan paused</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;" id="pause-resume-date">Resuming soon</div>
-        </div>
-      </div>
-      <button onclick="resumePlan()" style="background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.3);color:#fb923c;padding:7px 14px;border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;cursor:pointer;">
-        Resume now
-      </button>
-    </div>
+
     <div class="plan-intro" id="pintro"></div>
   </div>
 
@@ -2618,153 +2606,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.getElementById('modal').classList.remove('open');
 });
 
-// ── PLAN PAUSE ──────────────────────────────────────────────────────────────
-let pauseDays = 0;
 
-function openPauseModal() {
-  pauseDays = 0;
-  document.getElementById('pause-days-input').value = '';
-  document.getElementById('pause-preview').style.display = 'none';
-  document.querySelectorAll('.pause-opt').forEach(b => b.style.borderColor = 'rgba(255,255,255,0.15)');
-  document.getElementById('pause-modal').style.display = 'flex';
-}
-
-function closePauseModal() {
-  document.getElementById('pause-modal').style.display = 'none';
-}
-
-function selectPauseDays(days, btn) {
-  pauseDays = days;
-  document.getElementById('pause-days-input').value = '';
-  document.querySelectorAll('.pause-opt').forEach(b => {
-    b.style.background = 'rgba(255,255,255,0.06)';
-    b.style.borderColor = 'rgba(255,255,255,0.15)';
-    b.style.color = 'rgba(255,255,255,0.8)';
-  });
-  btn.style.background = 'rgba(30,144,255,0.15)';
-  btn.style.borderColor = 'var(--blue)';
-  btn.style.color = '#fff';
-  showPausePreview();
-}
-
-function showPausePreview() {
-  if (pauseDays < 1) return;
-  const resume = new Date();
-  resume.setDate(resume.getDate() + pauseDays);
-  const opts = {weekday:'long', day:'numeric', month:'long'};
-  const shortOpts = {day:'numeric', month:'short', year:'numeric'};
-
-  let msg = `Your plan will resume ${resume.toLocaleDateString('en-AU', opts)}. All upcoming sessions shift forward by ${pauseDays} day${pauseDays===1?'':'s'}.`;
-
-  // Check if pause pushes past race date
-  const raceDate = planData.raceDate || A.date;
-  if (raceDate) {
-    const race = new Date(raceDate);
-    const totalWeeks = planData.weeks ? planData.weeks.length : 0;
-    const planEnd = new Date(planData.startDate || new Date());
-    planEnd.setDate(planEnd.getDate() + totalWeeks * 7);
-    const newPlanEnd = new Date(planEnd);
-    newPlanEnd.setDate(newPlanEnd.getDate() + pauseDays);
-
-    if (newPlanEnd > race) {
-      const daysOver = Math.ceil((newPlanEnd - race) / 86400000);
-      const weeksOver = Math.round(daysOver / 7);
-      document.getElementById('pause-preview').style.background = 'rgba(239,68,68,0.08)';
-      document.getElementById('pause-preview').style.borderColor = 'rgba(239,68,68,0.3)';
-      msg = `⚠️ Your race is on ${race.toLocaleDateString('en-AU', shortOpts)}. Pausing ${pauseDays} days means your plan finishes ${weeksOver > 0 ? weeksOver + ' week' + (weeksOver===1?'':'s') : daysOver + ' day' + (daysOver===1?'':'s')} after race day — you may need to skip some later sessions. Consider a shorter pause.`;
-    } else {
-      document.getElementById('pause-preview').style.background = 'rgba(30,144,255,0.08)';
-      document.getElementById('pause-preview').style.borderColor = 'rgba(30,144,255,0.2)';
-    }
-  }
-
-  document.getElementById('pause-preview-text').textContent = msg;
-  document.getElementById('pause-preview').style.display = 'block';
-}
-
-document.getElementById('pause-days-input')?.addEventListener('input', showPausePreview);
-
-async function confirmPause() {
-  const days = pauseDays || parseInt(document.getElementById('pause-days-input').value) || 0;
-  if (days < 1) { showIronToast('Please select or enter a number of days', '#ef4444'); return; }
-
-  // Shift planData.startDate forward
-  const oldStart = planData.startDate ? new Date(planData.startDate) : new Date();
-  const newStart = new Date(oldStart);
-  newStart.setDate(newStart.getDate() + days);
-  planData.startDate = newStart.toISOString().split('T')[0];
-  planData.pausedUntil = planData.startDate;
-  planData.pausedDays = (planData.pausedDays || 0) + days;
-
-  // Save back to Supabase
-  const btn = document.querySelector('#pause-modal button:last-child');
-  btn.textContent = 'Saving...';
-  btn.disabled = true;
-  try {
-    const { data: d1 } = await sb2.auth.getSession();
-    const session = d1?.session;
-    if (session) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const loadId = urlParams.get('load');
-      if (loadId) {
-        await sb2.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', loadId);
-      }
-    }
-  } catch(e) { console.error('Pause save error', e); }
-
-  closePauseModal();
-
-  // Show pause banner
-  const resume = new Date(planData.startDate);
-  const opts = {weekday:'short', day:'numeric', month:'short'};
-  document.getElementById('pause-resume-date').textContent =
-    `Resuming ${resume.toLocaleDateString('en-AU', opts)} · ${days} day${days===1?'':'s'} added to your plan`;
-  document.getElementById('pause-banner').style.display = 'flex';
-  document.getElementById('pause-btn').style.display = 'none';
-
-  showIronToast(`Plan paused for ${days} day${days===1?'':'s'} ⏸️`, '#fb923c');
-}
-
-async function resumePlan() {
-  if (!confirm('Resume your plan now? Remaining paused time will be cancelled.')) return;
-
-  // Calculate how many days remain of the pause
-  const pausedUntil = planData.pausedUntil ? new Date(planData.pausedUntil + 'T00:00:00') : null;
-  const today = new Date();
-  today.setHours(0,0,0,0);
-
-  // Shift startDate back by the remaining pause days (don't just set to today)
-  if (pausedUntil && pausedUntil > today) {
-    const remainingDays = Math.round((pausedUntil - today) / 86400000);
-    const currentStart = new Date(planData.startDate + 'T00:00:00');
-    currentStart.setDate(currentStart.getDate() - remainingDays);
-    planData.startDate = currentStart.toISOString().split('T')[0];
-  } else {
-    // Pause already expired — just clear it, don't touch startDate
-  }
-
-  // Never touch raceDate — preserve it exactly as set
-  delete planData.pausedUntil;
-  delete planData.pausedDays;
-
-  // Save
-  try {
-    const { data: d1 } = await sb2.auth.getSession();
-    if (d1?.session) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const loadId = urlParams.get('load');
-      if (loadId) {
-        await sb2.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', loadId);
-      }
-    }
-  } catch(e) { console.error('Resume save error', e); }
-
-  document.getElementById('pause-banner').style.display = 'none';
-  document.getElementById('pause-btn').style.display = 'flex';
-  renderWeek();
-  showIronToast('Plan resumed! ▶️', '#4ade80');
-  renderStartDateEditor(A.startDate, new URLSearchParams(location.search).get('load'));
-}
 // ── END PLAN PAUSE ──────────────────────────────────────────────────────────
 
 async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
@@ -2958,32 +2800,6 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
 </script>
 
 <!-- PAUSE MODAL -->
-<div id="pause-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);">
-  <div style="background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:28px;max-width:420px;width:100%;animation:fu 0.3s ease both;">
-    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px;">⏸️ Pause your plan</div>
-    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Your sessions shift forward — nothing gets lost.</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-      <button class="pause-opt" onclick="selectPauseDays(3,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">3 days</button>
-      <button class="pause-opt" onclick="selectPauseDays(7,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">1 week</button>
-      <button class="pause-opt" onclick="selectPauseDays(14,this)" style="flex:1;min-width:70px;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.8);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">2 weeks</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
-      <span style="font-size:12px;color:rgba(255,255,255,0.3);">or enter days</span>
-      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
-    </div>
-    <input type="number" id="pause-days-input" min="1" max="90" placeholder="e.g. 10" style="width:100%;padding:13px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;margin-bottom:12px;">
-    <div id="pause-preview" style="display:none;background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;">
-      <span id="pause-preview-text"></span>
-    </div>
-    <div style="display:flex;gap:10px;">
-      <button onclick="closePauseModal()" style="flex:1;padding:13px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.6);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;">Cancel</button>
-      <button onclick="confirmPause()" style="flex:2;padding:13px;background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.3);border-radius:10px;color:#fb923c;font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;">⏸️ Pause plan</button>
-    </div>
-  </div>
-</div>
-
-
 <!-- TRIAL BANNER -->
 <div id="trial-banner" style="display:none;position:fixed;top:68px;left:0;right:0;z-index:90;background:rgba(30,144,255,0.12);border-bottom:1px solid rgba(30,144,255,0.25);padding:10px 20px;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
   <span style="font-size:13px;color:rgba(255,255,255,0.8);font-family:'Inter',sans-serif;">⏳ <strong style="color:#fff"><span id="trial-days-left">7</span> days</strong> left on your free trial</span>
