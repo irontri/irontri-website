@@ -2894,6 +2894,7 @@ nd.weeks.forEach((wk)=>{
     _tBike=Math.round(_bh*60);_tRun=_pct<0.35?Math.round(45+(_pct/0.35)*35):_pct<0.75?Math.round(80+((_pct-0.35)/0.40)*40):Math.max(20,Math.round(120-((_pct-0.75)/0.25)*90));_tSwim=_pct<0.5?Math.round(40+_pct*30):Math.max(20,Math.round(70-(_pct-0.5)*60));
   } else if(_isOlympic){_tBike=Math.round(Math.min(90,45+_pct*60));_tRun=Math.round(Math.min(70,30+_pct*50));_tSwim=Math.round(Math.min(60,30+_pct*40));
   } else if(_isSprint){_tBike=Math.round(Math.min(60,25+_pct*40));_tRun=Math.round(Math.min(40,20+_pct*25));_tSwim=Math.round(Math.min(35,20+_pct*20));}
+  if(wk.phase==='Race Week') return; // Never override race week volumes
   if(_tBike>0&&wk.days){const _bs=wk.days.filter(d=>d.type==='Bike'||d.type==='Brick');if(_bs.length>0){const _lb=_bs.reduce((a,b)=>(parseFloat(a.duration)||0)>(parseFloat(b.duration)||0)?a:b);_lb.duration=_tBike;}}
   if(_tRun>0&&wk.days){const _rs=wk.days.filter(d=>d.type==='Run');if(_rs.length>0){const _lr=_rs.reduce((a,b)=>(parseFloat(a.duration)||0)>(parseFloat(b.duration)||0)?a:b);_lr.duration=_tRun;}}
   if(_tSwim>0&&wk.days){const _ss=wk.days.filter(d=>d.type==='Swim');if(_ss.length>0){const _ls=_ss.reduce((a,b)=>(parseFloat(a.duration)||0)>(parseFloat(b.duration)||0)?a:b);_ls.duration=_tSwim;}}
