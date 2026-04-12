@@ -62,7 +62,15 @@ export default async function handler(req, res) {
 
     const taperRule = isSprint ? 'SPRINT TAPER: Final 4-5 days only — reduce volume 40-60%.' : isOlympic ? 'OLYMPIC TAPER: Final 2 weeks — reduce volume by 40% then 70%.' : 'FULL/HALF IRONMAN TAPER: Final 3 weeks — reduce volume by 30%, 50%, 70% respectively. Keep intensity.';
 
-    const raceDayRule = isFinalBatch ? `RACE DAY REQUIRED: The LAST day of week ${totalNeeded} MUST be a Race Day session: {"day":"Sunday","type":"Race","name":"Race Day 🏁","duration":null,"effort":9,"zone":null,"purpose":"Your race — execute your plan and enjoy every moment.","warmup":"Light warm-up as per race briefing","mainset":"${raceDayDistances} — race pace throughout.","cooldown":"Recovery walk and celebrate your achievement","coachNote":"Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.","paceTarget":"Race pace","heartRateZone":"Race"}. The day BEFORE race day must be Rest.` : '';
+    // Calculate actual race day name from raceDate
+    const raceDayName = (() => {
+      const rd = planData.raceDate;
+      if (!rd) return 'Sunday';
+      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      return days[new Date(rd + 'T00:00:00').getDay()];
+    })();
+
+    const raceDayRule = isFinalBatch ? `RACE DAY REQUIRED: The LAST day of week ${totalNeeded} MUST be a Race Day session on ${raceDayName} (this is the actual race day): {"day":"${raceDayName}","type":"Race","name":"Race Day 🏁","duration":null,"effort":9,"zone":null,"purpose":"Your race — execute your plan and enjoy every moment.","warmup":"Light warm-up as per race briefing","mainset":"${raceDayDistances} — race pace throughout.","cooldown":"Recovery walk and celebrate your achievement","coachNote":"Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.","paceTarget":"Race pace","heartRateZone":"Race"}. The day BEFORE ${raceDayName} must be Rest. All other days can be easy shakeout or Rest.` : '';
 
     // Get last built week's bike data for continuity
     const lastBuiltWeeks = planData.weeks?.slice(-2) || [];
@@ -188,7 +196,15 @@ export default async function handler(req, res) {
     allWeeks.forEach((wk, i) => { wk.weekNumber = i + 1; });
 
     // Post-process: strip Race sessions from any week that isn't the final week
+    // Also ensure race day is on the correct day in the final week
     const finalWeekNum = totalNeeded;
+    const raceDayNameFinal = (() => {
+      const rd = planData.raceDate;
+      if (!rd) return 'Sunday';
+      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      return days[new Date(rd + 'T00:00:00').getDay()];
+    })();
+
     allWeeks.forEach((wk, i) => {
       if (wk.weekNumber < finalWeekNum && wk.days) {
         wk.days = wk.days.map(d => {
@@ -197,6 +213,22 @@ export default async function handler(req, res) {
           }
           return d;
         });
+      }
+      // Fix race day to correct day in final week
+      if (wk.weekNumber === finalWeekNum && wk.days) {
+        const raceDay = wk.days.find(d => d.type === 'Race');
+        if (raceDay && raceDay.day !== raceDayNameFinal) {
+          // Move race to correct day
+          const wrongDay = wk.days.find(d => d.type === 'Race');
+          const correctDaySession = wk.days.find(d => d.day === raceDayNameFinal);
+          if (wrongDay && correctDaySession) {
+            const wrongIdx = wk.days.indexOf(wrongDay);
+            const correctIdx = wk.days.indexOf(correctDaySession);
+            // Swap
+            wk.days[wrongIdx] = { ...correctDaySession, type: 'Rest', name: 'Rest', duration: 0, effort: 0, purpose: 'Recovery day', warmup: '', mainset: '', cooldown: '', coachNote: 'Rest and recover.' };
+            wk.days[correctIdx] = { ...wrongDay, day: raceDayNameFinal };
+          }
+        }
       }
     });
 
