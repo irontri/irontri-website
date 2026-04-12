@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delete Account — irontri</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --blue: #1E90FF;
+      --red: #ef4444;
+      --red-dim: rgba(239,68,68,0.08);
+      --red-border: rgba(239,68,68,0.2);
+      --white: #ffffff;
+      --muted: rgba(255,255,255,0.5);
+      --card: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--blue);
+      letter-spacing: -0.5px;
+      margin-bottom: 40px;
+      display: block;
+      text-decoration: none;
+    }
+
+    .icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: var(--red-dim);
+      border: 1px solid var(--red-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 10px;
+    }
+
+    .sub {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .notice {
+      background: rgba(251,146,60,0.08);
+      border: 1px solid rgba(251,146,60,0.2);
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .notice strong { color: #fb923c; }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    input, textarea {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 16px;
+      color: var(--white);
+      font-size: 15px;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, textarea:focus {
+      border-color: rgba(30,144,255,0.4);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 15px;
+      background: var(--red-dim);
+      border: 1px solid var(--red-border);
+      border-radius: 12px;
+      color: #f87171;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      margin-top: 8px;
+    }
+
+    .btn:hover {
+      background: rgba(239,68,68,0.14);
+      border-color: rgba(239,68,68,0.35);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .success {
+      display: none;
+      text-align: center;
+      padding: 32px 0;
+    }
+
+    .success .check {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .success h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .success p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .back {
+      display: block;
+      text-align: center;
+      margin-top: 28px;
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .back:hover { color: var(--white); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a href="/" class="logo">irontri</a>
+
+    <div id="form-view">
+      <div class="icon">🗑️</div>
+      <h1>Delete your account</h1>
+      <p class="sub">We're sorry to see you go. Submit this form and we'll permanently delete your account and all associated data within 30 days.</p>
+
+      <div class="notice">
+        <strong>What gets deleted:</strong> your profile, training plans, session history, and Strava connection. This cannot be undone.
+      </div>
+
+      <form id="delete-form">
+        <div class="form-group">
+          <label>Email address on your irontri account</label>
+          <input type="email" id="email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>Reason for leaving (optional)</label>
+          <textarea id="reason" placeholder="Help us improve irontri..."></textarea>
+        </div>
+        <button type="submit" class="btn" id="submit-btn">Request account deletion</button>
+      </form>
+    </div>
+
+    <div class="success" id="success-view">
+      <div class="check">✅</div>
+      <h2>Request received</h2>
+      <p>We've received your deletion request for <strong id="confirmed-email"></strong>. Your account and all data will be permanently deleted within 30 days. You'll receive a confirmation email shortly.</p>
+    </div>
+
+    <a href="/" class="back">← Back to irontri</a>
+  </div>
+
+  <script>
+    document.getElementById('delete-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const reason = document.getElementById('reason').value.trim();
+      const btn = document.getElementById('submit-btn');
+
+      if (!email) return;
+
+      btn.textContent = 'Submitting...';
+      btn.disabled = true;
+
+      try {
+        await fetch('https://irontriapp.com/api/request-delete-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, reason })
+        });
+      } catch(e) {}
+
+      document.getElementById('confirmed-email').textContent = email;
+      document.getElementById('form-view').style.display = 'none';
+      document.getElementById('success-view').style.display = 'block';
+    });
+  </script>
+</body>
+</html>
