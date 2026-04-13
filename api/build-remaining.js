@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   if (!planId || !userId) return res.status(400).json({ error: 'Missing planId or userId' });
 
   try {
-    const planRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?user_id=eq.${userId}&order=created_at.desc&limit=1`, {
+    const planRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?id=eq.${planId}&limit=1`, {
       headers: {
         'apikey': SUPABASE_SERVICE_KEY,
         'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
@@ -24,14 +24,14 @@ export default async function handler(req, res) {
     });
     const plans = await planRes.json();
 
-    console.log('plans query result:', plans?.length, 'for userId:', userId);
+    console.log('plans query result:', plans?.length, 'for planId:', planId);
 
     if (!plans || plans.length === 0) {
-      return res.status(404).json({ error: 'Plan not found', userId });
+      return res.status(404).json({ error: 'Plan not found', planId });
     }
 
-    const plan = plans.find(p => String(p.id) === String(planId)) || plans[0];
-    console.log('Using plan id:', plan.id, 'requested planId:', planId);
+    const plan = plans[0];
+    console.log('Using plan id:', plan.id);
 
     let txt = plan.plan_data || '';
     txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1);
