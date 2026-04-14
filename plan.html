@@ -2219,6 +2219,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   const loadId = urlParams.get('load');
   if (loadId) window.currentPlanId = loadId;
 
+  // Handle Strava OAuth return from quiz fitness flow
+  if (urlParams.get('strava_connected') === '1' && (urlParams.get('quiz_step') === '7' || !urlParams.get('load'))) {
+    const accessToken = urlParams.get('access_token');
+    const refreshToken = urlParams.get('refresh_token');
+    const expiresAt = urlParams.get('expires_at');
+    const athleteId = urlParams.get('athlete_id');
+    window.history.replaceState({}, '', '/plan.html');
+    setTimeout(async () => {
+      try {
+        if (sb2 && accessToken) {
+          const { data: { session } } = await sb2.auth.getSession();
+          if (session) {
+            await sb2.from('users').update({
+              strava_access_token: accessToken,
+              strava_refresh_token: refreshToken,
+              strava_token_expires_at: parseInt(expiresAt),
+              strava_athlete_id: athleteId
+            }).eq('id', session.user.id);
+          }
+        }
+      } catch(e) { console.error('Strava token save error:', e); }
+      go(7);
+      setTimeout(() => loadStravaFitness(), 1000);
+    }, 500);
+  }
+
   // Handle Stripe redirect
   const paymentStatus = urlParams.get('payment');
   if (paymentStatus === 'success') {
