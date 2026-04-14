@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How Long Does It Take to Train for an Ironman? | irontri</title>
+  <meta name="description" content="From complete beginner to race day — here's exactly how long you need to train for a Full Ironman and what your training should look like week by week." />
+  <link rel="canonical" href="https://irontriapp.com/blog/how-long-to-train-for-an-ironman.html" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --blue: #1E90FF; --bg: #0a0a0a; --border: rgba(255,255,255,0.08); --muted: rgba(255,255,255,0.5); --faint: rgba(255,255,255,0.25); }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: #fff; font-family: 'DM Sans', sans-serif; font-weight: 300; line-height: 1.7; }
+
+    /* NAV */
+    nav { position: sticky; top: 0; z-index: 100; background: var(--blue); padding: 0 56px; height: 52px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -0.5px; }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 14px; font-weight: 500; }
+    .nav-links a:hover { color: #fff; }
+    .nav-cta { background: #fff; color: var(--blue); padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; }
+
+    /* ARTICLE */
+    .article-wrap { max-width: 720px; margin: 0 auto; padding: 64px 24px 100px; }
+    .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); text-decoration: none; margin-bottom: 40px; transition: color 0.2s; }
+    .back-link:hover { color: #fff; }
+    .article-tag { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--blue); margin-bottom: 16px; }
+    .article-title { font-family: 'Syne', sans-serif; font-size: clamp(32px, 5vw, 52px); font-weight: 800; letter-spacing: -2px; line-height: 1.05; margin-bottom: 20px; }
+    .article-meta { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--faint); margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+    .article-body { font-size: 17px; line-height: 1.8; color: rgba(255,255,255,0.85); }
+    .article-body h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; color: #fff; margin: 56px 0 20px; }
+    .article-body h3 { font-size: 20px; font-weight: 600; color: #fff; margin: 36px 0 12px; }
+    .article-body p { margin-bottom: 20px; }
+    .article-body strong { color: #fff; font-weight: 600; }
+    .article-body ul, .article-body ol { margin: 0 0 20px 24px; }
+    .article-body li { margin-bottom: 8px; }
+    .article-body hr { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+    .article-body em { color: var(--muted); font-style: italic; font-size: 15px; }
+
+    /* CALLOUT */
+    .callout { background: rgba(30,144,255,0.08); border: 1px solid rgba(30,144,255,0.25); border-left: 4px solid var(--blue); border-radius: 0 12px 12px 0; padding: 24px 28px; margin: 40px 0; }
+    .callout-title { font-weight: 600; color: #fff; margin-bottom: 8px; font-size: 15px; }
+    .callout p { font-size: 15px; color: var(--muted); margin: 0; }
+
+    /* SUMMARY TABLE */
+    .summary-table { width: 100%; border-collapse: collapse; margin: 32px 0; font-size: 15px; }
+    .summary-table th { text-align: left; padding: 12px 16px; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--blue); border-bottom: 1px solid var(--border); }
+    .summary-table td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
+    .summary-table tr:last-child td { border-bottom: none; }
+
+    /* CTA */
+    .article-cta { background: rgba(30,144,255,0.08); border: 1px solid rgba(30,144,255,0.25); border-radius: 16px; padding: 36px; margin: 56px 0; text-align: center; }
+    .article-cta h3 { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 12px; }
+    .article-cta p { color: var(--muted); font-size: 15px; margin-bottom: 24px; }
+    .article-cta a { display: inline-block; background: var(--blue); color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-size: 15px; font-weight: 600; }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 40px 56px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .footer-copy { font-size: 13px; color: var(--faint); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--faint); text-decoration: none; }
+    .footer-links a:hover { color: var(--muted); }
+
+    @media(max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .article-wrap { padding: 40px 20px 80px; }
+      footer { padding: 32px 20px; flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">irontri</a>
+  <ul class="nav-links">
+    <li><a href="/#strava">How it works</a></li>
+    <li><a href="/#features">Features</a></li>
+    <li><a href="/#pricing-plans">Pricing</a></li>
+    <li><a href="/blog">Blog</a></li>
+  </ul>
+  <a href="/auth.html" class="nav-cta">Get my free plan →</a>
+</nav>
+
+<div class="article-wrap">
+  <a href="/blog" class="back-link">← Back to blog</a>
+
+  <div class="article-tag">Ironman Training</div>
+  <h1 class="article-title">How Long Does It Take to Train for an Ironman?</h1>
+  <div class="article-meta">
+    <span>By Dean · irontri founder</span>
+    <span>·</span>
+    <span>9 min read</span>
+  </div>
+
+  <div class="article-body">
+
+    <p>Training for a Full Ironman is one of the biggest athletic commitments you can make. A 3.8km swim, 180km bike, and 42.2km run — back to back, in a single day. So how long do you actually need to prepare?</p>
+
+    <p>The honest answer: it depends. But this guide will give you a clear, realistic picture based on where you're starting from — and what your training needs to look like to get you to that finish line.</p>
+
+    <hr>
+
+    <h2>The Short Answer</h2>
+
+    <p>For most people, <strong>20 to 36 weeks</strong> is the sweet spot for Full Ironman preparation. That's roughly 5 to 9 months of structured training.</p>
+
+    <p>If you're already a competent swimmer, cyclist, and runner with some triathlon experience, you might be race-ready in 20 weeks. If you're newer to the sport or coming from a single-discipline background, you'll want closer to 36 weeks — and that's not a bad thing. More time means more aerobic development, fewer injuries, and a better race.</p>
+
+    <div class="callout">
+      <div class="callout-title">The golden rule</div>
+      <p>More time is almost always better. The athletes who struggle most on race day are the ones who started training too late — not too early.</p>
+    </div>
+
+    <hr>
+
+    <h2>Training Time by Experience Level</h2>
+
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>Background</th>
+          <th>Recommended time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Complete beginner</td>
+          <td>36+ weeks</td>
+        </tr>
+        <tr>
+          <td>Sprint / Olympic triathlon experience</td>
+          <td>24–32 weeks</td>
+        </tr>
+        <tr>
+          <td>Half Ironman (70.3) background</td>
+          <td>20–24 weeks</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Complete Beginner (No triathlon background)</h3>
+    <p>If you've never done a triathlon before, jumping straight to Ironman training is a big ask. You'll need time to build swim technique, cycling endurance, and running economy — three completely different movement patterns — before you can start layering in race-specific work.</p>
+    <p>That doesn't mean it's impossible. Thousands of people complete their first Ironman every year with no prior triathlon experience. But they give themselves enough time to do it properly.</p>
+    <p>If you're in this category, consider doing a Sprint or Olympic distance triathlon first. It'll teach you race transitions, pacing, and give you a huge confidence boost before the big day.</p>
+
+    <h3>Some Triathlon Experience (Sprint or Olympic distance)</h3>
+    <p>If you've completed a Sprint or Olympic triathlon, you already understand what it feels like to swim, bike, and run in sequence. You have a base to build from.</p>
+    <p>At this level, 24 to 32 weeks gives you enough time to progressively build volume in each discipline, complete a Half Ironman (70.3) as a training race, peak properly, and taper into race day feeling fresh rather than exhausted.</p>
+
+    <h3>Half Ironman (70.3) Background</h3>
+    <p>If you've completed a 70.3, you're already halfway there in terms of fitness and race experience. Your aerobic base is solid and your body knows what sustained triathlon effort feels like.</p>
+    <p>20 to 24 weeks is plenty to bridge the gap — mainly by extending your long rides and long runs, increasing weekly swim volume, and building in the race-specific sessions that will prepare you for the unique demands of a full-distance race.</p>
+
+    <hr>
+
+    <h2>What a Full Ironman Training Plan Actually Looks Like</h2>
+
+    <p>A well-structured Ironman plan is divided into phases. Each phase has a specific purpose, and skipping any of them is a shortcut to either underperformance or injury.</p>
+
+    <h3>Base Phase (Weeks 1–8)</h3>
+    <p>This is where aerobic fitness is built. Long, easy sessions. Low intensity. High volume relative to where you started. The goal is to develop your aerobic engine — the foundation everything else is built on.</p>
+    <p>Most athletes rush this phase because easy feels too easy. Don't. The base phase is where Ironman races are won and lost.</p>
+
+    <h3>Build Phase (Weeks 9–20)</h3>
+    <p>Volume increases and intensity starts to creep in. Longer rides, longer runs, threshold swim sets. This is the hardest part of training — physically and mentally. You'll be tired. That's the point.</p>
+
+    <h3>Peak Phase (Weeks 21–26)</h3>
+    <p>Your biggest training weeks. The sessions that simulate race demands — long bricks, race-pace intervals, back-to-back long days. This phase will test everything you've built.</p>
+
+    <h3>Taper (Weeks 27–30)</h3>
+    <p>Volume drops sharply. Intensity stays. Your body recovers and supercompensates — getting stronger while doing less. Many athletes feel flat or anxious during the taper. That's completely normal.</p>
+
+    <h3>Race Week</h3>
+    <p>Short, sharp sessions only. A 25-minute easy swim Monday, 30-minute bike with a few surges Tuesday, 20-minute run with strides Wednesday, rest Thursday and Friday, rest Saturday. Then race day Sunday.</p>
+
+    <hr>
+
+    <h2>How Many Hours Per Week Do You Need to Train?</h2>
+
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>Phase</th>
+          <th>Weekly training hours</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Base phase</td>
+          <td>8–12 hours</td>
+        </tr>
+        <tr>
+          <td>Build phase</td>
+          <td>12–16 hours</td>
+        </tr>
+        <tr>
+          <td>Peak phase</td>
+          <td>14–20 hours</td>
+        </tr>
+        <tr>
+          <td>Taper</td>
+          <td>6–10 hours</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The athletes who finish Ironman successfully aren't always the ones who trained the most hours. They're the ones who trained consistently, recovered properly, and showed up to race day healthy.</p>
+
+    <hr>
+
+    <h2>The Biggest Mistakes People Make With Ironman Training Time</h2>
+
+    <p><strong>Starting too late.</strong> 12 weeks is not enough for a Full Ironman. If you're reading this 3 months out from your race with no base, consider deferring to next year or dropping to a 70.3.</p>
+
+    <p><strong>Ignoring the swim.</strong> Most athletes come from a running or cycling background and underestimate the swim. The swim is first — if you blow up in the water, your whole race unravels. Give it the time it deserves.</p>
+
+    <p><strong>Skipping recovery weeks.</strong> A proper Ironman plan has scheduled recovery weeks — usually every 3 to 4 weeks — where volume drops by 30 to 40%. These are not optional. They're where your body actually adapts.</p>
+
+    <p><strong>Training without a plan.</strong> Random sessions might maintain fitness but they won't build it in the way Ironman demands. You need progressive overload, periodisation, and race-specific preparation. That requires a structured plan.</p>
+
+    <div class="article-cta">
+      <h3>Build your free Ironman training plan</h3>
+      <p>irontri builds a fully personalised plan based on your race date, schedule, and fitness — with every session explained and your taper automatically pinned to race day.</p>
+      <a href="/auth.html">Get my free plan →</a>
+    </div>
+
+    <hr>
+
+    <h2>The Bottom Line</h2>
+
+    <p>There's no single answer to how long it takes to train for an Ironman — but there is a minimum. Give yourself at least 20 weeks if you have a strong triathlon background, and 30 to 36 weeks if you're newer to the sport.</p>
+
+    <p>The athletes who have the best Ironman experiences aren't always the fastest. They're the ones who respected the distance, followed a plan, and gave their body enough time to adapt.</p>
+
+    <p>Start early. Train smart. See you at the finish line.</p>
+
+    <hr>
+
+    <p><em>Dean is the founder of irontri and a 2x 70.3 Busselton finisher currently training for Full Ironman Busselton 2026.</em></p>
+
+  </div>
+</div>
+
+<footer>
+  <p class="footer-copy">© 2026 irontri. All rights reserved.</p>
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/blog">Blog</a>
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
+  </div>
+</footer>
+
+</body>
+</html>
