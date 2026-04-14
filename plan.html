@@ -2219,37 +2219,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const loadId = urlParams.get('load');
   if (loadId) window.currentPlanId = loadId;
 
-  // Handle Strava OAuth return from quiz fitness flow
-  const stravaConnected = urlParams.get('strava_connected');
-  const quizStep = urlParams.get('quiz_step');
-  if (stravaConnected === '1' && quizStep === '7') {
-    // Save tokens to user record then jump back to quiz step 7
-    const accessToken = urlParams.get('access_token');
-    const refreshToken = urlParams.get('refresh_token');
-    const expiresAt = urlParams.get('expires_at');
-    const athleteId = urlParams.get('athlete_id');
-    // Wait for Supabase then save tokens and restore quiz
-    setTimeout(async () => {
-      try {
-        if (sb2 && accessToken) {
-          const { data: { session } } = await sb2.auth.getSession();
-          if (session) {
-            await sb2.from('users').update({
-              strava_access_token: accessToken,
-              strava_refresh_token: refreshToken,
-              strava_token_expires_at: parseInt(expiresAt),
-              strava_athlete_id: athleteId
-            }).eq('id', session.user.id);
-          }
-        }
-      } catch(e) { console.error('Strava token save error:', e); }
-      // Jump to step 7 and load fitness
-      go(7);
-      // Clean URL
-      window.history.replaceState({}, '', '/plan.html');
-    }, 800);
-  }
-
   // Handle Stripe redirect
   const paymentStatus = urlParams.get('payment');
   if (paymentStatus === 'success') {
