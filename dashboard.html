@@ -1032,7 +1032,7 @@ async function loadTodaySession() {
           <button class="today-done-btn${done ? ' done' : ''}" onclick="quickComplete(${weekIdx}, ${dayIdx}, ${plan.id}, this)">
             ${done ? '✅ Done — undo?' : '✓ Mark done'}
           </button>
-        </div>`;"
+        </div>`;
 
     }
   } catch(e) { console.log('Today session error:', e); }
