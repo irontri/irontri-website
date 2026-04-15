@@ -1501,7 +1501,7 @@ async function buildPlan(){
     // Ensure start date is a Monday (plans run Mon-Sun)
     planData.startDate = planData.startDate || A.startDate;
     checkAndSavePlan(JSON.stringify(planData));
-    if(A.date&&planData.weeks.length<w){const _bt=document.createElement('div');_bt.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1E90FF;color:#fff;padding:14px 20px;border-radius:12px;font-size:13px;font-family:Inter,sans-serif;text-align:center;z-index:9999;max-width:340px;line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.4);';_bt.innerHTML='<strong>Your first 4 weeks are ready!</strong><br>Building your full '+w+'-week plan to race day in the background.';document.body.appendChild(_bt);setTimeout(()=>{if(_bt.parentNode)_bt.remove();},8000);setTimeout(()=>autoGenerateRemainingWeeks(w),5000);}
+    if(A.date&&planData.weeks.length<w){const _bt=document.createElement('div');_bt.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(251,146,60,0.95);color:#fff;padding:16px 24px;border-radius:12px;font-size:14px;font-family:Inter,sans-serif;text-align:center;z-index:9999;max-width:380px;line-height:1.6;box-shadow:0 4px 24px rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.2);';_bt.innerHTML='⚠️ <strong>Keep this tab open!</strong><br>Your full '+w+'-week plan is building in the background — closing this tab will stop it.';document.body.appendChild(_bt);setTimeout(()=>{if(_bt.parentNode)_bt.remove();},30000);setTimeout(()=>autoGenerateRemainingWeeks(w),5000);}
     window.scrollTo({top:0,behavior:'smooth'});
     setTimeout(() => window.dispatchEvent(new Event('plan-loaded')), 100);
 
