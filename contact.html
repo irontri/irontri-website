@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1E90FF" />
+  <title>Contact Us — irontri</title>
+  <meta name="description" content="Get in touch with the irontri team. Questions, beta testing, feedback — we'd love to hear from you." />
+  <link rel="canonical" href="https://www.irontriapp.com/contact.html" />
+  <link rel="apple-touch-icon" href="/irontri_logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --blue: #1E90FF;
+      --blue-dark: #1478d4;
+      --bg: #0a0a0a;
+      --surface: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --text: #ffffff;
+      --muted: rgba(255,255,255,0.75);
+      --faint: rgba(255,255,255,0.5);
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;min-height:100vh;}
+
+    /* NAV */
+    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 56px;height:68px;background:#1E90FF;border-bottom:1px solid rgba(255,255,255,0.15);}
+    .nav-logo{height:auto;width:160px;display:block;mix-blend-mode:screen;filter:brightness(10);}
+    .nav-right{display:flex;align-items:center;gap:12px;}
+    .btn-ghost{background:transparent;color:rgba(255,255,255,0.9);border:1px solid rgba(255,255,255,0.35);padding:9px 20px;border-radius:8px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;text-decoration:none;}
+    .btn-ghost:hover{background:rgba(255,255,255,0.1);}
+    .btn-white{background:#fff;color:var(--blue);border:none;padding:9px 20px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity 0.2s;text-decoration:none;}
+    .btn-white:hover{opacity:0.9;}
+    .nav-hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;background:none;border:none;}
+    .nav-hamburger span{display:block;width:22px;height:2px;background:#fff;border-radius:2px;}
+    .nav-mobile-menu{display:none;position:fixed;top:68px;left:0;right:0;background:#111;border-bottom:1px solid rgba(255,255,255,0.08);padding:20px;flex-direction:column;gap:4px;z-index:99;}
+    .nav-mobile-menu.open{display:flex;}
+    .nav-mobile-menu a{font-size:16px;color:rgba(255,255,255,0.7);text-decoration:none;padding:12px 8px;border-radius:8px;border-bottom:1px solid rgba(255,255,255,0.06);}
+    .nav-mobile-cta{margin-top:8px;background:#1E90FF!important;color:#fff!important;text-align:center;border-radius:10px;padding:14px!important;font-weight:600;border-bottom:none!important;}
+    @media(max-width:768px){.nav-hamburger{display:flex;}.nav-right .btn-ghost,.nav-right .btn-white{display:none;}}
+
+    /* PAGE */
+    .page{max-width:680px;margin:0 auto;padding:80px 24px 100px;}
+
+    .page-label{font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:16px;}
+    .page-title{font-family:'Syne',sans-serif;font-size:clamp(32px,5vw,52px);font-weight:800;letter-spacing:-2px;line-height:1.05;margin-bottom:16px;}
+    .page-sub{font-size:17px;color:var(--muted);line-height:1.7;font-weight:300;margin-bottom:48px;}
+
+    /* QUICK LINKS */
+    .quick-links{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:48px;}
+    .quick-link{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;text-decoration:none;transition:border-color 0.2s,background 0.2s;}
+    .quick-link:hover{border-color:rgba(30,144,255,0.4);background:rgba(30,144,255,0.05);}
+    .quick-link-icon{font-size:24px;margin-bottom:10px;}
+    .quick-link-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:4px;}
+    .quick-link-desc{font-size:12px;color:var(--faint);line-height:1.5;}
+
+    /* FORM */
+    .form-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px;}
+    .form-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;}
+    .form-sub{font-size:14px;color:var(--faint);margin-bottom:28px;line-height:1.5;}
+    .form-group{margin-bottom:20px;}
+    label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:8px;}
+    input,textarea{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:13px 16px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;resize:vertical;}
+    input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.25);}
+    input:focus,textarea:focus{border-color:var(--blue);}
+    textarea{min-height:140px;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .btn-submit{width:100%;background:var(--blue);color:#fff;border:none;padding:16px;border-radius:10px;font-size:16px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s,transform 0.15s;margin-top:8px;}
+    .btn-submit:hover{background:var(--blue-dark);transform:translateY(-1px);}
+    .btn-submit:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+
+    /* STATUS */
+    .status{display:none;margin-top:16px;padding:14px 18px;border-radius:10px;font-size:14px;font-weight:500;text-align:center;}
+    .status.success{background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.3);color:#4ade80;}
+    .status.error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;}
+
+    /* FOOTER */
+    footer{text-align:center;padding:40px 24px;border-top:1px solid var(--border);font-size:13px;color:var(--faint);}
+    footer a{color:var(--faint);text-decoration:none;}
+    footer a:hover{color:#fff;}
+
+    @media(max-width:600px){
+      .form-row{grid-template-columns:1fr;}
+      .quick-links{grid-template-columns:1fr;}
+      .form-card{padding:24px;}
+      .page{padding:48px 20px 80px;}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/"><img src="/irontri_logo.png" alt="irontri" class="nav-logo" /></a>
+  <div class="nav-right">
+    <a href="auth.html" class="btn-ghost">Log in</a>
+    <a href="auth.html" class="btn-white">Sign up free</a>
+  </div>
+  <button class="nav-hamburger" onclick="document.getElementById('mobileMenu').classList.toggle('open');this.classList.toggle('open');" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="nav-mobile-menu" id="mobileMenu">
+  <a href="/">Home</a>
+  <a href="auth.html" class="nav-mobile-cta">Get my free plan →</a>
+</div>
+
+<div class="page">
+
+  <div class="page-label">Get in touch</div>
+  <h1 class="page-title">We'd love to<br>hear from you.</h1>
+  <p class="page-sub">Questions about your plan, beta testing the app, or just want to say g'day — drop us a message and we'll get back to you fast.</p>
+
+  <!-- Quick links -->
+  <div class="quick-links">
+    <a href="https://play.google.com/apps/testing/com.irontri.app" target="_blank" class="quick-link">
+      <div class="quick-link-icon">📱</div>
+      <div class="quick-link-title">Join Android Beta</div>
+      <div class="quick-link-desc">Test the irontri app on Google Play — currently in closed testing.</div>
+    </a>
+    <a href="feedback.html" class="quick-link">
+      <div class="quick-link-icon">💬</div>
+      <div class="quick-link-title">Leave Feedback</div>
+      <div class="quick-link-desc">Help us improve irontri — your feedback directly shapes the product.</div>
+    </a>
+  </div>
+
+  <!-- Contact form -->
+  <div class="form-card">
+    <div class="form-title">Send us a message</div>
+    <div class="form-sub">We typically reply within a few hours. For urgent plan issues, mention your email address so we can look up your account.</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="name">Your name</label>
+        <input type="text" id="name" placeholder="Dean" autocomplete="name" />
+      </div>
+      <div class="form-group">
+        <label for="email">Your email</label>
+        <input type="email" id="email" placeholder="you@email.com" autocomplete="email" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="subject">Subject</label>
+      <input type="text" id="subject" placeholder="e.g. Android beta testing, plan question…" />
+    </div>
+
+    <div class="form-group">
+      <label for="message">Message</label>
+      <textarea id="message" placeholder="Tell us what's on your mind…"></textarea>
+    </div>
+
+    <button class="btn-submit" id="submitBtn" onclick="submitForm()">Send message →</button>
+    <div class="status" id="status"></div>
+  </div>
+
+</div>
+
+<footer>
+  <p style="margin-bottom:8px;">© 2026 irontri · <a href="/">Home</a> · <a href="feedback.html">Feedback</a></p>
+  <p>Built by a triathlete, for triathletes 🏊‍♂️🚴‍♂️🏃‍♂️</p>
+</footer>
+
+<script>
+async function submitForm() {
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const subject = document.getElementById('subject').value.trim();
+  const message = document.getElementById('message').value.trim();
+  const btn = document.getElementById('submitBtn');
+  const status = document.getElementById('status');
+
+  if (!name || !email || !message) {
+    status.className = 'status error';
+    status.style.display = 'block';
+    status.textContent = 'Please fill in your name, email and message.';
+    return;
+  }
+
+  const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailReg.test(email)) {
+    status.className = 'status error';
+    status.style.display = 'block';
+    status.textContent = 'Please enter a valid email address.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  status.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, subject, message })
+    });
+
+    if (res.ok) {
+      status.className = 'status success';
+      status.style.display = 'block';
+      status.textContent = '✓ Message sent! We\'ll get back to you soon.';
+      btn.textContent = 'Message sent ✓';
+      document.getElementById('name').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('subject').value = '';
+      document.getElementById('message').value = '';
+    } else {
+      throw new Error('Failed');
+    }
+  } catch(e) {
+    status.className = 'status error';
+    status.style.display = 'block';
+    status.textContent = 'Something went wrong. Please email us directly at coach@irontriapp.com';
+    btn.disabled = false;
+    btn.textContent = 'Send message →';
+  }
+}
+
+// Allow Enter in inputs to move to next field
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+    e.preventDefault();
+    const inputs = [...document.querySelectorAll('input, textarea')];
+    const idx = inputs.indexOf(e.target);
+    if (idx < inputs.length - 1) inputs[idx + 1].focus();
+  }
+});
+</script>
+</body>
+</html>
