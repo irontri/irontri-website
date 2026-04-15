@@ -149,6 +149,11 @@
     .today-meta-badge{background:rgba(255,255,255,0.08);padding:3px 10px;border-radius:20px;font-size:12px;}
     .today-go{background:#1E90FF;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;text-decoration:none;display:inline-block;transition:background 0.2s;flex-shrink:0;}
     .today-go:hover{background:#1478d4;}
+    .today-btn-row{display:flex;gap:10px;align-items:center;margin-top:4px;flex-wrap:wrap;}
+    .today-done-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.2s;flex-shrink:0;}
+    .today-done-btn:hover{background:rgba(74,222,128,0.12);border-color:rgba(74,222,128,0.35);color:#4ade80;}
+    .today-done-btn.done{background:rgba(74,222,128,0.12);border-color:rgba(74,222,128,0.35);color:#4ade80;}
+    .dash-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(15,15,15,0.97);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px 24px;font-size:15px;font-weight:600;color:#fff;z-index:999;pointer-events:none;opacity:0;transition:opacity 0.3s;white-space:nowrap;}
     .today-rest{font-size:14px;color:rgba(255,255,255,0.6);line-height:1.6;}
     .today-purpose{font-size:13px;color:rgba(255,255,255,0.5);margin-top:6px;line-height:1.5;}
     .race-countdown{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:12px;padding:14px 20px;margin-bottom:16px;display:none;align-items:center;gap:14px;}
@@ -1022,9 +1027,51 @@ async function loadTodaySession() {
           </div>
           ${day.purpose ? '<div class="today-purpose">' + day.purpose + '</div>' : ''}
         </div>
-        ${!done ? '<a href="/plan.html?load=' + plan.id + '" class="today-go">Open session →</a>' : ''}`;
+        <div class="today-btn-row">
+          <a href="/plan.html?load=${plan.id}" class="today-go">Open session →</a>
+          <button class="today-done-btn${done ? ' done' : ''}" onclick="quickComplete(${weekIdx}, ${dayIdx}, ${plan.id}, this)">
+            ${done ? '✅ Done — undo?' : '✓ Mark done'}
+          </button>
+        </div>`;"
+
     }
   } catch(e) { console.log('Today session error:', e); }
+}
+
+async function quickComplete(weekIdx, dayIdx, planId, btn) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    const { data: existing } = await sb.from('completions').select('id')
+      .eq('user_id', session.user.id).eq('plan_id', String(planId))
+      .eq('week_num', weekIdx).eq('day', String(dayIdx)).limit(1);
+    if (existing && existing.length > 0) {
+      await sb.from('completions').delete().eq('id', existing[0].id);
+      btn.textContent = '✓ Mark done';
+      btn.classList.remove('done');
+      document.querySelector('.today-name') && (document.querySelector('.today-name').style.color = '#fff');
+      document.querySelector('.today-icon') && (document.querySelector('.today-icon').textContent = document.querySelector('.today-icon').textContent.replace('✅', '🏅'));
+    } else {
+      await sb.from('completions').insert({ user_id: session.user.id, plan_id: String(planId), week_num: weekIdx, day: String(dayIdx), source: 'manual' });
+      btn.textContent = '✅ Done — undo?';
+      btn.classList.add('done');
+      showDashToast('✅ Session logged! Keep it up 💪');
+      // Refresh streak
+      loadDashboard && loadDashboard();
+    }
+  } catch(e) { console.error(e); btn.textContent = '✓ Mark done'; }
+  btn.disabled = false;
+}
+
+function showDashToast(msg) {
+  let t = document.getElementById('dash-toast');
+  if (!t) { t = document.createElement('div'); t.id = 'dash-toast'; t.className = 'dash-toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
 }
 
 let dashUnits = localStorage.getItem('irontri_units') || 'metric';
