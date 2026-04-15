@@ -416,6 +416,7 @@
     <div class="sl-hint" id="hh">Good balance for most athletes</div>
     <input type="range" min="3" max="20" value="8" step="1" oninput="setH(this.value)">
     <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.6);margin-top:6px;"><span>3 hrs</span><span>20 hrs</span></div>
+    <div id="hours-warning" style="display:none;margin-top:12px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:10px;padding:12px 14px;font-size:13px;color:rgba(251,191,36,0.9);line-height:1.5;font-family:'Inter',sans-serif;"></div>
   </div>
 
   <!-- STRAVA FITNESS CARD — shown if already connected -->
@@ -844,7 +845,17 @@ function updateGoalTime(){
   document.getElementById('n3').disabled=false;
 }
 function pg(el,key,val){el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
-function setH(v){A.hours=parseInt(v);document.getElementById('hv').innerHTML=v+' <span>hours/week</span>';const h={3:'Light — great for beginners',5:'Good starting point',7:'Solid volume',8:'Good balance for most',10:'Strong commitment',12:'Serious training load',15:'High performance',18:'Elite volume',20:'Maximum load'};const k=Object.keys(h).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);document.getElementById('hh').textContent=h[k]||'';}
+function setH(v){A.hours=parseInt(v);document.getElementById('hv').innerHTML=v+' <span>hours/week</span>';const h={3:'Light — great for beginners',5:'Good starting point',7:'Solid volume',8:'Good balance for most',10:'Strong commitment',12:'Serious training load',15:'High performance',18:'Elite volume',20:'Maximum load'};const k=Object.keys(h).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);document.getElementById('hh').textContent=h[k]||'';
+// Show warning if hours are high for race distance and plan length
+const race=(A.race||'').toLowerCase();
+const isSprint=race.includes('sprint');
+const isOlympic=race.includes('olympic');
+const planWeeks=A.weeks||0;
+let warn='';
+if(isSprint&&parseInt(v)>8) warn='⚠️ For a Sprint Triathlon, most athletes train 5–8h/week. No matter how far away race day is, high volume on a Sprint plan leads to fatigue without extra benefit.';
+else if(isOlympic&&planWeeks>=16&&parseInt(v)>12) warn='⚠️ Even with a longer Olympic plan, 12h/week is plenty. Higher volume risks overtraining before race day. Your plan will reflect your input.';
+else if(isOlympic&&planWeeks<16&&parseInt(v)>10) warn='⚠️ For an Olympic Triathlon, 6–10h/week is the sweet spot. Higher volume on a shorter plan can lead to overtraining. Your plan will reflect your input.';
+const wel=document.getElementById('hours-warning');if(wel)wel.style.display=warn?'block':'none';if(wel)wel.textContent=warn;}
 function td(btn,day){btn.classList.toggle('sel');if(btn.classList.contains('sel')){if(!A.days.includes(day))A.days.push(day);}else A.days=A.days.filter(d=>d!==day);document.getElementById('n8').disabled=A.days.length===0;}
 function toggleFifo(yes){
   A.fifo=yes;
