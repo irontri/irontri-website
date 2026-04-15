@@ -225,6 +225,56 @@ export default async function handler(req, res) {
     const allWeeks = [...(planData.weeks || []), ...newWeeks];
     allWeeks.forEach((wk, i) => { wk.weekNumber = i + 1; });
 
+    // Strip Strength sessions from Peak, Taper and Race Week phases
+    newWeeks.forEach(wk => {
+      const phase = (wk.phase || '').toLowerCase();
+      if (phase === 'peak' || phase === 'taper' || phase === 'race week') {
+        if (wk.days) {
+          wk.days = wk.days.map(d => {
+            if (d.type === 'Strength') {
+              return { ...d, type: 'Rest', name: 'Rest', duration: 0, effort: 0, purpose: 'Recovery — strength work stops in Peak and Taper to allow full adaptation.', warmup: '', mainset: '', cooldown: '', coachNote: 'Strength training stops here. Your body needs full recovery for race-specific intensity.' };
+            }
+            return d;
+          });
+        }
+      }
+    });
+
+    // Enforce minimum sessions in Peak weeks for long-distance races
+    const _raceLower = (athleteData.race || '').toLowerCase();
+    const _isFull = _raceLower.includes('full ironman') || _raceLower.includes('140');
+    const _isHalf = _raceLower.includes('70.3') || _raceLower.includes('half ironman');
+    if (_isFull || _isHalf) {
+      newWeeks.forEach(wk => {
+        if ((wk.phase || '').toLowerCase() === 'peak' && wk.days) {
+          const sessions = wk.days.filter(d => d.type !== 'Rest').length;
+          const minSessions = _isFull ? 4 : 3;
+          if (sessions < minSessions) {
+            // Find rest days and convert one to an easy aerobic session
+            const restDays = wk.days.map((d, i) => ({ d, i })).filter(x => x.d.type === 'Rest');
+            const toActivate = restDays.slice(0, minSessions - sessions);
+            toActivate.forEach(({ i }) => {
+              wk.days[i] = {
+                ...wk.days[i],
+                type: 'Run',
+                name: 'Easy Aerobic Run',
+                duration: _isFull ? 50 : 40,
+                effort: 5,
+                zone: 2,
+                purpose: 'Maintain aerobic base during Peak phase.',
+                warmup: '10 min easy jog',
+                mainset: _isFull ? '30 min easy run at Zone 2 — conversational pace, 130-145 bpm.' : '20 min easy run at Zone 2.',
+                cooldown: '10 min walk and stretch',
+                coachNote: 'Added to ensure adequate Peak phase training load.',
+                paceTarget: 'Easy Zone 2',
+                heartRateZone: 'Zone 2'
+              };
+            });
+          }
+        }
+      });
+    }
+
     // Post-process: fix consecutive rest days (never allow 3+ in a row)
     function fixConsecutiveRestDays(weeks) {
       const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
