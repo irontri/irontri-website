@@ -241,14 +241,11 @@ export default async function handler(req, res) {
     });
 
     // Enforce minimum sessions in Peak weeks for long-distance races
-    const _raceLower = (athleteData.race || '').toLowerCase();
-    const _isFull = _raceLower.includes('full ironman') || _raceLower.includes('140');
-    const _isHalf = _raceLower.includes('70.3') || _raceLower.includes('half ironman');
-    if (_isFull || _isHalf) {
+    if (isFull || isHalf) {
       newWeeks.forEach(wk => {
         if ((wk.phase || '').toLowerCase() === 'peak' && wk.days) {
           const sessions = wk.days.filter(d => d.type !== 'Rest').length;
-          const minSessions = _isFull ? 4 : 3;
+          const minSessions = isFull ? 4 : 3;
           if (sessions < minSessions) {
             // Find rest days and convert one to an easy aerobic session
             const restDays = wk.days.map((d, i) => ({ d, i })).filter(x => x.d.type === 'Rest');
@@ -258,12 +255,12 @@ export default async function handler(req, res) {
                 ...wk.days[i],
                 type: 'Run',
                 name: 'Easy Aerobic Run',
-                duration: _isFull ? 50 : 40,
+                duration: isFull ? 50 : 40,
                 effort: 5,
                 zone: 2,
                 purpose: 'Maintain aerobic base during Peak phase.',
                 warmup: '10 min easy jog',
-                mainset: _isFull ? '30 min easy run at Zone 2 — conversational pace, 130-145 bpm.' : '20 min easy run at Zone 2.',
+                mainset: isFull ? '30 min easy run at Zone 2 — conversational pace, 130-145 bpm.' : '20 min easy run at Zone 2.',
                 cooldown: '10 min walk and stretch',
                 coachNote: 'Added to ensure adequate Peak phase training load.',
                 paceTarget: 'Easy Zone 2',
