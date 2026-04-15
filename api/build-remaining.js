@@ -61,7 +61,6 @@ export default async function handler(req, res) {
     const restDayRule = isSprint ? 'REST DAYS: 2 rest days per week.' : isOlympic ? 'REST DAYS: 1-2 rest days per week.' : isHalf ? 'REST DAYS: 1 rest day per week. Never 0.' : 'REST DAYS: 1 rest day per week. Never 0. Never two consecutive rest days.';
 
     const totalWeeks = totalNeeded;
-    const taperStartWeek = totalWeeks <= 10 ? totalWeeks - 1 : totalWeeks - 2;
     const taperRule = isSprint ? \`SPRINT TAPER: ONLY week \${totalWeeks - 1} (second to last) reduces volume by 40-50%. Weeks 1 to \${totalWeeks - 2} must maintain progressive volume — do NOT reduce sessions or volume before week \${totalWeeks - 1}. Race week is week \${totalWeeks}. MINIMUM 5 sessions per week until taper week. NEVER drop below 4 sessions in any non-taper week.\` : isOlympic ? \`OLYMPIC TAPER: ONLY the final 2 weeks reduce volume (week \${totalWeeks-1} = -40%, week \${totalWeeks} = race week). All weeks before that must maintain progressive volume.\` : \`FULL/HALF IRONMAN TAPER: Final 3 weeks — reduce volume by 30%, 50%, 70% respectively. Keep intensity. All weeks before taper must maintain progressive volume.\`;
 
     // Calculate actual race day name from raceDate
@@ -72,7 +71,7 @@ export default async function handler(req, res) {
       return days[new Date(rd + 'T00:00:00').getDay()];
     })();
 
-    const raceDayRule = isFinalBatch ? `RACE WEEK REQUIRED: Week ${totalNeeded} is race week. Generate a proper race week with SHORT activation sessions — NOT all rest days. EXACT structure required: Monday=easy 25min Swim, Tuesday=easy 30min Bike with 4x30sec surges, Wednesday=easy 20min Run with strides, Thursday=Rest, Friday=easy 15min Swim, Saturday=Rest, Sunday=Race Day. The LAST day (${raceDayName}) MUST be: {"day":"${raceDayName}","type":"Race","name":"Race Day 🏁","duration":null,"effort":9,"zone":null,"purpose":"Your race — execute your plan and enjoy every moment.","warmup":"Light warm-up as per race briefing","mainset":"${raceDayDistances} — race pace throughout. Swim smooth, bike strong, run proud.","cooldown":"Recovery walk and celebrate your achievement","coachNote":"Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.","paceTarget":"Race pace","heartRateZone":"Race"}. NEVER make all 7 days Rest — race week must have swim, bike and run activation sessions before race day.` : '';
+    const raceDayRule = isFinalBatch ? `RACE WEEK REQUIRED: Week ${totalNeeded} is race week. Generate a proper race week with SHORT activation sessions. CRITICAL: NEVER have more than 2 consecutive rest days in race week. EXACT structure required based on race day (${raceDayName}): 4 days before race=easy 25min Swim, 3 days before=easy 30min Bike with 4x30sec surges, 2 days before=easy 20min Run with strides, 1 day before=Rest, race day=${raceDayName}=Race Day. All other days = Rest. NEVER place 3 or more rest days in a row. The LAST day (${raceDayName}) MUST be: {"day":"${raceDayName}","type":"Race","name":"Race Day 🏁","duration":null,"effort":9,"zone":null,"purpose":"Your race — execute your plan and enjoy every moment.","warmup":"Light warm-up as per race briefing","mainset":"${raceDayDistances} — race pace throughout. Swim smooth, bike strong, run proud.","cooldown":"Recovery walk and celebrate your achievement","coachNote":"Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.","paceTarget":"Race pace","heartRateZone":"Race"}. NEVER make all 7 days Rest — race week must have swim, bike and run activation sessions before race day.` : '';
 
     // Get last built week's bike data for continuity
     const lastBuiltWeeks = planData.weeks?.slice(-2) || [];
@@ -226,6 +225,46 @@ export default async function handler(req, res) {
     const allWeeks = [...(planData.weeks || []), ...newWeeks];
     allWeeks.forEach((wk, i) => { wk.weekNumber = i + 1; });
 
+    // Post-process: fix consecutive rest days (never allow 3+ in a row)
+    function fixConsecutiveRestDays(weeks) {
+      const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+      weeks.forEach((wk) => {
+        if (!wk.days || wk.days.length === 0) return;
+        const sorted = [...wk.days].sort((a, b) => dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day));
+        let restRun = 0, restStart = -1;
+        for (let i = 0; i <= sorted.length; i++) {
+          const isRest = i < sorted.length && sorted[i].type === 'Rest';
+          if (isRest) {
+            if (restRun === 0) restStart = i;
+            restRun++;
+          } else {
+            if (restRun >= 3) {
+              const midIdx = restStart + Math.floor(restRun / 2);
+              const midDay = sorted[midIdx];
+              const raceIdx = sorted.findIndex(d => d.type === 'Race');
+              // Don't insert before or on race day
+              if (midIdx !== raceIdx && midIdx !== raceIdx - 1) {
+                const origIdx = wk.days.findIndex(d => d.day === midDay.day);
+                if (origIdx !== -1) {
+                  wk.days[origIdx] = {
+                    day: midDay.day, type: 'Swim', name: 'Easy Activation Swim',
+                    duration: 20, effort: 3, zone: 1,
+                    purpose: 'Keep the body ticking over — light movement to stay loose without adding fatigue.',
+                    warmup: '5 min easy freestyle',
+                    mainset: '10 min easy continuous swim at Zone 1 — focus on stroke feel and breathing only.',
+                    cooldown: '5 min easy backstroke',
+                    coachNote: 'This short session maintains neuromuscular activation without building fatigue. Feel relaxed and confident going into race day.',
+                    paceTarget: 'Easy — 30-40 sec/100m slower than CSS',
+                    heartRateZone: 'Zone 1-2'
+                  };
+                }
+              }
+            }
+            restRun = 0; restStart = -1;
+          }
+        }
+      });
+    }
     // Post-process: strip Race sessions and fake "Race Day" sessions from non-final weeks
     const finalWeekNum = totalNeeded;
     const raceDayNameFinal = (() => {
@@ -322,6 +361,9 @@ export default async function handler(req, res) {
         }
       }
     });
+
+    // Now safe to fix consecutive rest days — fake race days already cleaned up
+    fixConsecutiveRestDays(allWeeks);
 
     const updated = { ...planData, weeks: allWeeks };
     const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?id=eq.${plan.id}`, {
