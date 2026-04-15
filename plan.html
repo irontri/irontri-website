@@ -611,7 +611,19 @@
     <div class="opt" onclick="pick(this,'injury','Managing a niggle — training but being cautious')"><span class="oi">⚠️</span><div class="ob"><div class="ot">Managing a niggle</div><div class="od">Minor ache — training through it carefully</div></div><div class="or"></div></div>
     <div class="opt" onclick="pick(this,'injury','Long-term condition requiring a modified approach')"><span class="oi">💊</span><div class="ob"><div class="ot">Long-term condition</div><div class="od">A permanent condition that affects how I train</div></div><div class="or"></div></div>
   </div>
-  <div class="qnav"><button class="bb" onclick="go(9)">← Back</button><button class="bn" id="n10" onclick="go(11)" disabled="">Continue →</button></div>
+  <div class="qnav"><button class="bb" onclick="go(9)">← Back</button><button class="bn" id="n10" onclick="go(10.5)" disabled="">Continue →</button></div>
+</div>
+
+<!-- Q10 strength -->
+<div class="q" id="q10b" style="display:none;">
+  <div class="qlbl">Your training</div>
+  <div class="qtitle">Would you like strength training included in your plan?</div>
+  <p class="qsub">Strength training improves power, reduces injury risk and is especially effective for shorter race distances.</p>
+  <div class="opts">
+    <div class="opt" onclick="pickStrength(this, true)"><span class="oi">💪</span><div class="ob"><div class="ot">Yes — include strength sessions</div><div class="od">1 session per week focused on core and functional strength</div></div><div class="or"></div></div>
+    <div class="opt" onclick="pickStrength(this, false)"><span class="oi">🏊</span><div class="ob"><div class="ot">No — swim, bike and run only</div><div class="od">Keep my plan focused on the three disciplines</div></div><div class="or"></div></div>
+  </div>
+  <div class="qnav"><button class="bb" onclick="go(10)">← Back</button><button class="bn" id="n10b" onclick="go(11)">Continue →</button></div>
 </div>
 
 <!-- Q10 -->
@@ -805,7 +817,7 @@
 </div>
 
 <script>
-const A={goal:'',race:'',goaltime:'',goaltimeText:'',exp:'',fitness:'',weak:'',hours:8,days:[],pool:'',injury:'',age:'',name:'',email:'',startDate:'',date:'',ftp:'',css:'',runThreshold:''};
+const A={goal:'',race:'',goaltime:'',goaltimeText:'',exp:'',fitness:'',weak:'',hours:8,days:[],pool:'',injury:'',strength:false,age:'',name:'',email:'',startDate:'',date:'',ftp:'',css:'',runThreshold:''};
 const T=12;
 let planData=null;
 let curWeek=0;
@@ -813,7 +825,8 @@ let curDay=null;
 let completions = new Set();
 
 function prog(n){const p=Math.round(n/T*100);document.getElementById('pf').style.width=p+'%';document.getElementById('pt').textContent='Question '+n+' of '+T;document.getElementById('pp').textContent=p+'%';}
-function go(n){document.querySelectorAll('.q').forEach(q=>q.classList.remove('active'));const t=document.getElementById('q'+n);if(t){t.classList.add('active');prog(n);}window.scrollTo({top:0,behavior:'smooth'});if(n===7){loadStravaFitness();}}
+function go(n){
+  if(n===10.5){document.querySelectorAll('.q').forEach(q=>q.style.display='none');document.getElementById('q10b').style.display='block';window.scrollTo(0,0);return;}document.querySelectorAll('.q').forEach(q=>q.classList.remove('active'));const t=document.getElementById('q'+n);if(t){t.classList.add('active');prog(n);}window.scrollTo({top:0,behavior:'smooth'});if(n===7){loadStravaFitness();}}
 function pick(el,key,val){el.closest('.opts').querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={goal:'n1',exp:'n4',fitness:'n5',weak:'n6',pool:'n9',injury:'n10'};if(m[key])document.getElementById(m[key]).disabled=false;
   if(key==='goaltime'){
     const box=document.getElementById('goaltime-input');
@@ -844,6 +857,7 @@ function updateGoalTime(){
   breakdown.innerHTML=`<div style="font-weight:500;margin-bottom:8px;color:#fff;">Target split breakdown:</div>🏊 Swim: ${swimMins} min (${Math.floor(swimPace)}:${String(Math.round((swimPace%1)*60)).padStart(2,'0')}/100m) &nbsp;·&nbsp; 🚴 Bike: ${bikeMins} min (${bikeSpeed}km/h) &nbsp;·&nbsp; 🏃 Run: ${runMins} min (${runPaceMin}:${String(runPaceSec).padStart(2,'0')}/km)<br><span style="color:var(--faint);font-size:12px;">Transitions: ~${transMins} min · Total: ${h}h ${m}m</span>`;
   document.getElementById('n3').disabled=false;
 }
+function pickStrength(el,val){el.closest('.opts').querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A.strength=val;document.getElementById('n10b').disabled=false;}
 function pg(el,key,val){el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
 function setH(v){A.hours=parseInt(v);document.getElementById('hv').innerHTML=v+' <span>hours/week</span>';const h={3:'Light — great for beginners',5:'Good starting point',7:'Solid volume',8:'Good balance for most',10:'Strong commitment',12:'Serious training load',15:'High performance',18:'Elite volume',20:'Maximum load'};const k=Object.keys(h).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);document.getElementById('hh').textContent=h[k]||'';
 // Show warning if hours are high for race distance and plan length
@@ -1425,7 +1439,7 @@ async function buildPlan(){
       "\n\nThis is a hard physical constraint. Do not put banned types in work weeks under any circumstances."+
       "\n=============================================";
   }
-  const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.units==="imperial"?", UNITS: IMPERIAL — use miles, yards, min/mile, min/100yd, mph for ALL distances and paces throughout the ENTIRE plan. NEVER use km, km/h, /km or /100m anywhere in any session. Every single pace target, distance and speed must be in imperial.":"")+
+  const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", strength training: "+(A.strength?'YES — include 1 strength session per week (core stability, glutes, single-leg exercises, 30-45 mins). Label as type Strength.':'No strength sessions — swim, bike and run only')+", age: "+A.age+", goal: "+(A.goaltimeText||"finish")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.units==="imperial"?", UNITS: IMPERIAL — use miles, yards, min/mile, min/100yd, mph for ALL distances and paces throughout the ENTIRE plan. NEVER use km, km/h, /km or /100m anywhere in any session. Every single pace target, distance and speed must be in imperial.":"")+
   (A.stravaFitness ? "\n\nSTRAVA FITNESS DATA — CRITICAL: Use these EXACT numbers in every session. Do NOT use % FTP or zone labels when actual watts/BPM are provided:\n" +
     (A.stravaFitness.run ? "- Run: avg pace "+(A.units==="imperial" ? (()=>{const p=A.stravaFitness.run.avgPace;const [m,s]=p.split(':').map(Number);const totalSec=m*60+s;const mpm=totalSec*1.60934;const mm=Math.floor(mpm/60);const ss=Math.round(mpm%60);return mm+':'+(ss<10?'0':'')+ss})()+" min/mile" : A.stravaFitness.run.avgPace+"/km")+", threshold pace "+(A.units==="imperial" ? (()=>{const p=A.stravaFitness.run.thresholdPace;const [m,s]=p.split(':').map(Number);const totalSec=m*60+s;const mpm=totalSec*1.60934;const mm=Math.floor(mpm/60);const ss=Math.round(mpm%60);return mm+':'+(ss<10?'0':'')+ss})()+" min/mile" : A.stravaFitness.run.thresholdPace+"/km")+", max HR "+A.stravaFitness.run.maxHR+"bpm, weekly volume "+(A.units==="imperial" ? Math.round(A.stravaFitness.run.weeklyDistanceKm*0.621)+"mi" : A.stravaFitness.run.weeklyDistanceKm+"km")+"\n" : "") +
     (A.stravaFitness.bike ? "- Bike: avg speed "+(A.units==="imperial" ? Math.round(A.stravaFitness.bike.avgSpeedKmh*0.621)+"mph" : A.stravaFitness.bike.avgSpeedKmh+"km/h")+(A.stravaFitness.bike.ftpEstimate?", FTP = "+A.stravaFitness.bike.ftpEstimate+"w (use actual watts in sessions, e.g. Zone 2 = "+(Math.round(A.stravaFitness.bike.ftpEstimate*0.56))+"-"+(Math.round(A.stravaFitness.bike.ftpEstimate*0.75))+"w, Threshold = "+(Math.round(A.stravaFitness.bike.ftpEstimate*0.91))+"-"+(Math.round(A.stravaFitness.bike.ftpEstimate*1.05))+"w)":"")+", weekly volume "+(A.units==="imperial" ? Math.round(A.stravaFitness.bike.weeklyDistanceKm*0.621)+"mi" : A.stravaFitness.bike.weeklyDistanceKm+"km")+"\n" : "") +
@@ -2903,7 +2917,7 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
           " ===";
       }
     }
-    const _rd=planData.raceDate||A.date;const _rdName=_rd?["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(_rd+"T00:00:00").getDay()]:"Sunday";const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(_rd||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". "+((planData.units||A.units)==="imperial"?"UNITS: IMPERIAL — use miles, yards, min/mile, min/100yd, mph for ALL paces and distances throughout the ENTIRE plan. NEVER use km, km/h, /km or /100m anywhere. Every pace target, distance and speed must be imperial. ":"")+(near?"RACE WEEK: Generate proper race week with SHORT activation sessions. CRITICAL: NEVER 3 or more consecutive rest days. Structure: 4 days before race=easy 25min Swim, 3 days before=easy 30min Bike with surges, 2 days before=easy 20min Run with strides, 1 day before=Rest, "+_rdName+"=Race Day 🏁. All other days=Rest. NEVER place 3+ rest days in a row. NEVER make all 7 days Rest. Place Race session ONLY on "+_rdName+".":"Progressive overload.")+autoFifoBlock+" Focus descriptions must be plain English, inspiring and athlete-friendly — never use terms like 'constraint', 'adaptation', 'modality' or corporate language. JSON only: {\"weeks\":[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");
+    const _rd=planData.raceDate||A.date;const _rdName=_rd?["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(_rd+"T00:00:00").getDay()]:"Sunday";const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(_rd||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". Strength training: "+(A.strength?"YES — include 1 strength session per week (core, glutes, single-leg, 30-45min), type Strength.":"No strength — swim bike run only")+". "+((planData.units||A.units)==="imperial"?"UNITS: IMPERIAL — use miles, yards, min/mile, min/100yd, mph for ALL paces and distances throughout the ENTIRE plan. NEVER use km, km/h, /km or /100m anywhere. Every pace target, distance and speed must be imperial. ":"")+(near?"RACE WEEK: Generate proper race week with SHORT activation sessions. CRITICAL: NEVER 3 or more consecutive rest days. Structure: 4 days before race=easy 25min Swim, 3 days before=easy 30min Bike with surges, 2 days before=easy 20min Run with strides, 1 day before=Rest, "+_rdName+"=Race Day 🏁. All other days=Rest. NEVER place 3+ rest days in a row. NEVER make all 7 days Rest. Place Race session ONLY on "+_rdName+".":"Progressive overload.")+autoFifoBlock+" Focus descriptions must be plain English, inspiring and athlete-friendly — never use terms like 'constraint', 'adaptation', 'modality' or corporate language. JSON only: {\"weeks\":[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");
 // Post-process new weeks: strip fake race days and correct volumes
 const _raceDistLower=(planData.race||A.race||'').toLowerCase();
 const _isFull=_raceDistLower.includes('140.6')||_raceDistLower.includes('full ironman');
