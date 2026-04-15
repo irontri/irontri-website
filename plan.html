@@ -654,6 +654,7 @@
       <input type="date" id="idate" oninput="cf()">
     </div>
   </div>
+  <div id="plan-length-warning" style="display:none;margin-bottom:16px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:10px;padding:12px 14px;font-size:13px;color:rgba(251,191,36,0.9);line-height:1.6;"></div>
   <div class="qnav"><button class="bb" onclick="go(11)">← Back</button><button class="bn" id="n12" onclick="showSum()" disabled="">See my plan summary →</button></div>
 </div>
 
@@ -937,6 +938,23 @@ function cf(){
   A.startDate=document.getElementById('istart').value;
   A.date=document.getElementById('idate').value;
   document.getElementById('n12').disabled=!A.startDate;
+  // Show warning if plan is too short for race distance
+  const _warnEl = document.getElementById('plan-length-warning');
+  if (_warnEl && A.startDate && A.date) {
+    const _w = wks(A.date);
+    const _race = (A.race||'').toLowerCase();
+    const _isFull = _race.includes('full ironman');
+    const _isHalf = _race.includes('70.3')||_race.includes('half ironman');
+    const _isOlympic = _race.includes('olympic');
+    const _min = _isFull?20:_isHalf?14:_isOlympic?10:0;
+    const _name = _isFull?'Full Ironman':_isHalf?'Half Ironman':'Olympic Triathlon';
+    if (_min && _w < _min) {
+      _warnEl.style.display='block';
+      _warnEl.textContent='⚠️ '+_w+' weeks is short for a '+_name+'. We recommend at least '+_min+' weeks for best results. Your plan will still be built but volume may be compressed.';
+    } else {
+      _warnEl.style.display='none';
+    }
+  }
 }
 function wks(d){if(!d)return 16;const start=A.startDate?new Date(A.startDate+"T00:00:00"):new Date();const w=Math.round((new Date(d+"T00:00:00")-start)/(7*24*60*60*1000));return Math.min(Math.max(w,8),52);}
 
