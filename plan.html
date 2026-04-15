@@ -1139,7 +1139,14 @@ function renderWeek(){
 
   const allDaysFull=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('cal').innerHTML=w.days.map((d,i)=>{
+
+  // Always render exactly 7 days — pad with Rest if AI returned fewer
+  const fullDays = [...w.days];
+  while (fullDays.length < 7) {
+    fullDays.push({ type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Rest day', warmup: '', mainset: '', cooldown: '', coachNote: '' });
+  }
+
+  document.getElementById('cal').innerHTML=fullDays.map((d,i)=>{
     const t=resolveType(d.type, d.name, d.warmup, d.mainset);
     const isActive=curDay===i;
     const isComplete=completions.has(`${curWeek}-${i}`);
@@ -1167,7 +1174,7 @@ function renderWeek(){
 function selectDay(i){
   curDay=i;
   const w=planData.weeks[curWeek];
-  const d=w.days[i];
+  const d=w.days[i] || { type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Rest day', warmup: '', mainset: '', cooldown: '', coachNote: '' };
   const t=resolveType(d.type, d.name, d.warmup, d.mainset);
   const sd=document.getElementById('sd');
 
