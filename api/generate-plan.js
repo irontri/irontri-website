@@ -1,7 +1,7 @@
 export const config = { maxDuration: 300 };
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -41,6 +41,7 @@ BASE PHASE RULES (critical — strictly enforced):
 - Base bike: steady aerobic riding at 55-65% FTP only — NO FTP intervals, NO over-unders, NO hard efforts
 - Base run: easy conversational pace only — NO tempo runs, NO strides, NO track sessions, NO speed work
 - Speedwork, threshold intervals and race-pace efforts begin ONLY from Build phase onwards — never before
+- STRENGTH SESSIONS: If the prompt requests strength training, include 1 strength session per week throughout ALL phases including Base. Strength sessions are always type "Strength", effort 5-6/10, 30-45 minutes. Focus on core stability, glutes, hip flexors and single-leg exercises. Never cardio — purely functional strength for triathlon. Strength sessions do NOT violate Base phase rules.
 
 PHASE ASSIGNMENT RULES (critical — must follow exactly):
 - phase field MUST be one of: "Base", "Build", "Peak", "Taper", "Race Week"
