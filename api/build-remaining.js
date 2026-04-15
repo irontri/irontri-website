@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   if (!planId || !userId) return res.status(400).json({ error: 'Missing planId or userId' });
 
   try {
-    const planRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?id=eq.${planId}&limit=1`, {
+    const planRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?user_id=eq.${userId}&order=created_at.desc&limit=1`, {
       headers: {
         'apikey': SUPABASE_SERVICE_KEY,
         'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
@@ -24,14 +24,14 @@ export default async function handler(req, res) {
     });
     const plans = await planRes.json();
 
-    console.log('plans query result:', plans?.length, 'for planId:', planId);
+    console.log('plans query result:', plans?.length, 'for userId:', userId);
 
     if (!plans || plans.length === 0) {
-      return res.status(404).json({ error: 'Plan not found', planId });
+      return res.status(404).json({ error: 'Plan not found', userId });
     }
 
-    const plan = plans[0];
-    console.log('Using plan id:', plan.id);
+    const plan = plans.find(p => String(p.id) === String(planId)) || plans[0];
+    console.log('Using plan id:', plan.id, 'requested planId:', planId);
 
     let txt = plan.plan_data || '';
     txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1);
@@ -119,7 +119,8 @@ export default async function handler(req, res) {
       return 'Match bike volume to race distance with steady progressive overload.';
     })();
 
-    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
+    const swimPaceRule = `SWIM PACE FORMAT: Always express swim pace as min:sec per 100m (e.g. 3:26/100m). Z2 pace is always 20-40 seconds SLOWER than CSS per 100m. Race pace ≈ CSS. VO2max is 5-10 sec/100m FASTER than CSS. NEVER use paces faster than 1:40/100m for age group athletes — if you calculate a pace faster than this it means you have made an error with the format.`;
+    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule} ${swimPaceRule}`;
 
     const prompt = basePrompt + structureInstructions;
 
