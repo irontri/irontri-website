@@ -60,7 +60,9 @@ export default async function handler(req, res) {
 
     const restDayRule = isSprint ? 'REST DAYS: 2 rest days per week.' : isOlympic ? 'REST DAYS: 1-2 rest days per week.' : isHalf ? 'REST DAYS: 1 rest day per week. Never 0.' : 'REST DAYS: 1 rest day per week. Never 0. Never two consecutive rest days.';
 
-    const taperRule = isSprint ? 'SPRINT TAPER: Final 4-5 days only — reduce volume 40-60%.' : isOlympic ? 'OLYMPIC TAPER: Final 2 weeks — reduce volume by 40% then 70%.' : 'FULL/HALF IRONMAN TAPER: Final 3 weeks — reduce volume by 30%, 50%, 70% respectively. Keep intensity.';
+    const totalWeeks = totalNeeded;
+    const taperStartWeek = totalWeeks <= 10 ? totalWeeks - 1 : totalWeeks - 2;
+    const taperRule = isSprint ? \`SPRINT TAPER: ONLY week \${totalWeeks - 1} (second to last) reduces volume by 40-50%. Weeks 1 to \${totalWeeks - 2} must maintain progressive volume — do NOT reduce sessions or volume before week \${totalWeeks - 1}. Race week is week \${totalWeeks}. MINIMUM 5 sessions per week until taper week. NEVER drop below 4 sessions in any non-taper week.\` : isOlympic ? \`OLYMPIC TAPER: ONLY the final 2 weeks reduce volume (week \${totalWeeks-1} = -40%, week \${totalWeeks} = race week). All weeks before that must maintain progressive volume.\` : \`FULL/HALF IRONMAN TAPER: Final 3 weeks — reduce volume by 30%, 50%, 70% respectively. Keep intensity. All weeks before taper must maintain progressive volume.\`;
 
     // Calculate actual race day name from raceDate
     const raceDayName = (() => {
@@ -119,8 +121,7 @@ export default async function handler(req, res) {
       return 'Match bike volume to race distance with steady progressive overload.';
     })();
 
-    const swimPaceRule = `SWIM PACE FORMAT: Always express swim pace as min:sec per 100m (e.g. 3:26/100m). Z2 pace is always 20-40 seconds SLOWER than CSS per 100m. Race pace ≈ CSS. VO2max is 5-10 sec/100m FASTER than CSS. NEVER use paces faster than 1:40/100m for age group athletes — if you calculate a pace faster than this it means you have made an error with the format.`;
-    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule} ${swimPaceRule}`;
+    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
 
     const prompt = basePrompt + structureInstructions;
 
