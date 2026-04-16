@@ -1204,14 +1204,9 @@ function renderWeek(){
   });
 
   // Store slot map on window for selectDay to use
-  window._daySlots = _isFinalWeek ? _displaySlots : daySlots;
+  window._daySlots = daySlots;
 
-  // In race week, hide slots that are rest-only (keep race day and real sessions)
-  const _displaySlots = _isFinalWeek
-    ? daySlots.filter(slot => slot.sessions.some(s => s.type !== 'Rest'))
-    : daySlots;
-
-  document.getElementById('cal').innerHTML=_displaySlots.map((slot,i)=>{
+  document.getElementById('cal').innerHTML=daySlots.map((slot,i)=>{
     const primary = slot.sessions[0];
     const hasDouble = slot.sessions.length > 1;
     const t=resolveType(primary.type, primary.name, primary.warmup, primary.mainset);
@@ -2471,7 +2466,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderRoadmap();
         await loadCompletions();
         renderWeek();
-        if(planData.raceDate){const _twR=Math.min(Math.ceil((new Date(planData.raceDate+'T00:00:00')-new Date((planData.startDate||A.startDate)+'T00:00:00'))/(7*24*60*60*1000)),52);if(planData.weeks.length>=_twR){planData.race=planData.race||A.race;await repairEliteTaper();}}
+        
         syncStravaActivities();
         // Resume background generation if plan is incomplete
         if(planData.raceDate){
@@ -2973,53 +2968,7 @@ function fixFifoViolations(weeks) {
   });
 }
 
-async function repairEliteTaper(){
-  const tw=planData.weeks?.length;
-  if(!tw||tw<2)return;
-  const raceDate=planData.raceDate||A.date;
-  const startDate=planData.startDate||A.startDate;
-  const race=planData.race||A.race||planData.basePrompt||'';
-  if(!raceDate||!startDate)return;
-  const _rd=new Date(raceDate+'T00:00:00');
-  const _dn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const _rl=race.toLowerCase();
-  const _isFull=_rl.includes('140.6')||_rl.includes('full ironman');
-  const _isHalf=_rl.includes('70.3')||_rl.includes('half ironman');
-  const _isOlympic=_rl.includes('olympic');
-  const _bikeLong=_isFull?210:_isHalf?150:_isOlympic?90:60;
-  const _bikeInt=_isFull?120:_isHalf?90:_isOlympic?60:45;
-  const _swimQ=_isFull?55:_isHalf?45:_isOlympic?30:20;
-  const _swimD=_isFull?60:_isHalf?45:_isOlympic?30:20;
-  const _runD=_isFull?60:_isHalf?45:_isOlympic?30:20;
-  const _raceDists=_isFull?'3.8km swim, 180km bike, 42.2km run':_isHalf?'1.9km swim, 90km bike, 21.1km run':_isOlympic?'1.5km swim, 40km bike, 10km run':'750m swim, 20km bike, 5km run';
-  const finalWk=planData.weeks[tw-1];
-  const penultWk=planData.weeks[tw-2];
-  // Always wipe and rebuild final 2 weeks
-  finalWk.days=[];finalWk.phase='Race Week';finalWk.focus='Race day — execute your plan.';finalWk.weeklyNarrative='Race week. Your fitness is locked in. Trust your training.';
-  penultWk.days=[];penultWk.phase='Taper';penultWk.focus='Final taper — stay sharp, stay fresh.';penultWk.weeklyNarrative='Final taper week. Keep the intensity, drop the volume. Arrive at the start line fresh and confident.';
-  // dbr=0 (race) → finalWk. dbr=1-7 → penultWk. Use actual calendar day names.
-  for(let i=7;i>=0;i--){
-    const d=new Date(_rd);d.setDate(_rd.getDate()-i);
-    const dayName=_dn[d.getDay()];
-    const _diff=Math.round((d-new Date(startDate+'T00:00:00'))/86400000);
-    const _wkIdx=Math.min(Math.floor(_diff/7),tw-1);
-    const wk=planData.weeks[_wkIdx]||finalWk;
-    if(i===0){wk.days.push({day:dayName,type:'Race',name:'Race Day 🏁',duration:null,effort:9,zone:null,purpose:'Your race — execute your plan and enjoy every moment.',warmup:'Light warm-up as per race briefing',mainset:_raceDists+' — race pace throughout. Swim smooth, bike strong, run proud.',cooldown:'Recovery walk and celebrate your achievement',coachNote:'Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.',paceTarget:'Race pace',heartRateZone:'Race'});}
-    else if(i===1){wk.days.push({day:dayName,type:'Swim',name:'Open Water Recce',duration:20,effort:3,zone:1,purpose:'Easy open water swim — sight the course, stay relaxed.',warmup:'5 min easy',mainset:'10 min easy swimming, practise sighting every 10 strokes.',cooldown:'5 min easy',coachNote:'Keep it easy. This is about feeling the water and sighting your course, not training.',paceTarget:'Easy',heartRateZone:'Zone 1'});wk.days.push({day:dayName,type:'Run',name:'Race Eve Activation Jog',duration:20,effort:3,zone:1,purpose:'Short easy jog to keep legs loose with 4-6 fast strides.',warmup:'10 min easy jog',mainset:'4-6 x 20 second strides at race pace with full recovery between each. Everything else is easy.',cooldown:'5 min walk',coachNote:'The strides keep your nervous system sharp without fatiguing your legs. Keep the rest easy.',paceTarget:'Easy with strides',heartRateZone:'Zone 1'});wk.days.push({day:dayName,type:'Bike',name:'Race Eve Bike Spin',duration:25,effort:3,zone:1,purpose:'Easy spin to keep legs loose and check your bike is race ready.',warmup:'5 min easy',mainset:'15 min very easy spin. Include 3-4 x 15 second race cadence efforts.',cooldown:'5 min easy',coachNote:'Spin easy. Check your bike over — tyres, gears, brakes. Arrive tomorrow feeling fresh.',paceTarget:'Easy spin',heartRateZone:'Zone 1'});}
-    else if(i===2){wk.days.push({day:dayName,type:'Rest',name:'Rest',duration:0,effort:0,zone:1,purpose:'Full rest day.',warmup:'',mainset:'Rest and recover.',cooldown:'',coachNote:'Rest is training. Sleep, eat well, hydrate.'});}
-    else if(i===3){wk.days.push({day:dayName,type:'Rest',name:'Rest',duration:0,effort:0,zone:1,purpose:'Full rest day.',warmup:'',mainset:'Rest and recover.',cooldown:'',coachNote:'Your body is absorbing everything. Trust the process.'});}
-    else if(i===4){wk.days.push({day:dayName,type:'Swim',name:'Quality Pre-Race Swim',duration:_swimQ,effort:6,zone:2,purpose:'Final quality swim — feel smooth and confident.',warmup:'400m easy freestyle',mainset:Math.round(_swimQ*0.6)+' min with race pace efforts.',cooldown:'200m easy',coachNote:'Feel the water one last time. Stay relaxed and smooth.',paceTarget:'Race pace efforts',heartRateZone:'Zone 2-3'});}
-    else if(i===5){wk.days.push({day:dayName,type:'Bike',name:'Race Pace Intervals',duration:_bikeInt,effort:7,zone:3,purpose:'Last intensity session — feel sharp on the bike.',warmup:'20 min easy spin',mainset:_isFull?'4x10min at race pace, 5min easy between each.':_isHalf?'4x10min at 70.3 race pace, 5min easy between each.':'3x8min at race pace, 5min easy between each.',cooldown:'20 min easy spin',coachNote:'Last real intensity session. Trust your fitness.',paceTarget:'Race pace',heartRateZone:'Zone 3-4'});}
-    else if(i===6){wk.days.push({day:dayName,type:'Swim',name:'Pre-Race Quality Swim',duration:_swimD,effort:6,zone:2,purpose:'Quality swim to stay sharp.',warmup:'400m easy',mainset:Math.round(_swimD*0.7)+' min quality swimming with race pace efforts.',cooldown:'200m easy',coachNote:'Morning session — do this first, run later.',paceTarget:'Race pace efforts',heartRateZone:'Zone 2'});wk.days.push({day:dayName,type:'Run',name:'Aerobic Run with Race Pace Push',duration:_runD,effort:6,zone:2,purpose:'Easy run with 10 min at race pace.',warmup:'15 min easy jog',mainset:'Easy Zone 2 running. Include 10 min at race pace in the middle.',cooldown:'10 min easy jog',coachNote:'Push to race pace for 10 minutes. Everything else is easy.',paceTarget:'Race pace for 10min',heartRateZone:'Zone 2'});}
-    else if(i===7){wk.days.push({day:dayName,type:'Bike',name:'Long TT Position Ride',duration:_bikeLong,effort:5,zone:2,purpose:'Last long ride in race position — build confidence.',warmup:'20 min easy spin',mainset:(_bikeLong-30)+' min steady aerobic in TT/race position. Race cadence (85-90rpm).',cooldown:'10 min easy spin',coachNote:'Last big ride. Stay in race position, feel the bike. Confidence building, not fitness building.',paceTarget:'Aerobic Zone 2',heartRateZone:'Zone 2'});}
-  }
-  // Save to Supabase
-  const pid=new URLSearchParams(location.search).get('load')||window.currentPlanId;
-  if(pid&&sb2){for(let a=0;a<3;a++){try{const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from('plans').update({plan_data:JSON.stringify(planData)}).eq('id',pid);if(!error){console.log('repairEliteTaper: saved');break;}}}catch(e){}await new Promise(r=>setTimeout(r,1000));}}
-  renderWeek();renderRoadmap();
-}
-
-async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadmap();const pid=new URLSearchParams(location.search).get("load")||window.currentPlanId;let fails=0;while(planData.weeks.length<tw&&fails<3){const built=planData.weeks.length,bs=built+1,near=tw-built<=4,be=near?tw:Math.min(built+2,tw);const bT=document.getElementById("roadmap-building-text");const ph=near?"Taper":built<tw*0.3?"Base":built<tw*0.65?"Build":"Peak";if(bT)bT.textContent="Building weeks "+bs+"-"+be+" of "+tw+" ("+ph+")...";const lw=planData.weeks.slice(-2).map(w=>({phase:w.phase,focus:w.focus}));// Build FIFO block for autoGen
+async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadmap();const pid=new URLSearchParams(location.search).get("load")||window.currentPlanId;let fails=0;while(planData.weeks.length<tw&&fails<3){const built=planData.weeks.length,bs=built+1,be=Math.min(built+2,tw),near=be>=tw-3;const bT=document.getElementById("roadmap-building-text");const ph=near?"Taper":built<tw*0.3?"Base":built<tw*0.65?"Build":"Peak";if(bT)bT.textContent="Building weeks "+bs+"-"+be+" of "+tw+" ("+ph+")...";const lw=planData.weeks.slice(-2).map(w=>({phase:w.phase,focus:w.focus}));// Build FIFO block for autoGen
     var autoFifoBlock = "";
     if(A.fifo){
       var aForbidden=[];
@@ -3050,7 +2999,7 @@ async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadm
           " ===";
       }
     }
-    const _rd=planData.raceDate||A.date;const _rdName=_rd?["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(_rd+"T00:00:00").getDay()]:"Sunday";const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(_rd||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". Strength training: "+(A.strength?"YES — include 1 strength session per week (core, glutes, single-leg, 30-45min), type Strength.":"No strength — swim bike run only")+". "+((planData.units||A.units)==="imperial"?"UNITS: IMPERIAL — use miles, yards, min/mile, min/100yd, mph for ALL paces and distances throughout the ENTIRE plan. NEVER use km, km/h, /km or /100m anywhere. Every pace target, distance and speed must be imperial. ":"")+(near?"RACE WEEK (week "+tw+"): This is the final week before the race. MAXIMUM 2 rest days total. Structure working back from race day: 1 day before race=easy triple activation (20min swim + 20min jog with strides + 25min easy bike spin, all on same day); 2 days before=Rest; 3 days before=Rest; 4 days before=easy quality swim 30-55min with race pace efforts; 5 days before=bike with race pace intervals 45-120min; 6 days before=double session (quality swim 30-60min morning + easy run 30-60min with 10min race pace afternoon); 7 days before=long aerobic bike in TT position 60-210min. Race day="+_rdName+". Place Race session ONLY on "+_rdName+". NEVER more than 2 rest days. NEVER 3+ consecutive rest days.":"Progressive overload.")+autoFifoBlock+" Focus descriptions must be plain English, inspiring and athlete-friendly — never use terms like 'constraint', 'adaptation', 'modality' or corporate language. JSON only: {weeks:[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");
+    const _rd=planData.raceDate||A.date;const _rdName=_rd?["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(_rd+"T00:00:00").getDay()]:"Sunday";const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(_rd||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". Strength training: "+(A.strength?"YES — include 1 strength session per week (core, glutes, single-leg, 30-45min), type Strength.":"No strength — swim bike run only")+". "+((planData.units||A.units)==="imperial"?"UNITS: IMPERIAL — use miles, yards, min/mile, min/100yd, mph for ALL paces and distances throughout the ENTIRE plan. NEVER use km, km/h, /km or /100m anywhere. Every pace target, distance and speed must be imperial. ":"")+(near?"RACE WEEK — week "+tw+" of "+tw+". Place Race session ONLY on "+_rdName+". Working back from "+_rdName+": 7 days before=Long TT Position Ride (aerobic bike 60-210min in race position, type=Bike effort=5); 6 days before=TWO sessions same day (quality swim 30-60min effort=6 + easy run 30-60min with 10min race pace effort=6); 5 days before=Race Pace Intervals (bike 45-120min effort=7); 4 days before=Quality Pre-Race Swim (30-55min effort=6); 3 days before=Rest; 2 days before=Rest; 1 day before=THREE sessions same day (Open Water Recce swim 20min effort=3 + Race Eve Activation Jog run 20min effort=3 + Race Eve Bike Spin 25min effort=3); Race day=type Race name Race Day duration=null effort=9. ONLY 2 rest days total. NEVER add extra rest days. NEVER change this structure.":"Progressive overload.")+autoFifoBlock+" Focus descriptions must be plain English, inspiring and athlete-friendly — never use terms like 'constraint', 'adaptation', 'modality' or corporate language. JSON only: {weeks:[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");
 // Post-process new weeks: strip fake race days and correct volumes
 const _raceDistLower=(planData.race||A.race||'').toLowerCase();
 const _isFull=_raceDistLower.includes('140.6')||_raceDistLower.includes('full ironman');
@@ -3093,7 +3042,7 @@ nd.weeks.forEach((wk)=>{
 planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});
 // Fix consecutive rest days (never 3+ in a row)
 (function fixConsecRest(weeks){const _do=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];weeks.forEach(wk=>{if(!wk.days||!wk.days.length)return;const s=[...wk.days].sort((a,b)=>_do.indexOf(a.day)-_do.indexOf(b.day));let rr=0,rs=-1;for(let i=0;i<=s.length;i++){const isR=i<s.length&&s[i].type==='Rest';if(isR){if(rr===0)rs=i;rr++;}else{if(rr>=3){const mi=rs+Math.floor(rr/2);const md=s[mi];const ri=s.findIndex(d=>d.type==='Race');if(mi!==ri&&mi!==ri-1){const oi=wk.days.findIndex(d=>d.day===md.day);if(oi!==-1){wk.days[oi]={day:md.day,type:'Swim',name:'Easy Activation Swim',duration:20,effort:3,zone:1,purpose:'Keep the body ticking — light movement to stay loose.',warmup:'5 min easy freestyle',mainset:'10 min easy continuous swim at Zone 1 — stroke feel only.',cooldown:'5 min easy backstroke',coachNote:'Short activation to maintain neuromuscular readiness without fatigue.',paceTarget:'Easy — 30-40 sec/100m slower than CSS',heartRateZone:'Zone 1-2'};}}}rr=0;rs=-1;}}});})(planData.weeks);
-if(A.fifo)fixFifoViolations(planData.weeks);correctPhases(planData.weeks);if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}planData.race=planData.race||A.race;await repairEliteTaper();}
+if(A.fifo)fixFifoViolations(planData.weeks);correctPhases(planData.weeks);if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}}
 
 </script>
 
