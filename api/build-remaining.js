@@ -260,6 +260,7 @@ export default async function handler(req, res) {
         }
       }
     });
+    const allWeeks = [...(planData.weeks || []), ...newWeeks];
     allWeeks.forEach((wk, i) => { wk.weekNumber = i + 1; });
 
     // Strip Strength sessions from Peak, Taper and Race Week phases
