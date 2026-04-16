@@ -168,7 +168,7 @@ export default async function handler(req, res) {
 
     const strengthRule = `STRENGTH SESSIONS: If strength training is requested, always place the strength session on a rest day — NEVER on a day that already has swim, bike, run or brick. Strength is 20-30 min, type Strength, on what would otherwise be a rest day. NEVER in Peak, Taper or Race Week.`;
 
-    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
+    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS — use EXACTLY these phases for each week based on position in the ${totalNeeded}-week plan: Base = weeks 1-${Math.floor(totalNeeded*0.30)}, Build = weeks ${Math.floor(totalNeeded*0.30)+1}-${Math.floor(totalNeeded*0.65)}, Peak = weeks ${Math.floor(totalNeeded*0.65)+1}-${Math.floor(totalNeeded*0.85)}, Taper = weeks ${Math.floor(totalNeeded*0.85)+1}-${totalNeeded-1}, Race Week = week ${totalNeeded}. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"[correct phase for this week]","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
 
     const prompt = basePrompt + structureInstructions;
 
@@ -560,7 +560,7 @@ export default async function handler(req, res) {
       // Wipe the final two weeks' days and rebuild from scratch
       const weeksToOverride = [...new Set(raceWeekSessions.map(s => s.weekNum))];
       weeksToOverride.forEach(wn => {
-        const wk = newWeeks.find(w => parseInt(w.weekNumber) === wn);
+        const wk = allWeeks.find(w => parseInt(w.weekNumber) === wn);
         if (wk) { wk.days = []; wk.phase = wn === totalNeeded ? 'Race Week' : 'Taper'; }
       });
 
