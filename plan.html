@@ -2984,7 +2984,7 @@ async function autoGenerateRemainingWeeks(tw){
   if(!userId){console.error("autoGen: no userId");return;}
   let fails=0;
   const bT=document.getElementById("roadmap-building-text");
-  while(planData.weeks.length<tw&&fails<3){
+  while(planData.weeks.length<tw&&fails<8){
     try{
       const built=planData.weeks.length;
       const ph=built<tw*0.3?"Base":built<tw*0.65?"Build":built<tw*0.85?"Peak":"Taper";
@@ -2999,7 +2999,7 @@ async function autoGenerateRemainingWeeks(tw){
       fails=0;
       if(data.done){console.log("autoGen: complete, "+planData.weeks.length+" weeks built");break;}
       await new Promise(r=>setTimeout(r,1000));
-    }catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}
+    }catch(e){console.error("autoGen:",e);fails++;const backoff=Math.min(2000*Math.pow(2,fails-1),30000);console.log('autoGen: retrying in '+backoff+'ms (fail '+fails+'/8)');await new Promise(r=>setTimeout(r,backoff));}
   }
   if(A.fifo)fixFifoViolations(planData.weeks);
   correctPhases(planData.weeks);
