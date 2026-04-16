@@ -24,6 +24,7 @@ SESSION QUALITY RULES (apply to every session):
 - Bike: always include cadence (rpm) + speed (${isImperial ? 'mph' : 'km/h'}) + power in ACTUAL WATTS (e.g. "210w", "195-215w") — NEVER use "% FTP" if actual FTP watts are provided in the prompt. Only use % FTP if no FTP data is available.
 - Run: always include pace (${isImperial ? 'min/mile' : '/km'}) + cadence (spm) + technique cue. Use ACTUAL BPM for heart rate zones (e.g. "130-145 bpm") — NEVER use generic "Zone 2" labels if actual HR zone BPM values are provided in the prompt.
 - Swim: always include interval distance (${isImperial ? 'yards' : 'metres'}) + rest + technique cue
+- SWIM SESSIONS: Always include exactly 2 swim sessions per week for 70.3, T100 and Full Ironman plans. Each swim must be on its own separate day. The longer swim is the key session (60-75 min at peak); the second swim is shorter (45-60 min) and focuses on technique and aerobic base. NEVER generate more than 7 sessions total per week.
 - paceTarget: MUST be in ${isImperial ? 'min/mile or min/100yd or mph' : 'min/km or min/100m or km/h'} — NEVER mix units
 - heartRateZone: When HR zone BPM data is provided, use actual BPM ranges (e.g. "130-145 bpm") not generic labels like "Zone 2". When no HR data available, use zone labels.
 - CRITICAL: If the prompt contains "STRAVA FITNESS DATA" with actual watts and BPM values — USE THOSE EXACT VALUES throughout the entire plan. Do not substitute percentages or zone labels for actual numbers.
@@ -70,10 +71,12 @@ FULL IRONMAN (140.6) LONG SESSION REQUIREMENTS:
 - Long run peak volume: 2-2.5 hours (${isImperial ? '16-20 miles' : '25-32 km'}) in Peak phase. Build from 60 min in Base.
 - Weekly bike volume: 6-10 hours total at peak. Never less than 3 hours in any non-taper week.
 - Never cap long ride at under 3.5 hours in Build or Peak phase for Full Ironman.
+- Swim volume: 2 sessions per week. Long swim builds from 45 min in Base to 75 min in Peak. Second swim 45-60 min. Total weekly swim ~2-2.5 hours at peak.
 
 HALF IRONMAN (70.3) LONG SESSION REQUIREMENTS:
 - Long ride peak: 3-4 hours (${isImperial ? '55-75 miles' : '90-120 km'}) in Peak phase.
 - Long run peak: 1.5-2 hours (${isImperial ? '12-16 miles' : '18-24 km'}) in Peak phase.
+- Swim volume: 2 sessions per week. Long swim builds to 65 min in Peak. Second swim 40-50 min.
 
 OLYMPIC TRIATHLON LONG SESSION REQUIREMENTS:
 - Long ride peak: 2-2.5 hours (${isImperial ? '35-50 miles' : '55-80 km'}) in Peak phase.
