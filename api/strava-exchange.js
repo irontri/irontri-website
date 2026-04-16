@@ -38,7 +38,7 @@ export default async function handler(req, res) {
 
     if (error) {
       if (isApp) return res.redirect(302, 'irontri://strava-error?error=denied');
-      const dest = state === 'quiz_fitness' ? '/plan.html' : '/dashboard.html';
+      const dest = (state && state.startsWith('quiz_fitness')) ? '/plan.html' : '/dashboard.html';
       return res.redirect(302, dest + '?strava_error=denied');
     }
 
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       const data = await r.json();
       if (!r.ok) {
         if (isApp) return res.redirect(302, 'irontri://strava-error?error=' + encodeURIComponent(data.message || 'exchange_failed'));
-        const dest = state === 'quiz_fitness' ? '/plan.html' : '/dashboard.html';
+        const dest = (state && state.startsWith('quiz_fitness')) ? '/plan.html' : '/dashboard.html';
         return res.redirect(302, dest + '?strava_error=' + encodeURIComponent(data.message || 'exchange_failed'));
       }
 
@@ -75,9 +75,27 @@ export default async function handler(req, res) {
       }
 
       // Quiz fitness flow — save tokens server-side then redirect back
-      if (state === 'quiz_fitness') {
-        // Try to save tokens server-side using athlete ID lookup
-        if (athleteId) {
+      if (state && state.startsWith('quiz_fitness')) {
+        // Extract user ID from state param (format: quiz_fitness__USER_ID)
+        const userId = state.includes('__') ? state.split('__')[1] : null;
+        if (userId) {
+          // Save by user ID — most reliable
+          await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_SERVICE_KEY,
+              'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+              'Prefer': 'return=minimal',
+            },
+            body: JSON.stringify({
+              strava_access_token: accessToken,
+              strava_refresh_token: refreshToken,
+              strava_token_expires_at: parseInt(expiresAt),
+              strava_athlete_id: String(athleteId),
+            }),
+          });
+        } else if (athleteId) {
           await saveStravaTokens(athleteId, accessToken, refreshToken, expiresAt);
         }
         // Also pass tokens in URL as fallback in case user row doesn't exist yet
@@ -107,7 +125,7 @@ export default async function handler(req, res) {
 
     } catch (e) {
       if (isApp) return res.redirect(302, 'irontri://strava-error?error=' + encodeURIComponent(e.message));
-      const dest = state === 'quiz_fitness' ? '/plan.html' : '/dashboard.html';
+      const dest = (state && state.startsWith('quiz_fitness')) ? '/plan.html' : '/dashboard.html';
       return res.redirect(302, dest + '?strava_error=' + encodeURIComponent(e.message));
     }
   }
