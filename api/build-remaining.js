@@ -127,7 +127,9 @@ export default async function handler(req, res) {
       return `TRACK SESSIONS: Include 1 track run per week in Build and Peak phases only — NEVER in Base or Taper. Replaces a standalone run session, never adds on top. Structure: 20min warm up with dynamic stretching + 4-6 fast strides at end of WU; main set: ${repsByDistance}; 15min cool down + easy stretching. Use actual run pace from prompt if available. coachNote MUST include the injury warning: "If you feel any niggle or tightness — back off immediately. Consistency is everything and injury is the worst thing that can happen. If you have another hard session this week, pay attention to how your body feels and skip if needed." NEVER place track on a day adjacent to a hard bike, brick or long run.`;
     })();
 
-    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
+    const strengthRule = `STRENGTH SESSIONS: If strength training is requested, always place the strength session on a rest day — NEVER on a day that already has swim, bike, run or brick. Strength is 20-30 min, type Strength, on what would otherwise be a rest day. NEVER in Peak, Taper or Race Week.`;
+
+    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
 
     const prompt = basePrompt + structureInstructions;
 
@@ -273,6 +275,28 @@ export default async function handler(req, res) {
           });
         }
       }
+    });
+
+    // Post-process: ensure strength sessions land on rest days, not training days
+    // If AI placed strength on a training day, swap it with the first available rest day
+    newWeeks.forEach(wk => {
+      const phase = (wk.phase || '').toLowerCase();
+      if (phase === 'peak' || phase === 'taper' || phase === 'race week') return;
+      if (!wk.days) return;
+      wk.days.forEach((d, i) => {
+        if (d.type !== 'Strength') return;
+        // Check if this day also has another session (shouldn't with current structure, but safety check)
+        // Main issue: AI sometimes puts strength on a training day instead of rest day
+        // Find a rest day to swap with
+        const restIdx = wk.days.findIndex((r, ri) => ri !== i && r.type === 'Rest');
+        if (restIdx !== -1) {
+          // Swap — strength goes to rest day, rest day content comes here
+          const restDay = wk.days[restIdx];
+          const strengthDay = wk.days[i];
+          wk.days[i] = { ...restDay };
+          wk.days[restIdx] = { ...strengthDay, day: restDay.day };
+        }
+      });
     });
 
     // Post-process: inject open water swims in Build/Peak phases
