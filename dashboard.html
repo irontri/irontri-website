@@ -1053,12 +1053,18 @@ async function loadTodaySession() {
             <span style="color:rgba(255,255,255,0.35);">Week ${weekIdx+1} · ${week.phase||''} phase</span>
           </div>
           ${day.purpose ? '<div class="today-purpose">' + day.purpose + '</div>' : ''}
-          ${hasDouble && secondSession ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);">
-            <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-bottom:6px;">ALSO TODAY</div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span>${t2.icon}</span>
-              <span style="color:rgba(255,255,255,0.8);font-size:14px;font-weight:500;">${secondSession.name || secondSession.type + ' Session'}</span>
-              ${secondSession.duration ? '<span style="color:rgba(255,255,255,0.4);font-size:13px;">· ' + fmtDurD(secondSession.duration) + '</span>' : ''}
+          ${hasDouble && secondSession ? `<div style="margin-top:12px;padding:12px 14px;background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:10px;">
+            <div style="font-size:10px;color:#1E90FF;letter-spacing:1.5px;font-weight:700;margin-bottom:8px;">+ ALSO TODAY</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:20px;">${t2.icon}</span>
+              <div>
+                <div style="color:#fff;font-size:14px;font-weight:600;">${secondSession.name || secondSession.type + ' Session'}</div>
+                <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;">
+                  <span style="background:${t2.color}20;color:${t2.color};font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px;">${t2.label}</span>
+                  ${secondSession.duration ? '<span style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:11px;padding:2px 8px;border-radius:100px;">⏱ ' + fmtDurD(secondSession.duration) + '</span>' : ''}
+                  ${secondSession.effort ? '<span style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);font-size:11px;padding:2px 8px;border-radius:100px;">RPE ' + secondSession.effort + '/10</span>' : ''}
+                </div>
+              </div>
             </div>
           </div>` : ''}
         </div>
