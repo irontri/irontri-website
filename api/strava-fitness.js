@@ -180,6 +180,7 @@ export default async function handler(req, res) {
           const rawFtp = Math.round(avgWatts * 1.17);
           const cap = Math.round(avgWatts * 1.25);
           ftpEstimate = Math.min(rawFtp, cap);
+          console.log('FTP DEBUG — allPoweredRides:', allPoweredRides.length, 'avgWatts:', avgWatts, 'rawFtp:', rawFtp, 'cap:', cap, 'ftpEstimate:', ftpEstimate);
         }
       } else {
         // Scenario 2: No power meter — estimate FTP from speed and HR
