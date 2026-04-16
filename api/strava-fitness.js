@@ -180,7 +180,7 @@ export default async function handler(req, res) {
           const rawFtp = Math.round(avgWatts * 1.17);
           const cap = Math.round(avgWatts * 1.25);
           ftpEstimate = Math.min(rawFtp, cap);
-          console.log('FTP DEBUG — allPoweredRides:', allPoweredRides.length, 'avgWatts:', avgWatts, 'rawFtp:', rawFtp, 'cap:', cap, 'ftpEstimate:', ftpEstimate);
+
         }
       } else {
         // Scenario 2: No power meter — estimate FTP from speed and HR
@@ -197,7 +197,7 @@ export default async function handler(req, res) {
           const estimatedPower = Math.round((Math.pow(bestSpeedMs, 3) * 0.24) + (bestSpeedMs * 75 * 9.81 * 0.004));
           ftpEstimate = Math.round(estimatedPower * 0.95);
           hasPowerMeter = false;
-          console.log('FTP DEBUG (no power meter) — rides in range:', noPoweRidesInRange.length, 'bestSpeedMs:', bestSpeedMs.toFixed(3), 'estimatedPower:', estimatedPower, 'ftpEstimate:', ftpEstimate);
+
         } else if (avgHR && maxHR) {
           // Fallback: HR-based estimate if no suitable rides
           // Athletes riding at ~75% max HR typically produce ~55% of max aerobic power
