@@ -1173,7 +1173,11 @@ function renderWeek(){
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   // Build 7 day slots — group multiple sessions on same day name into one slot
-  const dayNameOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const allDayNames=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  // Build dayNameOrder starting from the actual start day of this week
+  const _startDow=planStartDate.getDay(); // 0=Sun,1=Mon,...,6=Sat
+  const _startIdx=_startDow===0?6:_startDow-1; // convert to Mon=0 index
+  const dayNameOrder=[...allDayNames.slice(_startIdx),...allDayNames.slice(0,_startIdx)];
   const daySlots = Array.from({length:7}, (_,i) => ({
     dayIndex: i,
     sessions: [],
