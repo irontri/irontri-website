@@ -1429,7 +1429,7 @@ function changeWeek(dir){
   curDay=null;
   renderWeek();
   renderGraph();
-  window.scrollTo({top:document.getElementById('plan').offsetTop-20,behavior:'smooth'});
+  const weekNav=document.querySelector('.week-nav');if(weekNav){weekNav.scrollIntoView({behavior:'smooth',block:'center'});}
   document.querySelectorAll('.phase-pill').forEach(p=>{
     p.classList.toggle('active',p.dataset.phase===planData.weeks[curWeek].phase);
   });
