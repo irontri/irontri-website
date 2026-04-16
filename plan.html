@@ -2132,13 +2132,20 @@ async function loadStravaFitness() {
   }
 }
 
-function connectStravaForFitness() {
+async function connectStravaForFitness() {
   sessionStorage.setItem('irontri_quiz_state', JSON.stringify(A));
   sessionStorage.setItem('irontri_quiz_step', '7');
   const clientId = '216800';
   const redirect = encodeURIComponent(window.location.origin + '/api/strava-exchange');
   const scope = 'read,activity:read_all,activity:write';
-  window.location.href = 'https://www.strava.com/oauth/authorize?client_id=' + clientId + '&response_type=code&redirect_uri=' + redirect + '&approval_prompt=force&scope=' + scope + '&state=quiz_fitness';
+  // Include user ID in state so server can save tokens by user ID
+  let userId = '';
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    if (session) userId = session.user.id;
+  } catch(e) {}
+  const state = 'quiz_fitness' + (userId ? '__' + userId : '');
+  window.location.href = 'https://www.strava.com/oauth/authorize?client_id=' + clientId + '&response_type=code&redirect_uri=' + redirect + '&approval_prompt=force&scope=' + scope + '&state=' + encodeURIComponent(state);
 }
 
 function applyStravaFitness() {
