@@ -757,6 +757,8 @@ async function loadPlans() {
     const daysLeft = Math.max(0, trialDays - daysSince);
     if (isPaid) { const el = document.getElementById('manage-sub-banner'); if (el) el.style.display = 'flex'; }
     else if (!isFounding && daysLeft > 0) { const el = document.getElementById('trial-banner'); const dl = document.getElementById('trial-days-left'); const upgradeBtn = document.getElementById('trial-upgrade-btn'); if (el && dl) { dl.textContent = daysLeft; el.style.display = 'flex'; } if (upgradeBtn) upgradeBtn.href = '/plan.html?load=' + plan.id; }
+    // Trial expired — show paywall on dashboard too
+    else if (!isFounding && !isPaid && daysLeft === 0) { const pw = document.getElementById('paywall-modal'); if (pw) pw.style.display = 'flex'; }
   }
   if (error || !plans || plans.length===0) {
     document.getElementById('s-plans').textContent='0';
@@ -807,6 +809,22 @@ async function loadPlans() {
 }
 
 function viewPlan(id) { window.location.href = '/plan.html?load=' + id; }
+
+async function dashboardStartCheckout() {
+  const btn = document.getElementById('dashboard-checkout-btn');
+  if (btn) { btn.textContent = 'Redirecting...'; btn.disabled = true; }
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = '/auth.html'; return; }
+    const { data: plans } = await sb.from('plans').select('id').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1);
+    const planId = plans?.[0]?.id;
+    const r = await fetch('/api/create-checkout-session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: session.user.id, email: session.user.email, planId }) });
+    const d = await r.json();
+    if (d.url) { window.location.href = d.url; }
+    else { alert('Something went wrong. Please try again.'); }
+  } catch(e) { console.error('Checkout error:', e); alert('Something went wrong. Please try again.'); }
+  if (btn) { btn.textContent = 'Continue my plan — $20/month'; btn.disabled = false; }
+}
 
 async function upgradeNow() {
   const btn = document.getElementById('trial-upgrade-btn');
@@ -1402,5 +1420,26 @@ init();
     <span style="font-size:20px;">💬</span>Feedback
   </a>
 </nav>
+
+<!-- PAYWALL MODAL -->
+<div id="paywall-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);">
+  <div style="background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:36px 28px;max-width:420px;width:100%;text-align:center;">
+    <div style="font-size:40px;margin-bottom:16px;">🏊‍♂️🚴‍♂️🏃‍♂️</div>
+    <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px;">Your free trial has ended</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:28px;">Keep training with your personalised plan — every session, every week, all the way to race day.</div>
+    <div style="background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:14px;padding:20px;margin-bottom:24px;">
+      <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#1E90FF;">$20<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.5)">/month</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;">Cancel anytime</div>
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;text-align:left;">
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Full plan to race day</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ AI-adaptive coaching</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Strava sync</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Swim, bike & run sessions</div>
+      </div>
+    </div>
+    <button id="dashboard-checkout-btn" onclick="dashboardStartCheckout()" style="width:100%;padding:16px;background:#1E90FF;border:none;color:#fff;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:12px;">Continue my plan — $20/month</button>
+  </div>
+</div>
+<!-- END PAYWALL MODAL -->
 </body>
 </html>
