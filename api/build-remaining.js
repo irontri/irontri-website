@@ -541,6 +541,65 @@ export default async function handler(req, res) {
       }
     });
 
+    // Post-process: override race week with elite taper structure
+    if (planData.raceDate && planData.startDate) {
+      const raceDate = new Date(planData.raceDate + 'T00:00:00');
+      const startDate = new Date(planData.startDate + 'T00:00:00');
+      const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+      // Build the 8 sessions (7 days before + race day)
+      const raceWeekSessions = [];
+      for (let i = 7; i >= 0; i--) {
+        const d = new Date(raceDate);
+        d.setDate(raceDate.getDate() - i);
+        const dayName = dayNames[d.getDay()];
+        const diffDays = Math.round((d - startDate) / 86400000);
+        const weekNum = Math.floor(diffDays / 7) + 1;
+        raceWeekSessions.push({ daysBeforeRace: i, dayName, weekNum });
+      }
+
+      // Wipe the final two weeks' days and rebuild from scratch
+      const weeksToOverride = [...new Set(raceWeekSessions.map(s => s.weekNum))];
+      weeksToOverride.forEach(wn => {
+        const wk = allWeeks.find(w => w.weekNumber === wn);
+        if (wk) { wk.days = []; wk.phase = wn === totalNeeded ? 'Race Week' : 'Taper'; }
+      });
+
+      // Inject each session into correct week
+      raceWeekSessions.forEach(s => {
+        const wk = allWeeks.find(w => w.weekNumber === s.weekNum);
+        if (!wk) return;
+        const dbr = s.daysBeforeRace;
+
+        if (dbr === 0) {
+          wk.days.push({ day: s.dayName, type: 'Race', name: 'Race Day 🏁', duration: null, effort: 9, zone: null, purpose: 'Your race — execute your plan and enjoy every moment.', warmup: 'Light warm-up as per race briefing', mainset: raceDayDistances + ' — race pace throughout. Swim smooth, bike strong, run proud.', cooldown: 'Recovery walk and celebrate your achievement', coachNote: 'Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.', paceTarget: 'Race pace', heartRateZone: 'Race' });
+        } else if (dbr === 1) {
+          // Triple activation day
+          wk.days.push({ day: s.dayName, type: 'Swim', name: 'Open Water Recce', duration: 20, effort: 3, zone: 1, purpose: 'Easy open water swim — sight the course, stay relaxed.', warmup: '5 min easy', mainset: '10 min easy swimming, practise sighting every 10 strokes.', cooldown: '5 min easy', coachNote: 'Keep it easy. This is about feeling the water and sighting your course, not training.' , paceTarget: 'Easy', heartRateZone: 'Zone 1' });
+          wk.days.push({ day: s.dayName, type: 'Run', name: 'Race Eve Activation Jog', duration: 20, effort: 3, zone: 1, purpose: 'Short easy jog to keep legs loose with 4-6 fast strides.', warmup: '10 min easy jog', mainset: '4-6 x 20 second strides at race pace with full recovery between each. Everything else is easy.', cooldown: '5 min walk', coachNote: 'The strides keep your nervous system sharp without fatiguing your legs. Keep the rest easy.', paceTarget: 'Easy with strides', heartRateZone: 'Zone 1' });
+          wk.days.push({ day: s.dayName, type: 'Bike', name: 'Race Eve Bike Spin', duration: 25, effort: 3, zone: 1, purpose: 'Easy spin to keep legs loose and check your bike is race ready.', warmup: '5 min easy', mainset: '15 min very easy spin. Include 3-4 x 15 second race cadence efforts.', cooldown: '5 min easy', coachNote: 'Spin easy. Check your bike over — tyres, gears, brakes. Arrive tomorrow feeling fresh.', paceTarget: 'Easy spin', heartRateZone: 'Zone 1' });
+        } else if (dbr === 2) {
+          wk.days.push({ day: s.dayName, type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Full rest day — sleep, eat well, hydrate.', warmup: '', mainset: 'Rest and recover.', cooldown: '', coachNote: 'Rest is training. Sleep as much as possible. Eat well, hydrate well. Your fitness is locked in.' });
+        } else if (dbr === 3) {
+          wk.days.push({ day: s.dayName, type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Full rest day — sleep, eat well, hydrate.', warmup: '', mainset: 'Rest and recover.', cooldown: '', coachNote: 'Another full rest day. Your body is absorbing everything. Trust the process — you are ready.' });
+        } else if (dbr === 4) {
+          const dur = isFull ? 55 : isHalf ? 45 : isOlympic ? 30 : 20;
+          wk.days.push({ day: s.dayName, type: 'Swim', name: 'Quality Pre-Race Swim', duration: dur, effort: 6, zone: 2, purpose: 'Final quality swim — feel smooth and confident in the water.', warmup: '400m easy freestyle', mainset: `${Math.round(dur*0.6)} min swimming with some race pace efforts. Focus on technique and feel.`, cooldown: '200m easy', coachNote: 'Feel the water one last time before race day. Stay relaxed and smooth.', paceTarget: 'Race pace efforts', heartRateZone: 'Zone 2-3' });
+        } else if (dbr === 5) {
+          const dur = isFull ? 120 : isHalf ? 90 : isOlympic ? 60 : 45;
+          wk.days.push({ day: s.dayName, type: 'Bike', name: 'Race Pace Intervals', duration: dur, effort: 7, zone: 3, purpose: 'Last intensity session — feel sharp and confident on the bike.', warmup: '20 min easy spin', mainset: isFull ? '4x10min at race pace (around 225w), 5min easy between each.' : isHalf ? '4x10min at 70.3 race pace, 5min easy between each.' : '3x8min at Olympic race pace, 5min easy between each.', cooldown: '20 min easy spin', coachNote: 'Last real intensity session. Trust your fitness.', paceTarget: 'Race pace', heartRateZone: 'Zone 3-4' });
+        } else if (dbr === 6) {
+          const swimDur = isFull ? 60 : isHalf ? 45 : isOlympic ? 30 : 20;
+          const runDur = isFull ? 60 : isHalf ? 45 : isOlympic ? 30 : 20;
+          wk.days.push({ day: s.dayName, type: 'Swim', name: 'Pre-Race Quality Swim', duration: swimDur, effort: 6, zone: 2, purpose: 'Quality swim to stay sharp in the water.', warmup: '400m easy', mainset: `${Math.round(swimDur*0.7)} min quality swimming — some race pace efforts, focus on technique.`, cooldown: '200m easy', coachNote: 'Morning session — do this first, run later in the day.', paceTarget: 'Race pace efforts', heartRateZone: 'Zone 2' });
+          wk.days.push({ day: s.dayName, type: 'Run', name: 'Aerobic Run with Race Pace Push', duration: runDur, effort: 6, zone: 2, purpose: 'Aerobic run with a 10 minute push at race pace to stay sharp.', warmup: '15 min easy jog', mainset: `Easy Zone 2 running. Include 10 min at race pace in the middle — feel what race day should feel like.`, cooldown: '10 min easy jog', coachNote: 'Push to race pace for 10 minutes — feel what it should feel like on the day. Everything else is easy.', paceTarget: 'Race pace for 10min', heartRateZone: 'Zone 2' });
+        } else if (dbr === 7) {
+          const dur = isFull ? 210 : isHalf ? 150 : isOlympic ? 90 : 60;
+          wk.days.push({ day: s.dayName, type: 'Bike', name: 'Long TT Position Ride', duration: dur, effort: 5, zone: 2, purpose: 'Last long ride in race position — build confidence and feel.', warmup: '20 min easy spin', mainset: `${dur - 30} min steady aerobic riding in TT/race position on flat course. Race cadence (85-90rpm). Aerobic effort only.`, cooldown: '10 min easy spin', coachNote: 'Last big ride. Stay in your race position, feel the bike beneath you. Confidence building, not fitness building.', paceTarget: 'Aerobic Zone 2', heartRateZone: 'Zone 2' });
+        }
+      });
+    }
+
     // Now safe to fix consecutive rest days — fake race days already cleaned up
     fixConsecutiveRestDays(allWeeks);
 
