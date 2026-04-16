@@ -159,10 +159,10 @@ export default async function handler(req, res) {
         : null;
 
       // ── FTP ESTIMATION ────────────────────────────────────────────────────
-      // Scenario 1: Has power meter — use best average watts from 20-60 min efforts
+      // Scenario 1: Has power meter — use all rides with power data (no time window restriction)
+      // Time window was too narrow — most triathlete rides are 60+ min
       const poweredRides = rides.filter(r =>
-        r.average_watts && r.average_watts > 50 &&
-        r.moving_time >= 1200 && r.moving_time <= 3600 // 20-60 min range
+        r.average_watts && r.average_watts > 50 && r.moving_time > 0
       );
 
       let ftpEstimate = null;
@@ -197,6 +197,7 @@ export default async function handler(req, res) {
           const estimatedPower = Math.round((Math.pow(bestSpeedMs, 3) * 0.24) + (bestSpeedMs * 75 * 9.81 * 0.004));
           ftpEstimate = Math.round(estimatedPower * 0.95);
           hasPowerMeter = false;
+          console.log('FTP DEBUG (no power meter) — rides in range:', noPoweRidesInRange.length, 'bestSpeedMs:', bestSpeedMs.toFixed(3), 'estimatedPower:', estimatedPower, 'ftpEstimate:', ftpEstimate);
         } else if (avgHR && maxHR) {
           // Fallback: HR-based estimate if no suitable rides
           // Athletes riding at ~75% max HR typically produce ~55% of max aerobic power
