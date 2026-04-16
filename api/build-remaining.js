@@ -41,6 +41,50 @@ export default async function handler(req, res) {
     const totalNeeded = targetWeeks || planData.totalWeeksPlanned || 0;
     const basePrompt = planData.basePrompt || '';
 
+    // Build FIFO block from planData if athlete is a FIFO worker
+    let fifoBlock = '';
+    if (planData.fifo) {
+      const fifoRestrictions = planData.fifoRestrictions || [];
+      const forbiddenTypes = [];
+      if (fifoRestrictions.some(r=>r.toLowerCase().includes('swim'))) forbiddenTypes.push('Swim');
+      if (fifoRestrictions.some(r=>r.toLowerCase().includes('cycl')||r.toLowerCase().includes('bike'))) forbiddenTypes.push('Bike');
+      if (fifoRestrictions.some(r=>r.toLowerCase().includes('run'))) forbiddenTypes.push('Run');
+      if (fifoRestrictions.some(r=>r.toLowerCase().includes('gym')||r.toLowerCase().includes('strength')||r.toLowerCase().includes('weight'))) forbiddenTypes.push('Strength');
+
+      let rosterCycle = [];
+      if (planData.fifoRoster==='1/1') rosterCycle=['work','home'];
+      else if (planData.fifoRoster==='2/1') rosterCycle=['work','work','home'];
+      else if (planData.fifoRoster==='2/2') rosterCycle=['work','work','home','home'];
+      else rosterCycle=['work','home'];
+
+      const currentWeek = parseInt(planData.fifoCurrentWeek)||1;
+      const currentStatus = planData.fifoCurrentStatus||'work';
+      let cyclePos = 0, found = 0;
+      for (let ci=0;ci<rosterCycle.length;ci++) {
+        if (rosterCycle[ci]===currentStatus) { found++; if(found===currentWeek){cyclePos=ci;break;} }
+      }
+
+      const weekSchedule = [];
+      for (let wi=0;wi<totalNeeded;wi++) weekSchedule.push(rosterCycle[(cyclePos+wi)%rosterCycle.length]);
+
+      const workWeeks = [], homeWeeks = [];
+      weekSchedule.forEach((s,i)=>{ if(s==='work') workWeeks.push(i+1); else homeWeeks.push(i+1); });
+
+      // Only include weeks in this batch
+      const batchWorkWeeks = workWeeks.filter(wn=>wn>=startWk&&wn<=endWk);
+      const batchHomeWeeks = homeWeeks.filter(wn=>wn>=startWk&&wn<=endWk);
+
+      const maxMins = planData.fifoHours==='30min-1hr'?60:planData.fifoHours==='1-2hrs'?120:planData.fifoHours==='2-3hrs'?180:240;
+
+      if (batchWorkWeeks.length||batchHomeWeeks.length) {
+        fifoBlock = ' === FIFO RULES FOR THIS BATCH ===' +
+          ' WORK WEEKS in this batch: '+(batchWorkWeeks.length?batchWorkWeeks.join(','):'none') +
+          ' HOME WEEKS in this batch: '+(batchHomeWeeks.length?batchHomeWeeks.join(','):'none') +
+          (batchWorkWeeks.length?' BANNED types on work weeks: '+(forbiddenTypes.length?forbiddenTypes.join(','):'none')+'. MAX duration: '+maxMins+'min. Allowed: '+['Swim','Bike','Run','Strength','Brick'].filter(t=>!forbiddenTypes.includes(t)).concat(['Rest']).join(',')+' ONLY.':'') +
+          ' ===';
+      }
+    }
+
     console.log('builtSoFar:', builtSoFar, 'totalNeeded:', totalNeeded, 'hasPrompt:', !!basePrompt);
 
     if (builtSoFar >= totalNeeded) return res.status(200).json({ success: true, done: true, builtSoFar, totalNeeded });
@@ -173,7 +217,7 @@ export default async function handler(req, res) {
     const _phaseForBatch=_getPhase(startWk);
     const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
 
-    const prompt = basePrompt + structureInstructions;
+    const prompt = basePrompt + fifoBlock + structureInstructions;
 
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -407,6 +451,46 @@ export default async function handler(req, res) {
     }
 
     // Post-process: fix consecutive rest days (never allow 3+ in a row)
+    // Fix FIFO violations — replace banned session types on work weeks
+    function fixFifoViolations(weeks) {
+      if (!planData.fifo || !planData.fifoRestrictions || !planData.fifoRestrictions.length) return;
+      const forbidden = [];
+      if (planData.fifoRestrictions.some(r=>r.toLowerCase().includes('swim'))) forbidden.push('Swim');
+      if (planData.fifoRestrictions.some(r=>r.toLowerCase().includes('cycl')||r.toLowerCase().includes('bike'))) forbidden.push('Bike');
+      if (planData.fifoRestrictions.some(r=>r.toLowerCase().includes('run'))) forbidden.push('Run');
+      if (planData.fifoRestrictions.some(r=>r.toLowerCase().includes('gym')||r.toLowerCase().includes('strength')||r.toLowerCase().includes('weight'))) forbidden.push('Strength');
+      if (!forbidden.length) return;
+      let rosterCycle = [];
+      if (planData.fifoRoster==='1/1') rosterCycle=['work','home'];
+      else if (planData.fifoRoster==='2/1') rosterCycle=['work','work','home'];
+      else if (planData.fifoRoster==='2/2') rosterCycle=['work','work','home','home'];
+      else rosterCycle=['work','home'];
+      const currentWeek = parseInt(planData.fifoCurrentWeek)||1;
+      const currentStatus = planData.fifoCurrentStatus||'work';
+      let cyclePos = 0, found = 0;
+      for (let ci=0;ci<rosterCycle.length;ci++) { if(rosterCycle[ci]===currentStatus){found++;if(found===currentWeek){cyclePos=ci;break;}} }
+      const maxMins = planData.fifoHours==='30min-1hr'?60:planData.fifoHours==='1-2hrs'?120:planData.fifoHours==='2-3hrs'?180:240;
+      const allTypes = ['Swim','Bike','Run','Strength','Brick'];
+      const allowed = allTypes.filter(t=>!forbidden.includes(t));
+      if (!allowed.length) allowed.push('Run');
+      weeks.forEach((week, idx) => {
+        const isWork = rosterCycle[(cyclePos+idx)%rosterCycle.length]==='work';
+        if (!isWork) return;
+        (week.days||[]).forEach(day => {
+          if (day.type==='Rest') return;
+          if (forbidden.some(f=>f.toLowerCase()===(day.type||'').toLowerCase())) {
+            const replacement = allowed[0];
+            day.type = replacement; day.name = replacement+' Session';
+            day.purpose = 'Work week session — adjusted for on-site availability';
+            day.warmup = '10 min easy warm up'; day.mainset = 'Main '+replacement.toLowerCase()+' effort';
+            day.cooldown = '5 min cool down';
+            day.coachNote = 'Original session converted to '+replacement+' — restricted equipment not available on site this week.';
+          }
+          if (day.duration > maxMins) day.duration = maxMins;
+        });
+      });
+    }
+
     function fixConsecutiveRestDays(weeks) {
       const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
       weeks.forEach((wk) => {
@@ -603,6 +687,7 @@ export default async function handler(req, res) {
     }
 
     // Now safe to fix consecutive rest days — fake race days already cleaned up
+    fixFifoViolations(newWeeks);
     fixConsecutiveRestDays(allWeeks);
 
     const updated = { ...planData, weeks: allWeeks };
