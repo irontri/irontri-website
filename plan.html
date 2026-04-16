@@ -1204,9 +1204,14 @@ function renderWeek(){
   });
 
   // Store slot map on window for selectDay to use
-  window._daySlots = daySlots;
+  window._daySlots = _isFinalWeek ? _displaySlots : daySlots;
 
-  document.getElementById('cal').innerHTML=daySlots.map((slot,i)=>{
+  // In race week, hide slots that are rest-only (keep race day and real sessions)
+  const _displaySlots = _isFinalWeek
+    ? daySlots.filter(slot => slot.sessions.some(s => s.type !== 'Rest'))
+    : daySlots;
+
+  document.getElementById('cal').innerHTML=_displaySlots.map((slot,i)=>{
     const primary = slot.sessions[0];
     const hasDouble = slot.sessions.length > 1;
     const t=resolveType(primary.type, primary.name, primary.warmup, primary.mainset);
@@ -2996,7 +3001,9 @@ async function repairEliteTaper(){
   for(let i=7;i>=0;i--){
     const d=new Date(_rd);d.setDate(_rd.getDate()-i);
     const dayName=_dn[d.getDay()];
-    const wk=i===0?finalWk:penultWk;
+    const _diff=Math.round((d-new Date(startDate+'T00:00:00'))/86400000);
+    const _wkIdx=Math.min(Math.floor(_diff/7),tw-1);
+    const wk=planData.weeks[_wkIdx]||finalWk;
     if(i===0){wk.days.push({day:dayName,type:'Race',name:'Race Day 🏁',duration:null,effort:9,zone:null,purpose:'Your race — execute your plan and enjoy every moment.',warmup:'Light warm-up as per race briefing',mainset:_raceDists+' — race pace throughout. Swim smooth, bike strong, run proud.',cooldown:'Recovery walk and celebrate your achievement',coachNote:'Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.',paceTarget:'Race pace',heartRateZone:'Race'});}
     else if(i===1){wk.days.push({day:dayName,type:'Swim',name:'Open Water Recce',duration:20,effort:3,zone:1,purpose:'Easy open water swim — sight the course, stay relaxed.',warmup:'5 min easy',mainset:'10 min easy swimming, practise sighting every 10 strokes.',cooldown:'5 min easy',coachNote:'Keep it easy. This is about feeling the water and sighting your course, not training.',paceTarget:'Easy',heartRateZone:'Zone 1'});wk.days.push({day:dayName,type:'Run',name:'Race Eve Activation Jog',duration:20,effort:3,zone:1,purpose:'Short easy jog to keep legs loose with 4-6 fast strides.',warmup:'10 min easy jog',mainset:'4-6 x 20 second strides at race pace with full recovery between each. Everything else is easy.',cooldown:'5 min walk',coachNote:'The strides keep your nervous system sharp without fatiguing your legs. Keep the rest easy.',paceTarget:'Easy with strides',heartRateZone:'Zone 1'});wk.days.push({day:dayName,type:'Bike',name:'Race Eve Bike Spin',duration:25,effort:3,zone:1,purpose:'Easy spin to keep legs loose and check your bike is race ready.',warmup:'5 min easy',mainset:'15 min very easy spin. Include 3-4 x 15 second race cadence efforts.',cooldown:'5 min easy',coachNote:'Spin easy. Check your bike over — tyres, gears, brakes. Arrive tomorrow feeling fresh.',paceTarget:'Easy spin',heartRateZone:'Zone 1'});}
     else if(i===2){wk.days.push({day:dayName,type:'Rest',name:'Rest',duration:0,effort:0,zone:1,purpose:'Full rest day.',warmup:'',mainset:'Rest and recover.',cooldown:'',coachNote:'Rest is training. Sleep, eat well, hydrate.'});}
