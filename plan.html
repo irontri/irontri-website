@@ -1172,31 +1172,56 @@ function renderWeek(){
   const allDaysFull=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // Always render exactly 7 days — pad with Rest if AI returned fewer
-  const fullDays = [...w.days];
-  while (fullDays.length < 7) {
-    fullDays.push({ type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Rest day', warmup: '', mainset: '', cooldown: '', coachNote: '' });
-  }
+  // Build 7 day slots — group multiple sessions on same day name into one slot
+  const dayNameOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const daySlots = Array.from({length:7}, (_,i) => ({
+    dayIndex: i,
+    sessions: [],
+    date: (() => { const d = new Date(planStartDate); d.setDate(planStartDate.getDate()+i); return d; })()
+  }));
 
-  document.getElementById('cal').innerHTML=fullDays.map((d,i)=>{
-    const t=resolveType(d.type, d.name, d.warmup, d.mainset);
+  // Map day names to slot indices
+  w.days.forEach(session => {
+    const slotIdx = dayNameOrder.indexOf(session.day);
+    if (slotIdx !== -1) {
+      daySlots[slotIdx].sessions.push(session);
+    }
+  });
+
+  // Pad empty slots with Rest
+  daySlots.forEach(slot => {
+    if (slot.sessions.length === 0) {
+      slot.sessions.push({ type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Rest day', warmup: '', mainset: '', cooldown: '', coachNote: '', day: dayNameOrder[slot.dayIndex] });
+    }
+  });
+
+  // Store slot map on window for selectDay to use
+  window._daySlots = daySlots;
+
+  document.getElementById('cal').innerHTML=daySlots.map((slot,i)=>{
+    const primary = slot.sessions[0];
+    const hasDouble = slot.sessions.length > 1;
+    const t=resolveType(primary.type, primary.name, primary.warmup, primary.mainset);
     const isActive=curDay===i;
-    const isComplete=completions.has(`${curWeek}-${i}`);
-    const dayDate = new Date(planStartDate);
-    dayDate.setDate(planStartDate.getDate() + i);
-    const dateStr = dayDate.getDate()+' '+months[dayDate.getMonth()];
-    const dayName = allDaysFull[dayDate.getDay()];
-    return `<div class="cal-day${d.type==='Rest'?' rest':''}${isActive?' active':''}" data-type="${d.swapped?'Run':d.type}" onclick="selectDay(${i})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
+    // Check completion — all sessions in slot complete
+    const isComplete = slot.sessions.every((_,si) => completions.has(`${curWeek}-${i}-${si}`)) && completions.has(`${curWeek}-${i}-0`);
+    const dateStr = slot.date.getDate()+' '+months[slot.date.getMonth()];
+    const dayName = allDaysFull[slot.date.getDay()];
+    const totalDur = slot.sessions.reduce((sum,s) => sum + (parseFloat(s.duration)||0), 0);
+    return `<div class="cal-day${primary.type==='Rest'&&!hasDouble?' rest':''}${isActive?' active':''}" data-type="${primary.swapped?'Run':primary.type}" onclick="selectDay(${i})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
       <div class="cal-day-name">${dayName}</div>
       <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:4px;">${dateStr}</div>
-      <div class="cal-day-icon">${isComplete ? '✅' : d.swapped ? '😓' : t.icon}</div>
-      <div class="cal-day-type ${t.cls}">${d.swapped ? 'Easy' : t.label}</div>
-      <div class="cal-day-dur">${d.duration?fmtDur(d.duration):''}</div>
+      <div class="cal-day-icon" style="position:relative;">
+        ${isComplete ? '✅' : primary.swapped ? '😓' : t.icon}
+        ${hasDouble ? `<span style="position:absolute;top:-6px;right:-10px;background:#1E90FF;color:#fff;font-size:9px;font-weight:700;border-radius:100px;padding:1px 5px;line-height:14px;">+1</span>` : ''}
+      </div>
+      <div class="cal-day-type ${t.cls}">${primary.swapped ? 'Easy' : t.label}</div>
+      <div class="cal-day-dur">${totalDur?fmtDur(totalDur):''}</div>
     </div>`;
   }).join('');
 
   if(curDay===null){
-    const firstActive=w.days.findIndex(d=>d.type!=='Rest');
+    const firstActive=daySlots.findIndex(slot=>slot.sessions[0].type!=='Rest'||slot.sessions.length>1);
     selectDay(firstActive>=0?firstActive:0);
   } else {
     selectDay(curDay);
@@ -1206,7 +1231,11 @@ function renderWeek(){
 function selectDay(i){
   curDay=i;
   const w=planData.weeks[curWeek];
-  const d=w.days[i] || { type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Rest day', warmup: '', mainset: '', cooldown: '', coachNote: '' };
+  // Use slot-based sessions if available, fall back to index-based
+  const slot = window._daySlots ? window._daySlots[i] : null;
+  const slotSessions = slot ? slot.sessions : null;
+  const d = slotSessions ? slotSessions[0] : (w.days[i] || { type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Rest day', warmup: '', mainset: '', cooldown: '', coachNote: '' });
+  const hasDouble = slotSessions && slotSessions.length > 1;
   const t=resolveType(d.type, d.name, d.warmup, d.mainset);
   const sd=document.getElementById('sd');
 
@@ -1338,7 +1367,7 @@ function selectDay(i){
       ${strengthHTML}
       <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;">
         <button id="complete-btn-${i}" onclick="toggleComplete(${i})" style="width:100%;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);color:#4ade80;padding:14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;">
-          ${completions.has(`${curWeek}-${i}`) ? '✅ Session completed!' : '✓ Mark as complete'}
+          ${completions.has(`${curWeek}-${i}-0`) || completions.has(`${curWeek}-${i}`) ? '✅ Session completed!' : '✓ Mark as complete'}
         </button>
         ${!completions.has(`${curWeek}-${i}`) && d.type !== 'Rest' ? `<div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.3);">Rate it after — your plan adapts to how it felt 🎯</div>` : ''}
         <button onclick="swapSession(${i})" style="width:100%;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;">
@@ -1352,9 +1381,47 @@ function selectDay(i){
             ✕ Skip session
           </button>
         </div>
-        ${completions.has(curWeek+'-'+i) && d.type !== 'Rest' ? '<button id="strava-share-btn-'+i+'" onclick="shareToStrava('+i+', this)" class="strava-share-btn">🟠 Share this session to Strava</button>' : ''}
+        ${completions.has(curWeek+'-'+i+'-0') || completions.has(curWeek+'-'+i) && d.type !== 'Rest' ? '<button id="strava-share-btn-'+i+'" onclick="shareToStrava('+i+', this)" class="strava-share-btn">🟠 Share this session to Strava</button>' : ''}
       </div>
-    </div>`;
+    </div>
+    ${hasDouble ? (() => {
+      const d2 = slotSessions[1];
+      const t2 = resolveType(d2.type, d2.name, d2.warmup, d2.mainset);
+      const isComplete2 = completions.has(curWeek+'-'+i+'-1');
+      return `<div class="sd" data-type="${d2.type||'Rest'}" style="margin-top:12px;">
+        <div class="sd-header">
+          <div class="sd-icon">${t2.icon}</div>
+          <div class="sd-info">
+            <div class="sd-title">${d2.name||d2.type+' Session'}</div>
+            <div class="sd-meta">${fmtDur(d2.duration||60)}</div>
+            <div class="sd-badges">
+              <span class="sd-badge ${t2.cls}" style="border-color:${t2.color}40;font-size:12px;font-weight:600;">${t2.icon} ${t2.label}</span>
+              ${d2.effort?`<span class="sd-badge" style="border-color:rgba(255,255,255,0.1);color:var(--muted);">RPE ${d2.effort}/10</span>`:''}
+            </div>
+          </div>
+        </div>
+        <div class="sd-body">
+          ${d2.purpose?`<div class="sd-purpose">🎯 <strong>Purpose:</strong> ${d2.purpose}</div>`:''}
+          ${d2.warmup?`<div class="sd-section"><div class="sd-sec-title">Warm up</div><div class="sd-sec-content">${d2.warmup}</div></div>`:''}
+          ${d2.mainset?`<div class="sd-section"><div class="sd-sec-title">Main set</div><div class="sd-sec-content">${d2.mainset}</div></div>`:''}
+          ${d2.cooldown?`<div class="sd-section"><div class="sd-sec-title">Cool down</div><div class="sd-sec-content">${d2.cooldown}</div></div>`:''}
+          ${d2.coachNote?`<div class="sd-section coach-note"><div class="sd-sec-title">🧠 Coach note</div><div class="sd-sec-content">${d2.coachNote}</div></div>`:''}
+          <button onclick="markComplete2(${i})" style="width:100%;background:${isComplete2?'rgba(74,222,128,0.15)':'rgba(30,144,255,0.1)'};border:1px solid ${isComplete2?'rgba(74,222,128,0.4)':'rgba(30,144,255,0.3)'};color:${isComplete2?'#4ade80':'#1E90FF'};padding:14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:10px;">
+            ${isComplete2 ? '✅ Session completed!' : '✓ Mark as complete'}
+          </button>
+        </div>
+      </div>`;
+    })() : ''}`;
+}
+
+function markComplete2(slotIdx) {
+  const key = curWeek+'-'+slotIdx+'-1';
+  const key0 = curWeek+'-'+slotIdx+'-0';
+  if (completions.has(key)) { completions.delete(key); } else { completions.add(key); }
+  // Also mark primary if not done
+  if (!completions.has(key0)) completions.add(key0);
+  saveCompletions();
+  selectDay(slotIdx);
 }
 
 function changeWeek(dir){
