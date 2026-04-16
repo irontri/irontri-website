@@ -3035,9 +3035,9 @@ nd.weeks.forEach((wk)=>{
   if(_tSwim>0&&wk.days){const _ss=wk.days.filter(d=>d.type==='Swim');if(_ss.length>0){const _ls=_ss.reduce((a,b)=>(parseFloat(a.duration)||0)>(parseFloat(b.duration)||0)?a:b);_ls.duration=_tSwim;}}
 });
 planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});
-// Elite taper post-processor — overrides race week (and penultimate week if race spans two weeks)
+// Elite taper post-processor — overrides final 2 weeks by position (not date calc)
 (function applyEliteTaper(weeks,totalWks,raceDate,startDate,race){
-  if(!raceDate||!startDate)return;
+  if(!raceDate||!startDate||!weeks||weeks.length<2)return;
   const _rd=new Date(raceDate+'T00:00:00');const _sd=new Date(startDate+'T00:00:00');
   const _dn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const _rl=race.toLowerCase();
@@ -3051,13 +3051,24 @@ planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{w
   const _swimD=_isFull?60:_isHalf?45:_isOlympic?30:20;
   const _runD=_isFull?60:_isHalf?45:_isOlympic?30:20;
   const _raceDists=_isFull?'3.8km swim, 180km bike, 42.2km run':_isHalf?'1.9km swim, 90km bike, 21.1km run':_isOlympic?'1.5km swim, 40km bike, 10km run':'750m swim, 20km bike, 5km run';
-  // Build schedule: 7 days before race + race day
+  // Build schedule: 7 days before race + race day, using actual calendar dates
   const _sched=[];
-  for(let i=7;i>=0;i--){const d=new Date(_rd);d.setDate(_rd.getDate()-i);const diff=Math.round((d-_sd)/86400000);const wn=Math.floor(diff/7)+1;_sched.push({dbr:i,dayName:_dn[d.getDay()],weekNum:wn});}
-  // Wipe affected weeks and reset
-  const _affectedWks=[...new Set(_sched.map(s=>s.weekNum))];
-  _affectedWks.forEach(wn=>{const wk=weeks.find(w=>w.weekNumber===wn);if(wk){wk.days=[];wk.phase=wn===totalWks?'Race Week':'Taper';wk.focus=wn===totalWks?'Race day — execute your plan.':'Final taper — stay sharp, stay fresh.';wk.weeklyNarrative=wn===totalWks?'Race week. Your fitness is locked in. Trust your training.':'Final taper week. Keep the intensity, drop the volume. Arrive at the start line fresh and confident.';}});
-  // Inject sessions
+  for(let i=7;i>=0;i--){const d=new Date(_rd);d.setDate(_rd.getDate()-i);_sched.push({dbr:i,dayName:_dn[d.getDay()],date:d});}
+  // Assign each session to week by date range, not by floor(diff/7)
+  // Week N covers days (N-1)*7 to N*7-1 from startDate
+  _sched.forEach(s=>{
+    const diff=Math.round((s.date-_sd)/86400000);
+    // Use same logic as plan: which week does this day fall in?
+    const wn=Math.min(Math.floor(diff/7)+1,totalWks);
+    s.weekNum=wn;
+  });
+  // Wipe the final 2 weeks by position (totalWks and totalWks-1)
+  const _wipeNums=new Set([totalWks,totalWks-1]);
+  _wipeNums.forEach(wn=>{const wk=weeks.find(w=>w.weekNumber===wn);if(wk){wk.days=[];wk.phase=wn===totalWks?'Race Week':'Taper';wk.focus=wn===totalWks?'Race day — execute your plan.':'Final taper — stay sharp, stay fresh.';wk.weeklyNarrative=wn===totalWks?'Race week. Your fitness is locked in. Trust your training.':'Final taper week. Keep the intensity, drop the volume. Arrive at the start line fresh and confident.';}});
+  // Also wipe any other affected weeks (in case taper spans 3 weeks)
+  const _extraWks=new Set(_sched.map(s=>s.weekNum).filter(wn=>!_wipeNums.has(wn)));
+  _extraWks.forEach(wn=>{const wk=weeks.find(w=>w.weekNumber===wn);if(wk){wk.days=[];wk.phase='Taper';}});
+  // Inject sessions — look up week by weekNum assigned above
   _sched.forEach(s=>{
     const wk=weeks.find(w=>w.weekNumber===s.weekNum);if(!wk)return;
     if(s.dbr===0){wk.days.push({day:s.dayName,type:'Race',name:'Race Day 🏁',duration:null,effort:9,zone:null,purpose:'Your race — execute your plan and enjoy every moment.',warmup:'Light warm-up as per race briefing',mainset:_raceDists+' — race pace throughout. Swim smooth, bike strong, run proud.',cooldown:'Recovery walk and celebrate your achievement',coachNote:'Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.',paceTarget:'Race pace',heartRateZone:'Race'});}
