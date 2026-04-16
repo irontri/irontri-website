@@ -1,4 +1,4 @@
-export const config = { maxDuration: 300 };
+export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
@@ -94,10 +94,26 @@ TAPER RULES (race-distance specific — apply strictly):
 - Never apply a multi-week taper to a sprint plan — it wastes valuable training time.
 - CONSECUTIVE REST DAYS: NEVER place 3 or more rest days in a row in any week, including taper and race week. Maximum 2 consecutive rest days at any point in the plan. In race week, place short activation sessions between rest days to prevent athletes going stale.
 
+RACE WEEK STRUCTURE (elite taper — apply exactly based on race distance):
+Race week keeps intensity right up to 5 days out — the body stays sharp then fully rests. Scale ALL durations to race distance.
+
+7 DAYS BEFORE RACE: Long bike in TT/race position on flat course. Keep it aerobic but at race cadence. Full Ironman: 3-3.5h. 70.3: 2-2.5h. Olympic: 1.5h. Sprint: 1h. coachNote: "Last big ride — stay in your race position, feel the bike beneath you. This is confidence building, not fitness building."
+
+6 DAYS BEFORE RACE: Quality swim (1h Full IM / 45min 70.3 / 30min Olympic / 20min Sprint) + aerobic run with a 10min push to race pace in the middle. Full IM run: 1h. 70.3: 45min. Olympic: 30min. Sprint: 20min. These are SEPARATE entries on the same day name (double session). coachNote on run: "Push to race pace for 10 minutes in the middle — feel what it should feel like on the day. Everything else is easy."
+
+5 DAYS BEFORE RACE: Bike with race pace intervals. Full IM: 2h with 4x10min at race pace. 70.3: 1.5h with 4x10min at 70.3 pace. Olympic: 1h with 3x8min at Olympic pace. Sprint: 45min with 4x5min at Sprint pace. coachNote: "Last real intensity session — feel sharp and confident. Trust your fitness."
+
+4 DAYS BEFORE RACE: Standalone quality swim. Full IM: 55min. 70.3: 45min. Olympic: 30min. Sprint: 20min. Technique focus, some race pace efforts. coachNote: "Feel the water one last time before race day. Stay relaxed and smooth."
+
+3 DAYS BEFORE RACE: Full Rest. Sleep, eat well, hydrate. coachNote: "Rest is training. Sleep as much as possible. Eat well, hydrate well. Your fitness is locked in."
+
+2 DAYS BEFORE RACE: Full Rest. Sleep, eat well, hydrate. coachNote: "Another full rest day. Your body is absorbing everything. Trust the process — you are ready."
+
+1 DAY BEFORE RACE: Three short easy activation sessions on the same day (triple session day — separate entries with same day name): (1) Easy open water swim recce if possible — 20min easy, practice sighting the course. (2) Short easy jog with 4-6 fast strides at race pace — 20min total. (3) Short easy bike spin — 20-30min, just to keep legs loose. All effort 2-3/10. coachNote: "Keep it short and easy. The goal is to stay loose and keep your nervous system activated — not to train. Arrive at the start line fresh, not tired."
+
 RACE DAY RULES (critical — must always be included):
 - The FINAL day of the FINAL week must ALWAYS be a Race Day session with type "Race".
 - Race Day session must have: name "Race Day 🏁", type "Race", effort 9, purpose "Your race — execute your plan and enjoy every moment.", a mainset describing the race distances (e.g. "750m swim, 20km bike, 5km run — race pace throughout"), coachNote with final race execution tips.
-- The day before race day must always be type "Rest" with a short activation note (e.g. 5-10 min easy shakeout optional).
 - Race Week phase must always contain the actual Race Day session — never end on a Rest day.
 
 JSON structure for weeks:
