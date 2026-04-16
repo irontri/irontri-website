@@ -2968,81 +2968,39 @@ function fixFifoViolations(weeks) {
   });
 }
 
-async function autoGenerateRemainingWeeks(tw){window._targetWeeks=tw;renderRoadmap();const pid=new URLSearchParams(location.search).get("load")||window.currentPlanId;let fails=0;while(planData.weeks.length<tw&&fails<3){const built=planData.weeks.length,bs=built+1,be=Math.min(built+2,tw),near=be>=tw-3;const bT=document.getElementById("roadmap-building-text");const ph=near?"Taper":built<tw*0.3?"Base":built<tw*0.65?"Build":"Peak";if(bT)bT.textContent="Building weeks "+bs+"-"+be+" of "+tw+" ("+ph+")...";const lw=planData.weeks.slice(-2).map(w=>({phase:w.phase,focus:w.focus}));// Build FIFO block for autoGen
-    var autoFifoBlock = "";
-    if(A.fifo){
-      var aForbidden=[];
-      if(A.fifoRestrictions){
-        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("swim")))aForbidden.push("Swim");
-        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("cycl")||r.toLowerCase().includes("bike")))aForbidden.push("Bike");
-        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("run")))aForbidden.push("Run");
-        if(A.fifoRestrictions.some(r=>r.toLowerCase().includes("gym")||r.toLowerCase().includes("strength")||r.toLowerCase().includes("weight")))aForbidden.push("Strength");
-      }
-      var aRoster=[];
-      if(A.fifoRoster==="1/1")aRoster=["work","home"];
-      else if(A.fifoRoster==="2/1")aRoster=["work","work","home"];
-      else if(A.fifoRoster==="2/2")aRoster=["work","work","home","home"];
-      else aRoster=["work","home"];
-      var aCyclePos=0,aFound=0,aCurStatus=A.fifoCurrentStatus||"work",aCurWeek=parseInt(A.fifoCurrentWeek)||1;
-      for(var aci=0;aci<aRoster.length;aci++){if(aRoster[aci]===aCurStatus){aFound++;if(aFound===aCurWeek){aCyclePos=aci;break;}}}
-      var aWorkWeeks=[],aHomeWeeks=[];
-      for(var awi=0;awi<tw;awi++){if(aRoster[(aCyclePos+awi)%aRoster.length]==="work")aWorkWeeks.push(awi+1);else aHomeWeeks.push(awi+1);}
-      var aMaxMins=A.fifoHours==="30min-1hr"?60:A.fifoHours==="1-2hrs"?120:A.fifoHours==="2-3hrs"?180:240;
-      // Only include work weeks in the range being generated
-      var rangeWorkWeeks=aWorkWeeks.filter(function(wn){return wn>=bs&&wn<=be;});
-      var rangeHomeWeeks=aHomeWeeks.filter(function(wn){return wn>=bs&&wn<=be;});
-      if(rangeWorkWeeks.length||rangeHomeWeeks.length){
-        autoFifoBlock=" === FIFO RULES FOR THIS BATCH ==="+
-          " WORK WEEKS in this batch: "+(rangeWorkWeeks.length?rangeWorkWeeks.join(","):"none")+
-          " HOME WEEKS in this batch: "+(rangeHomeWeeks.length?rangeHomeWeeks.join(","):"none")+
-          (rangeWorkWeeks.length?" BANNED types on work weeks: "+(aForbidden.length?aForbidden.join(","):"none")+". MAX duration: "+aMaxMins+"min. Allowed: "+["Swim","Bike","Run","Strength","Brick"].filter(t=>!aForbidden.includes(t)).concat(["Rest"]).join(",")+" ONLY.":"")+
-          " ===";
-      }
-    }
-    const _rd=planData.raceDate||A.date;const _rdName=_rd?["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(_rd+"T00:00:00").getDay()]:"Sunday";const _raceDistLower2=(planData.race||A.race||'').toLowerCase();const _isFull2=_raceDistLower2.includes('140.6')||_raceDistLower2.includes('full ironman');const _isHalf2=_raceDistLower2.includes('70.3')||_raceDistLower2.includes('half ironman');const _isOlympic2=_raceDistLower2.includes('olympic');const _bikeDurRW=_isFull2?'3h 30min':_isHalf2?'2h 30min':_isOlympic2?'1h 30min':'60min';const _swimDurRW=_isFull2?60:_isHalf2?45:_isOlympic2?30:20;const _runDurRW=_isFull2?60:_isHalf2?45:_isOlympic2?30:20;const _bikeIntDur=_isFull2?120:_isHalf2?90:_isOlympic2?60:45;const _swimQDur=_isFull2?55:_isHalf2?45:_isOlympic2?30:20;const _rwSchedule=(()=>{if(!_rd||!(planData.startDate||A.startDate))return null;const _dn4=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];const _rdt2=new Date(_rd+"T00:00:00");const _sdt=new Date((planData.startDate||A.startDate)+"T00:00:00");const _res=[];for(let _i=7;_i>=0;_i--){const _d=new Date(_rdt2);_d.setDate(_rdt2.getDate()-_i);const _diff=Math.round((_d-_sdt)/86400000);const _wn=Math.floor(_diff/7)+1;_res.push({dbr:_i,weekNum:_wn,dayName:_dn4[_d.getDay()]});}return _res;})();const _raceDayRule2=near&&_rwSchedule?(()=>{const _lines=_rwSchedule.map(s=>{if(s.dbr===0)return"Week "+s.weekNum+" "+s.dayName+': RACE DAY — {"day":"'+s.dayName+'","type":"Race","name":"Race Day \u{1F3C1}","duration":null,"effort":9,"zone":null,"purpose":"Your race.","warmup":"Light warm-up","mainset":"Race.","cooldown":"Recovery walk","coachNote":"Trust your training.","paceTarget":"Race pace","heartRateZone":"Race"}';if(s.dbr===1)return"Week "+s.weekNum+" "+s.dayName+": THREE separate entries (same day name) — (1) Easy 20min swim recce type=Swim effort=3, (2) Easy 20min jog with strides type=Run effort=3, (3) Easy 25min bike spin type=Bike effort=3";if(s.dbr===2)return"Week "+s.weekNum+" "+s.dayName+": Full Rest. type=Rest";if(s.dbr===3)return"Week "+s.weekNum+" "+s.dayName+": Full Rest. type=Rest";if(s.dbr===4)return"Week "+s.weekNum+" "+s.dayName+": Quality swim "+_swimQDur+"min with race pace efforts. type=Swim effort=6";if(s.dbr===5)return"Week "+s.weekNum+" "+s.dayName+": Bike "+_bikeIntDur+"min with race pace intervals. type=Bike effort=7";if(s.dbr===6)return"Week "+s.weekNum+" "+s.dayName+": TWO entries same day name — (1) Quality swim "+_swimDurRW+"min type=Swim effort=6, (2) Aerobic run "+_runDurRW+"min with 10min at race pace type=Run effort=6";if(s.dbr===7)return"Week "+s.weekNum+" "+s.dayName+": Long bike "+_bikeDurRW+" TT position aerobic. type=Bike effort=5";return"";}).join("\n");return"ELITE TAPER REQUIRED for weeks "+bs+" to "+be+". Race day is "+_rdName+" in week "+tw+". Generate ALL sessions below — do NOT omit any:\n"+_lines+"\n\nAll other days in these weeks = Rest. NEVER generate only Rest days for an entire week.";})():near?"RACE WEEK: Week "+tw+" is race week. Race day is "+_rdName+". Generate proper activation sessions. NEVER make all days Rest.":"Progressive overload.";const pr="Triathlon coach. Generate weeks "+bs+" to "+be+" for a "+(planData.race||A.race)+" athlete. Race date: "+(_rd||"TBD")+". Total plan: "+tw+" weeks. Recent: "+JSON.stringify(lw)+". Days: "+(A.days||[]).join(",")+". Hrs: "+(A.hours||8)+". Strength training: "+(A.strength?"YES — include 1 strength session per week (core, glutes, single-leg, 30-45min), type Strength.":"No strength — swim bike run only")+". "+((planData.units||A.units)==="imperial"?"UNITS: IMPERIAL — use miles, yards, min/mile, min/100yd, mph for ALL paces and distances throughout the ENTIRE plan. NEVER use km, km/h, /km or /100m anywhere. Every pace target, distance and speed must be imperial. ":"")+_raceDayRule2+autoFifoBlock+" Focus descriptions must be plain English, inspiring and athlete-friendly — never use terms like 'constraint', 'adaptation', 'modality' or corporate language. JSON only: {weeks:[{weekNumber,phase,focus,weeklyNarrative,days:[{day,type,name,duration,effort,zone,purpose,warmup,mainset,cooldown,coachNote,paceTarget,heartRateZone}]}]}";try{const r=await fetch("/api/generate-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:pr})});if(!r.ok)throw new Error("API "+r.status);const data=await r.json();let txt=(data.plan||"").replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const nd=JSON.parse(txt);if(!nd.weeks||!nd.weeks.length)throw new Error("no weeks");
-// Post-process new weeks: strip fake race days and correct volumes
-const _raceDistLower=(planData.race||A.race||'').toLowerCase();
-const _isFull=_raceDistLower.includes('140.6')||_raceDistLower.includes('full ironman');
-const _isHalf=_raceDistLower.includes('70.3')||_raceDistLower.includes('half ironman');
-const _isOlympic=_raceDistLower.includes('olympic');
-const _isSprint=_raceDistLower.includes('sprint');
-const _totalWks=tw;
-const _rdFinal=planData.raceDate||A.date;
-const _raceDayName=_rdFinal?['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(_rdFinal+'T00:00:00').getDay()]:'Sunday';
-nd.weeks.forEach((wk)=>{
-  const _wkNum=(planData.weeks?.length||0)+nd.weeks.indexOf(wk)+1;
-  const _pct=_wkNum/_totalWks;
-  const _isFinalWk=_wkNum>=_totalWks;
-  // Strip fake race days from non-final weeks
-  if(!_isFinalWk&&wk.days){
-    wk.days=wk.days.map(d=>{
-      if(d.type==='Race'||(d.name&&d.name.includes('Race Day'))){
-        return{...d,type:'Rest',name:'Rest',duration:0,effort:0,purpose:'Recovery day',warmup:'',mainset:'Rest and recover.',cooldown:'',coachNote:'Rest is training.'};
-      }
-      return d;
-    });
+async function autoGenerateRemainingWeeks(tw){
+  window._targetWeeks=tw;
+  renderRoadmap();
+  const pid=new URLSearchParams(location.search).get("load")||window.currentPlanId;
+  if(!pid){console.error("autoGen: no planId");return;}
+  // Get user session for userId
+  let userId=null;
+  if(sb2){try{const{data:{session}}=await sb2.auth.getSession();if(session)userId=session.user.id;}catch(e){}}
+  if(!userId){console.error("autoGen: no userId");return;}
+  let fails=0;
+  const bT=document.getElementById("roadmap-building-text");
+  while(planData.weeks.length<tw&&fails<3){
+    try{
+      const built=planData.weeks.length;
+      const ph=built<tw*0.3?"Base":built<tw*0.65?"Build":built<tw*0.85?"Peak":"Taper";
+      if(bT)bT.textContent="Building weeks "+(built+1)+" of "+tw+" ("+ph+")...";
+      const r=await fetch("/api/build-remaining",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({planId:pid,userId})});
+      if(!r.ok)throw new Error("API "+r.status);
+      const data=await r.json();
+      if(!data.success)throw new Error(data.error||"build-remaining failed");
+      // Reload planData from Supabase to get updated weeks
+      if(sb2){const{data:{session}}=await sb2.auth.getSession();if(session){const pr2=await sb2.from("plans").select("plan_data").eq("id",pid).single();if(pr2.data&&pr2.data.plan_data){let txt=pr2.data.plan_data;txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const pd=JSON.parse(txt);if(pd.weeks)planData.weeks=pd.weeks;}}}
+      renderRoadmap();
+      fails=0;
+      if(data.done){console.log("autoGen: complete, "+planData.weeks.length+" weeks built");break;}
+      await new Promise(r=>setTimeout(r,1000));
+    }catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}
   }
-  // Volume corrections
-  let _tBike=0,_tRun=0,_tSwim=0;
-  if(_isFull){
-    const _bh=_pct<0.30?2+(_pct/0.30)*1.5:_pct<0.65?3.5+((_pct-0.30)/0.35)*1.5:_pct<0.85?5.5:Math.max(1,5.5-((_pct-0.85)/0.15)*4);
-    _tBike=Math.round(_bh*60);
-    _tRun=_pct<0.30?Math.round(60+(_pct/0.30)*30):_pct<0.65?Math.round(90+((_pct-0.30)/0.35)*60):_pct<0.85?150:Math.max(30,Math.round(150-((_pct-0.85)/0.15)*120));
-    _tSwim=_pct<0.30?Math.round(45+(_pct/0.30)*20):_pct<0.65?Math.round(65+((_pct-0.30)/0.35)*25):_pct<0.85?90:Math.max(20,Math.round(90-((_pct-0.85)/0.15)*60));
-  } else if(_isHalf){
-    const _bh=_pct<0.35?1.5+(_pct/0.35)*1.5:_pct<0.75?3+((_pct-0.35)/0.40):Math.max(0.75,4-((_pct-0.75)/0.25)*3);
-    _tBike=Math.round(_bh*60);_tRun=_pct<0.35?Math.round(45+(_pct/0.35)*35):_pct<0.75?Math.round(80+((_pct-0.35)/0.40)*40):Math.max(20,Math.round(120-((_pct-0.75)/0.25)*90));_tSwim=_pct<0.5?Math.round(40+_pct*30):Math.max(20,Math.round(70-(_pct-0.5)*60));
-  } else if(_isOlympic){_tBike=Math.round(Math.min(90,45+_pct*60));_tRun=Math.round(Math.min(70,30+_pct*50));_tSwim=Math.round(Math.min(60,30+_pct*40));
-  } else if(_isSprint){_tBike=Math.round(Math.min(60,25+_pct*40));_tRun=Math.round(Math.min(40,20+_pct*25));_tSwim=Math.round(Math.min(35,20+_pct*20));}
-  if(wk.phase==='Race Week') return; // Never override race week volumes
-  if(_tBike>0&&wk.days){const _bs=wk.days.filter(d=>d.type==='Bike'||d.type==='Brick');if(_bs.length>0){const _lb=_bs.reduce((a,b)=>(parseFloat(a.duration)||0)>(parseFloat(b.duration)||0)?a:b);_lb.duration=_tBike;}}
-  if(_tRun>0&&wk.days){const _rs=wk.days.filter(d=>d.type==='Run');if(_rs.length>0){const _lr=_rs.reduce((a,b)=>(parseFloat(a.duration)||0)>(parseFloat(b.duration)||0)?a:b);_lr.duration=_tRun;}}
-  if(_tSwim>0&&wk.days){const _ss=wk.days.filter(d=>d.type==='Swim');if(_ss.length>0){const _ls=_ss.reduce((a,b)=>(parseFloat(a.duration)||0)>(parseFloat(b.duration)||0)?a:b);_ls.duration=_tSwim;}}
-});
-planData.weeks=[...planData.weeks,...nd.weeks];planData.weeks.forEach((wk,i)=>{wk.weekNumber=i+1;});
-// Fix consecutive rest days (never 3+ in a row)
-(function fixConsecRest(weeks){const _do=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];weeks.forEach(wk=>{if(!wk.days||!wk.days.length)return;const s=[...wk.days].sort((a,b)=>_do.indexOf(a.day)-_do.indexOf(b.day));let rr=0,rs=-1;for(let i=0;i<=s.length;i++){const isR=i<s.length&&s[i].type==='Rest';if(isR){if(rr===0)rs=i;rr++;}else{if(rr>=3){const mi=rs+Math.floor(rr/2);const md=s[mi];const ri=s.findIndex(d=>d.type==='Race');if(mi!==ri&&mi!==ri-1){const oi=wk.days.findIndex(d=>d.day===md.day);if(oi!==-1){wk.days[oi]={day:md.day,type:'Swim',name:'Easy Activation Swim',duration:20,effort:3,zone:1,purpose:'Keep the body ticking — light movement to stay loose.',warmup:'5 min easy freestyle',mainset:'10 min easy continuous swim at Zone 1 — stroke feel only.',cooldown:'5 min easy backstroke',coachNote:'Short activation to maintain neuromuscular readiness without fatigue.',paceTarget:'Easy — 30-40 sec/100m slower than CSS',heartRateZone:'Zone 1-2'};}}}rr=0;rs=-1;}}});})(planData.weeks);
-if(A.fifo)fixFifoViolations(planData.weeks);correctPhases(planData.weeks);if(pid&&sb2){for(let a=0;a<3;a++){const{data:{session}}=await sb2.auth.getSession();if(session){const{error}=await sb2.from("plans").update({plan_data:JSON.stringify(planData)}).eq("id",pid);if(!error)break;}await new Promise(r=>setTimeout(r,1000));}}renderRoadmap();fails=0;await new Promise(r=>setTimeout(r,1000));}catch(e){console.error("autoGen:",e);fails++;await new Promise(r=>setTimeout(r,2000));}}renderRoadmap();try{renderGraph();}catch(e){}}
+  if(A.fifo)fixFifoViolations(planData.weeks);
+  correctPhases(planData.weeks);
+  renderRoadmap();
+  try{renderGraph();}catch(e){}
+}
 
 </script>
 
