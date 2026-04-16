@@ -1023,16 +1023,25 @@ async function loadTodaySession() {
       return;
     }
     const week = planData.weeks[weekIdx];
-    const day = week?.days?.[dayIdx];
+    if (!week?.days) return;
+
+    // Group sessions by day name — same logic as plan.html to support double sessions
+    const dayNameOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const todayDayName = dayNameOrder[dayIdx];
+    const todaySessions = week.days.filter(d => d.day === todayDayName);
+    const day = todaySessions.length > 0 ? todaySessions[0] : week.days[dayIdx];
     if (!day) return;
+    const hasDouble = todaySessions.length > 1;
     const t = TYPE_INFO[day.type] || TYPE_INFO['Rest'];
     const card = document.getElementById('today-card');
     card.style.display = 'block';
-    if (day.type === 'Rest') {
+    if (day.type === 'Rest' && !hasDouble) {
       document.getElementById('today-card-inner').innerHTML = `<div class="today-icon">😴</div><div class="today-info"><div class="today-name">Rest Day</div><div class="today-rest" style="margin-top:6px;">Recovery is where fitness is built. Stretch, eat well, sleep.</div></div>`;
     } else {
       const { data: comp } = await sb.from('completions').select('id').eq('user_id', session.user.id).eq('week_num', weekIdx).eq('day', String(dayIdx)).limit(1);
       const done = comp && comp.length > 0;
+      const secondSession = hasDouble ? todaySessions[1] : null;
+      const t2 = secondSession ? (TYPE_INFO[secondSession.type] || TYPE_INFO['Rest']) : null;
       document.getElementById('today-card-inner').innerHTML = `
         <div class="today-icon">${done ? '✅' : t.icon}</div>
         <div class="today-info">
@@ -1044,6 +1053,14 @@ async function loadTodaySession() {
             <span style="color:rgba(255,255,255,0.35);">Week ${weekIdx+1} · ${week.phase||''} phase</span>
           </div>
           ${day.purpose ? '<div class="today-purpose">' + day.purpose + '</div>' : ''}
+          ${hasDouble && secondSession ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);">
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-bottom:6px;">ALSO TODAY</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span>${t2.icon}</span>
+              <span style="color:rgba(255,255,255,0.8);font-size:14px;font-weight:500;">${secondSession.name || secondSession.type + ' Session'}</span>
+              ${secondSession.duration ? '<span style="color:rgba(255,255,255,0.4);font-size:13px;">· ' + fmtDurD(secondSession.duration) + '</span>' : ''}
+            </div>
+          </div>` : ''}
         </div>
         <div class="today-btn-row">
           <a href="/plan.html?load=${plan.id}" class="today-go">Open session →</a>
@@ -1051,7 +1068,6 @@ async function loadTodaySession() {
             ${done ? '✅ Done — undo?' : '✓ Mark done'}
           </button>
         </div>`;
-
     }
   } catch(e) { console.log('Today session error:', e); }
 }
