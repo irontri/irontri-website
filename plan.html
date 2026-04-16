@@ -2467,7 +2467,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadCompletions();
         renderWeek();
         // Repair elite taper if final 2 weeks are wrong (skips if already correct)
-        if(planData.weeks.length>0&&planData.raceDate){const _twR=Math.min(Math.ceil((new Date(planData.raceDate+'T00:00:00')-new Date((planData.startDate||A.startDate)+'T00:00:00'))/(7*24*60*60*1000)),52);if(planData.weeks.length>=_twR)repairEliteTaper();}
+        if(planData.weeks.length>0&&planData.raceDate){const _twR=Math.min(Math.ceil((new Date(planData.raceDate+'T00:00:00')-new Date((planData.startDate||A.startDate)+'T00:00:00'))/(7*24*60*60*1000)),52);if(planData.weeks.length>=_twR){planData.race=planData.race||A.race;repairEliteTaper();}}
         syncStravaActivities();
         // Resume background generation if plan is incomplete
         if(planData.raceDate){
