@@ -1,4 +1,4 @@
-export const config = { maxDuration: 60 };
+export const config = { maxDuration: 300 };
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
@@ -144,6 +144,17 @@ JSON structure for weeks:
     const data = await response.json();
     const planText = data.content.map(c => c.text || '').join('\n');
 
+    // Inject basePrompt into plan_data so build-remaining can use it for weeks 5+
+    let planDataToSave = planText;
+    try {
+      const txt = planText.substring(planText.indexOf('{'), planText.lastIndexOf('}') + 1);
+      const pd = JSON.parse(txt);
+      pd.basePrompt = prompt;
+      planDataToSave = JSON.stringify(pd);
+    } catch(e) {
+      console.log('Could not inject basePrompt:', e);
+    }
+
     if (userId) {
       try {
         await fetch(process.env.SUPABASE_URL + '/rest/v1/plans', {
@@ -154,7 +165,7 @@ JSON structure for weeks:
             'Authorization': 'Bearer ' + process.env.SUPABASE_ANON_KEY,
             'Prefer': 'return=minimal'
           },
-          body: JSON.stringify({ user_id: userId, plan_data: planText, race: race || 'Triathlon' })
+          body: JSON.stringify({ user_id: userId, plan_data: planDataToSave, race: race || 'Triathlon' })
         });
       } catch(e) {
         console.log('Could not save plan:', e);
