@@ -2138,7 +2138,7 @@ function connectStravaForFitness() {
   const clientId = '216800';
   const redirect = encodeURIComponent(window.location.origin + '/api/strava-exchange');
   const scope = 'read,activity:read_all,activity:write';
-  window.location.href = 'https://www.strava.com/oauth/authorize?client_id=' + clientId + '&response_type=code&redirect_uri=' + redirect + '&approval_prompt=auto&scope=' + scope + '&state=quiz_fitness';
+  window.location.href = 'https://www.strava.com/oauth/authorize?client_id=' + clientId + '&response_type=code&redirect_uri=' + redirect + '&approval_prompt=force&scope=' + scope + '&state=quiz_fitness';
 }
 
 function applyStravaFitness() {
