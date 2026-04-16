@@ -558,22 +558,16 @@ export default async function handler(req, res) {
         raceWeekSessions.push({ daysBeforeRace: i, dayName, weekNum });
       }
 
-      // Wipe and rebuild only weeks that are in the CURRENT batch (newWeeks)
-      // Never wipe weeks from previous batches — they already have correct sessions
+      // Wipe the final two weeks' days and rebuild from scratch
       const weeksToOverride = [...new Set(raceWeekSessions.map(s => s.weekNum))];
       weeksToOverride.forEach(wn => {
-        const wk = newWeeks.find(w => w.weekNumber === wn);
-        if (wk) {
-          wk.days = [];
-          wk.phase = wn === totalNeeded ? 'Race Week' : 'Taper';
-          wk.focus = wn === totalNeeded ? 'Race day — execute your plan.' : 'Elite taper — stay sharp, rest fully.';
-          wk.weeklyNarrative = wn === totalNeeded ? 'Your race. Trust your training and enjoy every moment.' : 'Final days before race. Short sharp sessions keep you fresh and ready.';
-        }
+        const wk = newWeeks.find(w => parseInt(w.weekNumber) === wn);
+        if (wk) { wk.days = []; wk.phase = wn === totalNeeded ? 'Race Week' : 'Taper'; }
       });
 
       // Inject each session into correct week
       raceWeekSessions.forEach(s => {
-        const wk = allWeeks.find(w => w.weekNumber === s.weekNum);
+        const wk = allWeeks.find(w => parseInt(w.weekNumber) === s.weekNum);
         if (!wk) return;
         const dbr = s.daysBeforeRace;
 
