@@ -43,18 +43,28 @@ export default async function handler(req, res) {
 
     console.log('builtSoFar:', builtSoFar, 'totalNeeded:', totalNeeded, 'hasPrompt:', !!basePrompt);
 
-    if (!basePrompt) return res.status(400).json({ error: 'No basePrompt available' });
     if (builtSoFar >= totalNeeded) return res.status(200).json({ success: true, done: true, builtSoFar, totalNeeded });
 
     const startWk = builtSoFar + 1;
     const endWk = Math.min(builtSoFar + 2, totalNeeded);
 
     const isFinalBatch = endWk >= totalNeeded;
-    const raceDistanceLower = (basePrompt || '').toLowerCase();
+
+    // Determine race distance from basePrompt or planData.race
+    const raceDistanceLower = (basePrompt || planData.race || '').toLowerCase();
     const isSprint = raceDistanceLower.includes('sprint');
     const isOlympic = raceDistanceLower.includes('olympic');
-    const isHalf = raceDistanceLower.includes('70.3') || raceDistanceLower.includes('half ironman');
-    const isFull = raceDistanceLower.includes('140.6') || raceDistanceLower.includes('full ironman');
+    const isHalf = raceDistanceLower.includes('70.3') || raceDistanceLower.includes('half ironman') || raceDistanceLower.includes('half');
+    const isFull = raceDistanceLower.includes('140.6') || raceDistanceLower.includes('full ironman') || raceDistanceLower.includes('full ironman');
+
+    // If no basePrompt (web-generated plans), reconstruct a minimal prompt from planData
+    const effectiveBasePrompt = basePrompt || (() => {
+      const race = planData.race || 'Full Ironman';
+      const startDay = planData.startDate ? new Date(planData.startDate + 'T00:00:00').toLocaleDateString('en-AU', {weekday:'long'}) : 'Thursday';
+      const recentWeeks = (planData.weeks || []).slice(-2);
+      const lastPhase = recentWeeks.length > 0 ? recentWeeks[recentWeeks.length-1].phase : 'Base';
+      return `Race: ${race}. Total plan: ${totalNeeded} weeks, start date: ${planData.startDate || 'recent'} (${startDay}), race date: ${planData.raceDate || 'TBD'}. Athlete is an intermediate triathlete. Hours/week: 8-12. Training days: Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday. Continuing from ${lastPhase} phase. Progressive overload. Zone 2 aerobic base in Base phase. Build intensity from Build phase. `;
+    })();
 
     const raceDayDistances = isFull ? '3.8km swim, 180km bike, 42.2km run' : isHalf ? '1.9km swim, 90km bike, 21.1km run' : isOlympic ? '1.5km swim, 40km bike, 10km run' : '750m swim, 20km bike, 5km run';
 
@@ -171,7 +181,7 @@ export default async function handler(req, res) {
 
     const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
 
-    const prompt = basePrompt + structureInstructions;
+    const prompt = effectiveBasePrompt + structureInstructions;
 
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
