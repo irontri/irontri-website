@@ -172,9 +172,10 @@ export default async function handler(req, res) {
         targetRunMins = pct < 0.30 ? Math.round(60 + (pct/0.30)*30) :
                         pct < 0.65 ? Math.round(90 + ((pct-0.30)/0.35)*60) :
                         pct < 0.85 ? 150 : Math.max(30, Math.round(150 - ((pct-0.85)/0.15)*120));
-        targetSwimMins = pct < 0.30 ? Math.round(45 + (pct/0.30)*20) :
-                         pct < 0.65 ? Math.round(65 + ((pct-0.30)/0.35)*25) :
-                         pct < 0.85 ? 90 : Math.max(20, Math.round(90 - ((pct-0.85)/0.15)*60));
+        // Swim: Base 45→60min, Build 60→75min, Peak 75min, Taper drops back
+        targetSwimMins = pct < 0.30 ? Math.round(45 + (pct/0.30)*15) :
+                         pct < 0.65 ? Math.round(60 + ((pct-0.30)/0.35)*15) :
+                         pct < 0.85 ? 75 : Math.max(25, Math.round(75 - ((pct-0.85)/0.15)*50));
       } else if (isHalf) {
         const bikeHrs = pct < 0.35 ? 1.5 + (pct/0.35)*1.5 :
                         pct < 0.75 ? 3 + ((pct-0.35)/0.40) :
@@ -183,7 +184,10 @@ export default async function handler(req, res) {
         targetRunMins = pct < 0.35 ? Math.round(45 + (pct/0.35)*35) :
                         pct < 0.75 ? Math.round(80 + ((pct-0.35)/0.40)*40) :
                         Math.max(20, Math.round(120 - ((pct-0.75)/0.25)*90));
-        targetSwimMins = pct < 0.5 ? Math.round(40 + pct*30) : Math.max(20, Math.round(70 - (pct-0.5)*60));
+        // Half: Base 40→55min, Build 55→65min, Peak 65min, Taper drops
+        targetSwimMins = pct < 0.35 ? Math.round(40 + (pct/0.35)*15) :
+                         pct < 0.75 ? Math.round(55 + ((pct-0.35)/0.40)*10) :
+                         Math.max(20, Math.round(65 - ((pct-0.75)/0.25)*40));
       } else if (isOlympic) {
         targetBikeMins = Math.round(Math.min(90, 45 + pct*60));
         targetRunMins = Math.round(Math.min(70, 30 + pct*50));
@@ -222,9 +226,33 @@ export default async function handler(req, res) {
         );
         longestSwim.duration = targetSwimMins;
       }
+      // Enforce minimum 2 swim sessions per week for Full IM and Half (not race week, not taper)
+      if ((isFull || isHalf) && wk.phase !== 'Race Week' && wk.phase !== 'Taper') {
+        const swimCount = (wk.days || []).filter(d => d.type === 'Swim').length;
+        if (swimCount < 2) {
+          // Swap first rest day for a second swim — never adds beyond 7 entries
+          const firstRest = wk.days.findIndex(d => d.type === 'Rest');
+          if (firstRest !== -1) {
+            const swimDur = Math.round(targetSwimMins * 0.8); // second swim slightly shorter than long swim
+            wk.days[firstRest] = {
+              day: wk.days[firstRest].day,
+              type: 'Swim',
+              name: 'Aerobic Swim',
+              duration: swimDur,
+              effort: 5,
+              zone: 2,
+              purpose: 'Second weekly swim session — build consistency in the water and reinforce technique.',
+              warmup: '400m easy freestyle — focus on catch and pull.',
+              mainset: `${Math.round(swimDur * 0.6)} min continuous aerobic swim at Zone 2. Focus on bilateral breathing, high elbow catch, and long strokes. Count strokes per length and try to reduce by 1 each 100m.`,
+              cooldown: '200m easy backstroke — open up the shoulders.',
+              coachNote: 'Two swims per week is the minimum to improve in the water. This session builds your aerobic base in the pool — show up, get it done, go home.',
+              paceTarget: isFull ? '2:05-2:20/100m aerobic' : '1:55-2:10/100m aerobic',
+              heartRateZone: 'Zone 2'
+            };
+          }
+        }
+      }
     });
-
-    const allWeeks = [...(planData.weeks || []), ...newWeeks];
     allWeeks.forEach((wk, i) => { wk.weekNumber = i + 1; });
 
     // Strip Strength sessions from Peak, Taper and Race Week phases
