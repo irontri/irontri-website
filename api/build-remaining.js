@@ -531,7 +531,7 @@ export default async function handler(req, res) {
       });
     }
     // Post-process: strip Race sessions and fake "Race Day" sessions from non-final weeks
-    const finalWeekNum = totalNeeded;
+    const finalWeekNum = allWeeks.length; // Use actual count so stripping is accurate for all plan lengths
     const raceDayNameFinal = (() => {
       const rd = planData.raceDate;
       if (!rd) return 'Sunday';
@@ -627,28 +627,30 @@ export default async function handler(req, res) {
       }
     });
 
-    // Post-process: override race week with elite taper structure
-    if (planData.raceDate && planData.startDate) {
+    // Post-process: override race week with elite taper structure (final batch only)
+    if (isFinalBatch && planData.raceDate && planData.startDate) {
+      const actualFinalWeek = allWeeks.length; // Use actual count, not totalNeeded (may differ)
       const raceDate = new Date(planData.raceDate + 'T00:00:00');
       const startDate = new Date(planData.startDate + 'T00:00:00');
       const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
       // Build the 8 sessions (7 days before + race day)
+      // Use position-based week assignment: race day (dbr=0) → final week, everything else → penultimate week
       const raceWeekSessions = [];
       for (let i = 7; i >= 0; i--) {
         const d = new Date(raceDate);
         d.setDate(raceDate.getDate() - i);
         const dayName = dayNames[d.getDay()];
-        const diffDays = Math.round((d - startDate) / 86400000);
-        const weekNum = Math.floor(diffDays / 7) + 1;
+        // Assign by position: dbr=0 goes to final week, dbr=1-7 go to penultimate week
+        const weekNum = i === 0 ? actualFinalWeek : actualFinalWeek - 1;
         raceWeekSessions.push({ daysBeforeRace: i, dayName, weekNum });
       }
 
       // Wipe the final two weeks' days and rebuild from scratch
-      const weeksToOverride = [...new Set(raceWeekSessions.map(s => s.weekNum))];
+      const weeksToOverride = [actualFinalWeek, actualFinalWeek - 1];
       weeksToOverride.forEach(wn => {
         const wk = allWeeks.find(w => parseInt(w.weekNumber) === wn);
-        if (wk) { wk.days = []; wk.phase = wn === totalNeeded ? 'Race Week' : 'Taper'; }
+        if (wk) { wk.days = []; wk.phase = wn === actualFinalWeek ? 'Race Week' : 'Taper'; }
       });
 
       // Inject each session into correct week
