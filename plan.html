@@ -1279,43 +1279,58 @@ function selectDay(i){
     return;
   }
 
-  const effortLevel=d.effort||6;
+  // Tab switcher for double sessions
+  if (!window._activeSessionTab) window._activeSessionTab = {};
+  if (hasDouble && window._activeSessionTab[i] === undefined) window._activeSessionTab[i] = 0;
+  const activeTab = hasDouble ? (window._activeSessionTab[i] || 0) : 0;
+  const dActive = hasDouble ? slotSessions[activeTab] : d;
+  const tActive = hasDouble ? resolveType(dActive.type, dActive.name, dActive.warmup, dActive.mainset) : t;
+  const effortLevel=(dActive.effort||d.effort||6);
   const effortBars=Array.from({length:10},(_,j)=>`<div class="eb ${j<effortLevel?'filled':'empty'}"></div>`).join('');
-  const strengthHTML = d.type === 'Strength' ? buildStrengthSession(curWeek) : '';
+  const strengthHTML = dActive.type === 'Strength' ? buildStrengthSession(curWeek) : '';
 
+  const tabHTML = hasDouble ? (() => {
+    const tabs = slotSessions.map((s, ti) => {
+      const tTab = resolveType(s.type, s.name, s.warmup, s.mainset);
+      const isActive = ti === activeTab;
+      return `<button onclick="switchSessionTab(${i},${ti})" style="flex:1;padding:10px 8px;background:${isActive?'rgba(30,144,255,0.15)':'transparent'};border:none;border-bottom:2px solid ${isActive?'#1E90FF':'transparent'};color:${isActive?'#1E90FF':'rgba(255,255,255,0.4)'};font-size:13px;font-weight:${isActive?'700':'400'};cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;text-align:center;">
+        ${tTab.icon} ${s.name||s.type} <span style="font-size:11px;opacity:0.7;">· ${fmtDur(s.duration||45)}</span>
+      </button>`;
+    }).join('');
+    return `<div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:0;">${tabs}</div>`;
+  })() : '';
+
+  sd.setAttribute('data-type', dActive.type||'Rest');
   sd.style.display='block';
   sd.innerHTML=`
+    ${tabHTML}
     <div class="sd-header">
-      <div class="sd-icon">${t.icon}</div>
+      <div class="sd-icon">${tActive.icon}</div>
       <div class="sd-info">
-        <div class="sd-title">${d.name||d.type+' Session'} <button class="info-btn" onclick="showExplainer('${d.type}')">What is this? ℹ️</button></div>
-        <div class="sd-meta">${fullDateStr} · ${fmtDur(d.duration||60)}</div>
+        <div class="sd-title">${dActive.name||dActive.type+' Session'} <button class="info-btn" onclick="showExplainer('${dActive.type}')">What is this? ℹ️</button></div>
+        <div class="sd-meta">${fullDateStr} · ${fmtDur(dActive.duration||60)}</div>
         <div class="sd-badges">
-          <span class="sd-badge ${t.cls}" style="border-color:${t.color}40;font-size:12px;font-weight:600;">${t.icon} ${t.label}</span>
-          ${d.effort?`<span class="sd-badge" style="border-color:rgba(255,255,255,0.1);color:var(--muted);">RPE ${d.effort}/10</span>`:''}
-          ${d.zone?`<span class="sd-badge" style="border-color:rgba(255,255,255,0.1);color:var(--muted);">Zone ${d.zone}</span>`:''}
+          <span class="sd-badge ${tActive.cls}" style="border-color:${tActive.color}40;font-size:12px;font-weight:600;">${tActive.icon} ${tActive.label}</span>
+          ${dActive.effort?`<span class="sd-badge" style="border-color:rgba(255,255,255,0.1);color:var(--muted);">RPE ${dActive.effort}/10</span>`:''}
+          ${dActive.zone?`<span class="sd-badge" style="border-color:rgba(255,255,255,0.1);color:var(--muted);">Zone ${dActive.zone}</span>`:''}
         </div>
       </div>
     </div>
     <div class="sd-body">
-      ${d.purpose?`<div class="sd-purpose">🎯 <strong>Purpose:</strong> ${d.purpose}</div>`:''}
-      ${(d.paceTarget && d.paceTarget !== 'N/A') || d.heartRateZone ? (() => {
-        const z = HR_ZONES[d.heartRateZone] || HR_ZONES[2];
+      ${dActive.purpose?`<div class="sd-purpose">🎯 <strong>Purpose:</strong> ${dActive.purpose}</div>`:''}
+      ${(dActive.paceTarget && dActive.paceTarget !== 'N/A') || dActive.heartRateZone ? (() => {
+        const z = HR_ZONES[dActive.heartRateZone] || HR_ZONES[2];
         return `<div class="targets-block">
-          ${d.paceTarget && d.paceTarget !== 'N/A' ? `<div class="target-item">
+          ${dActive.paceTarget && dActive.paceTarget !== 'N/A' ? `<div class="target-item">
             <div class="target-label">🎯 Pace target</div>
             <div class="target-value">${(() => {
               try {
                 const sf = planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null);
-
-                // BIKE — always show km/h · watts
-                if (d.type === 'Bike' || d.type === 'Brick') {
-                  const zMatch = String(d.heartRateZone || d.zone || '2').match(/\d/);
+                if (dActive.type === 'Bike' || dActive.type === 'Brick') {
+                  const zMatch = String(dActive.heartRateZone || dActive.zone || '2').match(/\d/);
                   const zNum = zMatch ? parseInt(zMatch[0]) : 2;
-                  // Extract km/h from paceTarget
-                  const speedMatch = d.paceTarget.match(/([\d.]+(?:-[\d.]+)?)\s*km\/h/i);
-                  const speedStr = speedMatch ? speedMatch[1] + ' km/h' : d.paceTarget;
-                  // Calculate watts from FTP if available
+                  const speedMatch = dActive.paceTarget.match(/([\d.]+(?:-[\d.]+)?)\s*km\/h/i);
+                  const speedStr = speedMatch ? speedMatch[1] + ' km/h' : dActive.paceTarget;
                   if (sf?.bike?.ftpEstimate) {
                     const ftp = sf.bike.ftpEstimate;
                     const wattRanges = { 1: [Math.round(ftp*0.45), Math.round(ftp*0.55)], 2: [Math.round(ftp*0.56), Math.round(ftp*0.75)], 3: [Math.round(ftp*0.76), Math.round(ftp*0.90)], 4: [Math.round(ftp*0.91), Math.round(ftp*1.05)], 5: [Math.round(ftp*1.06), Math.round(ftp*1.20)] };
@@ -1324,28 +1339,23 @@ function selectDay(i){
                   }
                   return speedStr;
                 }
-
-                // SWIM — always show just pace per 100m
-                if (d.type === 'Swim') {
+                if (dActive.type === 'Swim') {
                   if (sf?.swim?.avgPacePer100m) return sf.swim.avgPacePer100m + ' /100m';
-                  const swimMatch = d.paceTarget.match(/(\d+:\d+)\s*(?:\/\s*100m)?/i);
-                  return swimMatch ? swimMatch[1] + ' /100m' : d.paceTarget;
+                  const swimMatch = dActive.paceTarget.match(/(\d+:\d+)\s*(?:\/\s*100m)?/i);
+                  return swimMatch ? swimMatch[1] + ' /100m' : dActive.paceTarget;
                 }
-
-                // RUN — just the pace per km
-                if (d.type === 'Run') {
-                  const runMatch = d.paceTarget.match(/(\d+:\d+)\s*(?:\/\s*km)?/i);
-                  return runMatch ? runMatch[1] + ' /km' : d.paceTarget;
+                if (dActive.type === 'Run') {
+                  const runMatch = dActive.paceTarget.match(/(\d+:\d+)\s*(?:\/\s*km)?/i);
+                  return runMatch ? runMatch[1] + ' /km' : dActive.paceTarget;
                 }
-
               } catch(e) {}
-              return d.paceTarget;
+              return dActive.paceTarget;
             })()}</div>
           </div>` : ''}
-          ${d.heartRateZone || d.effort ? `<div class="target-item">
+          ${dActive.heartRateZone || dActive.effort ? `<div class="target-item">
             <div class="target-label">❤️ Heart rate zone</div>
             <div class="target-value" style="color:${z.color}">${(() => {
-              const rpe = parseInt(d.effort) || 5;
+              const rpe = parseInt(dActive.effort) || 5;
               const derivedZone = rpe <= 3 ? 1 : rpe <= 5 ? 2 : rpe <= 7 ? 3 : rpe === 8 ? 4 : 5;
               const zoneLabels = { 1: 'Zone 1', 2: 'Zone 2', 3: 'Zone 3', 4: 'Zone 4', 5: 'Zone 5' };
               const zonePcts = { 1: '<60%', 2: '60-70%', 3: '70-80%', 4: '80-90%', 5: '90-100%' };
@@ -1363,17 +1373,17 @@ function selectDay(i){
           </div>` : ''}
         </div>`;
       })() : ''}
-      ${d.warmup?`<div class="sd-section"><div class="sd-sec-title">🔥 Warm up</div><div class="sd-sec-content">${d.warmup}</div></div>`:''}
-      ${d.mainset?`<div class="sd-section"><div class="sd-sec-title">💪 Main set</div><div class="sd-sec-content">${d.mainset}</div></div>`:''}
-      ${d.cooldown?`<div class="sd-section"><div class="sd-sec-title">❄️ Cool down</div><div class="sd-sec-content">${d.cooldown}</div></div>`:''}
-      ${d.effort?`<div class="sd-section"><div class="sd-sec-title">📊 Effort level — RPE ${d.effort}/10 <button class="info-btn" onclick="showExplainer('RPE')">What is RPE? ℹ️</button></div><div class="effort-bar">${effortBars}</div></div>`:''}
-      ${d.coachNote?`<div class="sd-section"><div class="sd-sec-title">💬 Coach note</div><div class="sd-sec-content" style="font-style:italic;color:var(--muted);">"${d.coachNote}"</div></div>`:''}
+      ${dActive.warmup?`<div class="sd-section"><div class="sd-sec-title">🔥 Warm up</div><div class="sd-sec-content">${dActive.warmup}</div></div>`:''}
+      ${dActive.mainset?`<div class="sd-section"><div class="sd-sec-title">💪 Main set</div><div class="sd-sec-content">${dActive.mainset}</div></div>`:''}
+      ${dActive.cooldown?`<div class="sd-section"><div class="sd-sec-title">❄️ Cool down</div><div class="sd-sec-content">${dActive.cooldown}</div></div>`:''}
+      ${dActive.effort?`<div class="sd-section"><div class="sd-sec-title">📊 Effort level — RPE ${dActive.effort}/10 <button class="info-btn" onclick="showExplainer('RPE')">What is RPE? ℹ️</button></div><div class="effort-bar">${effortBars}</div></div>`:''}
+      ${dActive.coachNote?`<div class="sd-section"><div class="sd-sec-title">💬 Coach note</div><div class="sd-sec-content" style="font-style:italic;color:var(--muted);">"${dActive.coachNote}"</div></div>`:''}
       ${strengthHTML}
       <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;">
         <button id="complete-btn-${i}" onclick="toggleComplete(${i})" style="width:100%;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);color:#4ade80;padding:14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;">
           ${completions.has(`${curWeek}-${i}-0`) || completions.has(`${curWeek}-${i}`) ? '✅ Session completed!' : '✓ Mark as complete'}
         </button>
-        ${!completions.has(`${curWeek}-${i}`) && d.type !== 'Rest' ? `<div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.3);">Rate it after — your plan adapts to how it felt 🎯</div>` : ''}
+        ${!completions.has(`${curWeek}-${i}`) && dActive.type !== 'Rest' ? `<div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.3);">Rate it after — your plan adapts to how it felt 🎯</div>` : ''}
         <button onclick="swapSession(${i})" style="width:100%;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);color:#fbbf24;padding:12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;">
           😓 Not feeling 100%? Swap for an easier session
         </button>
@@ -1385,37 +1395,15 @@ function selectDay(i){
             ✕ Skip session
           </button>
         </div>
-        ${completions.has(curWeek+'-'+i+'-0') || completions.has(curWeek+'-'+i) && d.type !== 'Rest' ? '<button id="strava-share-btn-'+i+'" onclick="shareToStrava('+i+', this)" class="strava-share-btn">🟠 Share this session to Strava</button>' : ''}
+        ${completions.has(curWeek+'-'+i+'-0') || completions.has(curWeek+'-'+i) && dActive.type !== 'Rest' ? '<button id="strava-share-btn-'+i+'" onclick="shareToStrava('+i+', this)" class="strava-share-btn">🟠 Share this session to Strava</button>' : ''}
       </div>
-    </div>
-    ${hasDouble ? (() => {
-      const d2 = slotSessions[1];
-      const t2 = resolveType(d2.type, d2.name, d2.warmup, d2.mainset);
-      const isComplete2 = completions.has(curWeek+'-'+i+'-1');
-      return `<div class="sd" data-type="${d2.type||'Rest'}" style="margin-top:12px;">
-        <div class="sd-header">
-          <div class="sd-icon">${t2.icon}</div>
-          <div class="sd-info">
-            <div class="sd-title">${d2.name||d2.type+' Session'}</div>
-            <div class="sd-meta">${fmtDur(d2.duration||60)}</div>
-            <div class="sd-badges">
-              <span class="sd-badge ${t2.cls}" style="border-color:${t2.color}40;font-size:12px;font-weight:600;">${t2.icon} ${t2.label}</span>
-              ${d2.effort?`<span class="sd-badge" style="border-color:rgba(255,255,255,0.1);color:var(--muted);">RPE ${d2.effort}/10</span>`:''}
-            </div>
-          </div>
-        </div>
-        <div class="sd-body">
-          ${d2.purpose?`<div class="sd-purpose">🎯 <strong>Purpose:</strong> ${d2.purpose}</div>`:''}
-          ${d2.warmup?`<div class="sd-section"><div class="sd-sec-title">Warm up</div><div class="sd-sec-content">${d2.warmup}</div></div>`:''}
-          ${d2.mainset?`<div class="sd-section"><div class="sd-sec-title">Main set</div><div class="sd-sec-content">${d2.mainset}</div></div>`:''}
-          ${d2.cooldown?`<div class="sd-section"><div class="sd-sec-title">Cool down</div><div class="sd-sec-content">${d2.cooldown}</div></div>`:''}
-          ${d2.coachNote?`<div class="sd-section coach-note"><div class="sd-sec-title">🧠 Coach note</div><div class="sd-sec-content">${d2.coachNote}</div></div>`:''}
-          <button onclick="markComplete2(${i})" style="width:100%;background:${isComplete2?'rgba(74,222,128,0.15)':'rgba(30,144,255,0.1)'};border:1px solid ${isComplete2?'rgba(74,222,128,0.4)':'rgba(30,144,255,0.3)'};color:${isComplete2?'#4ade80':'#1E90FF'};padding:14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:10px;">
-            ${isComplete2 ? '✅ Session completed!' : '✓ Mark as complete'}
-          </button>
-        </div>
-      </div>`;
-    })() : ''}`;
+    </div>`;
+}
+
+function switchSessionTab(slotIdx, tabIdx) {
+  if (!window._activeSessionTab) window._activeSessionTab = {};
+  window._activeSessionTab[slotIdx] = tabIdx;
+  selectDay(slotIdx);
 }
 
 function markComplete2(slotIdx) {
