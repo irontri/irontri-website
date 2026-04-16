@@ -234,28 +234,29 @@ export default async function handler(req, res) {
         longestSwim.duration = targetSwimMins;
       }
       // Enforce minimum 2 swim sessions per week for Full IM and Half (not race week, not taper)
+      // Second swim is paired on a bike or run day — added as a separate entry (double session)
       if ((isFull || isHalf) && wk.phase !== 'Race Week' && wk.phase !== 'Taper') {
         const swimCount = (wk.days || []).filter(d => d.type === 'Swim').length;
         if (swimCount < 2) {
-          // Swap first rest day for a second swim — never adds beyond 7 entries
-          const firstRest = wk.days.findIndex(d => d.type === 'Rest');
-          if (firstRest !== -1) {
-            const swimDur = Math.round(targetSwimMins * 0.8); // second swim slightly shorter than long swim
-            wk.days[firstRest] = {
-              day: wk.days[firstRest].day,
+          // Find a bike or run day to pair with — prefer bike days
+          const pairTarget = wk.days.find(d => d.type === 'Bike') || wk.days.find(d => d.type === 'Run');
+          if (pairTarget) {
+            const swimDur = Math.round(targetSwimMins * 0.8); // second swim slightly shorter
+            wk.days.push({
+              day: pairTarget.day, // same day name = double session
               type: 'Swim',
               name: 'Aerobic Swim',
               duration: swimDur,
               effort: 5,
               zone: 2,
-              purpose: 'Second weekly swim session — build consistency in the water and reinforce technique.',
+              purpose: 'Second weekly swim — paired with your bike/run session. Do this in the morning, other session in the afternoon or evening.',
               warmup: '400m easy freestyle — focus on catch and pull.',
               mainset: `${Math.round(swimDur * 0.6)} min continuous aerobic swim at Zone 2. Focus on bilateral breathing, high elbow catch, and long strokes. Count strokes per length and try to reduce by 1 each 100m.`,
               cooldown: '200m easy backstroke — open up the shoulders.',
-              coachNote: 'Two swims per week is the minimum to improve in the water. This session builds your aerobic base in the pool — show up, get it done, go home.',
+              coachNote: 'Two swims per week is the minimum to improve in the water. Do this swim in the morning before your other session — fresh legs in the pool means better technique. Show up, get it done, go home.',
               paceTarget: isFull ? '2:05-2:20/100m aerobic' : '1:55-2:10/100m aerobic',
               heartRateZone: 'Zone 2'
-            };
+            });
           }
         }
       }
