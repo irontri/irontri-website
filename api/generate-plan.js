@@ -1,4 +1,4 @@
-export const config = { maxDuration: 300 };
+export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
@@ -49,6 +49,7 @@ BASE PHASE RULES (critical — strictly enforced):
 
 PHASE ASSIGNMENT RULES (critical — must follow exactly):
 - phase field MUST be one of: "Base", "Build", "Peak", "Taper", "Race Week"
+- CRITICAL: Weeks 1-4 are ALWAYS phase "Base" — NEVER use Build, Peak, Taper or Race Week for any of weeks 1-4. The user prompt will confirm this.
 - For a plan of N total weeks: Base = first 30%, Build = next 35%, Peak = next 20%, Taper = last 12%, Race Week = final 1 week
 - Example 36-week plan: Base weeks 1-11, Build weeks 12-23, Peak weeks 24-29, Taper weeks 30-35, Race Week 36
 - Example 20-week plan: Base weeks 1-6, Build weeks 7-13, Peak weeks 14-17, Taper weeks 18-19, Race Week 20
