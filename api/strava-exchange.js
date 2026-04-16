@@ -2,8 +2,28 @@
 // Vercel serverless function — handles Strava OAuth token exchange and activity updates
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const CLIENT_ID = '216800';
+
+async function saveStravaTokens(athleteId, accessToken, refreshToken, expiresAt) {
+  // Save tokens server-side using service key — bypasses RLS
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/users?strava_athlete_id=eq.${athleteId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_SERVICE_KEY,
+      'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({
+      strava_access_token: accessToken,
+      strava_refresh_token: refreshToken,
+      strava_token_expires_at: parseInt(expiresAt),
+      strava_athlete_id: String(athleteId),
+    }),
+  });
+  return r.ok;
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
@@ -43,40 +63,45 @@ export default async function handler(req, res) {
         return res.redirect(302, dest + '?strava_error=' + encodeURIComponent(data.message || 'exchange_failed'));
       }
 
-      // App flow — save tokens to Supabase server-side then redirect to app
+      const athleteId = data.athlete?.id || '';
+      const accessToken = data.access_token;
+      const refreshToken = data.refresh_token;
+      const expiresAt = data.expires_at;
+
+      // App flow — redirect to app with tokens (app saves them)
       if (isApp) {
-        // We need the user's ID — get it from Supabase auth using the session
-        // Since we can't get the session server-side easily, redirect to app with tokens
-        // The app will save them
-        const params = new URLSearchParams({
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
-          expires_at: data.expires_at,
-          athlete_id: data.athlete?.id || '',
-        });
+        const params = new URLSearchParams({ access_token: accessToken, refresh_token: refreshToken, expires_at: expiresAt, athlete_id: athleteId });
         return res.redirect(302, 'irontri://strava-connected?' + params.toString());
       }
 
-      // Quiz fitness flow
+      // Quiz fitness flow — save tokens server-side then redirect back
       if (state === 'quiz_fitness') {
+        // Try to save tokens server-side using athlete ID lookup
+        if (athleteId) {
+          await saveStravaTokens(athleteId, accessToken, refreshToken, expiresAt);
+        }
+        // Also pass tokens in URL as fallback in case user row doesn't exist yet
         const params = new URLSearchParams({
           strava_connected: '1',
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
-          expires_at: data.expires_at,
-          athlete_id: data.athlete?.id || '',
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          expires_at: expiresAt,
+          athlete_id: String(athleteId),
           quiz_step: '7'
         });
         return res.redirect(302, '/plan.html?' + params.toString());
       }
 
-      // Normal dashboard flow
+      // Normal dashboard flow — save tokens server-side then redirect
+      if (athleteId) {
+        await saveStravaTokens(athleteId, accessToken, refreshToken, expiresAt);
+      }
       const params = new URLSearchParams({
         strava_connected: '1',
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-        expires_at: data.expires_at,
-        athlete_id: data.athlete?.id || ''
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        expires_at: expiresAt,
+        athlete_id: String(athleteId),
       });
       return res.redirect(302, '/dashboard.html?' + params.toString());
 
