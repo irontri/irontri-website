@@ -1206,17 +1206,21 @@ function renderWeek(){
   // Store slot map on window for selectDay to use
   window._daySlots = daySlots;
 
-  document.getElementById('cal').innerHTML=daySlots.map((slot,i)=>{
+  const _calSlots = _isFinalWeek
+    ? daySlots.map((slot,idx)=>({...slot,_origIdx:idx})).filter(slot => slot.sessions.some(s => s.type !== 'Rest'))
+    : daySlots.map((slot,idx)=>({...slot,_origIdx:idx}));
+  document.getElementById('cal').innerHTML=_calSlots.map((slot,i)=>{
+    const _slotIdx=slot._origIdx!==undefined?slot._origIdx:i;
     const primary = slot.sessions[0];
     const hasDouble = slot.sessions.length > 1;
     const t=resolveType(primary.type, primary.name, primary.warmup, primary.mainset);
-    const isActive=curDay===i;
+    const isActive=curDay===_slotIdx;
     // Check completion — all sessions in slot complete
-    const isComplete = slot.sessions.every((_,si) => completions.has(`${curWeek}-${i}-${si}`)) && completions.has(`${curWeek}-${i}-0`);
+    const isComplete = slot.sessions.every((_,si) => completions.has(`${curWeek}-${_slotIdx}-${si}`)) && completions.has(`${curWeek}-${_slotIdx}-0`);
     const dateStr = slot.date.getDate()+' '+months[slot.date.getMonth()];
     const dayName = allDaysFull[slot.date.getDay()];
     const totalDur = slot.sessions.reduce((sum,s) => sum + (parseFloat(s.duration)||0), 0);
-    return `<div class="cal-day${primary.type==='Rest'&&!hasDouble?' rest':''}${isActive?' active':''}" data-type="${primary.swapped?'Run':primary.type}" onclick="selectDay(${i})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
+    return `<div class="cal-day${primary.type==='Rest'&&!hasDouble?' rest':''}${isActive?' active':''}" data-type="${primary.swapped?'Run':primary.type}" onclick="selectDay(${_slotIdx})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
       <div class="cal-day-name">${dayName}</div>
       <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:4px;">${dateStr}</div>
       <div class="cal-day-icon" style="position:relative;">
@@ -1229,8 +1233,8 @@ function renderWeek(){
   }).join('');
 
   if(curDay===null){
-    const firstActive=daySlots.findIndex(slot=>slot.sessions[0].type!=='Rest'||slot.sessions.length>1);
-    selectDay(firstActive>=0?firstActive:0);
+    const firstActive=_calSlots.findIndex(slot=>slot.sessions[0].type!=='Rest'||slot.sessions.length>1);
+    selectDay(firstActive>=0?(_calSlots[firstActive]._origIdx||firstActive):0);
   } else {
     selectDay(curDay);
   }
