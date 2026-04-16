@@ -1,4 +1,4 @@
-export const config = { maxDuration: 60 };
+export const config = { maxDuration: 300 };
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
@@ -24,7 +24,7 @@ SESSION QUALITY RULES (apply to every session):
 - Bike: always include cadence (rpm) + speed (${isImperial ? 'mph' : 'km/h'}) + power in ACTUAL WATTS (e.g. "210w", "195-215w") — NEVER use "% FTP" if actual FTP watts are provided in the prompt. Only use % FTP if no FTP data is available.
 - Run: always include pace (${isImperial ? 'min/mile' : '/km'}) + cadence (spm) + technique cue. Use ACTUAL BPM for heart rate zones (e.g. "130-145 bpm") — NEVER use generic "Zone 2" labels if actual HR zone BPM values are provided in the prompt.
 - Swim: always include interval distance (${isImperial ? 'yards' : 'metres'}) + rest + technique cue
-- SWIM SESSIONS: Always include exactly 2 swim sessions per week for 70.3, T100 and Full Ironman plans. Each swim must be on its own separate day. The longer swim is the key session (60-75 min at peak); the second swim is shorter (45-60 min) and focuses on technique and aerobic base. NEVER generate more than 7 sessions total per week.
+- SWIM SESSIONS: Always include exactly 2 swim sessions per week for 70.3, T100 and Full Ironman plans. The LONG swim must be on its own standalone day — it is the key session (60-75 min at peak). The SECOND shorter swim (45-60 min, technique and aerobic base focus) must be paired on the same day as an existing bike or run session — add it as a separate entry in the days array with the same day name. This creates a double session day. The days array may have more than 7 entries when double sessions exist — this is correct and expected.
 - paceTarget: MUST be in ${isImperial ? 'min/mile or min/100yd or mph' : 'min/km or min/100m or km/h'} — NEVER mix units
 - heartRateZone: When HR zone BPM data is provided, use actual BPM ranges (e.g. "130-145 bpm") not generic labels like "Zone 2". When no HR data available, use zone labels.
 - CRITICAL: If the prompt contains "STRAVA FITNESS DATA" with actual watts and BPM values — USE THOSE EXACT VALUES throughout the entire plan. Do not substitute percentages or zone labels for actual numbers.
