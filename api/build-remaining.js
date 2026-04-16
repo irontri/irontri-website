@@ -120,7 +120,9 @@ export default async function handler(req, res) {
       return 'Match bike volume to race distance with steady progressive overload.';
     })();
 
-    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
+    const lateBrickRule = (isFull || isHalf) ? `LATE BASE BRICK SESSIONS: In the final 2-3 weeks of Base phase, include 1 brick session per week replacing a mid-week bike session. Brick run structure: 8-10 min faster effort immediately off the bike (race pace feel — not threshold, not all-out) then settle into Zone 2 for the remainder. Scale to athlete level — Beginner: 20-30 min bike + 10 min run; Intermediate: 30-45 min bike + 15 min run; Advanced: 45-60 min bike + 20 min run. Use actual pace/watts from prompt if available. coachNote must say this is neuromuscular transition adaptation only, not fitness work. BASE PHASE EXCEPTION: this brick run faster effort is the ONLY intensity permitted in Base phase — all other Base sessions remain Zone 2 only.` : '';
+
+    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
 
     const prompt = basePrompt + structureInstructions;
 
@@ -238,6 +240,37 @@ export default async function handler(req, res) {
           });
         }
       }
+    });
+
+    // Post-process: inject open water swims in Build/Peak phases
+    // Monthly in Build (every 4 weeks), fortnightly in Peak (every 2 weeks)
+    // Swaps out one pool swim that week — never adds on top
+    const openWaterCoachNote = "Head to the ocean if you're within reasonable distance — otherwise any open water (lake, river, reservoir) works perfectly. Practice sighting every 10 strokes, wear your wetsuit if you're racing in one, and get comfortable with the conditions you'll face on race day. If you're far from open water, this is still a great mental prep session in the pool focusing on sighting drills.";
+    newWeeks.forEach(wk => {
+      const phase = (wk.phase || '').toLowerCase();
+      if (phase !== 'build' && phase !== 'peak') return;
+      const weekNum = wk.weekNumber;
+      const isOpenWaterWeek = phase === 'peak' ? (weekNum % 2 === 0) : (weekNum % 4 === 0);
+      if (!isOpenWaterWeek) return;
+      if (!wk.days) return;
+      // Find a pool swim to swap — prefer non-longest swim
+      const swimSessions = wk.days.map((d, i) => ({ d, i })).filter(x => x.d.type === 'Swim');
+      if (swimSessions.length === 0) return;
+      // Swap the first swim session (not the longest — keep the key long pool session)
+      const target = swimSessions.length > 1 ? swimSessions[0] : swimSessions[0];
+      const dur = parseFloat(target.d.duration) || 50;
+      wk.days[target.i] = {
+        ...target.d,
+        name: 'Open Water Swim',
+        purpose: 'Build open water confidence, practice sighting and get comfortable racing in natural conditions.',
+        warmup: '5 min easy entry and acclimatisation — get used to the water temperature and visibility.',
+        mainset: `${Math.round(dur * 0.7)} min continuous open water swim — sight every 10 strokes, hold steady Zone 2 effort. Focus on relaxed breathing and smooth technique despite the conditions.`,
+        cooldown: '5 min easy to shore — reflect on what felt good.',
+        coachNote: openWaterCoachNote,
+        heartRateZone: 'Zone 2',
+        effort: 5,
+        zone: 2,
+      };
     });
 
     // Enforce minimum sessions in Peak weeks for long-distance races
