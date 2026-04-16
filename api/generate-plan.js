@@ -1,4 +1,4 @@
-export const config = { maxDuration: 300 };
+export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
@@ -34,6 +34,7 @@ SESSION QUALITY RULES (apply to every session):
 - type field: MUST be EXACTLY one of: "Swim", "Bike", "Run", "Brick", "Strength", "Rest" — NO other values allowed. Never use "Recovery", "Threshold", "Endurance", "Vo2max" or any other custom type.
 - BRICK SESSIONS: Include at least 1 Brick session per week from Build phase onwards. A Brick session is a bike ride immediately followed by a run. Format mainset as: "Bike X km at [pace/watts], then immediately run Y km at [pace]. No rest between disciplines." Brick sessions are critical for race preparation and must appear consistently throughout the Build, Peak and Taper phases.
 - BRICK REALISM: Brick session distances must be realistic for age groupers. The combined brick duration must NEVER exceed 40% of total weekly training hours. Run off the bike should be 6-16km for 70.3 builds and 10-25km for Full Ironman builds — NEVER a full marathon distance in training. Pace targets for the run off the bike must be 15-30 seconds per km SLOWER than standalone run pace to account for fatigue.
+- TRACK SESSIONS: Include 1 track run session per week during Build and Peak phases for ALL race distances. Track sessions replace a standalone run session — never add on top. NEVER include track sessions in Base or Taper phases. Structure: 20 min warm up including dynamic stretching + 4-6 fast strides at the end of warm up; main set scaled by race distance and athlete level (Sprint/Olympic: 6-8x400m or 4-6x800m at race pace, rest 60-90sec; 70.3/T100: 4-6x1000m at race pace, rest 90sec; Full Ironman: 4-6x1000m or 3-4x1600m at race pace, rest 90sec-2min); 15 min cool down + easy stretching. Use actual run pace from Strava data if available. coachNote MUST include: "If you feel any niggle or tightness — back off immediately. Consistency is everything and injury is the worst thing that can happen to your training. If you have another hard session this week, pay attention to how your body feels and skip this session if needed." NEVER schedule track on consecutive days with another hard session (hard bike, brick or long run).
 
 BASE PHASE RULES (critical — strictly enforced):
 - During Base phase ALL sessions must be Zone 2 aerobic ONLY — effort 4-6/10, heartRateZone "Zone 2"
