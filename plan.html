@@ -1360,7 +1360,7 @@ function selectDay(i){
               return dActive.paceTarget;
             })()}</div>
           </div>` : ''}
-          ${dActive.heartRateZone || dActive.effort ? `<div class="target-item">
+          ${(dActive.heartRateZone || dActive.effort) && dActive.type !== 'Race' ? `<div class="target-item">
             <div class="target-label">❤️ Heart rate zone</div>
             <div class="target-value" style="color:${z.color}">${(() => {
               const rpe = parseInt(dActive.effort) || 5;
