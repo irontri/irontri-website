@@ -2970,8 +2970,7 @@ async function repairEliteTaper(){
   if(!tw||tw<2)return;
   const raceDate=planData.raceDate||A.date;
   const startDate=planData.startDate||A.startDate;
-  const race=planData.race||A.race||'';
-  if(!raceDate||!startDate||!race)return;
+  const race=planData.race||A.race||planData.basePrompt||'';
   // Check if final week already has correct race day on correct day
   const _rd=new Date(raceDate+'T00:00:00');
   const _dn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
