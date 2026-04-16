@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { planId, userId } = req.body;
+  const { planId, userId, targetWeeks } = req.body;
   if (!planId || !userId) return res.status(400).json({ error: 'Missing planId or userId' });
 
   try {
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     const planData = JSON.parse(txt);
 
     const builtSoFar = planData.weeks?.length || 0;
-    const totalNeeded = planData.totalWeeksPlanned || 0;
+    const totalNeeded = targetWeeks || planData.totalWeeksPlanned || 0;
     const basePrompt = planData.basePrompt || '';
 
     console.log('builtSoFar:', builtSoFar, 'totalNeeded:', totalNeeded, 'hasPrompt:', !!basePrompt);
