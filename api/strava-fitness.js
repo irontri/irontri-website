@@ -170,13 +170,17 @@ export default async function handler(req, res) {
       let avgWatts = null;
 
       if (poweredRides.length > 0) {
-        // Power meter path — best sustained effort in 20-60 min range * 0.95
+        // Power meter path — use weighted average watts across all powered rides
+        // then multiply by 1.17 to estimate FTP (avg training power is ~85% of FTP)
+        // Sanity cap: FTP cannot exceed average watts * 1.25 to avoid outlier inflation
         hasPowerMeter = true;
-        const bestEffortWatts = max(poweredRides.map(r => r.average_watts));
-        ftpEstimate = Math.round(bestEffortWatts * 0.95);
-        // Also calculate overall avg watts for context
         const allPoweredRides = rides.filter(r => r.average_watts && r.average_watts > 50);
         avgWatts = allPoweredRides.length > 0 ? Math.round(avg(allPoweredRides.map(r => r.average_watts))) : null;
+        if (avgWatts) {
+          const rawFtp = Math.round(avgWatts * 1.17);
+          const cap = Math.round(avgWatts * 1.25);
+          ftpEstimate = Math.min(rawFtp, cap);
+        }
       } else {
         // Scenario 2: No power meter — estimate FTP from speed and HR
         // Method: use best average speed from 20-60 min rides as a proxy
