@@ -71,7 +71,25 @@ export default async function handler(req, res) {
       return days[new Date(rd + 'T00:00:00').getDay()];
     })();
 
-    const raceDayRule = isFinalBatch ? `RACE WEEK REQUIRED: Week ${totalNeeded} is race week. Generate a proper race week with SHORT activation sessions. CRITICAL: NEVER have more than 2 consecutive rest days in race week. EXACT structure required based on race day (${raceDayName}): 4 days before race=easy 25min Swim, 3 days before=easy 30min Bike with 4x30sec surges, 2 days before=easy 20min Run with strides, 1 day before=Rest, race day=${raceDayName}=Race Day. All other days = Rest. NEVER place 3 or more rest days in a row. The LAST day (${raceDayName}) MUST be: {"day":"${raceDayName}","type":"Race","name":"Race Day 🏁","duration":null,"effort":9,"zone":null,"purpose":"Your race — execute your plan and enjoy every moment.","warmup":"Light warm-up as per race briefing","mainset":"${raceDayDistances} — race pace throughout. Swim smooth, bike strong, run proud.","cooldown":"Recovery walk and celebrate your achievement","coachNote":"Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.","paceTarget":"Race pace","heartRateZone":"Race"}. NEVER make all 7 days Rest — race week must have swim, bike and run activation sessions before race day.` : '';
+    const bikeDurRaceWeek = isFull ? '3-3.5h TT position flat course' : isHalf ? '2-2.5h race position' : isOlympic ? '1.5h' : '1h';
+    const swimDurRaceWeek = isFull ? '60min' : isHalf ? '45min' : isOlympic ? '30min' : '20min';
+    const runDurRaceWeek = isFull ? '60min with 10min at race pace' : isHalf ? '45min with 10min at race pace' : isOlympic ? '30min with 8min at race pace' : '20min with 5min at race pace';
+    const bikeIntervalsRaceWeek = isFull ? '2h with 4x10min at race pace' : isHalf ? '1.5h with 4x10min at 70.3 pace' : isOlympic ? '1h with 3x8min at Olympic pace' : '45min with 4x5min at Sprint pace';
+    const swimQualityRaceWeek = isFull ? '55min quality swim' : isHalf ? '45min quality swim' : isOlympic ? '30min quality swim' : '20min quality swim';
+
+    const raceDayRule = isFinalBatch ? `RACE WEEK REQUIRED: Week ${totalNeeded} is race week. Use this EXACT elite taper structure — scale durations already provided. Race day is ${raceDayName}.
+
+STRUCTURE (count back from ${raceDayName}):
+- 7 days before race: Long bike in race/TT position — ${bikeDurRaceWeek}. Aerobic but at race cadence. type=Bike.
+- 6 days before race: Quality swim (${swimDurRaceWeek}) + aerobic run (${runDurRaceWeek}) — TWO SEPARATE ENTRIES same day name (double session). type=Swim and type=Run.
+- 5 days before race: Bike with race pace intervals — ${bikeIntervalsRaceWeek}. type=Bike.
+- 4 days before race: ${swimQualityRaceWeek} with some race pace efforts. type=Swim.
+- 3 days before race: Full Rest. Sleep, eat, hydrate. type=Rest.
+- 2 days before race: Full Rest. Sleep, eat, hydrate. type=Rest.
+- 1 day before race: THREE short easy activation sessions same day (triple session — separate entries same day name): (1) Easy 20min open water swim recce type=Swim, (2) Easy 20min jog with 4-6 fast strides type=Run, (3) Easy 20-30min bike spin type=Bike. All effort 2-3/10.
+- Race day (${raceDayName}): MUST be: {"day":"${raceDayName}","type":"Race","name":"Race Day 🏁","duration":null,"effort":9,"zone":null,"purpose":"Your race — execute your plan and enjoy every moment.","warmup":"Light warm-up as per race briefing","mainset":"${raceDayDistances} — race pace throughout. Swim smooth, bike strong, run proud.","cooldown":"Recovery walk and celebrate your achievement","coachNote":"Trust your training. Start conservative, build through the bike, and leave it all on the run. You are ready.","paceTarget":"Race pace","heartRateZone":"Race"}
+
+NEVER make all 7 days Rest. NEVER place 3+ consecutive rest days.` : '';
 
     // Get last built week's bike data for continuity
     const lastBuiltWeeks = planData.weeks?.slice(-2) || [];
