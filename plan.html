@@ -261,12 +261,6 @@
     .pa-primary{background:var(--blue);color:#fff;}
     .pa-secondary{background:var(--surface);border:1px solid var(--border);color:var(--muted);}
 
-    /* DRAG AND DROP */
-    .cal-day.dragging{opacity:0.4;transform:scale(0.95);}
-    .cal-day.drag-over{border-color:#1E90FF!important;background:rgba(30,144,255,0.15)!important;transform:scale(1.05);}
-    .cal-day[draggable="true"]{cursor:grab;}
-    .cal-day[draggable="true"]:active{cursor:grabbing;}
-
     @media(max-width:600px){
       #plan{padding:20px 16px;}
       .cal-strip{grid-template-columns:repeat(7,1fr);gap:3px;}
@@ -793,6 +787,9 @@
   <div class="vol-breakdown" id="vol-breakdown"></div>
 
   <!-- CALENDAR STRIP -->
+  <div id="drag-hint" style="display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:8px;padding:0 2px;">
+    <span>⇄</span><span>Drag sessions to swap days</span>
+  </div>
   <div class="cal-strip" id="cal"></div>
 
   <!-- SESSION DETAIL -->
@@ -1226,7 +1223,7 @@ function renderWeek(){
     const dateStr = slot.date.getDate()+' '+months[slot.date.getMonth()];
     const dayName = allDaysFull[slot.date.getDay()];
     const totalDur = slot.sessions.reduce((sum,s) => sum + (parseFloat(s.duration)||0), 0);
-    return `<div class="cal-day${primary.type==='Rest'&&!hasDouble?' rest':''}${isActive?' active':''}" data-type="${primary.swapped?'Run':primary.type}" onclick="selectDay(${_slotIdx})" draggable="true" ondragstart="onDragStart(event,${_slotIdx})" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,${_slotIdx})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
+    return `<div class="cal-day${primary.type==='Rest'&&!hasDouble?' rest':''}${isActive?' active':''}" data-type="${primary.swapped?'Run':primary.type}" onclick="selectDay(${_slotIdx})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
       <div class="cal-day-name">${dayName}</div>
       <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:4px;">${dateStr}</div>
       <div class="cal-day-icon" style="position:relative;">
@@ -2910,71 +2907,6 @@ async function saveStartDate(planId) {
   } catch(e) { console.error("saveStartDate:", e); alert("Could not save: " + e.message); }
   if (bt) { bt.disabled = false; bt.textContent = "Save"; }
 }
-// ── DRAG AND DROP SESSIONS ───────────────────────────────────────────────────
-let _dragFromSlot = null;
-
-function onDragStart(e, slotIdx) {
-  _dragFromSlot = slotIdx;
-  e.dataTransfer.effectAllowed = 'move';
-  setTimeout(() => {
-    const els = document.querySelectorAll('.cal-day');
-    if (els[slotIdx]) els[slotIdx].classList.add('dragging');
-  }, 0);
-}
-
-function onDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  e.currentTarget.classList.add('drag-over');
-}
-
-function onDragLeave(e) {
-  e.currentTarget.classList.remove('drag-over');
-}
-
-async function onDrop(e, slotIdx) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('drag-over');
-  document.querySelectorAll('.cal-day').forEach(el => el.classList.remove('dragging', 'drag-over'));
-
-  if (_dragFromSlot === null || _dragFromSlot === slotIdx) { _dragFromSlot = null; return; }
-
-  const fromSlot = _dragFromSlot;
-  _dragFromSlot = null;
-
-  const w = planData.weeks[curWeek];
-  const dayNameOrder = window._daySlots ? window._daySlots.map(s => s.sessions[0]?.day || '') : [];
-
-  // Get the actual day names for these slots
-  const fromDayName = dayNameOrder[fromSlot];
-  const toDayName = dayNameOrder[slotIdx];
-
-  if (!fromDayName || !toDayName) return;
-
-  // Swap ALL sessions between these two day names
-  const fromSessions = w.days.filter(d => d.day === fromDayName);
-  const toSessions = w.days.filter(d => d.day === toDayName);
-
-  // Update day names
-  fromSessions.forEach(d => { d.day = toDayName; });
-  toSessions.forEach(d => { d.day = fromDayName; });
-
-  curDay = slotIdx;
-  renderWeek();
-  selectDay(slotIdx);
-  showIronToast('Sessions swapped ✓', '#1E90FF');
-
-  // Save
-  try {
-    const { data: { session } } = await sb2.auth.getSession();
-    if (session) {
-      const pid = new URLSearchParams(location.search).get('load') || window.currentPlanId;
-      if (pid) await sb2.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', pid);
-    }
-  } catch(e) { console.log('Drag save error:', e); }
-}
-// ── END DRAG AND DROP ─────────────────────────────────────────────────────────
-
 function renderRoadmap(){if(!planData||!planData.weeks)return;const el=document.getElementById("plan-roadmap");const _phaseOrder=['Base','Build','Peak','Taper','Race Week'];const _phases=[...new Set(planData.weeks.map(w=>w.phase))].sort((a,b)=>_phaseOrder.indexOf(a)-_phaseOrder.indexOf(b));const _phEl=document.getElementById('phases');if(_phEl){const _active=_phEl.querySelector('.phase-pill.active')?.dataset?.phase||(window._userSelectedPhase)||_phases[0];const _newActive=_phases.includes(_active)?_active:_phases[0];_phEl.innerHTML=_phases.map((p,i)=>`<button class="phase-pill${p===_newActive?' active':''}" data-phase="${p}" onclick="window._userSelectedPhase='${p}';jumpToPhase('${p}')">${p} Phase</button>`).join('');}if(!el)return;el.style.display="block";const weeks=planData.weeks,total=weeks.length,tw=window._targetWeeks||total;const pc={Base:0,Build:0,Peak:0,Taper:0};weeks.forEach(w=>{const ph=w.phase||"Base";if(pc[ph]!==undefined)pc[ph]++;else pc.Base++;});const rem=Math.max(0,tw-total),tot=tw||1;document.getElementById("roadmap-base").style.width=(pc.Base/tot*100)+"%";document.getElementById("roadmap-build").style.width=(pc.Build/tot*100)+"%";document.getElementById("roadmap-peak").style.width=(pc.Peak/tot*100)+"%";document.getElementById("roadmap-taper").style.width=(pc.Taper/tot*100)+"%";document.getElementById("roadmap-remaining").style.width=(rem/tot*100)+"%";const race=planData.raceDate||A.date||"";const rt=document.getElementById("roadmap-title");if(rt)rt.textContent=(A.race||planData.race||"Plan")+(race?" · Race "+new Date(race+"T00:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"}):"");const pt=document.getElementById("roadmap-progress-text");if(pt)pt.textContent="Week "+total+" of "+tw+" built";const bEl=document.getElementById("roadmap-building-status"),cEl=document.getElementById("roadmap-complete-status"),bT=document.getElementById("roadmap-building-text");if(total>=tw){if(bEl)bEl.style.display="none";if(cEl){cEl.style.display="block";const cw=document.getElementById("roadmap-complete-weeks");if(cw)cw.textContent=total;}}else{if(bEl)bEl.style.display="flex";if(cEl)cEl.style.display="none";if(bT)bT.textContent="Building to race day — "+total+" of "+tw+" weeks ready";
     var pb=document.getElementById("pdf-download-btn");if(pb){pb.disabled=true;pb.textContent="⏳ Still building — wait before downloading";pb.style.cssText="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.3);padding:8px 16px;border-radius:8px;font-size:12px;cursor:not-allowed;font-family:Inter,sans-serif;";}}
   var pbc=document.getElementById("pdf-download-btn");if(total>=tw&&pbc){pbc.disabled=false;pbc.textContent="✅ Download Full Plan PDF";pbc.style.cssText="background:rgba(74,222,128,0.15);border:2px solid #4ade80;color:#4ade80;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;";}
