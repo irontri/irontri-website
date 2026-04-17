@@ -97,15 +97,7 @@ function sessionMatchesActivity(session, activityType, activityDateStr) {
   return sessionType === mappedType;
 }
 
-async function syncUserActivities(user) {
-  let accessToken;
-  try {
-    accessToken = await refreshStravaToken(user);
-  } catch (err) {
-    console.error(`Token refresh failed for ${user.id}:`, err.message);
-    return { userId: user.id, skipped: true, reason: 'token_refresh_failed' };
-  }
-
+async function syncUserActivities(user, accessToken) {
   let activities;
   try {
     activities = await fetchRecentActivities(accessToken);
@@ -205,18 +197,113 @@ async function syncUserActivities(user) {
   return { userId: user.id, matched: newCompletions };
 }
 
+// ---------------------------------------------------------------------------
+// FITNESS REFRESH
+// ---------------------------------------------------------------------------
+
+const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
+
+async function fetchFitnessActivities(accessToken) {
+  const after = Math.floor(Date.now() / 1000) - 8 * 7 * 24 * 60 * 60;
+  const res = await fetch(
+    `https://www.strava.com/api/v3/athlete/activities?after=${after}&per_page=100`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (!res.ok) throw new Error(`Fitness fetch failed: ${res.status}`);
+  return res.json();
+}
+
+function calcPace(activities, type) {
+  const filtered = activities
+    .filter(a => a.type === type && a.distance > 0 && a.moving_time > 0)
+    .slice(0, 10);
+  if (!filtered.length) return null;
+  const avgSecsPerMetre = filtered.reduce((sum, a) => sum + a.moving_time / a.distance, 0) / filtered.length;
+  const secsPerKm = avgSecsPerMetre * 1000;
+  const mins = Math.floor(secsPerKm / 60);
+  const secs = Math.round(secsPerKm % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}/km`;
+}
+
+function calcBikeSpeed(activities) {
+  const rides = activities
+    .filter(a => (a.type === 'Ride' || a.type === 'VirtualRide') && a.distance > 0 && a.moving_time > 0)
+    .slice(0, 10);
+  if (!rides.length) return null;
+  const avgMps = rides.reduce((sum, a) => sum + a.distance / a.moving_time, 0) / rides.length;
+  return Math.round(avgMps * 3.6 * 10) / 10 + ' km/h';
+}
+
+function calcFTP(activities) {
+  const rides = activities
+    .filter(a => (a.type === 'Ride' || a.type === 'VirtualRide') && a.average_watts > 0)
+    .slice(0, 10);
+  if (!rides.length) return null;
+  const avgWatts = rides.reduce((sum, a) => sum + a.average_watts, 0) / rides.length;
+  return Math.round(avgWatts * 0.95) + 'W';
+}
+
+function calcHRZones(activities) {
+  const withHR = activities.filter(a => a.average_heartrate > 0);
+  if (!withHR.length) return null;
+  const maxHR = Math.max(...withHR.map(a => a.max_heartrate || a.average_heartrate));
+  if (!maxHR) return null;
+  return {
+    z1: Math.round(maxHR * 0.50) + '–' + Math.round(maxHR * 0.60) + ' bpm',
+    z2: Math.round(maxHR * 0.60) + '–' + Math.round(maxHR * 0.70) + ' bpm',
+    z3: Math.round(maxHR * 0.70) + '–' + Math.round(maxHR * 0.80) + ' bpm',
+    z4: Math.round(maxHR * 0.80) + '–' + Math.round(maxHR * 0.90) + ' bpm',
+    z5: Math.round(maxHR * 0.90) + '–' + maxHR + ' bpm',
+  };
+}
+
+async function refreshUserFitness(user, accessToken) {
+  const lastUpdated = user.strava_fitness_updated_at ? new Date(user.strava_fitness_updated_at) : null;
+  if (lastUpdated && Date.now() - lastUpdated.getTime() < FOURTEEN_DAYS_MS) {
+    return { fitnessRefreshed: false };
+  }
+
+  let activities;
+  try {
+    activities = await fetchFitnessActivities(accessToken);
+  } catch (err) {
+    return { fitnessRefreshed: false };
+  }
+
+  const fitness = {
+    runPace: calcPace(activities, 'Run') || calcPace(activities, 'VirtualRun'),
+    swimPace: calcPace(activities, 'Swim'),
+    bikeSpeed: calcBikeSpeed(activities),
+    ftp: calcFTP(activities),
+    hrZones: calcHRZones(activities),
+    calculatedAt: new Date().toISOString(),
+  };
+
+  await supabase
+    .from('users')
+    .update({
+      strava_fitness: fitness,
+      strava_fitness_updated_at: new Date().toISOString(),
+    })
+    .eq('id', user.id);
+
+  return { fitnessRefreshed: true };
+}
+
+// ---------------------------------------------------------------------------
+// HANDLER
+// ---------------------------------------------------------------------------
+
 export default async function handler(req, res) {
-  // Only allow cron invocations (Vercel sets this header)
   if (req.headers['x-vercel-cron'] !== '1') {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   console.log('[strava-sync-cron] Starting daily Strava sync');
 
-  // Fetch all users with Strava connected
   const { data: users, error } = await supabase
     .from('users')
-    .select('id, strava_access_token, strava_refresh_token, strava_token_expires_at')
+    .select('id, strava_access_token, strava_refresh_token, strava_token_expires_at, strava_fitness_updated_at')
     .not('strava_athlete_id', 'is', null)
     .not('strava_access_token', 'is', null);
 
@@ -229,12 +316,25 @@ export default async function handler(req, res) {
 
   const results = [];
 
-  // Process users sequentially to stay well within Strava rate limits
-  // 133 users × 2 requests (refresh + activities) = ~266 requests, well under 1000/day
   for (const user of users) {
     try {
-      const result = await syncUserActivities(user);
-      results.push(result);
+      // Refresh token once, reuse for both jobs
+      let accessToken;
+      try {
+        accessToken = await refreshStravaToken(user);
+      } catch (err) {
+        console.error(`Token refresh failed for ${user.id}:`, err.message);
+        results.push({ userId: user.id, skipped: true, reason: 'token_refresh_failed' });
+        continue;
+      }
+
+      // Job 1: auto-complete sessions
+      const syncResult = await syncUserActivities(user, accessToken);
+
+      // Job 2: refresh fitness if stale
+      const fitnessResult = await refreshUserFitness(user, accessToken);
+
+      results.push({ userId: user.id, ...syncResult, ...fitnessResult });
     } catch (err) {
       console.error(`[strava-sync-cron] Unhandled error for user ${user.id}:`, err.message);
       results.push({ userId: user.id, skipped: true, reason: 'unhandled_error' });
@@ -242,13 +342,15 @@ export default async function handler(req, res) {
   }
 
   const totalMatched = results.reduce((sum, r) => sum + (r.matched || 0), 0);
+  const fitnessRefreshed = results.filter(r => r.fitnessRefreshed).length;
   const skipped = results.filter(r => r.skipped).length;
 
-  console.log(`[strava-sync-cron] Done. ${totalMatched} new completions, ${skipped} users skipped`);
+  console.log(`[strava-sync-cron] Done. ${totalMatched} new completions, ${fitnessRefreshed} fitness updates, ${skipped} skipped`);
 
   return res.status(200).json({
     processed: users.length,
     totalMatched,
+    fitnessRefreshed,
     skipped,
     results,
   });
