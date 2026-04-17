@@ -1211,6 +1211,8 @@ function renderWeek(){
     : daySlots.map((slot,idx)=>({...slot,_origIdx:idx}));
   document.getElementById('cal').innerHTML=_calSlots.map((slot,i)=>{
     const _slotIdx=slot._origIdx!==undefined?slot._origIdx:i;
+    const _typeOrder={Swim:0,Bike:1,Run:2,Brick:3,Strength:4,Rest:5};
+    slot.sessions=[...slot.sessions].sort((a,b)=>(_typeOrder[a.type]??6)-(_typeOrder[b.type]??6));
     const primary = slot.sessions[0];
     const hasDouble = slot.sessions.length > 1;
     const t=resolveType(primary.type, primary.name, primary.warmup, primary.mainset);
