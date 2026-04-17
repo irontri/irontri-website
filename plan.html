@@ -1245,7 +1245,7 @@ function selectDay(i){
   const w=planData.weeks[curWeek];
   // Use slot-based sessions if available, fall back to index-based
   const slot = window._daySlots ? window._daySlots[i] : null;
-  const slotSessions = slot ? slot.sessions : null;
+  const slotSessions = slot ? [...slot.sessions].sort((a,b) => { const order = {Swim:0,Bike:1,Run:2,Brick:3,Strength:4,Rest:5}; return (order[a.type]??6)-(order[b.type]??6); }) : null;
   const d = slotSessions ? slotSessions[0] : (w.days[i] || { type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Rest day', warmup: '', mainset: '', cooldown: '', coachNote: '' });
   const hasDouble = slotSessions && slotSessions.length > 1;
   const t=resolveType(d.type, d.name, d.warmup, d.mainset);
