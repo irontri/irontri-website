@@ -2838,32 +2838,32 @@ function onCalDrop(e, toSlot) {
 
   if (_dragFromSlot === null || _dragFromSlot === toSlot) { _dragFromSlot = null; return; }
 
+  const fromSlot = _dragFromSlot;
+  _dragFromSlot = null;
+
   const w = planData.weeks[curWeek];
-  const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const slots = window._daySlots;
-  if (!slots) { _dragFromSlot = null; return; }
 
-  const fromSlotObj = slots[_dragFromSlot];
-  const toSlotObj = slots[toSlot];
-  if (!fromSlotObj || !toSlotObj) { _dragFromSlot = null; return; }
+  // Use the same dayNameOrder as renderWeek — rotated from plan start day
+  const allDayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const planStart = new Date((A.startDate || planData.startDate) + 'T00:00:00');
+  const weekStart = new Date(planStart);
+  weekStart.setDate(planStart.getDate() + (curWeek * 7));
+  const startDow = weekStart.getDay(); // 0=Sun
+  const startIdx = startDow === 0 ? 6 : startDow - 1; // Mon=0
+  const dayNameOrder = [...allDayNames.slice(startIdx), ...allDayNames.slice(0, startIdx)];
 
-  const fromDayLabel = dayNames[_dragFromSlot];
-  const toDayLabel = dayNames[toSlot];
+  // Get the day name for each slot index
+  const fromDayName = dayNameOrder[fromSlot];
+  const toDayName = dayNameOrder[toSlot];
 
-  fromSlotObj.sessions.forEach(s => { s.day = toDayLabel; });
-  toSlotObj.sessions.forEach(s => { s.day = fromDayLabel; });
-
-  // Rebuild w.days from all slots
-  // Rebuild w.days — exclude Rest placeholders (they're generated dynamically in renderWeek)
-  // but keep Rest sessions that were originally in the plan (i.e. have a coachNote or notes field,
-  // or were explicitly set). The safest approach: only keep non-Rest sessions, let renderWeek pad with Rest.
-  w.days = slots.flatMap(slot =>
-    slot.sessions.filter(s => s.type !== 'Rest')
-  );
+  // Update .day on every session in w.days by matching current day name
+  w.days.forEach(session => {
+    if (session.day === fromDayName) session.day = toDayName;
+    else if (session.day === toDayName) session.day = fromDayName;
+  });
 
   checkAndSavePlan(JSON.stringify(planData));
   curDay = toSlot;
-  _dragFromSlot = null;
   renderWeek();
   selectDay(toSlot);
   showIronToast('Sessions swapped ✓', '#1E90FF');
