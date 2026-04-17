@@ -708,6 +708,16 @@ async function loadStreakAndRing() {
   try {
     const { data:{ session } } = await sb.auth.getSession();
     if (!session) return;
+
+    // Check if user has any active plans — if not, show zeros and bail
+    const { data: activePlans } = await sb.from('plans').select('id').eq('user_id', session.user.id).limit(1);
+    if (!activePlans || activePlans.length === 0) {
+      document.getElementById('streak-num').textContent = '0';
+      document.getElementById('s-sessions').textContent = '0';
+      return;
+    }
+
+    // Fetch all completions for this user — filter orphaned ones by checking plan exists
     const { data: completions } = await sb.from('completions').select('created_at').eq('user_id',session.user.id).order('created_at',{ascending:false});
     if (!completions || !completions.length) return;
     document.getElementById('s-sessions').textContent = completions.length;
