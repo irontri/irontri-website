@@ -104,6 +104,8 @@ TAPER RULES (race-distance specific — apply strictly):
 - Olympic Triathlon: Final 2 weeks taper — reduce volume by 40%, 70% respectively. Keep intensity.
 - Sprint Triathlon: Final 4-5 DAYS only — reduce volume by 40-60%. No dedicated taper week for sprint plans under 8 weeks. Last full training day is 2 days before race day.
 - Never apply a multi-week taper to a sprint plan — it wastes valuable training time.
+- TRAINING DAYS: The prompt specifies which days the athlete can train (e.g. "days: Monday/Wednesday/Friday"). ONLY place training sessions on those days. All other days MUST be Rest. If the athlete selected all 7 days, distribute sessions across all 7 days with at most 1 rest day per week for Full Ironman/70.3 athletes.
+- MINIMUM SESSIONS: For Full Ironman plans with 6-7 available training days, weeks 1-4 (Base phase) must have a MINIMUM of 5 sessions. NEVER generate only 3 sessions in week 1 for an experienced Full Ironman athlete.
 - CONSECUTIVE REST DAYS: NEVER place 3 or more rest days in a row in any week, including taper and race week. Maximum 2 consecutive rest days at any point in the plan. In race week, place short activation sessions between rest days to prevent athletes going stale.
 
 RACE WEEK STRUCTURE (elite taper — apply exactly based on race distance):
