@@ -124,14 +124,74 @@
 <script>
 const SUPABASE_URL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } });
+
+// Init supabase only for auth session check — no localStorage dependency for the insert
+let sb;
+try {
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+} catch(e) {}
+
 let rating=0,sessionFeel=0,features=[];
 const ratingLabels=['','Terrible 😬','Not great 😕',"It's okay 😐",'Really good 😊','Love it! 🔥'];
+
 function setRating(n){rating=n;for(let i=1;i<=5;i++)document.getElementById('star'+i).classList.toggle('active',i<=n);document.getElementById('rating-label').textContent=ratingLabels[n];}
 function setSession(n){sessionFeel=n;for(let i=1;i<=5;i++){const b=document.getElementById('s'+i);b.className='rpe-btn';if(i===n)b.classList.add('sel-'+n);}}
 function toggleChip(el,val){el.classList.toggle('sel');if(el.classList.contains('sel'))features.push(val);else features=features.filter(f=>f!==val);}
-async function goToMyPlan(e){e.preventDefault();try{const{data:{session}}=await sb.auth.getSession();if(!session){window.location.href='/plan.html';return;}const{data:plans}=await sb.from('plans').select('id').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(1);if(plans?.length)window.location.href='/plan.html?load='+plans[0].id;else window.location.href='/plan.html';}catch(e){window.location.href='/plan.html';}}
-async function submitFeedback(){const comments=document.getElementById('comments').value.trim();const btn=document.getElementById('submit-btn');if(!rating&&!sessionFeel&&!features.length&&!comments){alert('Please fill in at least one field.');return;}btn.textContent='Sending...';btn.disabled=true;try{let userId=null,userEmail=null;try{const{data:{session}}=await sb.auth.getSession();if(session){userId=session.user.id;userEmail=session.user.email;}}catch(e){}const{error}=await sb.from('feedback').insert({user_id:userId,user_email:userEmail,rating:rating||null,session_feel:sessionFeel||null,feature_requests:features.length?features:null,comments:comments||null});if(error)throw error;document.getElementById('form-view').style.display='none';document.getElementById('success-view').style.display='block';}catch(e){btn.textContent='Send feedback →';btn.disabled=false;alert('Something went wrong — please try again.');}}
+
+async function goToMyPlan(e){
+  e.preventDefault();
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session){window.location.href='/plan.html';return;}
+    const{data:plans}=await sb.from('plans').select('id').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(1);
+    if(plans?.length)window.location.href='/plan.html?load='+plans[0].id;
+    else window.location.href='/plan.html';
+  }catch(e){window.location.href='/plan.html';}
+}
+
+async function submitFeedback(){
+  const comments=document.getElementById('comments').value.trim();
+  const btn=document.getElementById('submit-btn');
+  if(!rating&&!sessionFeel&&!features.length&&!comments){alert('Please fill in at least one field.');return;}
+  btn.textContent='Sending...';btn.disabled=true;
+  try{
+    // Try to get user session but don't fail if storage is blocked
+    let userId=null,userEmail=null;
+    try{
+      const{data:{session}}=await sb.auth.getSession();
+      if(session){userId=session.user.id;userEmail=session.user.email;}
+    }catch(e){}
+
+    // Use plain fetch with anon key — bypasses Supabase JS client and localStorage entirely
+    const res=await fetch(SUPABASE_URL+'/rest/v1/feedback',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SUPABASE_ANON_KEY,
+        'Authorization':'Bearer '+SUPABASE_ANON_KEY,
+        'Prefer':'return=minimal'
+      },
+      body:JSON.stringify({
+        user_id:userId,
+        user_email:userEmail,
+        rating:rating||null,
+        session_feel:sessionFeel||null,
+        feature_requests:features.length?features:null,
+        comments:comments||null
+      })
+    });
+    if(!res.ok){const err=await res.text();throw new Error(err);}
+    document.getElementById('form-view').style.display='none';
+    document.getElementById('success-view').style.display='block';
+  }catch(e){
+    console.error('Feedback error:',e);
+    btn.textContent='Send feedback →';
+    btn.disabled=false;
+    alert('Something went wrong — please try again.');
+  }
+}
 </script>
 </body>
 </html>
