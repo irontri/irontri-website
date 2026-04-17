@@ -1223,7 +1223,7 @@ function renderWeek(){
     const dateStr = slot.date.getDate()+' '+months[slot.date.getMonth()];
     const dayName = allDaysFull[slot.date.getDay()];
     const totalDur = slot.sessions.reduce((sum,s) => sum + (parseFloat(s.duration)||0), 0);
-    return `<div class="cal-day${primary.type==='Rest'&&!hasDouble?' rest':''}${isActive?' active':''}" data-type="${primary.swapped?'Run':primary.type}" onclick="selectDay(${_slotIdx})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
+    return `<div class="cal-day${primary.type==='Rest'&&!hasDouble?' rest':''  }${isActive?' active':''}" data-type="${primary.swapped?'Run':primary.type}" onclick="selectDay(${_slotIdx})" draggable="true" data-slot="${_slotIdx}" ondragstart="onCalDragStart(event,${_slotIdx})" ondragover="onCalDragOver(event)" ondragleave="onCalDragLeave(event)" ondrop="onCalDrop(event,${_slotIdx})" style="${isComplete?'border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.06);':''}">
       <div class="cal-day-name">${dayName}</div>
       <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:4px;">${dateStr}</div>
       <div class="cal-day-icon" style="position:relative;">
@@ -2808,6 +2808,62 @@ function confirmMove(weekIdx, fromDay, toDay) {
   const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   showIronToast('Moved to ' + dayNames[toDay] + ' ✓', '#1E90FF');
 }
+
+// ── DRAG-AND-DROP SWAP ─────────────────────────────────────────────────────
+let _dragFromSlot = null;
+
+function onCalDragStart(e, slotIdx) {
+  _dragFromSlot = slotIdx;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { e.currentTarget.style.opacity = '0.4'; }, 0);
+}
+
+function onCalDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.style.borderColor = 'rgba(30,144,255,0.6)';
+  e.currentTarget.style.background = 'rgba(30,144,255,0.12)';
+}
+
+function onCalDragLeave(e) {
+  e.currentTarget.style.borderColor = '';
+  e.currentTarget.style.background = '';
+}
+
+function onCalDrop(e, toSlot) {
+  e.preventDefault();
+  e.currentTarget.style.borderColor = '';
+  e.currentTarget.style.background = '';
+  document.querySelectorAll('.cal-day').forEach(el => el.style.opacity = '');
+
+  if (_dragFromSlot === null || _dragFromSlot === toSlot) { _dragFromSlot = null; return; }
+
+  const w = planData.weeks[curWeek];
+  const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const slots = window._daySlots;
+  if (!slots) { _dragFromSlot = null; return; }
+
+  const fromSlotObj = slots[_dragFromSlot];
+  const toSlotObj = slots[toSlot];
+  if (!fromSlotObj || !toSlotObj) { _dragFromSlot = null; return; }
+
+  const fromDayLabel = dayNames[_dragFromSlot];
+  const toDayLabel = dayNames[toSlot];
+
+  fromSlotObj.sessions.forEach(s => { s.day = toDayLabel; });
+  toSlotObj.sessions.forEach(s => { s.day = fromDayLabel; });
+
+  // Rebuild w.days from all slots
+  w.days = slots.flatMap(slot => slot.sessions);
+
+  checkAndSavePlan(JSON.stringify(planData));
+  curDay = toSlot;
+  _dragFromSlot = null;
+  renderWeek();
+  selectDay(toSlot);
+  showIronToast('Sessions swapped ✓', '#1E90FF');
+}
+// ── END DRAG-AND-DROP ──────────────────────────────────────────────────────
 
 function showIronToast(msg, color) {
   const old = document.getElementById('iron-toast');
