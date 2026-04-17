@@ -1,7 +1,6 @@
 {
   "functions": {
-    "api/*.js": { "maxDuration": 60 },
-    "api/generate-plan.js": { "maxDuration": 300 }
+    "api/*.js": { "maxDuration": 300 }
   },
   "crons": [
     {
