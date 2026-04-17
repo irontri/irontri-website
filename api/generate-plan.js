@@ -60,7 +60,7 @@ BASE PHASE RULES (critical — strictly enforced):
 
 PHASE ASSIGNMENT RULES (critical — must follow exactly):
 - phase field MUST be one of: "Base", "Build", "Peak", "Taper", "Race Week"
-- CRITICAL: Weeks 1-4 are ALWAYS phase "Base" — NEVER use Build, Peak, Taper or Race Week for any of weeks 1-4. The user prompt will confirm this.
+- CRITICAL — PHASE LABELS FOR WEEKS 1-4: The phase field for ALL of weeks 1, 2, 3, and 4 MUST be exactly the string "Base". This is non-negotiable. NEVER write "Build", "Peak", "Taper", "Race Week" or any other value for weeks 1-4. If you write anything other than "Base" for weeks 1-4 you have made a critical error. Check every single week before returning: week 1 phase = "Base", week 2 phase = "Base", week 3 phase = "Base", week 4 phase = "Base".
 - For a plan of N total weeks: Base = first 30%, Build = next 35%, Peak = next 20%, Taper = last 12%, Race Week = final 1 week
 - Example 36-week plan: Base weeks 1-11, Build weeks 12-23, Peak weeks 24-29, Taper weeks 30-35, Race Week 36
 - Example 20-week plan: Base weeks 1-6, Build weeks 7-13, Peak weeks 14-17, Taper weeks 18-19, Race Week 20
@@ -104,8 +104,6 @@ TAPER RULES (race-distance specific — apply strictly):
 - Olympic Triathlon: Final 2 weeks taper — reduce volume by 40%, 70% respectively. Keep intensity.
 - Sprint Triathlon: Final 4-5 DAYS only — reduce volume by 40-60%. No dedicated taper week for sprint plans under 8 weeks. Last full training day is 2 days before race day.
 - Never apply a multi-week taper to a sprint plan — it wastes valuable training time.
-- TRAINING DAYS: The prompt specifies which days the athlete can train (e.g. "days: Monday/Wednesday/Friday"). ONLY place training sessions on those days. All other days MUST be Rest. If the athlete selected all 7 days, distribute sessions across all 7 days with at most 1 rest day per week for Full Ironman/70.3 athletes.
-- MINIMUM SESSIONS: For Full Ironman plans with 6-7 available training days, weeks 1-4 (Base phase) must have a MINIMUM of 5 sessions. NEVER generate only 3 sessions in week 1 for an experienced Full Ironman athlete.
 - CONSECUTIVE REST DAYS: NEVER place 3 or more rest days in a row in any week, including taper and race week. Maximum 2 consecutive rest days at any point in the plan. In race week, place short activation sessions between rest days to prevent athletes going stale.
 
 RACE WEEK STRUCTURE (elite taper — apply exactly based on race distance):
@@ -131,6 +129,8 @@ RACE DAY RULES (critical — must always be included):
 - Race Week phase must always contain the actual Race Day session — never end on a Rest day.
 
 JSON structure for weeks:
+⚠️ FINAL CHECK BEFORE GENERATING: week 1 phase = "Base", week 2 phase = "Base", week 3 phase = "Base", week 4 phase = "Base". NO exceptions.
+
 {"weeks":[{"weekNumber":1,"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}]}`;
 
   try {
