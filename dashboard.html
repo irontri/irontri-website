@@ -1026,7 +1026,10 @@ async function loadTodaySession() {
     if (!week?.days) return;
 
     // Group sessions by day name — same logic as plan.html to support double sessions
-    const dayNameOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const allDayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const _planStartDow = new Date(planData.startDate + 'T00:00:00').getDay(); // 0=Sun
+    const _planStartIdx = _planStartDow === 0 ? 6 : _planStartDow - 1; // Mon=0
+    const dayNameOrder = [...allDayNames.slice(_planStartIdx), ...allDayNames.slice(0, _planStartIdx)];
     const todayDayName = dayNameOrder[dayIdx];
     const todaySessions = week.days.filter(d => d.day === todayDayName);
     const day = todaySessions.length > 0 ? todaySessions[0] : { type: 'Rest', name: 'Rest', duration: 0, effort: 0, day: todayDayName };
