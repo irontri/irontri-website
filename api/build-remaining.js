@@ -270,29 +270,40 @@ export default async function handler(req, res) {
       let targetBikeMins, targetRunMins, targetSwimMins;
 
       if (isFull) {
+        // Taper: week 1 = -30% (3h50), week 2 = -55% (2h30), week 3 = -70% (1h40)
         const bikeHrs = pct < 0.30 ? 2 + (pct/0.30)*1.5 :
                         pct < 0.65 ? 3.5 + ((pct-0.30)/0.35)*1.5 :
-                        pct < 0.85 ? 5.5 : Math.max(1, 5.5 - ((pct-0.85)/0.15)*4);
+                        pct < 0.85 ? 5.0 :
+                        pct < 0.90 ? 3.5 :   // Taper week 1: -30%
+                        pct < 0.95 ? 2.5 :   // Taper week 2: -50%
+                        1.5;                  // Taper week 3: -70%
         targetBikeMins = Math.round(bikeHrs * 60);
         targetRunMins = pct < 0.30 ? Math.round(60 + (pct/0.30)*30) :
                         pct < 0.65 ? Math.round(90 + ((pct-0.30)/0.35)*60) :
-                        pct < 0.85 ? 150 : Math.max(30, Math.round(150 - ((pct-0.85)/0.15)*120));
-        // Swim: Base 45→60min, Build 60→75min, Peak 75min, Taper drops back
+                        pct < 0.85 ? 140 :
+                        pct < 0.90 ? 90 :    // Taper week 1
+                        pct < 0.95 ? 60 :    // Taper week 2
+                        30;                  // Taper week 3
         targetSwimMins = pct < 0.30 ? Math.round(45 + (pct/0.30)*15) :
                          pct < 0.65 ? Math.round(60 + ((pct-0.30)/0.35)*15) :
-                         pct < 0.85 ? 75 : Math.max(25, Math.round(75 - ((pct-0.85)/0.15)*50));
+                         pct < 0.85 ? 75 :
+                         pct < 0.90 ? 55 :   // Taper week 1
+                         pct < 0.95 ? 40 :   // Taper week 2
+                         25;                 // Taper week 3
       } else if (isHalf) {
         const bikeHrs = pct < 0.35 ? 1.5 + (pct/0.35)*1.5 :
                         pct < 0.75 ? 3 + ((pct-0.35)/0.40) :
-                        Math.max(0.75, 4 - ((pct-0.75)/0.25)*3);
+                        pct < 0.87 ? 2.0 :   // Taper week 1: -50%
+                        1.0;                  // Taper week 2: -75%
         targetBikeMins = Math.round(bikeHrs * 60);
         targetRunMins = pct < 0.35 ? Math.round(45 + (pct/0.35)*35) :
                         pct < 0.75 ? Math.round(80 + ((pct-0.35)/0.40)*40) :
-                        Math.max(20, Math.round(120 - ((pct-0.75)/0.25)*90));
-        // Half: Base 40→55min, Build 55→65min, Peak 65min, Taper drops
+                        pct < 0.87 ? 60 :    // Taper week 1
+                        30;                  // Taper week 2
         targetSwimMins = pct < 0.35 ? Math.round(40 + (pct/0.35)*15) :
                          pct < 0.75 ? Math.round(55 + ((pct-0.35)/0.40)*10) :
-                         Math.max(20, Math.round(65 - ((pct-0.75)/0.25)*40));
+                         pct < 0.87 ? 35 :   // Taper week 1
+                         20;                 // Taper week 2
       } else if (isOlympic) {
         targetBikeMins = Math.round(Math.min(90, 45 + pct*60));
         targetRunMins = Math.round(Math.min(70, 30 + pct*50));
