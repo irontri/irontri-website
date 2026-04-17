@@ -96,6 +96,15 @@ PROGRESSIVE OVERLOAD: Max 2-3% improvement per week. Week 1 targets must match c
 - TRAINING DAYS: The prompt specifies which days the athlete can train (e.g. "days: Monday/Wednesday/Friday"). ONLY place training sessions on those days. All other days MUST be Rest. If the athlete selected all 7 days, distribute sessions across all 7 days with at most 1 rest day per week for Full Ironman/70.3 athletes.
 - MINIMUM SESSIONS: For Full Ironman plans with 6-7 available training days, weeks 1-4 (Base phase) must have a MINIMUM of 5 sessions. NEVER generate only 3 sessions in week 1 for an experienced Full Ironman athlete.
 
+INTENSITY DISTRIBUTION (80/20 polarised training — enforced every week):
+- Across ALL phases, a minimum of 80% of weekly sessions must be Zone 1-2 (effort 1-6/10)
+- A maximum of 20% of weekly sessions may be Zone 4-5 (effort 7-9/10)
+- ZERO Zone 3 "moderate" sessions — every session is either clearly easy OR clearly hard. No grey zone.
+- In a 7-session week: maximum 1-2 hard sessions. In a 5-session week: maximum 1 hard session.
+- Hard sessions are: track runs, threshold bike intervals, VO2max efforts, race pace brick runs
+- Easy sessions are: Zone 2 bike, Zone 2 run, aerobic swim, easy brick, strength, rest
+- Long sessions (long ride, long run) are ALWAYS Zone 2 easy — never make them hard
+
 RACE-SPECIFIC VOLUME RULES (critical — apply based on race distance in prompt):
 
 FULL IRONMAN (140.6) LONG SESSION REQUIREMENTS:
