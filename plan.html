@@ -1867,9 +1867,10 @@ async function syncStravaActivities() {
       if (completions.has(key)) continue; // already marked
 
       // Auto-tick it
+      const _planId = new URLSearchParams(location.search).get('load') || window.currentPlanId || 'current';
       const { error } = await sb2.from('completions').insert({
         user_id: session.user.id,
-        plan_id: 'current',
+        plan_id: String(_planId),
         week_num: weekNum,
         day: String(dayOfWeek)
       });
@@ -2193,7 +2194,7 @@ async function toggleComplete(dayIndex) {
       btn.textContent = '✓ Mark as complete';
       btn.style.background = 'rgba(74,222,128,0.08)';
     } else {
-      await sb2.from('completions').insert({user_id: session.user.id, plan_id: 'current', week_num: curWeek, day: String(dayIndex)});
+      const _pid = new URLSearchParams(location.search).get('load') || window.currentPlanId || 'current'; await sb2.from('completions').insert({user_id: session.user.id, plan_id: String(_pid), week_num: curWeek, day: String(dayIndex)});
       completions.add(key);
       btn.textContent = '✅ Session completed!';
       btn.style.background = 'rgba(74,222,128,0.2)';
@@ -2843,18 +2844,18 @@ function onCalDrop(e, toSlot) {
 
   const w = planData.weeks[curWeek];
 
-  // Use the same dayNameOrder as renderWeek — rotated from plan start day
-  const allDayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  // Use actual calendar date day names — matches what's displayed on the calendar
+  const allDaysFull2 = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const planStart = new Date((A.startDate || planData.startDate) + 'T00:00:00');
   const weekStart = new Date(planStart);
   weekStart.setDate(planStart.getDate() + (curWeek * 7));
-  const startDow = weekStart.getDay(); // 0=Sun
-  const startIdx = startDow === 0 ? 6 : startDow - 1; // Mon=0
-  const dayNameOrder = [...allDayNames.slice(startIdx), ...allDayNames.slice(0, startIdx)];
 
-  // Get the day name for each slot index
-  const fromDayName = dayNameOrder[fromSlot];
-  const toDayName = dayNameOrder[toSlot];
+  const fromDate = new Date(weekStart); fromDate.setDate(weekStart.getDate() + fromSlot);
+  const toDate = new Date(weekStart); toDate.setDate(weekStart.getDate() + toSlot);
+
+  // Get the day name for each slot using the actual calendar date
+  const fromDayName = allDaysFull2[fromDate.getDay()];
+  const toDayName = allDaysFull2[toDate.getDay()];
 
   // Update .day on every session in w.days by matching current day name
   w.days.forEach(session => {
