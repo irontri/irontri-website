@@ -112,6 +112,12 @@ export default async function handler(req, res) {
 
     const raceDayDistances = isFull ? '3.8km swim, 180km bike, 42.2km run' : isHalf ? '1.9km swim, 90km bike, 21.1km run' : isOlympic ? '1.5km swim, 40km bike, 10km run' : '750m swim, 20km bike, 5km run';
 
+    // Extract training days from basePrompt
+    const trainingDaysMatch = basePrompt.match(/days:\s*([^,\.\n]+)/i);
+    const trainingDaysList = trainingDaysMatch ? trainingDaysMatch[1].trim() : '';
+    const trainingDaysCount = trainingDaysList ? trainingDaysList.split('/').filter(Boolean).length : 5;
+    const trainingDaysRule = trainingDaysList ? `TRAINING DAYS: The athlete can ONLY train on these days: ${trainingDaysList.replace(/\//g, ', ')}. ALL other days MUST be type Rest. NEVER place training sessions on days not in this list. MINIMUM sessions per week: ${isFull ? Math.max(5, trainingDaysCount - 1) : isHalf ? Math.max(4, trainingDaysCount - 1) : trainingDaysCount - 2}.` : '';
+
     const restDayRule = isSprint ? 'REST DAYS: 2 rest days per week.' : isOlympic ? 'REST DAYS: 1-2 rest days per week.' : isHalf ? 'REST DAYS: 1 rest day per week. Never 0.' : 'REST DAYS: 1 rest day per week. Never 0. Never two consecutive rest days.';
 
     const totalWeeks = totalNeeded;
@@ -227,7 +233,7 @@ export default async function handler(req, res) {
     const _baseEnd=Math.floor(totalNeeded*0.30);const _buildEnd=Math.floor(totalNeeded*0.65);const _peakEnd=Math.floor(totalNeeded*0.85);const _taperEnd=totalNeeded-1;
     const _getPhase=(wk)=>wk<=_baseEnd?'Base':wk<=_buildEnd?'Build':wk<=_peakEnd?'Peak':wk<totalNeeded?'Taper':'Race Week';
     const _phaseForBatch=_getPhase(startWk);
-    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${doubleSessionRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
+    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${trainingDaysRule} ${lateBrickRule} ${trackRule} ${strengthRule} ${doubleSessionRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
 
     const prompt = basePrompt + fifoBlock + structureInstructions;
 
