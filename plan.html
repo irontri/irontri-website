@@ -1225,7 +1225,7 @@ function renderWeek(){
       <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:4px;">${dateStr}</div>
       <div class="cal-day-icon" style="position:relative;">
         ${isComplete ? '✅' : primary.swapped ? '😓' : t.icon}
-        ${hasDouble ? `<span style="position:absolute;top:-6px;right:-10px;background:#1E90FF;color:#fff;font-size:9px;font-weight:700;border-radius:100px;padding:1px 5px;line-height:14px;">+1</span>` : ''}
+        ${hasDouble ? `<span style="position:absolute;top:-6px;right:-10px;background:#1E90FF;color:#fff;font-size:9px;font-weight:700;border-radius:100px;padding:1px 5px;line-height:14px;">+${slot.sessions.length - 1}</span>` : ''}
       </div>
       <div class="cal-day-type ${t.cls}">${primary.swapped ? 'Easy' : t.label}</div>
       <div class="cal-day-dur">${totalDur?fmtDur(totalDur):''}</div>
