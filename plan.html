@@ -2854,7 +2854,12 @@ function onCalDrop(e, toSlot) {
   toSlotObj.sessions.forEach(s => { s.day = fromDayLabel; });
 
   // Rebuild w.days from all slots
-  w.days = slots.flatMap(slot => slot.sessions);
+  // Rebuild w.days — exclude Rest placeholders (they're generated dynamically in renderWeek)
+  // but keep Rest sessions that were originally in the plan (i.e. have a coachNote or notes field,
+  // or were explicitly set). The safest approach: only keep non-Rest sessions, let renderWeek pad with Rest.
+  w.days = slots.flatMap(slot =>
+    slot.sessions.filter(s => s.type !== 'Rest')
+  );
 
   checkAndSavePlan(JSON.stringify(planData));
   curDay = toSlot;
