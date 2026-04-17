@@ -1,6 +1,7 @@
 {
   "functions": {
-    "api/*.js": { "maxDuration": 60 }
+    "api/*.js": { "maxDuration": 60 },
+    "api/generate-plan.js": { "maxDuration": 300 }
   },
   "crons": [
     {
@@ -13,7 +14,11 @@
     },
     {
       "path": "/api/send-notifications",
-      "schedule": "0 22 * * *"
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/strava-sync-cron",
+      "schedule": "0 16 * * *"
     }
   ]
 }
