@@ -886,9 +886,19 @@ async function saveRename(id) {
 }
 
 async function deletePlan(id) {
-  if (!confirm('Delete this plan? Your completed sessions and streak will also be reset.')) return;
   const { data:{ session } } = await sb.auth.getSession();
-  await sb.from('completions').delete().eq('user_id', session.user.id);
+
+  // Count completions for this specific plan
+  const { count } = await sb.from('completions').select('id', { count: 'exact', head: true }).eq('plan_id', id).eq('user_id', session.user.id);
+
+  const msg = count > 0
+    ? `This plan has ${count} completed session${count === 1 ? '' : 's'}. Deleting it will permanently remove these completions and any streak attached to this plan. This cannot be undone. Are you sure?`
+    : 'Delete this plan? This cannot be undone.';
+
+  if (!confirm(msg)) return;
+
+  // Only delete completions for this specific plan
+  await sb.from('completions').delete().eq('plan_id', id).eq('user_id', session.user.id);
   await sb.from('plans').delete().eq('id', id);
   location.reload();
 }
