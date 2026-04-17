@@ -741,19 +741,20 @@ export default async function handler(req, res) {
       const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
       // Build the 8 sessions (7 days before + race day)
-      // Use position-based week assignment: race day (dbr=0) → final week, everything else → penultimate week
+      // Assign each session to the correct week based on its actual date
       const raceWeekSessions = [];
       for (let i = 7; i >= 0; i--) {
         const d = new Date(raceDate);
         d.setDate(raceDate.getDate() - i);
         const dayName = dayNames[d.getDay()];
-        // Assign by position: dbr=0 goes to final week, dbr=1-7 go to penultimate week
-        const weekNum = i === 0 ? actualFinalWeek : actualFinalWeek - 1;
+        // Calculate which week number this date falls in based on plan start date
+        const diffDays = Math.floor((d - startDate) / (1000 * 60 * 60 * 24));
+        const weekNum = Math.min(actualFinalWeek, Math.max(1, Math.floor(diffDays / 7) + 1));
         raceWeekSessions.push({ daysBeforeRace: i, dayName, weekNum });
       }
 
-      // Wipe the final two weeks' days and rebuild from scratch
-      const weeksToOverride = [actualFinalWeek, actualFinalWeek - 1];
+      // Wipe all weeks that have race week sessions and rebuild from scratch
+      const weeksToOverride = [...new Set(raceWeekSessions.map(s => s.weekNum))];
       weeksToOverride.forEach(wn => {
         const wk = allWeeks.find(w => parseInt(w.weekNumber) === wn);
         if (wk) { wk.days = []; wk.phase = wn === actualFinalWeek ? 'Race Week' : 'Taper'; }
