@@ -99,6 +99,17 @@ export default async function handler(req, res) {
     const isHalf = raceDistanceLower.includes('70.3') || raceDistanceLower.includes('half ironman');
     const isFull = raceDistanceLower.includes('140.6') || raceDistanceLower.includes('full ironman');
 
+    // Detect experience level from basePrompt
+    const promptLower = basePrompt.toLowerCase();
+    const isBeginner = promptLower.includes('beginner') || promptLower.includes('first triathlon') || promptLower.includes('new to') || promptLower.includes('complete beginner');
+    const isAdvanced = promptLower.includes('advanced') || promptLower.includes('competitive') || promptLower.includes('experienced') || promptLower.includes('personal best');
+    const isIntermediate = !isBeginner && !isAdvanced;
+
+    // Double session limits by experience level
+    const maxDoublesBase = isBeginner ? 0 : isIntermediate ? 1 : 2;
+    const maxDoublesBuild = isBeginner ? 1 : isIntermediate ? 2 : 3;
+    const maxDoublesPeak = isBeginner ? 1 : isIntermediate ? 2 : 3;
+
     const raceDayDistances = isFull ? '3.8km swim, 180km bike, 42.2km run' : isHalf ? '1.9km swim, 90km bike, 21.1km run' : isOlympic ? '1.5km swim, 40km bike, 10km run' : '750m swim, 20km bike, 5km run';
 
     const restDayRule = isSprint ? 'REST DAYS: 2 rest days per week.' : isOlympic ? 'REST DAYS: 1-2 rest days per week.' : isHalf ? 'REST DAYS: 1 rest day per week. Never 0.' : 'REST DAYS: 1 rest day per week. Never 0. Never two consecutive rest days.';
@@ -210,12 +221,13 @@ export default async function handler(req, res) {
       return `TRACK SESSIONS: Include 1 track run per week in Build and Peak phases only — NEVER in Base or Taper. Replaces a standalone run session, never adds on top. Structure: 20min warm up with dynamic stretching + 4-6 fast strides at end of WU; main set: ${repsByDistance}; 15min cool down + easy stretching. Use actual run pace from prompt if available. coachNote MUST include the injury warning: "If you feel any niggle or tightness — back off immediately. Consistency is everything and injury is the worst thing that can happen. If you have another hard session this week, pay attention to how your body feels and skip if needed." NEVER place track on a day adjacent to a hard bike, brick or long run.`;
     })();
 
-    const strengthRule = `STRENGTH SESSIONS: If strength training is requested, always place the strength session on a rest day — NEVER on a day that already has swim, bike, run or brick. Strength is 20-30 min, type Strength, on what would otherwise be a rest day. NEVER in Peak, Taper or Race Week.`;
+    const strengthRule = `STRENGTH SESSIONS: If strength training is requested, include 1 strength session per week in Base and Build phases ONLY. NEVER in Peak, Taper or Race Week. Strength is type Strength, effort 5/10, 30-40 min. PLACEMENT: pair strength as a double session on the same day as an easy or aerobic Swim session — athlete does the swim in the morning, strength in the afternoon. NEVER pair with a hard bike, brick, long run or track session. Use the same day name as the swim session to create a double session entry.`;
+    const doubleSessionRule = (isFull || isHalf) ? `DOUBLE SESSION PROGRAMMING: Professional triathlon coaches use double session days to build volume efficiently. Scale based on experience level in the prompt: BEGINNER — no doubles in Base, max 1 per week in Build/Peak (short easy sessions only, both under 45min, coachNote must reassure them this is a big step). INTERMEDIATE — 1 double in Base, up to 2 per week in Build/Peak. ADVANCED — 2 doubles in Base, up to 3 per week in Build/Peak. Valid pairings (all morning+afternoon): Swim+EasyBike, Swim+EasyRun, Swim+Strength. NEVER pair two hard sessions. NEVER doubles in Taper or Race Week. Use the same day name to create a double session entry.` : '';
 
     const _baseEnd=Math.floor(totalNeeded*0.30);const _buildEnd=Math.floor(totalNeeded*0.65);const _peakEnd=Math.floor(totalNeeded*0.85);const _taperEnd=totalNeeded-1;
     const _getPhase=(wk)=>wk<=_baseEnd?'Base':wk<=_buildEnd?'Build':wk<=_peakEnd?'Peak':wk<totalNeeded?'Taper':'Race Week';
     const _phaseForBatch=_getPhase(startWk);
-    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
+    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${doubleSessionRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
 
     const prompt = basePrompt + fifoBlock + structureInstructions;
 
@@ -319,28 +331,92 @@ export default async function handler(req, res) {
         );
         longestSwim.duration = targetSwimMins;
       }
-      // Enforce minimum 2 swim sessions per week for Full IM and Half (not race week, not taper)
-      // Second swim is paired on a bike or run day — added as a separate entry (double session)
+      // Enforce professional double session programming — scaled by experience level
       if ((isFull || isHalf) && wk.phase !== 'Race Week' && wk.phase !== 'Taper') {
-        const swimCount = (wk.days || []).filter(d => d.type === 'Swim').length;
-        if (swimCount < 2) {
-          // Find a bike or run day to pair with — prefer bike days
-          const pairTarget = wk.days.find(d => d.type === 'Bike') || wk.days.find(d => d.type === 'Run');
-          if (pairTarget) {
-            const swimDur = Math.round(targetSwimMins * 0.8); // second swim slightly shorter
+        const phase = (wk.phase || '').toLowerCase();
+
+        // Max doubles for this phase and experience level
+        const maxDoubles = phase === 'base' ? maxDoublesBase
+          : phase === 'build' ? maxDoublesBuild
+          : maxDoublesPeak;
+
+        // Helper: check if a session is already paired
+        const isPaired = (session) => wk.days.some(s =>
+          s !== session && s.type !== 'Rest' && s.day === session.day
+        );
+        const countDoubles = () => {
+          const pairedDays = new Set();
+          wk.days.forEach(d => { if (isPaired(d)) pairedDays.add(d.day); });
+          return pairedDays.size;
+        };
+
+        const swims = (wk.days || []).filter(d => d.type === 'Swim');
+        const bikeDays = (wk.days || []).filter(d => d.type === 'Bike');
+        const runDays = (wk.days || []).filter(d => d.type === 'Run');
+
+        // Step 1: Always ensure secondary swim is paired (even for beginners in Build+)
+        // Beginners skip this in Base phase
+        const shouldPairSwim = !(isBeginner && phase === 'base');
+        if (shouldPairSwim) {
+          if (swims.length >= 2) {
+            swims.sort((a, b) => (parseFloat(a.duration)||0) - (parseFloat(b.duration)||0));
+            const secondarySwim = swims[0];
+            if (!isPaired(secondarySwim)) {
+              const pairTarget = bikeDays.find(b => !isPaired(b)) || runDays.find(r => !isPaired(r));
+              if (pairTarget && countDoubles() < maxDoubles) {
+                secondarySwim.day = pairTarget.day;
+                secondarySwim.coachNote = isBeginner
+                  ? 'Morning swim before your afternoon ' + pairTarget.type.toLowerCase() + '. Keep both sessions easy — you're building the habit of training twice in a day.'
+                  : 'Morning swim before your afternoon ' + pairTarget.type.toLowerCase() + '. Get to the pool early — this is how pros build volume without killing themselves.';
+                secondarySwim.purpose = 'Second weekly swim — morning session before afternoon ' + pairTarget.type.toLowerCase() + '.';
+              }
+            }
+          } else if (swims.length === 1 && !isPaired(swims[0]) && countDoubles() < maxDoubles) {
+            const pairTarget = bikeDays.find(b => !isPaired(b)) || runDays.find(r => !isPaired(r));
+            if (pairTarget) {
+              const swimDur = isBeginner ? Math.round(targetSwimMins * 0.6) : Math.round(targetSwimMins * 0.75);
+              wk.days.push({
+                day: pairTarget.day,
+                type: 'Swim',
+                name: isBeginner ? 'Short Aerobic Swim' : 'Aerobic Technique Swim',
+                duration: swimDur,
+                effort: 5,
+                zone: 2,
+                purpose: 'Second weekly swim — morning session before afternoon ' + pairTarget.type.toLowerCase() + '.',
+                warmup: '300m easy — focus on long strokes.',
+                mainset: `${Math.round(swimDur * 0.6)} min continuous aerobic swim at Zone 2. Focus on technique — high elbow catch, bilateral breathing.`,
+                cooldown: '150m easy backstroke.',
+                coachNote: isBeginner
+                  ? 'Short morning swim before your afternoon session. Keep it easy — you're training your body to handle two sessions in a day. This is a big step.'
+                  : 'Morning swim before your afternoon ' + pairTarget.type.toLowerCase() + '. Two swims per week is the minimum to improve in the water.',
+                paceTarget: isFull ? '2:05-2:25/100m' : '1:55-2:15/100m',
+                heartRateZone: 'Zone 2'
+              });
+            }
+          }
+        }
+
+        // Step 2: Advanced/Intermediate — add extra swim+bike double in Build/Peak
+        if (!isBeginner && (phase === 'build' || phase === 'peak') && isFull && countDoubles() < maxDoubles) {
+          const unpairedBike = bikeDays.find(b => !isPaired(b) &&
+            !wk.days.some(s => s.type === 'Swim' && s.day === b.day));
+          if (unpairedBike) {
+            const swimDur = isAdvanced ? Math.round(targetSwimMins * 0.65) : Math.round(targetSwimMins * 0.55);
             wk.days.push({
-              day: pairTarget.day, // same day name = double session
+              day: unpairedBike.day,
               type: 'Swim',
-              name: 'Aerobic Swim',
+              name: 'Morning Aerobic Swim',
               duration: swimDur,
-              effort: 5,
+              effort: 4,
               zone: 2,
-              purpose: 'Second weekly swim — paired with your bike/run session. Do this in the morning, other session in the afternoon or evening.',
-              warmup: '400m easy freestyle — focus on catch and pull.',
-              mainset: `${Math.round(swimDur * 0.6)} min continuous aerobic swim at Zone 2. Focus on bilateral breathing, high elbow catch, and long strokes. Count strokes per length and try to reduce by 1 each 100m.`,
-              cooldown: '200m easy backstroke — open up the shoulders.',
-              coachNote: 'Two swims per week is the minimum to improve in the water. Do this swim in the morning before your other session — fresh legs in the pool means better technique. Show up, get it done, go home.',
-              paceTarget: isFull ? '2:05-2:20/100m aerobic' : '1:55-2:10/100m aerobic',
+              purpose: 'Early morning swim before afternoon bike — classic Ironman double session.',
+              warmup: '300m easy catch-up drill.',
+              mainset: `${swimDur - 10} min steady aerobic swim. Consistent stroke rate, relaxed breathing, Zone 2 effort.`,
+              cooldown: '200m easy choice.',
+              coachNote: isAdvanced
+                ? 'Early morning session before the afternoon ride. Volume is king in this phase — get comfortable doing two sessions in a day.'
+                : 'Morning swim before the afternoon bike. Keep both sessions aerobic — the goal is volume, not intensity.',
+              paceTarget: isFull ? '2:10-2:25/100m' : '2:00-2:15/100m',
               heartRateZone: 'Zone 2'
             });
           }
@@ -365,24 +441,43 @@ export default async function handler(req, res) {
       }
     });
 
-    // Post-process: ensure strength sessions land on rest days, not training days
-    // If AI placed strength on a training day, swap it with the first available rest day
+    // Post-process: pair strength sessions with a swim day (double session)
+    // Professional triathlon programming: strength in afternoon after morning swim
     newWeeks.forEach(wk => {
       const phase = (wk.phase || '').toLowerCase();
       if (phase === 'peak' || phase === 'taper' || phase === 'race week') return;
       if (!wk.days) return;
+
       wk.days.forEach((d, i) => {
         if (d.type !== 'Strength') return;
-        // Check if this day also has another session (shouldn't with current structure, but safety check)
-        // Main issue: AI sometimes puts strength on a training day instead of rest day
-        // Find a rest day to swap with
-        const restIdx = wk.days.findIndex((r, ri) => ri !== i && r.type === 'Rest');
-        if (restIdx !== -1) {
-          // Swap — strength goes to rest day, rest day content comes here
-          const restDay = wk.days[restIdx];
-          const strengthDay = wk.days[i];
-          wk.days[i] = { ...restDay };
-          wk.days[restIdx] = { ...strengthDay, day: restDay.day };
+
+        // Check if already paired with a swim (same day name)
+        const alreadyPaired = wk.days.some((s, si) => si !== i && s.type === 'Swim' && s.day === d.day);
+        if (alreadyPaired) return;
+
+        // Find an easy swim day to pair with — prefer aerobic/shorter swims
+        const swimDays = wk.days
+          .map((s, si) => ({ s, si }))
+          .filter(({ s, si }) => s.type === 'Swim' && si !== i);
+
+        if (swimDays.length > 0) {
+          // Pick the shortest swim (most likely the aerobic/secondary swim)
+          swimDays.sort((a, b) => (parseFloat(a.s.duration) || 0) - (parseFloat(b.s.duration) || 0));
+          const targetSwim = swimDays[0];
+
+          // Move strength to same day as that swim — double session
+          wk.days[i] = { ...d, day: targetSwim.s.day };
+          wk.days[i].coachNote = 'Do this strength session in the afternoon after your morning swim. Keep it functional — core, glutes, hip flexors. In and out in 35 minutes.';
+          wk.days[i].purpose = 'Afternoon strength session paired with morning swim. Triathlon-specific: core stability, glutes, hip flexors, single-leg work.';
+        } else {
+          // No swim available — fall back to a rest day
+          const restIdx = wk.days.findIndex((r, ri) => ri !== i && r.type === 'Rest');
+          if (restIdx !== -1) {
+            const restDay = wk.days[restIdx];
+            const strengthDay = wk.days[i];
+            wk.days[i] = { ...restDay };
+            wk.days[restIdx] = { ...strengthDay, day: restDay.day };
+          }
         }
       });
     });
