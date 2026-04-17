@@ -366,7 +366,7 @@ export default async function handler(req, res) {
               if (pairTarget && countDoubles() < maxDoubles) {
                 secondarySwim.day = pairTarget.day;
                 secondarySwim.coachNote = isBeginner
-                  ? 'Morning swim before your afternoon ' + pairTarget.type.toLowerCase() + '. Keep both sessions easy — you're building the habit of training twice in a day.'
+                  ? 'Morning swim before your afternoon ' + pairTarget.type.toLowerCase() + ". Keep both sessions easy — you're building the habit of training twice in a day."
                   : 'Morning swim before your afternoon ' + pairTarget.type.toLowerCase() + '. Get to the pool early — this is how pros build volume without killing themselves.';
                 secondarySwim.purpose = 'Second weekly swim — morning session before afternoon ' + pairTarget.type.toLowerCase() + '.';
               }
@@ -387,7 +387,7 @@ export default async function handler(req, res) {
                 mainset: `${Math.round(swimDur * 0.6)} min continuous aerobic swim at Zone 2. Focus on technique — high elbow catch, bilateral breathing.`,
                 cooldown: '150m easy backstroke.',
                 coachNote: isBeginner
-                  ? 'Short morning swim before your afternoon session. Keep it easy — you're training your body to handle two sessions in a day. This is a big step.'
+                  ? "Short morning swim before your afternoon session. Keep it easy — you're training your body to handle two sessions in a day. This is a big step."
                   : 'Morning swim before your afternoon ' + pairTarget.type.toLowerCase() + '. Two swims per week is the minimum to improve in the water.',
                 paceTarget: isFull ? '2:05-2:25/100m' : '1:55-2:15/100m',
                 heartRateZone: 'Zone 2'
