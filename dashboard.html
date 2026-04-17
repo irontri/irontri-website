@@ -1352,9 +1352,12 @@ async function goToMyPlan(e) {
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { window.location.href = '/plan.html'; return; }
-    const { data: plans } = await sb.from('plans').select('id').eq('user_id', session.user.id).order('created_at', {ascending:false}).limit(1);
-    if (plans?.length) window.location.href = '/plan.html?load=' + plans[0].id;
-    else window.location.href = '/plan.html';
+    const { data: plans } = await sb.from('plans').select('id').eq('user_id', session.user.id).order('created_at', {ascending:false});
+    if (!plans?.length) { window.location.href = '/plan.html'; return; }
+    // Use pinned plan if set, otherwise most recent
+    const pinnedId = localStorage.getItem('irontri_pinned_plan');
+    const pinned = pinnedId && plans.find(p => String(p.id) === pinnedId);
+    window.location.href = '/plan.html?load=' + (pinned ? pinned.id : plans[0].id);
   } catch(e) { window.location.href = '/plan.html'; }
 }
 
