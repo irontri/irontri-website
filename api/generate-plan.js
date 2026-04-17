@@ -56,17 +56,33 @@ BASE PHASE RULES (critical — strictly enforced):
 - Base run: easy conversational pace only — NO tempo runs, NO strides, NO track sessions, NO speed work
 - Speedwork, threshold intervals and race-pace efforts begin ONLY from Build phase onwards — never before
 - LATE BASE BRICK EXCEPTION (70.3, T100, Full Ironman only): In the final 2-3 weeks of Base phase, include 1 brick session per week. This replaces a mid-week bike session — do not add on top. The brick run may include a short 8-10 min faster effort immediately off the bike (race pace feel — not all-out, not threshold) followed by Zone 2 for the remainder. This is neuromuscular adaptation and transition shock training ONLY — not fitness work. Scale total duration to athlete level: Beginner = 20-30 min bike + 10 min run (8 min Zone 2, 2 min fast feel); Intermediate = 30-45 min bike + 15 min run (5 min fast feel, 10 min Zone 2); Advanced = 45-60 min bike + 20 min run (10 min fast feel, 10 min Zone 2). Use their actual pace/watts data from Strava or threshold if available. coachNote must explain: "This is not a fitness session — it is teaching your legs to run after riding. The short faster effort simulates the shock your body feels leaving T2 on race day. Keep it controlled."
+- POOL ACCESS: The prompt states whether the athlete has pool access. If pool = "No" or "Limited access", ALL swim sessions must be open water or lake/river swims — NEVER pool sessions. Structure these as continuous open water swims with sighting practice. If pool = "Yes", use pool sessions normally with intervals and technique work.
 - OPEN WATER SWIM SESSIONS: Regardless of pool access, include 1 open water swim session per month during Build and Peak phases. This session replaces one pool swim that week — do not add it on top. Name it "Open Water Swim" with a coachNote that says "Head to the ocean if you're within reasonable distance — otherwise any open water (lake, river, reservoir) works perfectly. Practice sighting every 10 strokes, wetsuit if racing in one, and get comfortable with the conditions you'll face on race day." If the athlete is inland or far from the ocean, suggest local open water alternatives. Open water sessions should be 45-60 min, effort 5-6, Zone 2, same duration as the pool swim they replace. CRITICAL: The paceTarget for open water swims must ALWAYS be Zone 2 pace (CSS + 20-40sec/100m) — NEVER VO2max pace. Open water is always easy aerobic effort.
 - STRENGTH SESSIONS: If the prompt requests strength training, include 1 strength session per week during Base and Build phases ONLY. NEVER include Strength sessions in Peak, Taper or Race Week phases. Strength is type "Strength", effort 5/10, 30-40 minutes. Focus on core stability, glutes, hip flexors and single-leg exercises — purely functional triathlon strength, never cardio. PLACEMENT: pair strength as a double session on the same day as a short or easy SWIM session (e.g. aerobic swim day) — strength in the afternoon after the morning swim. This is how professional triathlon coaches programme it. NEVER pair strength with a hard bike, brick, long run, or track session. NEVER place strength on a standalone rest day unless there is absolutely no suitable swim day available. The days array entry for strength should use the same day name as the swim it is paired with — this creates a double session.
 
 PHASE ASSIGNMENT RULES (critical — must follow exactly):
 - phase field MUST be one of: "Base", "Build", "Peak", "Taper", "Race Week"
-- CRITICAL: Weeks 1-4 are ALWAYS phase "Base" — NEVER use Build, Peak, Taper or Race Week for any of weeks 1-4. The user prompt will confirm this.
+- CRITICAL — PHASE LABELS FOR WEEKS 1-4: The phase field for ALL of weeks 1, 2, 3, and 4 MUST be exactly the string "Base". This is non-negotiable. NEVER write "Build", "Peak", "Taper", "Race Week" or any other value for weeks 1-4. If you write anything other than "Base" for weeks 1-4 you have made a critical error. Check every single week before returning: week 1 phase = "Base", week 2 phase = "Base", week 3 phase = "Base", week 4 phase = "Base".
 - For a plan of N total weeks: Base = first 30%, Build = next 35%, Peak = next 20%, Taper = last 12%, Race Week = final 1 week
 - Example 36-week plan: Base weeks 1-11, Build weeks 12-23, Peak weeks 24-29, Taper weeks 30-35, Race Week 36
 - Example 20-week plan: Base weeks 1-6, Build weeks 7-13, Peak weeks 14-17, Taper weeks 18-19, Race Week 20
 - Never assign "Base" to more than 35% of total weeks
 - Recovery weeks within a phase keep the current phase label (e.g. a recovery week during Build is still "Build")
+
+FITNESS LEVEL SCALING (apply based on "fitness" field in prompt):
+- "Just getting started" or "Low fitness": Week 1 volume = 60% of stated hours/week. Sessions 30-45min max. 2 rest days minimum. Build slowly — no doubles until week 3.
+- "Moderate fitness — some training background": Week 1 volume = 75% of stated hours/week. Sessions 45-60min. 1-2 rest days. Standard progression.
+- "Fit — regular training, good base": Week 1 volume = 85% of stated hours/week. Sessions 45-75min. 1 rest day. Normal load from week 1.
+- "Very fit — high training volume and strong aerobic base": Week 1 volume = 95% of stated hours/week. Sessions 60-90min. 1 rest day. Hit the ground running — athlete is ready for full load.
+- "Peak fitness — currently competing": Week 1 volume = 100% of stated hours/week. Full load immediately. Treat as advanced athlete from day 1.
+
+WEAKNESS TARGETING (apply based on "weakness" field in prompt — this shapes the entire plan):
+- "Swim": Add a THIRD swim session per week in Build and Peak phases (replace one rest day). Make swim the longest single-discipline session in peak week. Include more open water sessions. Add technique drills to every swim.
+- "Bike": Add an extra mid-week bike session in Build and Peak (replace one rest day). Extend long ride by 15-20% vs standard. Include more threshold bike work in Build/Peak.
+- "Run": Add an extra run session in Build and Peak. Extend long run by 15-20% vs standard. Include more track work and tempo runs.
+- "Transition / T1 and T2 speed": Include transition practice notes in every brick session coachNote. Add specific T1/T2 drill notes.
+- "All three equally" or "Balanced": Standard distribution — no single discipline dominates.
+- Always acknowledge the weakness in the weeklyNarrative for the first week: "This plan prioritises [weakness] to address your biggest area for improvement."
 
 REALISTIC PACE TARGETS BY LEVEL:
 - Beginner cyclist: ${isImperial ? '12-18 mph' : '20-28 km/h'}. Do NOT exceed ${isImperial ? '20 mph' : '30 km/h'} for beginners.
@@ -77,6 +93,8 @@ REALISTIC PACE TARGETS BY LEVEL:
 - Beginner swimmer: ${isImperial ? '2:10-2:45 /100yd' : '2:00-2:30 /100m'}
 - Intermediate swimmer: ${isImperial ? '1:50-2:10 /100yd' : '1:40-2:00 /100m'}
 PROGRESSIVE OVERLOAD: Max 2-3% improvement per week. Week 1 targets must match current fitness, NOT goal race pace.
+- TRAINING DAYS: The prompt specifies which days the athlete can train (e.g. "days: Monday/Wednesday/Friday"). ONLY place training sessions on those days. All other days MUST be Rest. If the athlete selected all 7 days, distribute sessions across all 7 days with at most 1 rest day per week for Full Ironman/70.3 athletes.
+- MINIMUM SESSIONS: For Full Ironman plans with 6-7 available training days, weeks 1-4 (Base phase) must have a MINIMUM of 5 sessions. NEVER generate only 3 sessions in week 1 for an experienced Full Ironman athlete.
 
 RACE-SPECIFIC VOLUME RULES (critical — apply based on race distance in prompt):
 
@@ -130,6 +148,8 @@ RACE DAY RULES (critical — must always be included):
 - The FINAL day of the FINAL week must ALWAYS be a Race Day session with type "Race".
 - Race Day session must have: name "Race Day 🏁", type "Race", effort 9, purpose "Your race — execute your plan and enjoy every moment.", a mainset describing the race distances (e.g. "750m swim, 20km bike, 5km run — race pace throughout"), coachNote with final race execution tips.
 - Race Week phase must always contain the actual Race Day session — never end on a Rest day.
+
+⚠️ FINAL CHECK BEFORE GENERATING: week 1 phase = "Base", week 2 phase = "Base", week 3 phase = "Base", week 4 phase = "Base". NO exceptions.
 
 JSON structure for weeks:
 {"weeks":[{"weekNumber":1,"phase":"Base","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}]}`;
