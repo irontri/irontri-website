@@ -2843,18 +2843,18 @@ function onCalDrop(e, toSlot) {
 
   const w = planData.weeks[curWeek];
 
-  // Use actual calendar date day names — matches what's displayed on the calendar
-  const allDaysFull2 = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  // Use the same dayNameOrder as renderWeek — rotated from plan start day
+  const allDayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   const planStart = new Date((A.startDate || planData.startDate) + 'T00:00:00');
   const weekStart = new Date(planStart);
   weekStart.setDate(planStart.getDate() + (curWeek * 7));
+  const startDow = weekStart.getDay(); // 0=Sun
+  const startIdx = startDow === 0 ? 6 : startDow - 1; // Mon=0
+  const dayNameOrder = [...allDayNames.slice(startIdx), ...allDayNames.slice(0, startIdx)];
 
-  const fromDate = new Date(weekStart); fromDate.setDate(weekStart.getDate() + fromSlot);
-  const toDate = new Date(weekStart); toDate.setDate(weekStart.getDate() + toSlot);
-
-  // Get the day name for each slot using the actual calendar date
-  const fromDayName = allDaysFull2[fromDate.getDay()];
-  const toDayName = allDaysFull2[toDate.getDay()];
+  // Get the day name for each slot index
+  const fromDayName = dayNameOrder[fromSlot];
+  const toDayName = dayNameOrder[toSlot];
 
   // Update .day on every session in w.days by matching current day name
   w.days.forEach(session => {
