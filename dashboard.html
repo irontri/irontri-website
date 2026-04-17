@@ -1004,10 +1004,10 @@ async function loadTodaySession() {
         document.getElementById('race-countdown').classList.add('show');
       }
     }
-    const today = new Date();
-    today.setHours(0,0,0,0);
+    const _now = new Date();
+    const _todayStr = _now.getFullYear() + '-' + String(_now.getMonth()+1).padStart(2,'0') + '-' + String(_now.getDate()).padStart(2,'0');
+    const today = new Date(_todayStr + 'T00:00:00');
     const start = new Date(planData.startDate + 'T00:00:00');
-    start.setHours(0,0,0,0);
     const diffDays = Math.round((today - start) / 86400000);
     if (diffDays < 0) {
       const daysUntil = Math.abs(diffDays);
@@ -1029,7 +1029,7 @@ async function loadTodaySession() {
     const dayNameOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
     const todayDayName = dayNameOrder[dayIdx];
     const todaySessions = week.days.filter(d => d.day === todayDayName);
-    const day = todaySessions.length > 0 ? todaySessions[0] : week.days[dayIdx];
+    const day = todaySessions.length > 0 ? todaySessions[0] : { type: 'Rest', name: 'Rest', duration: 0, effort: 0, day: todayDayName };
     if (!day) return;
     const hasDouble = todaySessions.length > 1;
     const t = TYPE_INFO[day.type] || TYPE_INFO['Rest'];
