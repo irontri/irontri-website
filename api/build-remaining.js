@@ -112,12 +112,6 @@ export default async function handler(req, res) {
 
     const raceDayDistances = isFull ? '3.8km swim, 180km bike, 42.2km run' : isHalf ? '1.9km swim, 90km bike, 21.1km run' : isOlympic ? '1.5km swim, 40km bike, 10km run' : '750m swim, 20km bike, 5km run';
 
-    // Extract training days from basePrompt
-    const trainingDaysMatch = basePrompt.match(/days:\s*([^,\.\n]+)/i);
-    const trainingDaysList = trainingDaysMatch ? trainingDaysMatch[1].trim() : '';
-    const trainingDaysCount = trainingDaysList ? trainingDaysList.split('/').filter(Boolean).length : 5;
-    const trainingDaysRule = trainingDaysList ? `TRAINING DAYS: The athlete can ONLY train on these days: ${trainingDaysList.replace(/\//g, ', ')}. ALL other days MUST be type Rest. NEVER place training sessions on days not in this list. MINIMUM sessions per week: ${isFull ? Math.max(5, trainingDaysCount - 1) : isHalf ? Math.max(4, trainingDaysCount - 1) : trainingDaysCount - 2}.` : '';
-
     const restDayRule = isSprint ? 'REST DAYS: 2 rest days per week.' : isOlympic ? 'REST DAYS: 1-2 rest days per week.' : isHalf ? 'REST DAYS: 1 rest day per week. Never 0.' : 'REST DAYS: 1 rest day per week. Never 0. Never two consecutive rest days.';
 
     const totalWeeks = totalNeeded;
@@ -233,7 +227,7 @@ export default async function handler(req, res) {
     const _baseEnd=Math.floor(totalNeeded*0.30);const _buildEnd=Math.floor(totalNeeded*0.65);const _peakEnd=Math.floor(totalNeeded*0.85);const _taperEnd=totalNeeded-1;
     const _getPhase=(wk)=>wk<=_baseEnd?'Base':wk<=_buildEnd?'Build':wk<=_peakEnd?'Peak':wk<totalNeeded?'Taper':'Race Week';
     const _phaseForBatch=_getPhase(startWk);
-    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${trainingDaysRule} ${lateBrickRule} ${trackRule} ${strengthRule} ${doubleSessionRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
+    const structureInstructions = `Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${doubleSessionRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
 
     const prompt = basePrompt + fifoBlock + structureInstructions;
 
@@ -525,6 +519,7 @@ export default async function handler(req, res) {
         cooldown: '5 min easy to shore — reflect on what felt good.',
         coachNote: openWaterCoachNote,
         heartRateZone: 'Zone 2',
+        paceTarget: 'Easy Zone 2 — no pace target for open water',
         effort: 5,
         zone: 2,
       };
@@ -795,8 +790,59 @@ export default async function handler(req, res) {
           wk.days.push({ day: s.dayName, type: 'Swim', name: 'Pre-Race Quality Swim', duration: swimDur, effort: 6, zone: 2, purpose: 'Quality swim to stay sharp in the water.', warmup: '400m easy', mainset: `${Math.round(swimDur*0.7)} min quality swimming — some race pace efforts, focus on technique.`, cooldown: '200m easy', coachNote: 'Morning session — do this first, run later in the day.', paceTarget: 'Race pace efforts', heartRateZone: 'Zone 2' });
           wk.days.push({ day: s.dayName, type: 'Run', name: 'Aerobic Run with Race Pace Push', duration: runDur, effort: 6, zone: 2, purpose: 'Aerobic run with a 10 minute push at race pace to stay sharp.', warmup: '15 min easy jog', mainset: `Easy Zone 2 running. Include 10 min at race pace in the middle — feel what race day should feel like.`, cooldown: '10 min easy jog', coachNote: 'Push to race pace for 10 minutes — feel what it should feel like on the day. Everything else is easy.', paceTarget: 'Race pace for 10min', heartRateZone: 'Zone 2' });
         } else if (dbr === 7) {
-          const dur = isFull ? 150 : isHalf ? 105 : isOlympic ? 75 : 50;
+          const dur = isFull ? 210 : isHalf ? 150 : isOlympic ? 90 : 60;
           wk.days.push({ day: s.dayName, type: 'Bike', name: 'Long TT Position Ride', duration: dur, effort: 5, zone: 2, purpose: 'Last long ride in race position — build confidence and feel.', warmup: '20 min easy spin', mainset: `${dur - 30} min steady aerobic riding in TT/race position on flat course. Race cadence (85-90rpm). Aerobic effort only.`, cooldown: '10 min easy spin', coachNote: 'Last big ride. Stay in your race position, feel the bike beneath you. Confidence building, not fitness building.', paceTarget: 'Aerobic Zone 2', heartRateZone: 'Zone 2' });
+        }
+      });
+    }
+
+    // Fix duration/mainset mismatches — ensure session duration reflects actual content
+    newWeeks.forEach(wk => {
+      if (!wk.days) return;
+      wk.days.forEach(d => {
+        if (!d.duration || d.type === 'Rest' || d.type === 'Race') return;
+        // If mainset mentions a duration longer than session duration, cap it
+        if (d.mainset) {
+          const mainsetMins = d.mainset.match(/(\d+)\s*min/i);
+          if (mainsetMins) {
+            const mainMins = parseInt(mainsetMins[1]);
+            // Session duration should be mainset + warmup + cooldown (roughly 20-30 min extra)
+            // If mainset alone is longer than total duration, fix the total duration
+            if (mainMins > parseFloat(d.duration)) {
+              d.duration = mainMins + 20; // add warmup/cooldown buffer
+            }
+          }
+        }
+      });
+    });
+
+    // Fix long run volume — ensure adequate standalone run sessions
+    if ((isFull || isHalf) && !isBeginner) {
+      newWeeks.forEach(wk => {
+        const phase = (wk.phase || '').toLowerCase();
+        if (phase === 'race week' || phase === 'taper') return;
+        if (!wk.days) return;
+
+        // Find standalone run sessions (not brick)
+        const runSessions = wk.days.filter(d => d.type === 'Run');
+        if (runSessions.length === 0) return;
+
+        // Find the longest run
+        const longestRun = runSessions.reduce((a, b) =>
+          (parseFloat(a.duration)||0) > (parseFloat(b.duration)||0) ? a : b
+        );
+
+        // Minimum long run durations by phase and distance
+        const minRunMins = isFull
+          ? (phase === 'base' ? 50 : phase === 'build' ? 75 : 90)
+          : (phase === 'base' ? 40 : phase === 'build' ? 60 : 75);
+
+        if ((parseFloat(longestRun.duration)||0) < minRunMins) {
+          longestRun.duration = minRunMins;
+          longestRun.name = longestRun.name || 'Long Aerobic Run';
+          if (longestRun.mainset && !longestRun.mainset.includes(minRunMins + ' min')) {
+            longestRun.coachNote = (longestRun.coachNote || '') + ' This is your weekly long run — the cornerstone of run fitness. Build endurance and mental toughness at Zone 2 effort.';
+          }
         }
       });
     }
