@@ -255,7 +255,7 @@ JSON structure for weeks:
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
-        max_tokens: 16000,
+        max_tokens: 32000,
         system: systemPrompt,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -269,6 +269,12 @@ JSON structure for weeks:
 
     const data = await response.json();
     const planText = data.content.map(c => c.text || '').join('\n');
+
+    // Log stop reason — if 'max_tokens' the response was truncated
+    console.log('Stop reason:', data.stop_reason, '| Output tokens:', data.usage?.output_tokens);
+    if (data.stop_reason === 'max_tokens') {
+      console.error('WARNING: Response truncated — JSON will be incomplete. Increase max_tokens.');
+    }
 
     // Inject basePrompt into plan_data so build-remaining can use it for weeks 5+
     let planDataToSave = planText;
