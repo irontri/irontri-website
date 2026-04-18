@@ -129,10 +129,12 @@ SPRINT TRIATHLON LONG SESSION REQUIREMENTS:
 - Long run peak: 45-60 min (${isImperial ? '5-8 miles' : '8-12 km'}) in Peak phase.
 
 TAPER RULES (race-distance specific — apply strictly):
-- Full Ironman / Half Ironman: Final 3 weeks taper — reduce volume by 30%, 50%, 70% respectively. Keep intensity.
+- Full Ironman / Half Ironman: Final 3 weeks taper — reduce volume by 30%, 50%, 70% respectively. Keep intensity touches in every week.
 - Olympic Triathlon: Final 2 weeks taper — reduce volume by 40%, 70% respectively. Keep intensity.
 - Sprint Triathlon: Final 4-5 DAYS only — reduce volume by 40-60%. No dedicated taper week for sprint plans under 8 weeks. Last full training day is 2 days before race day.
 - Never apply a multi-week taper to a sprint plan — it wastes valuable training time.
+- TAPER WEEK SESSIONS: Taper weeks MUST still contain 4-5 sessions. NEVER reduce to 1-2 sessions in a taper week — that is NOT tapering, that is detraining. Taper = same frequency, reduced duration and volume. Every taper session should be 20-40% shorter than peak sessions but the same number of days training.
+- TAPER SESSION STRUCTURE: Each taper session should include a short race-pace or intensity effort (5-15 min) within an otherwise easy session. The athlete must arrive at race week feeling sharp, not rusty.
 - CONSECUTIVE REST DAYS: NEVER place 3 or more rest days in a row in any week, including taper and race week. Maximum 2 consecutive rest days at any point in the plan. In race week, place short activation sessions between rest days to prevent athletes going stale.
 - SESSION SEQUENCING RULES: NEVER schedule a track session or hard run within 1 day of a long bike or brick session — minimum 2 days recovery between these sessions. NEVER schedule a hard bike (threshold or VO2max) the day before a long run. The long run should always follow an easy day or rest day. Brick sessions should not be placed adjacent to track sessions or long runs.
 
@@ -147,9 +149,11 @@ Race week keeps intensity right up to 5 days out — the body stays sharp then f
 
 4 DAYS BEFORE RACE: Standalone quality swim. Full IM: 55min. 70.3: 45min. Olympic: 30min. Sprint: 20min. Technique focus, some race pace efforts. coachNote: "Feel the water one last time before race day. Stay relaxed and smooth."
 
-3 DAYS BEFORE RACE: Full Rest. Sleep, eat well, hydrate. coachNote: "Rest is training. Sleep as much as possible. Eat well, hydrate well. Your fitness is locked in."
+3 DAYS BEFORE RACE: Full Rest. MANDATORY — no exceptions. Sleep, eat well, hydrate. coachNote: "Rest is training. Sleep as much as possible. Eat well, hydrate well. Your fitness is locked in."
 
-2 DAYS BEFORE RACE: Full Rest. Sleep, eat well, hydrate. coachNote: "Another full rest day. Your body is absorbing everything. Trust the process — you are ready."
+2 DAYS BEFORE RACE: Full Rest. MANDATORY — no exceptions. This is non-negotiable. Do NOT place any session here regardless of the athlete's schedule or training days. coachNote: "Another full rest day. Your body is absorbing everything. Trust the process — you are ready."
+
+CRITICAL REST RULE: The 2 days immediately before race day (2 days out and 3 days out) MUST always be Rest days. NEVER place any training session on these days under any circumstances. This applies regardless of what days the athlete normally trains. This is the single most important rule in race week.
 
 1 DAY BEFORE RACE: Three short easy activation sessions on the same day (triple session day — separate entries with same day name): (1) Easy open water swim recce if possible — 20min easy, practice sighting the course. (2) Short easy jog with 4-6 fast strides at race pace — 20min total. (3) Short easy bike spin — 20-30min, just to keep legs loose. All effort 2-3/10. coachNote: "Keep it short and easy. The goal is to stay loose and keep your nervous system activated — not to train. Arrive at the start line fresh, not tired."
 
