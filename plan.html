@@ -2407,7 +2407,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const { data: { session: _s } } = await sb2.auth.getSession();
         const isFounding = plan.is_founding_member === true || (_s && _s.user.user_metadata && _s.user.user_metadata.is_founding_member === true);
         const isPaid = plan.is_paid === true;
-        const createdAt = plan.created_at ? new Date(plan.created_at) : new Date();
+        const userSignupDate = _s?.user?.created_at ? new Date(_s.user.created_at) : (plan.created_at ? new Date(plan.created_at) : new Date());
+        const createdAt = userSignupDate;
         const daysSinceSignup = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
         const trialDays = createdAt >= new Date('2026-04-09') ? 7 : 30;
         const trialDaysLeft = Math.max(0, trialDays - daysSinceSignup);
@@ -3090,7 +3091,7 @@ async function autoGenerateRemainingWeeks(tw){
 
 <!-- PAUSE MODAL -->
 <!-- TRIAL BANNER -->
-<div id="trial-banner" style="display:none;position:fixed;top:68px;left:0;right:0;z-index:90;background:rgba(30,144,255,0.12);border-bottom:1px solid rgba(30,144,255,0.25);padding:10px 20px;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
+<div id="trial-banner" style="display:none;position:fixed;top:68px;left:0;right:0;z-index:90;background:rgba(10,10,10,0.97);border-bottom:1px solid rgba(30,144,255,0.2);padding:7px 20px;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
   <span style="font-size:13px;color:rgba(255,255,255,0.8);font-family:'Inter',sans-serif;">⏳ <strong style="color:#fff"><span id="trial-days-left">7</span> days</strong> left on your free trial</span>
   <button onclick="showPaywall()" style="background:#1E90FF;border:none;color:#fff;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Upgrade now</button>
 </div>
