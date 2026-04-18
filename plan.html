@@ -3183,7 +3183,8 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 function toggleTrixy(){
   trixyOpen=!trixyOpen;
-  document.getElementById('trixy-panel').classList.toggle('open',trixyOpen);
+  var panel=document.getElementById('trixy-panel');
+  if(panel){panel.style.display=trixyOpen?'flex':'none';}
   if(trixyOpen&&trixyHistory.length===0){trixyAddMsg('coach','Hey! I am Trixy, your personal triathlon coach. I can see your plan and sessions. What do you want to know?');}
   if(trixyOpen){setTimeout(function(){var i=document.getElementById('trixy-input');if(i)i.focus();},100);}
 }
