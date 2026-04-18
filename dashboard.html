@@ -208,6 +208,32 @@
     .finish-split.trans .finish-split-lbl{color:rgba(255,255,255,0.35);}
     .finish-confidence{font-size:11px;color:rgba(255,255,255,0.6);padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);}
     @media(max-width:600px){.finish-splits{grid-template-columns:repeat(2,1fr);}.finish-total{font-size:32px;}}
+  
+    /* ── TRIXY AI COACH ── */
+    .trixy-btn{position:fixed;bottom:80px;right:20px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#1E90FF,#7c3aed);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 20px rgba(30,144,255,0.4);z-index:200;transition:transform 0.2s;}
+    .trixy-btn:hover{transform:scale(1.1);}
+    .trixy-panel{position:fixed;bottom:80px;right:20px;width:340px;max-width:calc(100vw - 40px);height:520px;max-height:calc(100vh - 120px);background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:20px;display:none;flex-direction:column;z-index:200;box-shadow:0 8px 40px rgba(0,0,0,0.6);overflow:hidden;}
+    .trixy-panel.open{display:flex;}
+    .trixy-header{background:linear-gradient(135deg,rgba(30,144,255,0.15),rgba(124,58,237,0.1));padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.08);}
+    .trixy-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1E90FF,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+    .trixy-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+    .trixy-status{font-size:11px;color:rgba(255,255,255,0.45);margin-top:1px;}
+    .trixy-close{margin-left:auto;background:transparent;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:18px;padding:4px;}
+    .trixy-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;}
+    .trixy-msg{max-width:85%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.6;}
+    .trixy-msg.coach{background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.2);color:rgba(255,255,255,0.85);align-self:flex-start;border-bottom-left-radius:4px;}
+    .trixy-msg.user{background:rgba(30,144,255,0.2);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+    .trixy-msg.typing{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.4);align-self:flex-start;}
+    .trixy-input-wrap{padding:12px 16px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:8px;}
+    .trixy-input{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px 14px;color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;resize:none;}
+    .trixy-input:focus{border-color:rgba(30,144,255,0.4);}
+    .trixy-send{background:#1E90FF;border:none;color:#fff;width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.2s;}
+    .trixy-send:hover{background:#1478d4;}
+    .trixy-send:disabled{opacity:0.4;cursor:not-allowed;}
+    .trixy-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 12px;}
+    .trixy-sug{background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);color:#1E90FF;font-size:11px;padding:5px 10px;border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+    .trixy-sug:hover{background:rgba(30,144,255,0.2);}
+
   </style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
 <script>
@@ -1481,5 +1507,206 @@ init();
   </div>
 </div>
 <!-- END PAYWALL MODAL -->
+
+<!-- ── TRIXY AI COACH ── -->
+<button class="trixy-btn" id="trixy-btn" onclick="toggleTrixy()" title="Ask Trixy" style="padding:0;overflow:hidden;"><img src="/trixy.jpeg" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="Trixy"></button>
+
+<div class="trixy-panel" id="trixy-panel">
+  <div class="trixy-header">
+    <div class="trixy-avatar" style="padding:0;overflow:hidden;"><img src="/trixy.jpeg" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="Trixy"></div>
+    <div>
+      <div class="trixy-name">Trixy</div>
+      <div class="trixy-status">Your AI triathlon coach</div>
+    </div>
+    <button class="trixy-close" onclick="toggleTrixy()">✕</button>
+  </div>
+  <div class="trixy-messages" id="trixy-messages"></div>
+  <div class="trixy-suggestions" id="trixy-suggestions">
+    <button class="trixy-sug" onclick="trixyAsk('How am I tracking this week?')">This week 📅</button>
+    <button class="trixy-sug" onclick="trixyAsk('What should I focus on in training?')">Focus 🎯</button>
+    <button class="trixy-sug" onclick="trixyAsk('How is my pace improving?')">My pace 📈</button>
+    <button class="trixy-sug" onclick="trixyAsk('Am I on track for my race?')">Race ready? 🏁</button>
+  </div>
+  <div class="trixy-input-wrap">
+    <textarea class="trixy-input" id="trixy-input" placeholder="Ask Trixy anything..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();trixyAsk();}"></textarea>
+    <button class="trixy-send" id="trixy-send" onclick="trixyAsk()">➤</button>
+  </div>
+</div>
+
+<script>
+let trixyOpen = false;
+let trixyContext = null;
+let trixyHistory = [];
+
+function toggleTrixy() {
+  trixyOpen = !trixyOpen;
+  const panel = document.getElementById('trixy-panel');
+  const btn = document.getElementById('trixy-btn');
+  panel.classList.toggle('open', trixyOpen);
+  if (trixyOpen) {
+    btn.style.display = 'none';
+    if (trixyHistory.length === 0) trixyInit();
+    setTimeout(() => document.getElementById('trixy-input')?.focus(), 100);
+  } else {
+    btn.style.display = 'flex';
+  }
+}
+
+async function trixyInit() {
+  trixyAddMsg('coach', "Hey! I'm Trixy, your personal triathlon coach 👋 I can see your training plan, sessions and Strava data. What do you want to know?");
+}
+
+async function buildTrixyContext() {
+  if (trixyContext) return trixyContext;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return null;
+    const userId = session.user.id;
+    const userName = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
+
+    // Get latest plan
+    const { data: plans } = await sb.from('plans').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
+    const plan = plans?.[0];
+    let planContext = 'No plan yet.';
+    let raceContext = '';
+    let weekContext = '';
+    let fitnessContext = '';
+
+    if (plan?.plan_data) {
+      try {
+        let txt = plan.plan_data;
+        txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1);
+        const pd = JSON.parse(txt);
+        const totalWeeks = pd.weeks?.length || 0;
+        const raceDate = pd.raceDate || '';
+        const race = plan.race || pd.race || 'Triathlon';
+        const startDate = pd.startDate || '';
+
+        // Current week
+        let curWeek = 0;
+        if (startDate) {
+          const today = new Date(); today.setHours(0,0,0,0);
+          const start = new Date(startDate + 'T00:00:00');
+          const diff = Math.round((today - start) / (1000*60*60*24));
+          curWeek = Math.min(Math.floor(diff/7), totalWeeks-1);
+        }
+        const week = pd.weeks?.[curWeek];
+        const phase = week?.phase || 'Base';
+        const sessions = week?.days?.filter(d => d.type !== 'Rest') || [];
+        const sessionNames = sessions.map(s => s.name || s.type).join(', ');
+
+        // Days to race
+        let daysToRace = '';
+        if (raceDate) {
+          const today = new Date(); today.setHours(0,0,0,0);
+          const rd = new Date(raceDate + 'T00:00:00');
+          daysToRace = Math.round((rd - today) / (1000*60*60*24));
+        }
+
+        planContext = `Race: ${race}. Total weeks: ${totalWeeks}. Currently in week ${curWeek+1} (${phase} phase). Sessions this week: ${sessionNames || 'rest week'}. Days to race: ${daysToRace || 'unknown'}.`;
+        raceContext = raceDate ? `Race date: ${raceDate}.` : '';
+
+        // Completions this week
+        const { data: comps } = await sb.from('completions').select('week_num,day,rpe').eq('user_id', userId).eq('plan_id', String(plan.id));
+        const weekComps = comps?.filter(c => parseInt(c.week_num) === curWeek) || [];
+        const totalComps = comps?.length || 0;
+        weekContext = `Completed ${weekComps.length} of ${sessions.length} sessions this week. Total sessions completed: ${totalComps}.`;
+
+        // Strava fitness
+        const { data: userData } = await sb.from('users').select('strava_fitness_data, strava_athlete_id').eq('id', userId).single();
+        if (userData?.strava_fitness_data) {
+          try {
+            const sf = JSON.parse(userData.strava_fitness_data);
+            const parts = [];
+            if (sf.run) parts.push(`Run avg pace: ${sf.run.avgPace}/km, threshold: ${sf.run.thresholdPace}/km`);
+            if (sf.bike) parts.push(`Bike avg: ${sf.bike.avgSpeedKmh}km/h${sf.bike.ftpEstimate ? ', FTP: '+sf.bike.ftpEstimate+'w' : ''}`);
+            if (sf.swim) parts.push(`Swim avg: ${sf.swim.avgPacePer100m}/100m`);
+            fitnessContext = parts.join('. ');
+          } catch(e) {}
+        }
+      } catch(e) {}
+    }
+
+    trixyContext = {
+      userName, planContext, raceContext, weekContext, fitnessContext,
+      systemPrompt: `You are Trixy, an elite AI triathlon coach inside the irontri app. You are warm, direct, encouraging and knowledgeable. You know this athlete personally.
+
+ATHLETE: ${userName}
+PLAN: ${planContext}
+${raceContext}
+PROGRESS: ${weekContext}
+FITNESS: ${fitnessContext || 'No Strava data connected yet.'}
+
+Rules:
+- Keep responses concise — 2-4 sentences max unless asked for detail
+- Be specific to their data, not generic
+- Use their name occasionally
+- Sound like a real coach texting, not an AI
+- Never say "Based on your data" — just coach them naturally
+- If they ask something you don't know, say so honestly
+- Encourage but be honest about weaknesses
+- No bullet points in short replies — save those for detailed questions`
+    };
+    return trixyContext;
+  } catch(e) {
+    return null;
+  }
+}
+
+function trixyAddMsg(role, text) {
+  const msgs = document.getElementById('trixy-messages');
+  const div = document.createElement('div');
+  div.className = 'trixy-msg ' + role;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+async function trixyAsk(presetMsg) {
+  const input = document.getElementById('trixy-input');
+  const msg = presetMsg || input?.value?.trim();
+  if (!msg) return;
+  if (input) input.value = '';
+
+  // Hide suggestions after first message
+  document.getElementById('trixy-suggestions').style.display = 'none';
+
+  trixyAddMsg('user', msg);
+  trixyHistory.push({ role: 'user', content: msg });
+
+  const sendBtn = document.getElementById('trixy-send');
+  if (sendBtn) sendBtn.disabled = true;
+  const typingEl = trixyAddMsg('typing', 'Trixy is thinking...');
+
+  try {
+    const ctx = await buildTrixyContext();
+    const systemPrompt = ctx?.systemPrompt || 'You are Trixy, an AI triathlon coach. Be helpful, warm and concise.';
+
+    const response = await fetch('/api/generate-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: systemPrompt + '\n\nConversation so far:\n' + trixyHistory.slice(0,-1).map(m => m.role.toUpperCase() + ': ' + m.content).join('\n') + '\n\nATHLETE: ' + msg + '\n\nRespond as Trixy (2-4 sentences, warm, direct, coach-like):'
+      })
+    });
+
+    const data = await response.json();
+    const reply = data.plan || "Sorry, I couldn't get a response. Try again!";
+    typingEl.remove();
+    trixyAddMsg('coach', reply);
+    trixyHistory.push({ role: 'assistant', content: reply });
+
+    // Keep history manageable
+    if (trixyHistory.length > 20) trixyHistory = trixyHistory.slice(-16);
+  } catch(e) {
+    typingEl.remove();
+    trixyAddMsg('coach', "Something went wrong — give me a second and try again!");
+  }
+
+  if (sendBtn) sendBtn.disabled = false;
+}
+</script>
+
 </body>
 </html>
