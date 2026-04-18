@@ -1220,6 +1220,10 @@ function renderWeek(){
     const isActive=curDay===_slotIdx;
     // Check completion — all sessions in slot complete
     const isComplete = slot.sessions.every((_,si) => completions.has(`${curWeek}-${_slotIdx}-${si}`)) && completions.has(`${curWeek}-${_slotIdx}-0`);
+    // Check if previous slot was also completed (streak indicator)
+    const prevSlotIdx = _slotIdx > 0 ? _slotIdx - 1 : null;
+    const prevComplete = prevSlotIdx !== null && (completions.has(`${curWeek}-${prevSlotIdx}-0`) || completions.has(`${curWeek}-${prevSlotIdx}`));
+    const isStreak = isComplete && prevComplete;
     const dateStr = slot.date.getDate()+' '+months[slot.date.getMonth()];
     const dayName = allDaysFull[slot.date.getDay()];
     const totalDur = slot.sessions.reduce((sum,s) => sum + (parseFloat(s.duration)||0), 0);
@@ -1227,7 +1231,7 @@ function renderWeek(){
       <div class="cal-day-name">${dayName}</div>
       <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:4px;">${dateStr}</div>
       <div class="cal-day-icon" style="position:relative;">
-        ${isComplete ? '✅' : primary.swapped ? '😓' : t.icon}
+        ${isComplete ? (isStreak ? '🔥' : '✅') : primary.swapped ? '😓' : t.icon}
         ${hasDouble ? `<span style="position:absolute;top:-6px;right:-10px;background:#1E90FF;color:#fff;font-size:9px;font-weight:700;border-radius:100px;padding:1px 5px;line-height:14px;">+${slot.sessions.length - 1}</span>` : ''}
       </div>
       <div class="cal-day-type ${t.cls}">${primary.swapped ? 'Easy' : t.label}</div>
