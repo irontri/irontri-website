@@ -97,18 +97,7 @@
       box-shadow:0 0 0 3px rgba(255,140,0,0.15);
     }
     input[type=date]::-webkit-calendar-picker-indicator{
-      filter:invert(1) sepia(1) saturate(10) hue-rotate(5deg) brightness(1.2);
-      opacity:1;
-      cursor:pointer;
-      width:28px;
-      height:28px;
-      padding:4px;
-      border-radius:6px;
-      background:rgba(255,140,0,0.15);
-    }
-    input[type=date]::-webkit-calendar-picker-indicator:hover{
-      background:rgba(255,140,0,0.35);
-      filter:invert(1) sepia(1) saturate(10) hue-rotate(5deg) brightness(1.4);
+      display:none;
     }
     .is{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
     .is input{width:100%;padding:15px 18px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;}
@@ -708,11 +697,17 @@
   <div class="is">
     <div style="display:flex;flex-direction:column;gap:6px;">
       <label style="font-size:12px;font-weight:500;color:var(--blue);letter-spacing:1px;text-transform:uppercase;">📅 When do you want to start training?</label>
-      <input type="date" id="istart" oninput="cf()">
+      <div style="position:relative;display:flex;align-items:center;">
+        <input type="date" id="istart" oninput="cf()" style="padding-right:52px;">
+        <button onclick="document.getElementById('istart').showPicker?document.getElementById('istart').showPicker():document.getElementById('istart').click()" type="button" style="position:absolute;right:6px;background:#FF8C00;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:18px;line-height:1;color:#fff;display:flex;align-items:center;justify-content:center;" title="Pick a date">📅</button>
+      </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:6px;">
       <label style="font-size:12px;font-weight:500;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">🏁 What is your race date? (optional)</label>
-      <input type="date" id="idate" oninput="cf()">
+      <div style="position:relative;display:flex;align-items:center;">
+        <input type="date" id="idate" oninput="cf()" style="padding-right:52px;">
+        <button onclick="document.getElementById('idate').showPicker?document.getElementById('idate').showPicker():document.getElementById('idate').click()" type="button" style="position:absolute;right:6px;background:#FF8C00;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:18px;line-height:1;color:#fff;display:flex;align-items:center;justify-content:center;" title="Pick a date">🏁</button>
+      </div>
     </div>
   </div>
   <div id="plan-length-warning" style="display:none;margin-bottom:16px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:10px;padding:12px 14px;font-size:13px;color:rgba(251,191,36,0.9);line-height:1.6;"></div>
