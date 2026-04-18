@@ -3027,13 +3027,13 @@ var trixyOpen=false,trixyHistory=[];
 document.addEventListener('DOMContentLoaded',function(){
   var inp=document.getElementById('trixy-input');
   var btn=document.getElementById('trixy-send');
-  if(inp) inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();trixyAsk();}});
-  if(btn) btn.addEventListener('click',function(){trixyAsk();});
+  if(inp)inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();trixyAsk();}});
+  if(btn)btn.addEventListener('click',function(){trixyAsk();});
 });
 function toggleTrixy(){
   trixyOpen=!trixyOpen;
   document.getElementById('trixy-panel').classList.toggle('open',trixyOpen);
-  if(trixyOpen&&trixyHistory.length===0){trixyAddMsg('coach','Hey! I am Trixy, your personal triathlon coach. I can see your current plan and sessions. What do you want to know?');}
+  if(trixyOpen&&trixyHistory.length===0){trixyAddMsg('coach','Hey! I am Trixy, your personal triathlon coach. I can see your plan and sessions. What do you want to know?');}
   if(trixyOpen){setTimeout(function(){var i=document.getElementById('trixy-input');if(i)i.focus();},100);}
 }
 function buildTrixyCtx(){
@@ -3048,7 +3048,7 @@ function buildTrixyCtx(){
   if(rd){var n=new Date();n.setHours(0,0,0,0);days=Math.round((new Date(rd+'T00:00:00')-n)/86400000);}
   var done=0;
   sessions.forEach(function(_,i){if(completions.has(curWeek+'-'+i)||completions.has(curWeek+'-'+i+'-0'))done++;});
-  return 'Race:'+race+'. Week '+(curWeek+1)+' of '+(planData.weeks?planData.weeks.length:'?')+' ('+phase+'). Days to race:'+(days||'unknown')+'. Sessions this week:'+sessions.length+', completed:'+done+'. Current session:'+((today&&today.name)||'rest')+'.';
+  return 'Race:'+race+'. Week '+(curWeek+1)+' of '+(planData.weeks?planData.weeks.length:'?')+' ('+phase+'). Days to race:'+(days||'unknown')+'. Sessions:'+sessions.length+', done:'+done+'. Current:'+((today&&today.name)||'rest')+'.';
 }
 function trixyAddMsg(role,text){
   var m=document.getElementById('trixy-messages');
@@ -3071,15 +3071,19 @@ function trixyAsk(preset){
   if(btn)btn.disabled=true;
   var t=trixyAddMsg('typing','Trixy is thinking...');
   var ctx=buildTrixyCtx();
-  var sys='You are Trixy, an elite personal triathlon coach inside the irontri app. Warm, direct, 2-4 sentences max. Sound like a real coach texting. PLAN: '+ctx;
-  var hist=trixyHistory.slice(0,-1).map(function(m){return m.role.toUpperCase()+': '+m.content;}).join('\n');
-  var prompt=sys+'\n\n'+hist+'\nATHLETE: '+msg+'\nRespond as Trixy:';
+  var sys='You are Trixy, an elite personal triathlon coach. Warm, direct, 2-4 sentences max. Real coach texting style. PLAN: '+ctx;
+  var hist=trixyHistory.slice(0,-1).map(function(m){return m.role.toUpperCase()+': '+m.content;}).join('
+');
+  var prompt=sys+'
+
+'+hist+'
+ATHLETE: '+msg+'
+Trixy:';
   fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt})})
   .then(function(r){return r.json();})
   .then(function(data){
-    var reply=data.plan||'Give me a sec and try again!';
-    t.remove();trixyAddMsg('coach',reply);
-    trixyHistory.push({role:'assistant',content:reply});
+    t.remove();trixyAddMsg('coach',data.plan||'Give me a sec and try again!');
+    trixyHistory.push({role:'assistant',content:data.plan||''});
     if(trixyHistory.length>20)trixyHistory=trixyHistory.slice(-16);
     if(btn)btn.disabled=false;
   }).catch(function(){t.remove();trixyAddMsg('coach','Something went wrong, try again!');if(btn)btn.disabled=false;});
@@ -3261,13 +3265,13 @@ var trixyOpen=false,trixyHistory=[];
 document.addEventListener('DOMContentLoaded',function(){
   var inp=document.getElementById('trixy-input');
   var btn=document.getElementById('trixy-send');
-  if(inp) inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();trixyAsk();}});
-  if(btn) btn.addEventListener('click',function(){trixyAsk();});
+  if(inp)inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();trixyAsk();}});
+  if(btn)btn.addEventListener('click',function(){trixyAsk();});
 });
 function toggleTrixy(){
   trixyOpen=!trixyOpen;
   document.getElementById('trixy-panel').classList.toggle('open',trixyOpen);
-  if(trixyOpen&&trixyHistory.length===0){trixyAddMsg('coach','Hey! I am Trixy, your personal triathlon coach. I can see your current plan and sessions. What do you want to know?');}
+  if(trixyOpen&&trixyHistory.length===0){trixyAddMsg('coach','Hey! I am Trixy, your personal triathlon coach. I can see your plan and sessions. What do you want to know?');}
   if(trixyOpen){setTimeout(function(){var i=document.getElementById('trixy-input');if(i)i.focus();},100);}
 }
 function buildTrixyCtx(){
@@ -3282,7 +3286,7 @@ function buildTrixyCtx(){
   if(rd){var n=new Date();n.setHours(0,0,0,0);days=Math.round((new Date(rd+'T00:00:00')-n)/86400000);}
   var done=0;
   sessions.forEach(function(_,i){if(completions.has(curWeek+'-'+i)||completions.has(curWeek+'-'+i+'-0'))done++;});
-  return 'Race:'+race+'. Week '+(curWeek+1)+' of '+(planData.weeks?planData.weeks.length:'?')+' ('+phase+'). Days to race:'+(days||'unknown')+'. Sessions this week:'+sessions.length+', completed:'+done+'. Current session:'+((today&&today.name)||'rest')+'.';
+  return 'Race:'+race+'. Week '+(curWeek+1)+' of '+(planData.weeks?planData.weeks.length:'?')+' ('+phase+'). Days to race:'+(days||'unknown')+'. Sessions:'+sessions.length+', done:'+done+'. Current:'+((today&&today.name)||'rest')+'.';
 }
 function trixyAddMsg(role,text){
   var m=document.getElementById('trixy-messages');
@@ -3305,15 +3309,19 @@ function trixyAsk(preset){
   if(btn)btn.disabled=true;
   var t=trixyAddMsg('typing','Trixy is thinking...');
   var ctx=buildTrixyCtx();
-  var sys='You are Trixy, an elite personal triathlon coach inside the irontri app. Warm, direct, 2-4 sentences max. Sound like a real coach texting. PLAN: '+ctx;
-  var hist=trixyHistory.slice(0,-1).map(function(m){return m.role.toUpperCase()+': '+m.content;}).join('\n');
-  var prompt=sys+'\n\n'+hist+'\nATHLETE: '+msg+'\nRespond as Trixy:';
+  var sys='You are Trixy, an elite personal triathlon coach. Warm, direct, 2-4 sentences max. Real coach texting style. PLAN: '+ctx;
+  var hist=trixyHistory.slice(0,-1).map(function(m){return m.role.toUpperCase()+': '+m.content;}).join('
+');
+  var prompt=sys+'
+
+'+hist+'
+ATHLETE: '+msg+'
+Trixy:';
   fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt})})
   .then(function(r){return r.json();})
   .then(function(data){
-    var reply=data.plan||'Give me a sec and try again!';
-    t.remove();trixyAddMsg('coach',reply);
-    trixyHistory.push({role:'assistant',content:reply});
+    t.remove();trixyAddMsg('coach',data.plan||'Give me a sec and try again!');
+    trixyHistory.push({role:'assistant',content:data.plan||''});
     if(trixyHistory.length>20)trixyHistory=trixyHistory.slice(-16);
     if(btn)btn.disabled=false;
   }).catch(function(){t.remove();trixyAddMsg('coach','Something went wrong, try again!');if(btn)btn.disabled=false;});
