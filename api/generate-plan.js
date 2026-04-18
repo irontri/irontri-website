@@ -205,16 +205,22 @@ JSON structure for weeks:
 
     if (userId) {
       try {
-        await fetch(process.env.SUPABASE_URL + '/rest/v1/plans', {
+        const saveRes = await fetch(process.env.SUPABASE_URL + '/rest/v1/plans', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': process.env.SUPABASE_ANON_KEY,
-            'Authorization': 'Bearer ' + process.env.SUPABASE_ANON_KEY,
-            'Prefer': 'return=minimal'
+            'apikey': process.env.SUPABASE_SERVICE_KEY,
+            'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY,
+            'Prefer': 'return=representation'
           },
           body: JSON.stringify({ user_id: userId, plan_data: planDataToSave, race: race || 'Triathlon' })
         });
+        if (!saveRes.ok) {
+          const err = await saveRes.text();
+          console.error('Plan save failed:', err);
+        } else {
+          console.log('Plan saved successfully for user:', userId);
+        }
       } catch(e) {
         console.log('Could not save plan:', e);
       }
