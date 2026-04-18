@@ -3174,7 +3174,7 @@ async function autoGenerateRemainingWeeks(tw){
   </div>
 </div>
 <script>
-var trixyOpen=false,trixyHistory=[];
+var trixyOpen=false,trixyHistory=[],trixyGreeted=false;
 document.addEventListener('DOMContentLoaded',function(){
   var inp=document.getElementById('trixy-input');
   var btn=document.getElementById('trixy-send');
@@ -3185,7 +3185,7 @@ function toggleTrixy(){
   trixyOpen=!trixyOpen;
   var panel=document.getElementById('trixy-panel');
   if(panel){panel.style.display=trixyOpen?'flex':'none';}
-  if(trixyOpen&&trixyHistory.length===0){trixyAddMsg('coach','Hey! I am Trixy, your personal triathlon coach. I can see your plan and sessions. What do you want to know?');}
+  if(trixyOpen&&!trixyGreeted){trixyGreeted=true;trixyAddMsg('coach','Hey! I am Trixy, your personal triathlon coach. I can see your plan and sessions. What do you want to know?');}
   if(trixyOpen){setTimeout(function(){var i=document.getElementById('trixy-input');if(i)i.focus();},100);}
 }
 function buildTrixyCtx(){
