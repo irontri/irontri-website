@@ -1535,6 +1535,7 @@ init();
 
 <script>
 let trixyOpen = false;
+let trixyGreeted = false;
 let trixyContext = null;
 let trixyHistory = [];
 
@@ -1545,7 +1546,7 @@ function toggleTrixy() {
   panel.classList.toggle('open', trixyOpen);
   if (trixyOpen) {
     btn.style.display = 'none';
-    if (trixyHistory.length === 0) trixyInit();
+    if (!trixyGreeted) { trixyGreeted = true; trixyInit(); }
     setTimeout(() => document.getElementById('trixy-input')?.focus(), 100);
   } else {
     btn.style.display = 'flex';
