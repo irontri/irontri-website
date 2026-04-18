@@ -3224,13 +3224,8 @@ function trixyAsk(preset){
   var t=trixyAddMsg('typing','Trixy is thinking...');
   var ctx=buildTrixyCtx();
   var sys='You are Trixy, an elite personal triathlon coach. Warm, direct, 2-4 sentences max. Real coach texting style. PLAN: '+ctx;
-  var hist=trixyHistory.slice(0,-1).map(function(m){return m.role.toUpperCase()+': '+m.content;}).join('
-');
-  var prompt=sys+'
-
-'+hist+'
-ATHLETE: '+msg+'
-Trixy:';
+  var hist=trixyHistory.slice(0,-1).map(function(m){return m.role.toUpperCase()+': '+m.content;}).join(' | ');
+  var prompt=sys+' '+hist+' ATHLETE: '+msg+' Trixy:';
   fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt})})
   .then(function(r){return r.json();})
   .then(function(data){
