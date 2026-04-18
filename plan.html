@@ -1219,10 +1219,11 @@ function renderWeek(){
     const t=resolveType(primary.type, primary.name, primary.warmup, primary.mainset);
     const isActive=curDay===_slotIdx;
     // Check completion — all sessions in slot complete
-    const isComplete = slot.sessions.every((_,si) => completions.has(`${curWeek}-${_slotIdx}-${si}`)) && completions.has(`${curWeek}-${_slotIdx}-0`);
+    // Check completion — handle both old key format (week-slot) and new (week-slot-sessionIdx)
+    const isComplete = completions.has(`${curWeek}-${_slotIdx}`) || completions.has(`${curWeek}-${_slotIdx}-0`);
     // Check if previous slot was also completed (streak indicator)
     const prevSlotIdx = _slotIdx > 0 ? _slotIdx - 1 : null;
-    const prevComplete = prevSlotIdx !== null && (completions.has(`${curWeek}-${prevSlotIdx}-0`) || completions.has(`${curWeek}-${prevSlotIdx}`));
+    const prevComplete = prevSlotIdx !== null && (completions.has(`${curWeek}-${prevSlotIdx}`) || completions.has(`${curWeek}-${prevSlotIdx}-0`));
     const isStreak = isComplete && prevComplete;
     const dateStr = slot.date.getDate()+' '+months[slot.date.getMonth()];
     const dayName = allDaysFull[slot.date.getDay()];
