@@ -1,5 +1,81 @@
 export const config = { maxDuration: 300 };
 
+// Post-processing: fix duplicate same-day same-type sessions and wrong phase labels
+function sanitizePlan(pd) {
+  if (!pd || !Array.isArray(pd.weeks)) return;
+
+  const totalWeeks = pd.weeks.length;
+
+  // Phase thresholds (match generate-plan.js prompt rules)
+  const baseEnd   = Math.round(totalWeeks * 0.30);
+  const buildEnd  = Math.round(totalWeeks * 0.65);
+  const peakEnd   = Math.round(totalWeeks * 0.85);
+  const taperEnd  = totalWeeks - 1; // last week = Race Week
+
+  function correctPhase(weekNum) {
+    if (weekNum <= baseEnd)  return 'Base';
+    if (weekNum <= buildEnd) return 'Build';
+    if (weekNum <= peakEnd)  return 'Peak';
+    if (weekNum <= taperEnd) return 'Taper';
+    return 'Race Week';
+  }
+
+  // Day order for moving duplicate sessions forward
+  const DAY_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+  pd.weeks.forEach(week => {
+    // 1. Force correct phase label
+    week.phase = correctPhase(week.weekNumber);
+
+    // 2. Deduplicate: remove same-day + same-type duplicates
+    //    Keep the first occurrence; try to reschedule the duplicate to the next available day
+    const seen = {}; // "Day|Type" -> true
+    const keep = [];
+    const duplicates = [];
+
+    for (const session of week.days) {
+      const key = `${session.day}|${session.type}`;
+      if (!seen[key]) {
+        seen[key] = true;
+        keep.push(session);
+      } else {
+        duplicates.push(session);
+      }
+    }
+
+    // Try to place each duplicate on the next day that doesn't already have that type
+    // and isn't a Rest day
+    for (const dup of duplicates) {
+      if (dup.type === 'Rest') continue; // never need to move rest days
+
+      const currentDayIdx = DAY_ORDER.indexOf(dup.day);
+      let placed = false;
+
+      for (let offset = 1; offset <= 6; offset++) {
+        const candidateDay = DAY_ORDER[(currentDayIdx + offset) % 7];
+        const candidateKey = `${candidateDay}|${dup.type}`;
+
+        // Also don't place on a day that's already a Rest day in keep[]
+        const hasRest = keep.some(s => s.day === candidateDay && s.type === 'Rest');
+        if (!seen[candidateKey] && !hasRest) {
+          dup.day = candidateDay;
+          seen[candidateKey] = true;
+          keep.push(dup);
+          placed = true;
+          break;
+        }
+      }
+
+      // If we couldn't place it anywhere, just drop it (better than a duplicate)
+      if (!placed) {
+        console.log(`sanitizePlan: dropped duplicate ${dup.type} session (week ${week.weekNumber})`);
+      }
+    }
+
+    week.days = keep;
+  });
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -56,6 +132,7 @@ BASE PHASE RULES (critical — strictly enforced):
 - Base run: easy conversational pace only — NO tempo runs, NO strides, NO track sessions, NO speed work
 - Speedwork, threshold intervals and race-pace efforts begin ONLY from Build phase onwards — never before
 - LATE BASE BRICK EXCEPTION (70.3, T100, Full Ironman only): In the final 2-3 weeks of Base phase, include 1 brick session per week. This replaces a mid-week bike session — do not add on top. The brick run may include a short 8-10 min faster effort immediately off the bike (race pace feel — not all-out, not threshold) followed by Zone 2 for the remainder. This is neuromuscular adaptation and transition shock training ONLY — not fitness work. Scale total duration to athlete level: Beginner = 20-30 min bike + 10 min run (8 min Zone 2, 2 min fast feel); Intermediate = 30-45 min bike + 15 min run (5 min fast feel, 10 min Zone 2); Advanced = 45-60 min bike + 20 min run (10 min fast feel, 10 min Zone 2). Use their actual pace/watts data from Strava or threshold if available. coachNote must explain: "This is not a fitness session — it is teaching your legs to run after riding. The short faster effort simulates the shock your body feels leaving T2 on race day. Keep it controlled."
+- BASE SWIM PROGRESSION: Swim mainset distance must build linearly week over week during Base phase. Never increase total mainset distance by more than 15% between consecutive weeks. Never decrease mainset distance in Base phase unless it is a planned recovery week. Example for a 10-week Base: week 1 = 1600m, week 2 = 1800m, week 3 = 2000m, week 4 = 2200m — smooth linear build only. NEVER jump from 1800m to 4000m in a single week.
 - POOL ACCESS: The prompt states whether the athlete has pool access. If pool = "No" or "Limited access", ALL swim sessions must be open water or lake/river swims — NEVER pool sessions. Structure these as continuous open water swims with sighting practice. If pool = "Yes", use pool sessions normally with intervals and technique work.
 - OPEN WATER SWIM SESSIONS: Regardless of pool access, include 1 open water swim session per month during Build and Peak phases. This session replaces one pool swim that week — do not add it on top. Name it "Open Water Swim" with a coachNote that says "Head to the ocean if you're within reasonable distance — otherwise any open water (lake, river, reservoir) works perfectly. Practice sighting every 10 strokes, wetsuit if racing in one, and get comfortable with the conditions you'll face on race day." If the athlete is inland or far from the ocean, suggest local open water alternatives. Open water sessions should be 45-60 min, effort 5-6, Zone 2, same duration as the pool swim they replace. CRITICAL: The paceTarget for open water swims must ALWAYS be Zone 2 pace (CSS + 20-40sec/100m) — NEVER VO2max pace. Open water is always easy aerobic effort.
 - STRENGTH SESSIONS: If the prompt requests strength training, include 1 strength session per week during Base and Build phases ONLY. NEVER include Strength sessions in Peak, Taper or Race Week phases. Strength is type "Strength", effort 5/10, 30-40 minutes. Focus on core stability, glutes, hip flexors and single-leg exercises — purely functional triathlon strength, never cardio. PLACEMENT: pair strength as a double session on the same day as a short or easy SWIM session (e.g. aerobic swim day) — strength in the afternoon after the morning swim. This is how professional triathlon coaches programme it. NEVER pair strength with a hard bike, brick, long run, or track session. NEVER place strength on a standalone rest day unless there is absolutely no suitable swim day available. The days array entry for strength should use the same day name as the swim it is paired with — this creates a double session.
@@ -75,6 +152,7 @@ FITNESS LEVEL SCALING (apply based on "fitness" field in prompt):
 - "Fit — regular training, good base": Week 1 volume = 85% of stated hours/week. Sessions 45-75min. 1 rest day. Normal load from week 1.
 - "Very fit — high training volume and strong aerobic base": Week 1 volume = 95% of stated hours/week. Sessions 60-90min. 1 rest day. Hit the ground running — athlete is ready for full load.
 - "Peak fitness — currently competing": Week 1 volume = 100% of stated hours/week. Full load immediately. Treat as advanced athlete from day 1.
+- BASE PHASE VOLUME CAP: Regardless of fitness level, weeks 1-2 of Base phase must never exceed 70% of the athlete's stated weekly hours. Weeks 3-4 must never exceed 80%. This overrides the fitness level scaling above — the body needs time to adapt to the training structure even if the athlete is very fit. Example: 16hr/week athlete → week 1 max = 11.2hrs, week 2 max = 11.2hrs, week 3 max = 12.8hrs, week 4 max = 12.8hrs. Double sessions in weeks 1-2 of Base are only permitted if the total weekly volume stays within this cap.
 
 WEAKNESS TARGETING (apply based on "weakness" field in prompt — this shapes the entire plan):
 - "Swim": Add a THIRD swim session per week in Build and Peak phases (replace one rest day). Make swim the longest single-discipline session in peak week. Include more open water sessions. Add technique drills to every swim.
@@ -198,6 +276,7 @@ JSON structure for weeks:
       const txt = planText.substring(planText.indexOf('{'), planText.lastIndexOf('}') + 1);
       const pd = JSON.parse(txt);
       pd.basePrompt = prompt;
+      sanitizePlan(pd);
       planDataToSave = JSON.stringify(pd);
     } catch(e) {
       console.log('Could not inject basePrompt:', e);
