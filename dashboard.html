@@ -1482,9 +1482,9 @@ init();
   <a href="#" id="tab-plan" onclick="goToMyPlan(event)" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
     <span style="font-size:20px;">🗓️</span>My Plan
   </a>
-  <a href="/feedback.html" id="tab-support" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
-    <span style="font-size:20px;">💬</span>Feedback
-  </a>
+  <button onclick="toggleTrixy()" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;" id="trixy-tab-btn">
+    <img src="/trixy.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-bottom:0;" alt="Trixy">Coach
+  </button>
 </nav>
 
 <!-- PAYWALL MODAL -->
@@ -1509,14 +1509,14 @@ init();
 <!-- END PAYWALL MODAL -->
 
 <!-- ── TRIXY AI COACH ── -->
-<button class="trixy-btn" id="trixy-btn" onclick="toggleTrixy()" title="Ask Trixy" style="padding:0;overflow:hidden;"><img src="/trixy.jpeg" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="Trixy"></button>
+
 
 <div class="trixy-panel" id="trixy-panel">
   <div class="trixy-header">
     <div class="trixy-avatar" style="padding:0;overflow:hidden;"><img src="/trixy.jpeg" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="Trixy"></div>
     <div>
       <div class="trixy-name">Trixy</div>
-      <div class="trixy-status">Your AI triathlon coach</div>
+      <div class="trixy-status">Your personal triathlon coach</div>
     </div>
     <button class="trixy-close" onclick="toggleTrixy()">✕</button>
   </div>
