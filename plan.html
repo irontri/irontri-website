@@ -3148,7 +3148,7 @@ async function autoGenerateRemainingWeeks(tw){
   <a href="#" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:#1E90FF;font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
     <span style="font-size:20px;">🗓️</span>My Plan
   </a>
-  <button onclick="toggleTrixy()" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
+  <button onclick="if(typeof toggleTrixy==='function')toggleTrixy();" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'Inter',sans-serif;">
     <img src="/trixy.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" alt="Trixy">Coach
   </button>
 </nav>
