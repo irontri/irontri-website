@@ -751,9 +751,11 @@ async function loadPlans() {
     const plan = plans[0];
     const isFounding = isFoundingUser || plan.is_founding_member === true;
     const isPaid = plan.is_paid === true;
-    const createdAt = new Date(plan.created_at);
+    // Use user signup date for trial, not plan creation date
+    const userCreatedAt = currentUser?.created_at ? new Date(currentUser.created_at) : new Date(plan.created_at);
+    const createdAt = userCreatedAt;
     const daysSince = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
-    const trialDays = new Date(plan.created_at) >= new Date('2026-04-09') ? 7 : 30;
+    const trialDays = createdAt >= new Date('2026-04-09') ? 7 : 30;
     const daysLeft = Math.max(0, trialDays - daysSince);
     if (isPaid) { const el = document.getElementById('manage-sub-banner'); if (el) el.style.display = 'flex'; }
     else if (!isFounding && daysLeft > 0) { const el = document.getElementById('trial-banner'); const dl = document.getElementById('trial-days-left'); const upgradeBtn = document.getElementById('trial-upgrade-btn'); if (el && dl) { dl.textContent = daysLeft; el.style.display = 'flex'; } if (upgradeBtn) upgradeBtn.href = '/plan.html?load=' + plan.id; }
