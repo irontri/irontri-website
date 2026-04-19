@@ -1,4 +1,4 @@
-export const config = { maxDuration: 30 };
+export const config = { maxDuration: 60 };
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     const userRes = await fetch(
       SUPABASE_URL + '/rest/v1/users?id=eq.' + userId +
       '&select=id,strava_access_token,strava_refresh_token,strava_token_expires_at,strava_athlete_id',
-      { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY } }
+      { headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY } }
     );
     const users = await userRes.json();
     if (!users || users.length === 0 || !users[0].strava_athlete_id) {
