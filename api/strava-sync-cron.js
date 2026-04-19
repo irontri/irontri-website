@@ -67,9 +67,10 @@ async function syncUserActivities(user, accessToken) {
   const weeks = planData?.weeks;
   if (!weeks?.length) return { userId: user.id, skipped: true, reason: 'no_weeks' };
   const { data: existingCompletions } = await supabase.from('completions').select('week_num, day').eq('user_id', user.id).eq('plan_id', plan.id);
-  const completionSet = new Set((existingCompletions || []).map(c => `${c.week_num}:${c.day}`));
+  const completionSet = new Set((existingCompletions || []).map(c => `${c.week_num}-${c.day}`));
   const startDate = new Date(planData.startDate + 'T00:00:00');
   const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const DAY_NAME_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   let newCompletions = 0;
   for (const activity of activities) {
     const activityDate = new Date(getLocalDateStr(activity.start_date_local) + 'T00:00:00');
@@ -82,11 +83,13 @@ async function syncUserActivities(user, accessToken) {
     const week = weeks[weekIdx];
     const weekNum = weekIdx + 1;
     const dayName = DAY_NAMES[activityDate.getDay()];
+    const slotIndex = DAY_NAME_ORDER.indexOf(dayName);
+    if (slotIndex === -1) continue;
     const matchingSession = week.days?.find(d => d.day === dayName && sessionMatchesActivity(d, activity.type));
     if (!matchingSession) continue;
-    const completionKey = `${weekNum}:${dayName}`;
+    const completionKey = `${weekNum}-${slotIndex}`;
     if (completionSet.has(completionKey)) continue;
-    const { error: insertErr } = await supabase.from('completions').insert({ user_id: user.id, plan_id: plan.id, week_num: weekNum, day: dayName, rpe: null, source: 'strava' });
+    const { error: insertErr } = await supabase.from('completions').insert({ user_id: user.id, plan_id: plan.id, week_num: weekNum, day: String(slotIndex), rpe: null, source: 'strava' });
     if (!insertErr) { completionSet.add(completionKey); newCompletions++; }
   }
   return { userId: user.id, matched: newCompletions };
