@@ -105,6 +105,27 @@ function sanitizePlan(pd) {
 
     week.days = keep;
   });
+
+  // Enforce progressive volume in Base phase weeks 1-4
+  // If any week has LESS volume than the previous, boost it by extending sessions
+  const baseWeeks = pd.weeks.filter(w => w.weekNumber <= 4 && w.days);
+  for (let i = 1; i < baseWeeks.length; i++) {
+    const prevWeek = baseWeeks[i - 1];
+    const curWeek2 = baseWeeks[i];
+    const prevMins = prevWeek.days.reduce((s, d) => s + (d.type !== 'Rest' ? (parseFloat(d.duration) || 0) : 0), 0);
+    const curMins = curWeek2.days.reduce((s, d) => s + (d.type !== 'Rest' ? (parseFloat(d.duration) || 0) : 0), 0);
+    if (curMins < prevMins && curMins > 0) {
+      // Extend each non-rest session proportionally to reach at least prevMins + 5%
+      const target = Math.round(prevMins * 1.05);
+      const ratio = target / curMins;
+      curWeek2.days.forEach(d => {
+        if (d.type !== 'Rest' && d.duration) {
+          d.duration = Math.round(parseFloat(d.duration) * ratio);
+        }
+      });
+      console.log(`sanitizePlan: boosted week ${curWeek2.weekNumber} volume from ${curMins}min to ${target}min`);
+    }
+  }
 }
 
 export default async function handler(req, res) {
@@ -184,7 +205,7 @@ FITNESS LEVEL SCALING (apply based on "fitness" field in prompt):
 - "Very fit — high training volume and strong aerobic base": Week 1 volume = 95% of stated hours/week. Sessions 60-90min. 1 rest day. Hit the ground running — athlete is ready for full load.
 - "Peak fitness — currently competing": Week 1 volume = 100% of stated hours/week. Full load immediately. Treat as advanced athlete from day 1.
 - MANDATORY REST DAY: Regardless of fitness level, weeks 1 and 2 of ANY plan MUST include at least 1 full rest day. No exceptions — even elite athletes need structural rest in week 1. This overrides all other scheduling rules.
-- BASE PHASE VOLUME CAP: Regardless of fitness level, weeks 1-2 of Base phase must never exceed 70% of the athlete's stated weekly hours. Weeks 3-4 must never exceed 80%. This overrides the fitness level scaling above — the body needs time to adapt to the training structure even if the athlete is very fit. Example: 16hr/week athlete → week 1 max = 11.2hrs, week 2 max = 11.2hrs, week 3 max = 12.8hrs, week 4 max = 12.8hrs. Double sessions in weeks 1-2 of Base are only permitted if the total weekly volume stays within this cap.
+- BASE PHASE VOLUME PROGRESSION: Volume MUST build progressively week over week in Base phase. Follow this exact structure regardless of fitness level: Week 1 = 55-65% of stated weekly hours. Week 2 = 65-70% of stated weekly hours. Week 3 = 70-78% of stated weekly hours. Week 4 = 78-85% of stated weekly hours. CRITICAL: Week 2 must always have MORE total volume than Week 1. Week 3 must always have MORE than Week 2. Week 4 must always have MORE than Week 3. NEVER generate weeks that decrease in volume during Base phase unless it is a planned recovery week. Example for 16hr/week athlete: week 1 = ~9hrs, week 2 = ~10.5hrs, week 3 = ~11.5hrs, week 4 = ~13hrs. Double sessions in weeks 1-2 must stay within the volume cap for that week.
 
 WEAKNESS TARGETING (apply based on "weakness" field in prompt — this shapes the entire plan):
 - "Swim": Add a THIRD swim session per week in Build and Peak phases (replace one rest day). Make swim the longest single-discipline session in peak week. Include more open water sessions. Add technique drills to every swim.
