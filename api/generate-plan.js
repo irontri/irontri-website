@@ -27,6 +27,44 @@ function sanitizePlan(pd) {
     // 1. Force correct phase label
     week.phase = correctPhase(week.weekNumber);
 
+    // 2. Enforce mandatory rest day in weeks 1 and 2 for ALL athletes
+    if (week.weekNumber <= 2 && week.days) {
+      const restDays = week.days.filter(d => d.type === 'Rest').length;
+      if (restDays === 0) {
+        // Find the least important session and convert to rest
+        // Priority to remove: second Bike of week, then Strength, then shortest session
+        const typeOrder = ['Strength', 'Bike', 'Run', 'Swim', 'Brick'];
+        let removed = false;
+        for (const t of typeOrder) {
+          const idx = week.days.findLastIndex ? week.days.findLastIndex(d => d.type === t) : week.days.map(d=>d.type).lastIndexOf(t);
+          if (idx !== -1) {
+            week.days[idx] = {
+              ...week.days[idx],
+              type: 'Rest',
+              name: 'Recovery & Adaptation',
+              duration: 0,
+              effort: 0,
+              zone: 0,
+              purpose: 'Rest and recovery — your body adapts during rest, not during training.',
+              warmup: '',
+              mainset: '',
+              cooldown: '',
+              coachNote: 'Rest days are not lazy — they are when your body absorbs training. Eat well, hydrate, get 8+ hours sleep.',
+              paceTarget: '',
+              heartRateZone: ''
+            };
+            removed = true;
+            break;
+          }
+        }
+        if (!removed) {
+          // Fallback — convert last session to rest
+          const lastIdx = week.days.length - 1;
+          week.days[lastIdx] = { ...week.days[lastIdx], type: 'Rest', name: 'Recovery & Adaptation', duration: 0, effort: 0, zone: 0, purpose: 'Rest day.', warmup: '', mainset: '', cooldown: '', coachNote: 'Rest and recover.', paceTarget: '', heartRateZone: '' };
+        }
+      }
+    }
+
     // 2. Deduplicate: remove same-day + same-type duplicates
     //    Keep the first occurrence; try to reschedule the duplicate to the next available day
     const seen = {}; // "Day|Type" -> true
@@ -152,6 +190,7 @@ FITNESS LEVEL SCALING (apply based on "fitness" field in prompt):
 - "Fit — regular training, good base": Week 1 volume = 85% of stated hours/week. Sessions 45-75min. 1 rest day. Normal load from week 1.
 - "Very fit — high training volume and strong aerobic base": Week 1 volume = 95% of stated hours/week. Sessions 60-90min. 1 rest day. Hit the ground running — athlete is ready for full load.
 - "Peak fitness — currently competing": Week 1 volume = 100% of stated hours/week. Full load immediately. Treat as advanced athlete from day 1.
+- MANDATORY REST DAY: Regardless of fitness level, weeks 1 and 2 of ANY plan MUST include at least 1 full rest day. No exceptions — even elite athletes need structural rest in week 1. This overrides all other scheduling rules.
 - BASE PHASE VOLUME CAP: Regardless of fitness level, weeks 1-2 of Base phase must never exceed 70% of the athlete's stated weekly hours. Weeks 3-4 must never exceed 80%. This overrides the fitness level scaling above — the body needs time to adapt to the training structure even if the athlete is very fit. Example: 16hr/week athlete → week 1 max = 11.2hrs, week 2 max = 11.2hrs, week 3 max = 12.8hrs, week 4 max = 12.8hrs. Double sessions in weeks 1-2 of Base are only permitted if the total weekly volume stays within this cap.
 
 WEAKNESS TARGETING (apply based on "weakness" field in prompt — this shapes the entire plan):
