@@ -827,8 +827,12 @@ export default async function handler(req, res) {
           wk.days.push({ day: s.dayName, type: 'Swim', name: 'Pre-Race Quality Swim', duration: swimDur, effort: 6, zone: 2, purpose: 'Quality swim to stay sharp in the water.', warmup: '400m easy', mainset: `${Math.round(swimDur*0.7)} min quality swimming — some race pace efforts, focus on technique.`, cooldown: '200m easy', coachNote: 'Morning session — do this first, run later in the day.', paceTarget: 'Race pace efforts', heartRateZone: 'Zone 2' });
           wk.days.push({ day: s.dayName, type: 'Run', name: 'Aerobic Run with Race Pace Push', duration: runDur, effort: 6, zone: 2, purpose: 'Aerobic run with a 10 minute push at race pace to stay sharp.', warmup: '15 min easy jog', mainset: `Easy Zone 2 running. Include 10 min at race pace in the middle — feel what race day should feel like.`, cooldown: '10 min easy jog', coachNote: 'Push to race pace for 10 minutes — feel what it should feel like on the day. Everything else is easy.', paceTarget: 'Race pace for 10min', heartRateZone: 'Zone 2' });
         } else if (dbr === 7) {
-          const dur = isFull ? 150 : isHalf ? 105 : isOlympic ? 75 : 50;
-          wk.days.push({ day: s.dayName, type: 'Bike', name: 'Long TT Position Ride', duration: dur, effort: 5, zone: 2, purpose: 'Last long ride in race position — build confidence and feel.', warmup: '20 min easy spin', mainset: `${dur - 30} min steady aerobic riding in TT/race position on flat course. Race cadence (85-90rpm). Aerobic effort only.`, cooldown: '10 min easy spin', coachNote: 'Last big ride. Stay in your race position, feel the bike beneath you. Confidence building, not fitness building.', paceTarget: 'Aerobic Zone 2', heartRateZone: 'Zone 2' });
+          // Only add if this day name is different from race day — avoids collision when race is on Sunday
+          const raceDayNameCheck = dayNames[raceDate.getDay()];
+          if (s.dayName !== raceDayNameCheck) {
+            const dur = isFull ? 150 : isHalf ? 105 : isOlympic ? 75 : 50;
+            wk.days.push({ day: s.dayName, type: 'Bike', name: 'Long TT Position Ride', duration: dur, effort: 5, zone: 2, purpose: 'Last long ride in race position — build confidence and feel.', warmup: '20 min easy spin', mainset: `${dur - 30} min steady aerobic riding in TT/race position on flat course. Race cadence (85-90rpm). Aerobic effort only.`, cooldown: '10 min easy spin', coachNote: 'Last big ride. Stay in your race position, feel the bike beneath you. Confidence building, not fitness building.', paceTarget: 'Aerobic Zone 2', heartRateZone: 'Zone 2' });
+          }
         }
       });
     }
