@@ -14,7 +14,6 @@ const TYPE_MAP = {
 
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
-// Use service role key to bypass RLS for webhook operations
 async function sbFetch(path, options) {
   const key = SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY;
   return fetch(SUPABASE_URL + path, {
@@ -94,6 +93,7 @@ export default async function handler(req, res) {
     const activity = await actRes.json();
     if (!actRes.ok) return res.status(200).json({ ok: true });
 
+    // Auto-tag activity description
     if (!activity.description || !activity.description.includes('irontriapp.com')) {
       await fetch('https://www.strava.com/api/v3/activities/' + activityId, {
         method: 'PUT',
@@ -122,41 +122,45 @@ export default async function handler(req, res) {
         const startDate = new Date((planData.startDate || planData.start_date) + 'T00:00:00');
         const actDate = new Date(activityDate + 'T00:00:00');
         const daysDiff = Math.floor((actDate - startDate) / (1000 * 60 * 60 * 24));
-        const weekNum = Math.floor(daysDiff / 7);
-        const dayOfWeek = actDate.getDay();
+        const weekIdx = Math.floor(daysDiff / 7);
+        const weekNum = weekIdx + 1; // 1-indexed to match cron and app
+        const dayName = DAY_NAMES[actDate.getDay()]; // day name not index
 
-        if (weekNum >= 0 && planData.weeks && planData.weeks[weekNum]) {
-          const days = planData.weeks[weekNum].days || [];
-          let dayIndex = -1;
-          for (let i = 0; i < days.length; i++) {
-            if (days[i].type === sessionType && days[i].day === DAY_NAMES[dayOfWeek]) {
-              dayIndex = i;
-              break;
-            }
-          }
+        if (weekIdx >= 0 && planData.weeks && planData.weeks[weekIdx]) {
+          const days = planData.weeks[weekIdx].days || [];
 
-          if (dayIndex !== -1) {
-            const existingRes = await sbFetch(
-              '/rest/v1/completions?user_id=eq.' + user.id +
-              '&week_num=eq.' + weekNum +
-              '&day=eq.' + dayIndex +
-              '&select=id'
-            );
-            const existing = await existingRes.json();
+          // Match by day name and session type
+          const matchingSession = days.find(d => d.type === sessionType && d.day === dayName);
 
-            if (!existing || existing.length === 0) {
-              await sbFetch('/rest/v1/completions', {
-                method: 'POST',
-                headers: { 'Prefer': 'return=minimal' },
-                body: JSON.stringify({
-                  user_id: user.id,
-                  plan_id: String(plan.id),
-                  week_num: weekNum,
-                  day: String(dayIndex),
-                  source: 'strava',
-                  strava_activity_id: String(activityId)
-                })
-              });
+          if (matchingSession) {
+            // Use slot index format (0=Monday...6=Sunday) matching the app
+            const DAY_NAME_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+            const slotIndex = DAY_NAME_ORDER.indexOf(dayName);
+            if (slotIndex !== -1) {
+              const existingRes = await sbFetch(
+                '/rest/v1/completions?user_id=eq.' + user.id +
+                '&plan_id=eq.' + String(plan.id) +
+                '&week_num=eq.' + weekNum +
+                '&day=eq.' + String(slotIndex) +
+                '&select=id'
+              );
+              const existing = await existingRes.json();
+
+              if (!existing || existing.length === 0) {
+                await sbFetch('/rest/v1/completions', {
+                  method: 'POST',
+                  headers: { 'Prefer': 'return=minimal' },
+                  body: JSON.stringify({
+                    user_id: user.id,
+                    plan_id: String(plan.id),
+                    week_num: weekNum,
+                    day: String(slotIndex),
+                    source: 'strava',
+                    strava_activity_id: String(activityId)
+                  })
+                });
+                console.log(`Strava completion: user ${user.id} week ${weekNum} slot ${slotIndex} ${dayName} ${sessionType}`);
+              }
             }
           }
         }
