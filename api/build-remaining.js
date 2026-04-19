@@ -96,7 +96,8 @@ export default async function handler(req, res) {
     const raceDistanceLower = (basePrompt || planData.race || '').toLowerCase();
     const isSprint = raceDistanceLower.includes('sprint');
     const isOlympic = raceDistanceLower.includes('olympic');
-    const isHalf = raceDistanceLower.includes('70.3') || raceDistanceLower.includes('half ironman');
+    const isT100 = raceDistanceLower.includes('t100') || raceDistanceLower.includes('t 100') || raceDistanceLower.includes('super sprint');
+    const isHalf = raceDistanceLower.includes('70.3') || raceDistanceLower.includes('half ironman') || isT100;
     const isFull = raceDistanceLower.includes('140.6') || raceDistanceLower.includes('full ironman');
 
     // Detect experience level from basePrompt
@@ -115,7 +116,7 @@ export default async function handler(req, res) {
     const restDayRule = isSprint ? 'REST DAYS: 2 rest days per week.' : isOlympic ? 'REST DAYS: 1-2 rest days per week.' : isHalf ? 'REST DAYS: 1 rest day per week. Never 0.' : 'REST DAYS: 1 rest day per week. Never 0. Never two consecutive rest days.';
 
     const totalWeeks = totalNeeded;
-    const taperRule = isSprint ? `SPRINT TAPER: ONLY week ${totalWeeks - 1} (second to last) reduces volume by 40-50%. Weeks 1 to ${totalWeeks - 2} must maintain progressive volume — do NOT reduce sessions or volume before week ${totalWeeks - 1}. Race week is week ${totalWeeks}. MINIMUM 5 sessions per week until taper week. NEVER drop below 4 sessions in any non-taper week.` : isOlympic ? `OLYMPIC TAPER: ONLY the final 2 weeks reduce volume (week ${totalWeeks-1} = -40%, week ${totalWeeks} = race week). All weeks before that must maintain progressive volume. TAPER WEEKS MUST STILL HAVE 4-5 SESSIONS — taper means shorter sessions, NOT fewer sessions. Never drop to 1-2 sessions in a taper week. Each taper session should be 20-40% shorter than peak but include a short race-pace effort (5-15 min) to keep the athlete sharp.` : `FULL/HALF IRONMAN TAPER: Final 3 weeks — reduce volume by 30%, 50%, 70% respectively. Keep intensity touches in every week. TAPER WEEKS MUST STILL HAVE 4-5 SESSIONS — taper means shorter sessions, NOT fewer sessions. Never drop to 1-2 sessions in a taper week — that is detraining not tapering. Each taper session should be 20-40% shorter than peak but include a short race-pace effort (5-15 min) to keep sharpness. All weeks before taper must maintain progressive volume.`;
+    const taperRule = isSprint ? `SPRINT TAPER: ONLY week ${totalWeeks - 1} (second to last) reduces volume by 40-50%. Weeks 1 to ${totalWeeks - 2} must maintain progressive volume — do NOT reduce sessions or volume before week ${totalWeeks - 1}. Race week is week ${totalWeeks}. MINIMUM 5 sessions per week until taper week. NEVER drop below 4 sessions in any non-taper week. CRITICAL SPRINT TAPER RULE: The taper week MUST contain MINIMUM 4 training sessions — NEVER generate a Sprint taper week with mostly rest days. Sprint taper = short sharp sessions (20-30 min each) with race-pace touches embedded, NOT rest days. Maximum 2 consecutive rest days at any point. NEVER place 3 or more rest days in a row.` : isOlympic ? `OLYMPIC TAPER: ONLY the final 2 weeks reduce volume (week ${totalWeeks-1} = -40%, week ${totalWeeks} = race week). All weeks before that must maintain progressive volume. TAPER WEEKS MUST STILL HAVE 4-5 SESSIONS — taper means shorter sessions, NOT fewer sessions. Never drop to 1-2 sessions in a taper week. Each taper session should be 20-40% shorter than peak but include a short race-pace effort (5-15 min) to keep the athlete sharp.` : `FULL/HALF IRONMAN TAPER: Final 3 weeks — reduce volume by 30%, 50%, 70% respectively. Keep intensity touches in every week. TAPER WEEKS MUST STILL HAVE 4-5 SESSIONS — taper means shorter sessions, NOT fewer sessions. Never drop to 1-2 sessions in a taper week — that is detraining not tapering. Each taper session should be 20-40% shorter than peak but include a short race-pace effort (5-15 min) to keep sharpness. All weeks before taper must maintain progressive volume.`;
 
     // Calculate actual race day name from raceDate
     const raceDayName = (() => {
@@ -527,31 +528,65 @@ export default async function handler(req, res) {
       };
     });
 
-    // Enforce minimum sessions in Peak weeks for long-distance races
+    // Enforce minimum sessions in Peak and Taper weeks for long-distance races
     if (isFull || isHalf) {
       newWeeks.forEach(wk => {
-        if ((wk.phase || '').toLowerCase() === 'peak' && wk.days) {
+        const phase = (wk.phase || '').toLowerCase();
+        const isPeak = phase === 'peak';
+        const isTaper = phase === 'taper';
+        if ((isPeak || isTaper) && wk.days) {
           const sessions = wk.days.filter(d => d.type !== 'Rest').length;
-          const minSessions = isFull ? 4 : 3;
+          // Peak: min 4 (Full) or 3 (Half). Taper: min 4 for both (taper = shorter, not fewer)
+          const minSessions = isPeak ? (isFull ? 4 : 3) : 4;
           if (sessions < minSessions) {
-            // Find rest days and convert one to an easy aerobic session
             const restDays = wk.days.map((d, i) => ({ d, i })).filter(x => x.d.type === 'Rest');
             const toActivate = restDays.slice(0, minSessions - sessions);
+            toActivate.forEach(({ i }) => {
+              const duration = isTaper ? (isFull ? 35 : 30) : (isFull ? 50 : 40);
+              wk.days[i] = {
+                ...wk.days[i],
+                type: 'Run',
+                name: isTaper ? 'Taper Activation Run' : 'Easy Aerobic Run',
+                duration,
+                effort: isTaper ? 6 : 5,
+                zone: 2,
+                purpose: isTaper ? 'Keep neuromuscular system sharp during taper — short race-pace touch.' : 'Maintain aerobic base during Peak phase.',
+                warmup: '8 min easy jog',
+                mainset: isTaper ? '15 min easy Zone 2, then 2x2min at race pace with 2min easy between.' : (isFull ? '30 min easy run at Zone 2 — conversational pace.' : '20 min easy run at Zone 2.'),
+                cooldown: '7 min easy jog and stretch',
+                coachNote: isTaper ? 'Taper means shorter sessions, not fewer. This keeps your legs sharp without fatigue.' : 'Added to ensure adequate training load.',
+                paceTarget: isTaper ? 'Easy Zone 2 with 2x2min race pace efforts' : 'Easy Zone 2',
+                heartRateZone: 'Zone 2'
+              };
+            });
+          }
+        }
+      });
+    }
+
+    // Enforce minimum 4 sessions in Sprint/Olympic Taper weeks
+    if (isSprint || isOlympic) {
+      newWeeks.forEach(wk => {
+        if ((wk.phase || '').toLowerCase() === 'taper' && wk.days) {
+          const sessions = wk.days.filter(d => d.type !== 'Rest').length;
+          if (sessions < 4) {
+            const restDays = wk.days.map((d, i) => ({ d, i })).filter(x => x.d.type === 'Rest');
+            const toActivate = restDays.slice(0, 4 - sessions);
             toActivate.forEach(({ i }) => {
               wk.days[i] = {
                 ...wk.days[i],
                 type: 'Run',
-                name: 'Easy Aerobic Run',
-                duration: isFull ? 50 : 40,
-                effort: 5,
+                name: 'Sharp Activation Run',
+                duration: 25,
+                effort: 6,
                 zone: 2,
-                purpose: 'Maintain aerobic base during Peak phase.',
-                warmup: '10 min easy jog',
-                mainset: isFull ? '30 min easy run at Zone 2 — conversational pace, 130-145 bpm.' : '20 min easy run at Zone 2.',
-                cooldown: '10 min walk and stretch',
-                coachNote: 'Added to ensure adequate Peak phase training load.',
-                paceTarget: 'Easy Zone 2',
-                heartRateZone: 'Zone 2'
+                purpose: 'Keep neuromuscular system sharp during taper — short race-pace touch.',
+                warmup: '8 min easy jog',
+                mainset: '10 min easy Zone 2, then 3x1min at race pace with 1min easy between. Stay controlled.',
+                cooldown: '7 min easy jog',
+                coachNote: 'Taper does not mean rest — it means short and sharp. This session keeps your legs firing.',
+                paceTarget: 'Easy Zone 2 with 3x1min race pace efforts',
+                heartRateZone: 'Zone 2 with brief Zone 4 touches'
               };
             });
           }
