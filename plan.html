@@ -1265,8 +1265,13 @@ function renderWeek(){
   // Store slot map on window for selectDay to use
   window._daySlots = daySlots;
 
+  const _raceWeekActiveSessions = _isFinalWeek ? daySlots.filter(slot => slot.sessions.some(s => s.type !== 'Rest')).length : 0;
   const _calSlots = _isFinalWeek
-    ? daySlots.map((slot,idx)=>({...slot,_origIdx:idx})).filter(slot => slot.sessions.some(s => s.type !== 'Rest'))
+    ? daySlots.map((slot,idx)=>({...slot,_origIdx:idx})).filter(slot => {
+        // Show rest days in race week only when there are more than 3 active sessions
+        if (slot.sessions.every(s => s.type === 'Rest')) return _raceWeekActiveSessions > 3;
+        return true;
+      })
     : daySlots.map((slot,idx)=>({...slot,_origIdx:idx}));
   document.getElementById('cal').innerHTML=_calSlots.map((slot,i)=>{
     const _slotIdx=slot._origIdx!==undefined?slot._origIdx:i;
