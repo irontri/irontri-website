@@ -440,6 +440,50 @@ export default async function handler(req, res) {
     const allWeeks = [...(planData.weeks || []), ...newWeeks];
     allWeeks.forEach((wk, i) => { wk.weekNumber = i + 1; });
 
+    // Force correct phase labels on ALL weeks
+    const _totalWks = totalNeeded;
+    const _baseEndAll = Math.round(_totalWks * 0.30);
+    const _buildEndAll = Math.round(_totalWks * 0.65);
+    const _peakEndAll = Math.round(_totalWks * 0.85);
+    const _taperEndAll = _totalWks - 1;
+    allWeeks.forEach(wk => {
+      const n = wk.weekNumber;
+      if (n <= _baseEndAll) wk.phase = 'Base';
+      else if (n <= _buildEndAll) wk.phase = 'Build';
+      else if (n <= _peakEndAll) wk.phase = 'Peak';
+      else if (n < _totalWks) wk.phase = 'Taper';
+      else wk.phase = 'Race Week';
+    });
+
+    // Mandatory rest day in weeks 1 and 2 for ALL athletes and ALL race distances
+    allWeeks.filter(wk => wk.weekNumber <= 2).forEach(wk => {
+      if (!wk.days) return;
+      const restCount = wk.days.filter(d => d.type === 'Rest').length;
+      if (restCount === 0) {
+        const restDay = { type: 'Rest', name: 'Recovery & Adaptation', duration: 0, effort: 0, zone: 0, purpose: 'Rest and recovery — your body adapts during rest, not during training.', warmup: '', mainset: '', cooldown: '', coachNote: 'Rest days are not lazy — they are when your body absorbs training. Eat well, hydrate, get 8+ hours sleep.', paceTarget: '', heartRateZone: '' };
+        // Try Friday first, then last Strength, last Bike, last session
+        const friIdx = wk.days.findIndex(d => d.day === 'Friday');
+        if (friIdx !== -1 && wk.days[friIdx].type !== 'Rest') {
+          wk.days[friIdx] = { ...wk.days[friIdx], ...restDay, day: 'Friday' };
+        } else {
+          const typeOrder = ['Strength', 'Bike', 'Run', 'Swim', 'Brick'];
+          let removed = false;
+          for (const t of typeOrder) {
+            const indices = wk.days.map((d, i) => d.type === t ? i : -1).filter(i => i !== -1);
+            if (indices.length > 0) {
+              const idx = indices[indices.length - 1];
+              wk.days[idx] = { ...wk.days[idx], ...restDay, day: wk.days[idx].day };
+              removed = true;
+              break;
+            }
+          }
+          if (!removed && wk.days.length > 0) {
+            wk.days[wk.days.length - 1] = { ...wk.days[wk.days.length - 1], ...restDay };
+          }
+        }
+      }
+    });
+
     // Strip Strength sessions from Peak, Taper and Race Week phases
     newWeeks.forEach(wk => {
       const phase = (wk.phase || '').toLowerCase();
