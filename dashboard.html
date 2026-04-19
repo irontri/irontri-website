@@ -1658,7 +1658,8 @@ COMMUNICATION RULES:
 - If they're struggling mentally, be their biggest supporter — remind them why they started and what they've built
 - NEVER ask the athlete to send a screenshot — you cannot see images. If they mention something visual, ask them to describe it in words (e.g. "what does the total time show for that week?")
 - If you don't know something, say so honestly
-- Never make up session details or paces not in the context above — say "check your plan for the exact numbers"`
+- Never make up session details or paces not in the context above — say "check your plan for the exact numbers"
+- RESPONSE LENGTH: Keep replies SHORT. 2-3 sentences max for simple questions. Only go longer if they explicitly ask for a detailed breakdown or plan. Never write paragraphs when a sentence will do.`
     };
     return trixyContext;
   } catch(e) {
@@ -1696,16 +1697,18 @@ async function trixyAsk(presetMsg) {
     const ctx = await buildTrixyContext();
     const systemPrompt = ctx?.systemPrompt || 'You are Trixy, an AI triathlon coach. Be helpful, warm and concise.';
 
-    const response = await fetch('/api/generate-plan', {
+    const response = await fetch('/api/trixy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt: systemPrompt + '\n\nConversation so far:\n' + trixyHistory.slice(0,-1).map(m => m.role.toUpperCase() + ': ' + m.content).join('\n') + '\n\nATHLETE: ' + msg + '\n\nTRIXY RESPONSE:'
+        systemPrompt,
+        history: trixyHistory.slice(0, -1),
+        message: msg
       })
     });
 
     const data = await response.json();
-    const reply = data.plan || "Sorry, I couldn't get a response. Try again!";
+    const reply = data.reply || "Sorry, I couldn't get a response. Try again!";
     typingEl.remove();
     trixyAddMsg('coach', reply);
     trixyHistory.push({ role: 'assistant', content: reply });
