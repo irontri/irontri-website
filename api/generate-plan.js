@@ -29,38 +29,31 @@ function sanitizePlan(pd) {
 
     // 2. Enforce mandatory rest day in weeks 1 and 2 for ALL athletes
     if (week.weekNumber <= 2 && week.days) {
-      const restDays = week.days.filter(d => d.type === 'Rest').length;
-      if (restDays === 0) {
-        // Find the least important session and convert to rest
-        // Priority to remove: second Bike of week, then Strength, then shortest session
-        const typeOrder = ['Strength', 'Bike', 'Run', 'Swim', 'Brick'];
-        let removed = false;
-        for (const t of typeOrder) {
-          const idx = week.days.findLastIndex ? week.days.findLastIndex(d => d.type === t) : week.days.map(d=>d.type).lastIndexOf(t);
-          if (idx !== -1) {
-            week.days[idx] = {
-              ...week.days[idx],
-              type: 'Rest',
-              name: 'Recovery & Adaptation',
-              duration: 0,
-              effort: 0,
-              zone: 0,
-              purpose: 'Rest and recovery — your body adapts during rest, not during training.',
-              warmup: '',
-              mainset: '',
-              cooldown: '',
-              coachNote: 'Rest days are not lazy — they are when your body absorbs training. Eat well, hydrate, get 8+ hours sleep.',
-              paceTarget: '',
-              heartRateZone: ''
-            };
-            removed = true;
-            break;
+      const restCount = week.days.filter(d => d.type === 'Rest').length;
+      if (restCount === 0) {
+        // Convert Friday to rest if it exists and has a session, otherwise find least important session
+        const restDay = { type: 'Rest', name: 'Recovery & Adaptation', duration: 0, effort: 0, zone: 0, purpose: 'Rest and recovery — your body adapts during rest, not during training.', warmup: '', mainset: '', cooldown: '', coachNote: 'Rest days are not lazy — they are when your body absorbs training. Eat well, hydrate, get 8+ hours sleep.', paceTarget: '', heartRateZone: '' };
+        // Try Friday first (classic rest day placement)
+        const friIdx = week.days.findIndex(d => d.day === 'Friday');
+        if (friIdx !== -1 && week.days[friIdx].type !== 'Rest') {
+          week.days[friIdx] = { ...week.days[friIdx], ...restDay, day: 'Friday' };
+        } else {
+          // Find last Strength session, then last Bike, then last session overall
+          const typeOrder = ['Strength', 'Bike', 'Run', 'Swim', 'Brick'];
+          let removed = false;
+          for (const t of typeOrder) {
+            const indices = week.days.map((d, i) => d.type === t ? i : -1).filter(i => i !== -1);
+            if (indices.length > 0) {
+              const idx = indices[indices.length - 1]; // last occurrence
+              week.days[idx] = { ...week.days[idx], ...restDay, day: week.days[idx].day };
+              removed = true;
+              break;
+            }
           }
-        }
-        if (!removed) {
-          // Fallback — convert last session to rest
-          const lastIdx = week.days.length - 1;
-          week.days[lastIdx] = { ...week.days[lastIdx], type: 'Rest', name: 'Recovery & Adaptation', duration: 0, effort: 0, zone: 0, purpose: 'Rest day.', warmup: '', mainset: '', cooldown: '', coachNote: 'Rest and recover.', paceTarget: '', heartRateZone: '' };
+          if (!removed && week.days.length > 0) {
+            const lastIdx = week.days.length - 1;
+            week.days[lastIdx] = { ...week.days[lastIdx], ...restDay, day: week.days[lastIdx].day };
+          }
         }
       }
     }
