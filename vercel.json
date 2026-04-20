@@ -8,10 +8,6 @@
       "schedule": "0 23 * * 0"
     },
     {
-      "path": "/api/trial-reminders",
-      "schedule": "0 1 * * *"
-    },
-    {
       "path": "/api/send-notifications",
       "schedule": "0 14 * * *"
     },
