@@ -4,246 +4,496 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delete Account — irontri</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --bg: #0a0a0a;
+      --surface: #111111;
+      --border: #1e1e1e;
       --blue: #1E90FF;
-      --red: #ef4444;
-      --red-dim: rgba(239,68,68,0.08);
-      --red-border: rgba(239,68,68,0.2);
-      --white: #ffffff;
-      --muted: rgba(255,255,255,0.5);
-      --card: rgba(255,255,255,0.04);
-      --border: rgba(255,255,255,0.08);
+      --red: #e53935;
+      --red-dim: #c62828;
+      --text: #ffffff;
+      --muted: #666666;
+      --subtle: #999999;
     }
 
     body {
       background: var(--bg);
-      color: var(--white);
+      color: var(--text);
       font-family: 'DM Sans', sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
     }
 
-    .wrap {
-      width: 100%;
-      max-width: 480px;
+    nav {
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .logo {
       font-family: 'Syne', sans-serif;
-      font-size: 22px;
       font-weight: 800;
+      font-size: 20px;
       color: var(--blue);
-      letter-spacing: -0.5px;
-      margin-bottom: 40px;
-      display: block;
       text-decoration: none;
     }
 
-    .icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 16px;
-      background: var(--red-dim);
-      border: 1px solid var(--red-border);
+    .nav-back {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--text); }
+
+    main {
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      padding: 40px 20px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    /* Step 1 */
+    .step { display: none; }
+    .step.active { display: block; }
+
+    .emoji-icon {
+      font-size: 48px;
       margin-bottom: 20px;
+      display: block;
     }
 
     h1 {
       font-family: 'Syne', sans-serif;
       font-size: 28px;
       font-weight: 800;
-      letter-spacing: -0.5px;
       margin-bottom: 10px;
+      line-height: 1.2;
     }
 
-    .sub {
-      font-size: 14px;
-      color: var(--muted);
+    .subtitle {
+      color: var(--subtle);
+      font-size: 15px;
       line-height: 1.6;
       margin-bottom: 32px;
     }
 
-    .notice {
-      background: rgba(251,146,60,0.08);
-      border: 1px solid rgba(251,146,60,0.2);
-      border-radius: 12px;
-      padding: 16px;
+    .reason-label {
       font-size: 13px;
-      color: rgba(255,255,255,0.7);
-      line-height: 1.6;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .reasons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .reason-option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .reason-option:hover {
+      border-color: #333;
+      background: #161616;
+    }
+
+    .reason-option.selected {
+      border-color: var(--blue);
+      background: rgba(30, 144, 255, 0.06);
+    }
+
+    .reason-option input[type="radio"] {
+      display: none;
+    }
+
+    .radio-circle {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s;
+    }
+
+    .reason-option.selected .radio-circle {
+      border-color: var(--blue);
+    }
+
+    .radio-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--blue);
+      display: none;
+    }
+
+    .reason-option.selected .radio-dot { display: block; }
+
+    .reason-text {
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      resize: none;
+      height: 90px;
       margin-bottom: 28px;
+      transition: border-color 0.2s;
+      outline: none;
     }
 
-    .notice strong { color: #fb923c; }
+    textarea::placeholder { color: var(--muted); }
+    textarea:focus { border-color: #333; }
 
-    .form-group {
-      margin-bottom: 16px;
+    .btn-delete {
+      width: 100%;
+      padding: 15px;
+      background: var(--red);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+      margin-bottom: 12px;
     }
 
-    label {
-      display: block;
-      font-size: 13px;
+    .btn-delete:hover:not(:disabled) { background: var(--red-dim); }
+    .btn-delete:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-cancel {
+      width: 100%;
+      padding: 15px;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
       font-weight: 500;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+
+    .btn-cancel:hover { color: var(--text); border-color: #444; }
+
+    .warning-box {
+      background: rgba(229, 57, 53, 0.08);
+      border: 1px solid rgba(229, 57, 53, 0.2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      color: #ef9a9a;
+      line-height: 1.5;
+    }
+
+    .error-msg {
+      color: #ef9a9a;
+      font-size: 13px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    /* Step 2 — confirmation */
+    .confirm-header {
+      text-align: center;
+      padding: 20px 0 32px;
+    }
+
+    .type-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .type-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
       color: var(--muted);
       margin-bottom: 8px;
     }
 
-    input, textarea {
+    .type-input {
       width: 100%;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 13px 16px;
-      color: var(--white);
-      font-size: 15px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
       font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      padding: 8px 0;
       outline: none;
-      transition: border-color 0.2s;
+      letter-spacing: 1px;
     }
 
-    input:focus, textarea:focus {
-      border-color: rgba(30,144,255,0.4);
+    .type-input::placeholder { color: var(--muted); }
+
+    /* Step 3 — goodbye */
+    .goodbye {
+      text-align: center;
+      padding: 40px 0;
     }
 
-    textarea {
-      resize: vertical;
-      min-height: 100px;
-    }
+    .goodbye h1 { margin-bottom: 16px; }
+    .goodbye .subtitle { margin-bottom: 32px; }
 
-    .btn {
-      width: 100%;
-      padding: 15px;
-      background: var(--red-dim);
-      border: 1px solid var(--red-border);
-      border-radius: 12px;
-      color: #f87171;
+    .home-btn {
+      display: inline-block;
+      padding: 13px 32px;
+      background: var(--blue);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 10px;
       font-size: 15px;
       font-weight: 600;
       font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      transition: background 0.2s, border-color 0.2s;
-      margin-top: 8px;
     }
 
-    .btn:hover {
-      background: rgba(239,68,68,0.14);
-      border-color: rgba(239,68,68,0.35);
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
     }
 
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .success {
-      display: none;
-      text-align: center;
-      padding: 32px 0;
-    }
-
-    .success .check {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
-
-    .success h2 {
-      font-family: 'Syne', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      margin-bottom: 10px;
-    }
-
-    .success p {
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    .back {
-      display: block;
-      text-align: center;
-      margin-top: 28px;
-      font-size: 13px;
-      color: var(--muted);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
-    .back:hover { color: var(--white); }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <a href="/" class="logo">irontri</a>
 
-    <div id="form-view">
-      <div class="icon">🗑️</div>
-      <h1>Delete your account</h1>
-      <p class="sub">We're sorry to see you go. Submit this form and we'll permanently delete your account and all associated data within 30 days.</p>
+<nav>
+  <a href="/" class="logo">irontri</a>
+  <a href="/profile.html" class="nav-back">← Back to profile</a>
+</nav>
 
-      <div class="notice">
-        <strong>What gets deleted:</strong> your profile, training plans, session history, and Strava connection. This cannot be undone.
+<main>
+  <div class="card">
+
+    <!-- STEP 1: Reason -->
+    <div class="step active" id="step1">
+      <span class="emoji-icon">😔</span>
+      <h1>Sorry to see you go, <span id="firstName">Athlete</span>.</h1>
+      <p class="subtitle">Before you go, could you tell us why? Your feedback helps us build a better product for every triathlete.</p>
+
+      <div class="reason-label">Why are you leaving?</div>
+
+      <div class="reasons" id="reasons">
+        <label class="reason-option" onclick="selectReason(this)">
+          <input type="radio" name="reason" value="Too expensive">
+          <div class="radio-circle"><div class="radio-dot"></div></div>
+          <span class="reason-text">Too expensive</span>
+        </label>
+        <label class="reason-option" onclick="selectReason(this)">
+          <input type="radio" name="reason" value="Not using it enough">
+          <div class="radio-circle"><div class="radio-dot"></div></div>
+          <span class="reason-text">Not using it enough</span>
+        </label>
+        <label class="reason-option" onclick="selectReason(this)">
+          <input type="radio" name="reason" value="Missing a feature I need">
+          <div class="radio-circle"><div class="radio-dot"></div></div>
+          <span class="reason-text">Missing a feature I need</span>
+        </label>
+        <label class="reason-option" onclick="selectReason(this)">
+          <input type="radio" name="reason" value="Switching to another app">
+          <div class="radio-circle"><div class="radio-dot"></div></div>
+          <span class="reason-text">Switching to another app</span>
+        </label>
+        <label class="reason-option" onclick="selectReason(this)">
+          <input type="radio" name="reason" value="Created by accident / just testing">
+          <div class="radio-circle"><div class="radio-dot"></div></div>
+          <span class="reason-text">Created by accident / just testing</span>
+        </label>
+        <label class="reason-option" onclick="selectReason(this)">
+          <input type="radio" name="reason" value="Other">
+          <div class="radio-circle"><div class="radio-dot"></div></div>
+          <span class="reason-text">Other</span>
+        </label>
       </div>
 
-      <form id="delete-form">
-        <div class="form-group">
-          <label>Email address on your irontri account</label>
-          <input type="email" id="email" placeholder="you@example.com" required />
-        </div>
-        <div class="form-group">
-          <label>Reason for leaving (optional)</label>
-          <textarea id="reason" placeholder="Help us improve irontri..."></textarea>
-        </div>
-        <button type="submit" class="btn" id="submit-btn">Request account deletion</button>
-      </form>
+      <div class="reason-label" style="margin-bottom:10px;">Anything else? <span style="color:#444;font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
+      <textarea id="feedback" placeholder="Tell us what we could have done better..."></textarea>
+
+      <div class="warning-box">
+        ⚠️ Deleting your account will permanently remove your profile, training plan, and all session data. This cannot be undone.
+      </div>
+
+      <div class="error-msg" id="step1Error">Please select a reason before continuing.</div>
+
+      <button class="btn-delete" id="step1Btn" onclick="goToStep2()">Continue to delete →</button>
+      <a href="/profile.html" class="btn-cancel">Cancel — keep my account</a>
     </div>
 
-    <div class="success" id="success-view">
-      <div class="check">✅</div>
-      <h2>Request received</h2>
-      <p>We've received your deletion request for <strong id="confirmed-email"></strong>. Your account and all data will be permanently deleted within 30 days. You'll receive a confirmation email shortly.</p>
+    <!-- STEP 2: Type to confirm -->
+    <div class="step" id="step2">
+      <div class="confirm-header">
+        <span class="emoji-icon">⚠️</span>
+        <h1>Final confirmation</h1>
+        <p class="subtitle">This is permanent and cannot be undone. Type <strong style="color:#fff;">DELETE</strong> below to confirm you want to delete your account.</p>
+      </div>
+
+      <div class="type-box">
+        <div class="type-label">Type DELETE to confirm</div>
+        <input class="type-input" id="confirmInput" placeholder="DELETE" oninput="checkConfirm()" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+
+      <div class="error-msg" id="step2Error">Something went wrong. Please try again.</div>
+
+      <button class="btn-delete" id="deleteBtn" disabled onclick="deleteAccount()">Delete my account permanently</button>
+      <a href="/profile.html" class="btn-cancel">Cancel — keep my account</a>
     </div>
 
-    <a href="/" class="back">← Back to irontri</a>
+    <!-- STEP 3: Goodbye -->
+    <div class="step" id="step3">
+      <div class="goodbye">
+        <span class="emoji-icon">👋</span>
+        <h1>Account deleted.</h1>
+        <p class="subtitle">Your account and all training data has been permanently removed. We're sorry to see you go — and we hope to see you back on the start line someday.<br><br>Good luck with your training, <span id="goodbyeName">Athlete</span>. 🏁</p>
+        <a href="https://www.irontriapp.com" class="home-btn">Back to irontriapp.com</a>
+      </div>
+    </div>
+
   </div>
+</main>
 
-  <script>
-    document.getElementById('delete-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      const reason = document.getElementById('reason').value.trim();
-      const btn = document.getElementById('submit-btn');
+<script>
+  const SUPABASE_URL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIxMjkxNjgsImV4cCI6MjA1NzcwNTE2OH0.i3oQxYRgHGVZFynX33hNJbNpgGJGf2RmO6E0p2sXG20';
 
-      if (!email) return;
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      btn.textContent = 'Submitting...';
-      btn.disabled = true;
+  let currentUser = null;
+  let selectedReason = null;
 
-      try {
-        await fetch('https://irontriapp.com/api/request-delete-account', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, reason })
-        });
-      } catch(e) {}
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      window.location.href = '/index.html';
+      return;
+    }
+    currentUser = session.user;
+    const name = currentUser.user_metadata?.name || 'Athlete';
+    const firstName = name.split(' ')[0];
+    document.getElementById('firstName').textContent = firstName;
+    document.getElementById('goodbyeName').textContent = firstName;
+  }
 
-      document.getElementById('confirmed-email').textContent = email;
-      document.getElementById('form-view').style.display = 'none';
-      document.getElementById('success-view').style.display = 'block';
-    });
-  </script>
+  function selectReason(el) {
+    document.querySelectorAll('.reason-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedReason = el.querySelector('input').value;
+    document.getElementById('step1Error').style.display = 'none';
+  }
+
+  function goToStep2() {
+    if (!selectedReason) {
+      document.getElementById('step1Error').style.display = 'block';
+      return;
+    }
+    document.getElementById('step1').classList.remove('active');
+    document.getElementById('step2').classList.add('active');
+  }
+
+  function checkConfirm() {
+    const val = document.getElementById('confirmInput').value;
+    document.getElementById('deleteBtn').disabled = val !== 'DELETE';
+  }
+
+  async function deleteAccount() {
+    const btn = document.getElementById('deleteBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span>Deleting...';
+
+    try {
+      const feedback = document.getElementById('feedback').value.trim();
+
+      // Save churn reason before deleting
+      await sb.from('churn_feedback').insert({
+        user_id: currentUser.id,
+        email: currentUser.email,
+        reason: selectedReason,
+        feedback: feedback || null,
+        is_paid: false // will be overridden by RLS-free insert via trigger if needed
+      });
+
+      // Delete the user via edge function / RPC
+      const { error } = await sb.rpc('delete_user');
+      if (error) throw error;
+
+      // Sign out
+      await sb.auth.signOut();
+
+      // Show goodbye
+      document.getElementById('step2').classList.remove('active');
+      document.getElementById('step3').classList.add('active');
+
+    } catch (err) {
+      console.error(err);
+      document.getElementById('step2Error').style.display = 'block';
+      document.getElementById('step2Error').textContent = 'Something went wrong: ' + (err.message || 'Please try again.');
+      btn.disabled = false;
+      btn.innerHTML = 'Delete my account permanently';
+    }
+  }
+
+  init();
+</script>
 </body>
 </html>
