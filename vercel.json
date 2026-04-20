@@ -4,10 +4,6 @@
   },
   "crons": [
     {
-      "path": "/api/send-weekly-email",
-      "schedule": "0 23 * * 0"
-    },
-    {
       "path": "/api/send-notifications",
       "schedule": "0 14 * * *"
     },
