@@ -161,7 +161,7 @@
     const isPaid = plan && plan.is_paid === true;
     const createdAt = new Date(user.created_at);
     const daysSince = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
-    const daysLeft = Math.max(0, 30 - daysSince);
+    const daysLeft = Math.max(0, 7 - daysSince);
     const planStatus = document.getElementById('p-plan-status');
 
     if (isFounding) {
@@ -250,27 +250,8 @@
     window.location.href = 'index.html';
   }
 
-  async function deleteAccount() {
-    if (!confirm('This will permanently delete your account and all training plans. This cannot be undone.')) return;
-    if (!confirm('Are you absolutely sure? This is irreversible.')) return;
-    try {
-      const { data: { session } } = await sb.auth.getSession();
-      if (!session) return;
-      const res = await fetch('/api/delete-account', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: session.user.id })
-      });
-      const data = await res.json();
-      if (data.success) {
-        await sb.auth.signOut();
-        window.location.href = 'index.html';
-      } else {
-        alert('Could not delete account. Please try again or contact support.');
-      }
-    } catch(e) {
-      alert('Something went wrong. Please try again.');
-    }
+  function deleteAccount() {
+    window.location.href = 'delete-account.html';
   }
 
   loadProfile();
