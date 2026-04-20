@@ -234,34 +234,62 @@ export default async function handler(req, res) {
 
     const prompt = basePrompt + fifoBlock + structureInstructions;
 
-    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5',
-        max_tokens: 16000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
+    let parsed = null;
+    let newWeeks = [];
+    const MAX_RETRIES = 3;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5',
+            max_tokens: 16000,
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
 
-    if (!aiRes.ok) {
-      const err = await aiRes.text();
-      console.error('AI error:', err);
-      return res.status(500).json({ error: 'AI generation failed', detail: err });
+        if (!aiRes.ok) {
+          const err = await aiRes.text();
+          console.error(`AI error (attempt ${attempt}):`, err);
+          if (attempt === MAX_RETRIES) return res.status(500).json({ error: 'AI generation failed', detail: err });
+          await new Promise(r => setTimeout(r, 1000 * attempt));
+          continue;
+        }
+
+        const aiData = await aiRes.json();
+        const aiText = (aiData.content || []).map(c => c.text || '').join('');
+        const tokenCount = aiData.usage?.output_tokens || 0;
+
+        if (tokenCount < 1000) {
+          console.warn(`Short response on attempt ${attempt}: ${tokenCount} tokens`);
+          if (attempt < MAX_RETRIES) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
+        }
+
+        const clean = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const s = clean.indexOf('{'); const e = clean.lastIndexOf('}');
+        if (s === -1 || e === -1) {
+          console.warn(`No JSON brackets on attempt ${attempt}`);
+          if (attempt < MAX_RETRIES) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
+          return res.status(500).json({ error: 'Invalid JSON from AI' });
+        }
+
+        parsed = JSON.parse(clean.slice(s, e + 1));
+        newWeeks = parsed.weeks || [];
+        console.log(`build-remaining success on attempt ${attempt}, weeks: ${newWeeks.length}`);
+        break;
+
+      } catch (parseErr) {
+        console.warn(`JSON parse error on attempt ${attempt}:`, parseErr.message);
+        if (attempt === MAX_RETRIES) return res.status(500).json({ error: 'build-remaining JSON parse failed after retries: ' + parseErr.message });
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+      }
     }
 
-    const aiData = await aiRes.json();
-    const aiText = (aiData.content || []).map(c => c.text || '').join('');
-
-    const clean = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const s = clean.indexOf('{'); const e = clean.lastIndexOf('}');
-    if (s === -1 || e === -1) return res.status(500).json({ error: 'Invalid JSON from AI' });
-    const parsed = JSON.parse(clean.slice(s, e + 1));
-    const newWeeks = parsed.weeks || [];
 
     // Post-process: correct bike and run volume for each new week (skip race week)
     newWeeks.forEach((wk) => {
