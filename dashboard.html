@@ -162,7 +162,7 @@
     .rc-label{font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px;}
     .rc-text{font-size:14px;color:rgba(255,255,255,0.7);}
     .rc-race{font-weight:600;color:#fff;}
-    .pace-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:none;}
+    .pace-card{background:rgba(252,76,2,0.06);border:1px solid rgba(252,76,2,0.2);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:none;}
     .pace-card-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:16px;}
     .pace-rows{display:flex;flex-direction:column;gap:10px;}
     .pace-row{display:flex;align-items:center;gap:12px;}
@@ -354,7 +354,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
       <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);font-weight:600;">📈 Your fitness since day 1</div>
       <div style="display:flex;align-items:center;gap:6px;">
-        <button id="fitness-refresh-btn" onclick="refreshFitnessCard()" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">🔄 Refresh</button>
+        <button id="fitness-refresh-btn" onclick="refreshFitnessCard()" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(252,76,2,0.4);font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:rgba(252,76,2,0.12);color:#fc4c02;transition:all 0.15s;" onmouseover="this.style.background='rgba(252,76,2,0.25)'" onmouseout="this.style.background='rgba(252,76,2,0.12)'">🔄 Refresh</button>
         <div style="display:flex;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:3px;gap:2px;">
           <button id="dash-metric" onclick="setDashUnits('metric')" style="padding:4px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:#1E90FF;color:#fff;transition:all 0.15s;">km / m</button>
           <button id="dash-imperial" onclick="setDashUnits('imperial')" style="padding:4px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;">mi / yd</button>
