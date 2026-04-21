@@ -737,10 +737,11 @@ async function loadStreakAndRing() {
     const { data: completions } = await sb.from('completions').select('created_at').eq('user_id',session.user.id).order('created_at',{ascending:false});
     if (!completions || !completions.length) return;
     document.getElementById('s-sessions').textContent = completions.length;
-    const dates = [...new Set(completions.map(c=>c.created_at.slice(0,10)))].sort().reverse();
+    const toLocal=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
+    const dates = [...new Set(completions.map(c=>toLocal(new Date(c.created_at))))].sort().reverse();
     let streak=0,best=0,tempStreak=1;
-    const today=new Date().toISOString().slice(0,10);
-    const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+    const today=toLocal(new Date());
+    const yesterday=toLocal(new Date(Date.now()-86400000));
     // Build a set of all scheduled rest day dates from the plan
     const restDates = new Set();
     try {
