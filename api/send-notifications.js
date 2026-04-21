@@ -19,11 +19,13 @@ function getTodaySession(planData) {
     const diffDays = Math.round((today - start) / 86400000);
     if (diffDays < 0) return null;
     const weekIdx = Math.floor(diffDays / 7);
-    const dayIdx = diffDays % 7;
     if (weekIdx >= planData.weeks.length) return null;
     const week = planData.weeks[weekIdx];
-    const day = week?.days?.[dayIdx];
-    if (!day || day.type === 'Rest') return null;
+    // Match by day name not array index — days aren't stored in Mon-Sun order
+    const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const todayName = DAY_NAMES[today.getDay()];
+    const day = week?.days?.find(d => d.day === todayName && d.type !== 'Rest');
+    if (!day) return null;
     return { name: day.name || day.type + ' Session', type: day.type, duration: day.duration };
   } catch(e) {
     return null;
@@ -167,7 +169,7 @@ export default async function handler(req, res) {
     );
     const appUsers = await appUsersRes.json();
 
-    // Fetch latest plan for each user
+    // Fetch all plans for each user — pick the active one (startDate in past, raceDate in future)
     const plansRes = await fetch(
       process.env.SUPABASE_URL + '/rest/v1/plans?select=user_id,plan_data&order=created_at.desc',
       {
@@ -179,6 +181,23 @@ export default async function handler(req, res) {
     );
     const allPlans = await plansRes.json();
     const planMap = {};
+    const now = new Date();
+    for (const plan of allPlans) {
+      if (planMap[plan.user_id]) continue; // already found best plan for this user
+      try {
+        let txt = plan.plan_data || '';
+        txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1);
+        const pd = JSON.parse(txt);
+        const startDate = pd.startDate ? new Date(pd.startDate + 'T00:00:00') : null;
+        const raceDate = pd.raceDate ? new Date(pd.raceDate + 'T00:00:00') : null;
+        // Active plan = has started and race hasn't happened yet
+        const isActive = startDate && startDate <= now && (!raceDate || raceDate >= now);
+        if (isActive) {
+          planMap[plan.user_id] = plan.plan_data;
+        }
+      } catch(e) {}
+    }
+    // Fallback: if no active plan found, use most recent
     for (const plan of allPlans) {
       if (!planMap[plan.user_id]) planMap[plan.user_id] = plan.plan_data;
     }
