@@ -167,11 +167,11 @@
     .pace-rows{display:flex;flex-direction:column;gap:10px;}
     .pace-row{display:flex;align-items:center;gap:12px;}
     .pace-sport{font-size:18px;flex-shrink:0;width:28px;}
-    .pace-label{font-size:13px;color:rgba(255,255,255,0.7);width:40px;flex-shrink:0;}
+    .pace-label{font-size:13px;color:#fff;font-weight:600;width:40px;flex-shrink:0;}
     .pace-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;}
     .pace-bar{height:100%;border-radius:100px;transition:width 1s ease;}
     .pace-values{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-    .pace-from{font-size:12px;color:rgba(255,255,255,0.55);text-decoration:line-through;}
+    .pace-from{font-size:12px;color:rgba(255,255,255,0.75);text-decoration:line-through;}
     .pace-to{font-size:13px;font-weight:600;color:#fff;}
     .pace-delta{font-size:12px;font-weight:700;padding:2px 8px;border-radius:20px;}
     .pace-delta.better{background:rgba(74,222,128,0.15);color:#4ade80;}
@@ -352,7 +352,7 @@
   <!-- PACE IMPROVEMENT -->
   <div class="pace-card" id="pace-card">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);font-weight:600;">📈 Your fitness since day 1</div>
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.7);font-weight:600;">📈 Your fitness since day 1 vs now</div>
       <div style="display:flex;align-items:center;gap:6px;">
         <button id="fitness-refresh-btn" onclick="refreshFitnessCard()" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(252,76,2,0.4);font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:rgba(252,76,2,0.12);color:#fc4c02;transition:all 0.15s;" onmouseover="this.style.background='rgba(252,76,2,0.25)'" onmouseout="this.style.background='rgba(252,76,2,0.12)'">🔄 Refresh</button>
         <div style="display:flex;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:3px;gap:2px;">
