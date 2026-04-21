@@ -352,12 +352,15 @@
   <!-- PACE IMPROVEMENT -->
   <div class="pace-card" id="pace-card">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);font-weight:600;">📈 Your progress since week 1</div>
-    <div style="display:flex;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:3px;gap:2px;">
-      <button id="dash-metric" onclick="setDashUnits('metric')" style="padding:4px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:#1E90FF;color:#fff;transition:all 0.15s;">km / m</button>
-      <button id="dash-imperial" onclick="setDashUnits('imperial')" style="padding:4px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;">mi / yd</button>
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);font-weight:600;">📈 Your fitness since day 1</div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button id="fitness-refresh-btn" onclick="refreshFitnessCard()" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">🔄 Refresh</button>
+        <div style="display:flex;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:3px;gap:2px;">
+          <button id="dash-metric" onclick="setDashUnits('metric')" style="padding:4px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:#1E90FF;color:#fff;transition:all 0.15s;">km / m</button>
+          <button id="dash-imperial" onclick="setDashUnits('imperial')" style="padding:4px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:transparent;color:rgba(255,255,255,0.4);transition:all 0.15s;">mi / yd</button>
+        </div>
+      </div>
     </div>
-  </div>
     <div class="pace-rows" id="pace-rows"></div>
   </div>
 
@@ -1244,34 +1247,78 @@ async function loadPaceImprovement() {
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return;
-    const { data: plans } = await sb.from('plans').select('plan_data,race,created_at').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1);
+
+    // Get active plan (initial fitness snapshot) + current fitness from users table
+    const pinned = localStorage.getItem('irontri_pinned_plan');
+    const { data: plans } = await sb.from('plans').select('plan_data,race,created_at').eq('user_id', session.user.id).order('created_at', { ascending: false });
     if (!plans?.length) return;
+    let activePlan = pinned ? plans.find(p => String(p.id) === pinned) : null;
+    if (!activePlan) activePlan = plans[0];
     let planData;
-    try { let txt = plans[0].plan_data || ''; txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1); planData = JSON.parse(txt); } catch(e) { return; }
-    if (!planData.weeks || planData.weeks.length < 2) return;
-    const { data: week1Completions } = await sb.from('completions').select('id').eq('user_id', session.user.id).eq('week_num', 0);
-    if (!week1Completions || week1Completions.length < 1) return;
-    const sports = ['Swim', 'Bike', 'Run'];
+    try { let txt = activePlan.plan_data || ''; txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1); planData = JSON.parse(txt); } catch(e) { return; }
+
+    // Initial fitness = stravaFitness saved when plan was created
+    let initialFitness = null;
+    if (planData.stravaFitness) {
+      try { initialFitness = JSON.parse(planData.stravaFitness); } catch(e) {}
+    }
+    if (!initialFitness?.connected) return;
+
+    // Current fitness = latest from users table
+    const { data: ud } = await sb.from('users').select('strava_fitness').eq('id', session.user.id).single();
+    let currentFitness = null;
+    if (ud?.strava_fitness) {
+      try { currentFitness = typeof ud.strava_fitness === 'string' ? JSON.parse(ud.strava_fitness) : ud.strava_fitness; } catch(e) {}
+    }
+    if (!currentFitness?.connected) return;
+
+    // Build comparison rows using real Strava data
+    const fmtPace = s => { if(!s) return null; return Math.floor(s/60)+':'+ String(Math.round(s%60)).padStart(2,'0'); };
     const sportMeta = { Swim:{icon:'🏊',label:'Swim',color:'#38bdf8',higherBetter:false}, Bike:{icon:'🚴',label:'Bike',color:'#fb923c',higherBetter:true}, Run:{icon:'🏃',label:'Run',color:'#4ade80',higherBetter:false} };
-    const week1 = planData.weeks[0];
-    const latestWeek = planData.weeks[planData.weeks.length - 1];
-    const getPace = (week, sport) => { const day = week?.days?.find(d => d.type === sport && d.paceTarget && d.paceTarget !== 'N/A'); return day?.paceTarget || null; };
     const rows = [];
-    for (const sport of sports) {
-      const fromStr = getPace(week1, sport);
-      const toStr = getPace(latestWeek, sport);
-      if (!fromStr || !toStr) continue;
-      const fromVal = extractPaceSeconds(fromStr);
-      const toVal = extractPaceSeconds(toStr);
-      if (fromVal === null || toVal === null) continue;
-      const meta = sportMeta[sport];
-      const improved = meta.higherBetter ? (toVal > fromVal) : (toVal < fromVal);
-      const same = fromVal === toVal;
-      let deltaStr = '';
-      if (sport === 'Bike') { const diff = (toVal - fromVal).toFixed(1); deltaStr = (diff > 0 ? '+' : '') + diff + ' km/h'; }
-      else { const diffSec = Math.round(Math.abs(toVal - fromVal)); const sign = improved ? '-' : '+'; const m = Math.floor(diffSec / 60); const s = diffSec % 60; deltaStr = sign + (m > 0 ? m + 'm ' : '') + s + 's'; }
+
+    // FTP (Bike)
+    const ftpFrom = initialFitness.bike?.ftpEstimate;
+    const ftpTo = currentFitness.bike?.ftpEstimate;
+    if (ftpFrom && ftpTo) {
+      const improved = ftpTo > ftpFrom;
+      const same = ftpFrom === ftpTo;
+      const diff = (ftpTo - ftpFrom);
+      const deltaStr = (diff > 0 ? '+' : '') + diff + 'w';
       const barPct = same ? 50 : improved ? Math.min(95, 50 + 45) : Math.max(5, 50 - 30);
-      rows.push({ sport, meta, fromStr, toStr, fromVal, toVal, improved, same, deltaStr, barPct });
+      rows.push({ sport: 'Bike', meta: sportMeta['Bike'], fromStr: ftpFrom + 'w FTP', toStr: ftpTo + 'w FTP', fromVal: ftpFrom, toVal: ftpTo, improved, same, deltaStr, barPct });
+    }
+
+    // Run threshold pace
+    const runFrom = initialFitness.run?.thresholdPace;
+    const runTo = currentFitness.run?.thresholdPace;
+    const runFromSecs = initialFitness.run?.thresholdPaceSecs || (initialFitness.run?.thresholdPaceMin ? initialFitness.run.thresholdPaceMin * 60 + (initialFitness.run.thresholdPaceSec || 0) : null);
+    const runToSecs = currentFitness.run?.thresholdPaceSecs || (currentFitness.run?.thresholdPaceMin ? currentFitness.run.thresholdPaceMin * 60 + (currentFitness.run.thresholdPaceSec || 0) : null);
+    if (runFrom && runTo && runFromSecs && runToSecs) {
+      const improved = runToSecs < runFromSecs;
+      const same = runFromSecs === runToSecs;
+      const diffSec = Math.round(Math.abs(runToSecs - runFromSecs));
+      const sign = improved ? '-' : '+';
+      const m = Math.floor(diffSec / 60); const s = diffSec % 60;
+      const deltaStr = sign + (m > 0 ? m + 'm ' : '') + s + 's';
+      const barPct = same ? 50 : improved ? Math.min(95, 50 + 45) : Math.max(5, 50 - 30);
+      rows.push({ sport: 'Run', meta: sportMeta['Run'], fromStr: runFrom + '/km', toStr: runTo + '/km', fromVal: runFromSecs, toVal: runToSecs, improved, same, deltaStr, barPct });
+    }
+
+    // Swim CSS pace
+    const swimFrom = initialFitness.swim?.avgPacePer100m;
+    const swimTo = currentFitness.swim?.avgPacePer100m;
+    const swimFromSecs = initialFitness.swim?.avgPaceSecs;
+    const swimToSecs = currentFitness.swim?.avgPaceSecs;
+    if (swimFrom && swimTo && swimFromSecs && swimToSecs) {
+      const improved = swimToSecs < swimFromSecs;
+      const same = swimFromSecs === swimToSecs;
+      const diffSec = Math.round(Math.abs(swimToSecs - swimFromSecs));
+      const sign = improved ? '-' : '+';
+      const m = Math.floor(diffSec / 60); const s = diffSec % 60;
+      const deltaStr = sign + (m > 0 ? m + 'm ' : '') + s + 's';
+      const barPct = same ? 50 : improved ? Math.min(95, 50 + 45) : Math.max(5, 50 - 30);
+      rows.push({ sport: 'Swim', meta: sportMeta['Swim'], fromStr: swimFrom + '/100m', toStr: swimTo + '/100m', fromVal: swimFromSecs, toVal: swimToSecs, improved, same, deltaStr, barPct });
     }
     if (rows.length === 0) return;
     _paceRowsCache = rows;
@@ -1286,6 +1333,35 @@ async function loadPaceImprovement() {
 
 loadTodaySession();
 loadPaceImprovement();
+
+async function refreshFitnessCard() {
+  const btn = document.getElementById('fitness-refresh-btn');
+  if (btn) { btn.textContent = '⏳ Updating...'; btn.disabled = true; }
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const { data: ud } = await sb.from('users').select('strava_access_token, strava_refresh_token, strava_token_expires_at').eq('id', session.user.id).single();
+    if (!ud?.strava_access_token) {
+      if (btn) { btn.textContent = '🔄 Refresh'; btn.disabled = false; }
+      return;
+    }
+    let token = ud.strava_access_token;
+    const tokenExpired = Date.now() / 1000 > (ud.strava_token_expires_at || 0) - 300;
+    if (tokenExpired && ud.strava_refresh_token) {
+      const rr = await fetch('/api/strava-refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: session.user.id, refresh_token: ud.strava_refresh_token }) });
+      if (rr.ok) { const rd = await rr.json(); if (rd.access_token) token = rd.access_token; }
+    }
+    const fr = await fetch('/api/strava-fitness', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: session.user.id, access_token: token }) });
+    if (fr.ok) {
+      await loadPaceImprovement();
+      if (btn) { btn.textContent = '✅ Updated'; setTimeout(() => { btn.textContent = '🔄 Refresh'; btn.disabled = false; }, 2000); }
+    } else {
+      if (btn) { btn.textContent = '🔄 Refresh'; btn.disabled = false; }
+    }
+  } catch(e) {
+    if (btn) { btn.textContent = '🔄 Refresh'; btn.disabled = false; }
+  }
+}
 
 function calcFinishTime(planData, planRace, planId) {
   try {
