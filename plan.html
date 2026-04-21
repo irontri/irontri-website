@@ -1283,8 +1283,11 @@ function renderWeek(){
     // Check completion — handle both old key format (week-slot) and new (week-slot-sessionIdx)
     const isComplete = completions.has(`${curWeek}-${_slotIdx}`) || completions.has(`${curWeek}-${_slotIdx}-0`);
     // Check if previous slot was also completed (streak indicator)
+    // Rest days count as complete for streak purposes — streak shouldn't break on a planned rest day
     const prevSlotIdx = _slotIdx > 0 ? _slotIdx - 1 : null;
-    const prevComplete = prevSlotIdx !== null && (completions.has(`${curWeek}-${prevSlotIdx}`) || completions.has(`${curWeek}-${prevSlotIdx}-0`));
+    const prevSlot = prevSlotIdx !== null ? (_calSlots.find(s => (s._origIdx !== undefined ? s._origIdx : _calSlots.indexOf(s)) === prevSlotIdx) || null) : null;
+    const prevIsRest = prevSlot && prevSlot.sessions[0].type === 'Rest' && prevSlot.sessions.length === 1;
+    const prevComplete = prevSlotIdx !== null && (prevIsRest || completions.has(`${curWeek}-${prevSlotIdx}`) || completions.has(`${curWeek}-${prevSlotIdx}-0`));
     const isStreak = isComplete && prevComplete;
     const dateStr = slot.date.getDate()+' '+months[slot.date.getMonth()];
     const dayName = allDaysFull[slot.date.getDay()];
