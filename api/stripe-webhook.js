@@ -42,19 +42,32 @@ export default async function handler(req, res) {
   async function markUserPaid(email, subscriptionId) {
     if (!email) return;
     console.log('Marking paid:', email);
+
+    // Look up user by email via auth admin API (correct endpoint)
     const userRes = await fetch(
-      `${SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
+      `${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=1000`,
       { headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY } }
     );
     const userData = await userRes.json();
-    const userId = userData?.users?.[0]?.id;
-    if (!userId) return console.error('No user found:', email);
-    await fetch(`${SUPABASE_URL}/rest/v1/plans?user_id=eq.${userId}`, {
+    const user = (userData?.users || []).find(u => u.email?.toLowerCase() === email.toLowerCase());
+    const userId = user?.id;
+    if (!userId) {
+      console.error('No user found for email:', email);
+      return;
+    }
+    console.log('Found user:', userId, 'for email:', email);
+
+    // Update the plan
+    const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?user_id=eq.${userId}`, {
       method: 'PATCH',
       headers: { ...supabaseHeaders, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ is_paid: true, stripe_subscription_id: subscriptionId || null })
+      body: JSON.stringify({
+        is_paid: true,
+        stripe_subscription_id: subscriptionId || null,
+        paid_at: new Date().toISOString()
+      })
     });
-    console.log('Plan marked paid for:', email);
+    console.log('Plan patch status:', patchRes.status, 'for:', email);
   }
 
   async function sendWelcomeEmail(email, name) {
