@@ -741,9 +741,45 @@ async function loadStreakAndRing() {
     let streak=0,best=0,tempStreak=1;
     const today=new Date().toISOString().slice(0,10);
     const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+    // Build a set of all scheduled rest day dates from the plan
+    const restDates = new Set();
+    try {
+      const { data: planRows } = await sb.from('plans').select('plan_data,created_at').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(1);
+      if (planRows?.[0]) {
+        const pd = JSON.parse(planRows[0].plan_data);
+        const planStart = new Date((pd.startDate || planRows[0].created_at.slice(0,10)) + 'T00:00:00');
+        (pd.weeks || []).forEach((wk, wkIdx) => {
+          const DAY_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+          (wk.days || []).forEach(day => {
+            if (day.type === 'Rest') {
+              const dayOffset = wkIdx * 7 + DAY_ORDER.indexOf(day.day);
+              if (dayOffset >= 0) {
+                const d = new Date(planStart);
+                d.setDate(planStart.getDate() + dayOffset);
+                restDates.add(d.toISOString().slice(0,10));
+              }
+            }
+          });
+        });
+      }
+    } catch(e) {}
+
+    // Check if all dates between two completion dates are rest days
+    function gapIsAllRestDays(dateA, dateB) {
+      const a = new Date(dateA), b = new Date(dateB);
+      const diff = Math.round((a - b) / 86400000);
+      if (diff <= 1) return true;
+      for (let d = 1; d < diff; d++) {
+        const mid = new Date(b);
+        mid.setDate(b.getDate() + d);
+        if (!restDates.has(mid.toISOString().slice(0,10))) return false;
+      }
+      return true;
+    }
+
     const startDate=dates[0]===today||dates[0]===yesterday?dates[0]:null;
-    if(startDate){streak=1;for(let i=1;i<dates.length;i++){const prev=new Date(dates[i-1]),curr=new Date(dates[i]),diff=Math.round((prev-curr)/86400000);if(diff===1){streak++;}else{break;}}}
-    tempStreak=1;for(let i=1;i<dates.length;i++){const prev=new Date(dates[i-1]),curr=new Date(dates[i]),diff=Math.round((prev-curr)/86400000);if(diff===1){tempStreak++;best=Math.max(best,tempStreak);}else{tempStreak=1;}}
+    if(startDate){streak=1;for(let i=1;i<dates.length;i++){if(gapIsAllRestDays(dates[i-1],dates[i])){streak++;}else{break;}}}
+    tempStreak=1;for(let i=1;i<dates.length;i++){if(gapIsAllRestDays(dates[i-1],dates[i])){tempStreak++;best=Math.max(best,tempStreak);}else{tempStreak=1;}}
     best=Math.max(best,streak,1);
     document.getElementById('streak-num').textContent=streak;
     if(streak>0)document.getElementById('streak-card').classList.add('active');
