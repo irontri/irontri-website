@@ -106,21 +106,27 @@ function sanitizePlan(pd) {
     week.days = keep;
   });
 
-  // Fix taper weeks with too few sessions - add easy sessions on empty days at start of week
+  // Fix taper weeks with too few sessions - add easy sessions using rotated week order
   const ALL_TAPER_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   pd.weeks.forEach(week => {
     if (!week.days || week.phase !== 'Taper') return;
     const trainingSessions = week.days.filter(d => d.type !== 'Rest');
     if (trainingSessions.length >= 3) return;
 
-    const usedDays = new Set(week.days.map(d => d.day));
-    const sessionPositions = trainingSessions.map(d => ALL_TAPER_DAYS.indexOf(d.day)).filter(i => i !== -1);
-    const firstSessionPos = sessionPositions.length > 0 ? Math.min(...sessionPositions) : 6;
+    const usedDays = new Set(week.days.filter(d => d.type !== 'Rest').map(d => d.day));
+
+    // Rotate from plan start day to match visual calendar
+    const planStartDow = pd.startDate ? new Date(pd.startDate + 'T00:00:00').getDay() : 1;
+    const planStartIdx = planStartDow === 0 ? 6 : planStartDow - 1;
+    const ROTATED = [...ALL_TAPER_DAYS.slice(planStartIdx), ...ALL_TAPER_DAYS.slice(0, planStartIdx)];
+
+    const sessionRotPos = trainingSessions.map(d => ROTATED.indexOf(d.day)).filter(i => i !== -1);
+    const firstRotPos = sessionRotPos.length > 0 ? Math.min(...sessionRotPos) : 6;
 
     const sessionsNeeded = 3 - trainingSessions.length;
     let added = 0;
-    for (let i = 0; i < firstSessionPos && added < sessionsNeeded; i++) {
-      const day = ALL_TAPER_DAYS[i];
+    for (let i = 0; i < firstRotPos && added < sessionsNeeded; i++) {
+      const day = ROTATED[i];
       if (!usedDays.has(day)) {
         week.days.push({
           day: day, type: 'Run', name: 'Easy Taper Run',
