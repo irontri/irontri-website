@@ -147,7 +147,7 @@ function sanitizePlan(pd) {
       if (!existing || existing.type === 'Rest') {
         week.days = week.days.filter(d => d.day !== breakDay);
         week.days.push({ ...EASY_SESSION, day: breakDay });
-        console.log(\`sanitizePlan: inserted activation session on \${breakDay} week \${week.weekNumber} to break consecutive rest\`);
+        console.log('sanitizePlan: inserted activation session on ' + breakDay + ' week ' + week.weekNumber + ' to break consecutive rest');
       }
     }
   });
