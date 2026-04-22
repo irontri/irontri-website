@@ -964,6 +964,44 @@ export default async function handler(req, res) {
     fixFifoViolations(newWeeks);
     fixConsecutiveRestDays(allWeeks);
 
+    // Fix taper weeks with too few sessions — add easy sessions on empty days at start of week
+    const ALL_WEEK_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    allWeeks.forEach(wk => {
+      if (!wk.days || wk.phase !== 'Taper') return;
+      const trainingSessions = wk.days.filter(d => d.type !== 'Rest');
+      if (trainingSessions.length >= 3) return; // enough sessions already
+
+      // Find days that already have sessions
+      const usedDays = new Set(wk.days.map(d => d.day));
+
+      // Find session days and their earliest position in the week
+      const sessionPositions = trainingSessions.map(d => ALL_WEEK_DAYS.indexOf(d.day)).filter(i => i !== -1);
+      const firstSessionPos = sessionPositions.length > 0 ? Math.min(...sessionPositions) : 6;
+
+      // Add easy sessions on days before the first session
+      const sessionsNeeded = 3 - trainingSessions.length;
+      let added = 0;
+      for (let i = 0; i < firstSessionPos && added < sessionsNeeded; i++) {
+        const day = ALL_WEEK_DAYS[i];
+        if (!usedDays.has(day)) {
+          wk.days.push({
+            day: day, type: 'Run', name: 'Easy Taper Run',
+            duration: 20, effort: 4, zone: 2,
+            purpose: 'Short easy run to stay loose and maintain feel without adding fatigue.',
+            warmup: '5min easy walk/jog',
+            mainset: '10min easy Zone 2 run — conversational pace, focus on cadence and form.',
+            cooldown: '5min easy walk',
+            coachNote: 'Keep this very easy. The goal is to stay loose and activated, not to train. Short and sharp.',
+            paceTarget: 'Zone 2 easy',
+            heartRateZone: 'Zone 2'
+          });
+          usedDays.add(day);
+          added++;
+          console.log('Taper fix: added easy run on ' + day + ' week ' + wk.weekNumber);
+        }
+      }
+    });
+
     const updated = { ...planData, weeks: allWeeks };
     // Preserve stravaFitness from request or existing planData
     if (stravaFitness && !updated.stravaFitness) {
