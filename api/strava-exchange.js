@@ -105,6 +105,7 @@ export default async function handler(req, res) {
           refresh_token: refreshToken,
           expires_at: expiresAt,
           athlete_id: String(athleteId),
+          user_id: userId || '',
           quiz_step: '7'
         });
         return res.redirect(302, '/plan.html?' + params.toString());
