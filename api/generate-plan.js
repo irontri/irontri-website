@@ -106,48 +106,54 @@ function sanitizePlan(pd) {
     week.days = keep;
   });
 
-  // Fix consecutive rest days - max 2 in a row for Base/Build/Peak, max 3 for Taper
+  // Fix consecutive rest days - spread sessions evenly, max 2 consecutive rest in any week
   const ALL_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const EASY_SESSION = { type: 'Run', name: 'Easy Activation Run', duration: 20, effort: 3, zone: 1,
-    purpose: 'Short activation run to break up rest days and keep legs fresh.',
-    warmup: '5min easy walk', mainset: '10min easy jog at RPE 3/10', cooldown: '5min easy walk',
-    coachNote: 'Keep this very easy - just moving the legs. Not a training session.', paceTarget: 'Easy', heartRateZone: 'Zone 1' };
 
   pd.weeks.forEach(week => {
     if (!week.days) return;
     const phase = week.phase || 'Base';
-    const isTaper = phase === 'Taper' || phase === 'Race Week';
-    const maxConsecutive = isTaper ? 3 : 2;
+    const isRaceWeek = phase === 'Race Week';
+    if (isRaceWeek) return; // never touch race week structure
 
-    // Build a full 7-day map with rest for missing days
+    // Build day map
     const sessionMap = {};
     week.days.forEach(d => { if (d.day) sessionMap[d.day] = d; });
 
-    // Count consecutive rest days and break them up if over limit
-    let consecutiveRest = 0;
-    let breakDay = null;
-    for (let i = 0; i < ALL_DAYS.length; i++) {
-      const dayName = ALL_DAYS[i];
-      const session = sessionMap[dayName];
-      const isRest = !session || session.type === 'Rest';
-      if (isRest) {
-        consecutiveRest++;
-        if (consecutiveRest > maxConsecutive && !breakDay) {
-          breakDay = dayName;
-        }
-      } else {
-        consecutiveRest = 0;
-      }
+    // Find all training sessions (non-rest) and their current days
+    const trainingSessions = week.days.filter(d => d.type !== 'Rest');
+    if (trainingSessions.length === 0) return;
+
+    // Count max consecutive rest days
+    let maxConsec = 0, consec = 0;
+    for (const dayName of ALL_DAYS) {
+      const s = sessionMap[dayName];
+      if (!s || s.type === 'Rest') { consec++; maxConsec = Math.max(maxConsec, consec); }
+      else consec = 0;
     }
 
-    // If we found a day to break up, insert a short easy session there
-    if (breakDay && !isTaper) {
-      // Only insert for non-taper - taper allows more rest
-      const existing = week.days.find(d => d.day === breakDay);
-      if (!existing || existing.type === 'Rest') {
-        week.days = week.days.filter(d => d.day !== breakDay);
-        week.days.push({ ...EASY_SESSION, day: breakDay });
-        console.log('sanitizePlan: inserted activation session on ' + breakDay + ' week ' + week.weekNumber + ' to break consecutive rest');
+    // If max consecutive rest <= 2, no fix needed
+    if (maxConsec <= 2) return;
+
+    // For taper: try to spread sessions more evenly by moving clustered sessions earlier
+    // Find the first and last session days
+    const sessionDays = ALL_DAYS.filter(d => sessionMap[d] && sessionMap[d].type !== 'Rest');
+    if (sessionDays.length < 2) return;
+
+    // Check if all sessions are in the last N days of the week
+    const lastSessionIdx = ALL_DAYS.indexOf(sessionDays[sessionDays.length - 1]);
+    const firstSessionIdx = ALL_DAYS.indexOf(sessionDays[0]);
+    const sessionSpan = lastSessionIdx - firstSessionIdx;
+
+    // If sessions span less than half the week and there are too many rest days before them, move first session earlier
+    if (sessionSpan < 3 && firstSessionIdx > 2) {
+      // Move the first session to 2 days after the start of the week (index 2 = Wednesday if Mon-start)
+      const targetIdx = Math.max(0, firstSessionIdx - 3);
+      const targetDay = ALL_DAYS[targetIdx];
+      if (!sessionMap[targetDay] || sessionMap[targetDay].type === 'Rest') {
+        const sessionToMove = trainingSessions[0];
+        const oldDay = sessionToMove.day;
+        sessionToMove.day = targetDay;
+        console.log('sanitizePlan: moved session from ' + oldDay + ' to ' + targetDay + ' to spread taper week ' + week.weekNumber);
       }
     }
   });
@@ -312,6 +318,7 @@ TAPER RULES (race-distance specific - apply strictly):
 - TAPER WEEK SESSIONS: Taper weeks MUST still contain 4-5 sessions. NEVER reduce to 1-2 sessions in a taper week - that is NOT tapering, that is detraining. Taper = same frequency, reduced duration and volume. Every taper session should be 20-40% shorter than peak sessions but the same number of days training. For Sprint plans specifically: taper week must have at least 4 sessions of 20-35 min each with race-pace efforts embedded.
 - TAPER SESSION STRUCTURE: Each taper session should include a short race-pace or intensity effort (5-15 min) within an otherwise easy session. The athlete must arrive at race week feeling sharp, not rusty.
 - CONSECUTIVE REST DAYS: NEVER place 3 or more rest days in a row in any week, including taper and race week. Maximum 2 consecutive rest days at any point in the plan. In race week, place short activation sessions between rest days to prevent athletes going stale.
+- TAPER SESSION DISTRIBUTION: Spread taper sessions evenly across the week - NEVER cluster all sessions in the final 2 days of the week. If the plan starts mid-week (e.g. Wednesday), the taper week runs from that day. Distribute sessions so no more than 2 consecutive days are rest at any point in the week. For example if taper has 3 sessions in a week starting Wednesday, place them on Wednesday, Friday and Monday - NOT all on Monday and Tuesday.
 - SESSION SEQUENCING RULES: NEVER schedule a track session or hard run within 1 day of a long bike or brick session - minimum 2 days recovery between these sessions. NEVER schedule a hard bike (threshold or VO2max) the day before a long run. The long run should always follow an easy day or rest day. Brick sessions should not be placed adjacent to track sessions or long runs.
 
 RACE WEEK STRUCTURE (elite taper - apply exactly based on race distance):
