@@ -361,6 +361,7 @@
         </div>
       </div>
     </div>
+    <div id="pace-stale-notice" style="display:none;font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:10px;">⚠️ Strava refresh failed — showing day 1 data. Tap Refresh to update.</div>
     <div class="pace-rows" id="pace-rows"></div>
   </div>
 
@@ -1281,7 +1282,9 @@ async function loadPaceImprovement() {
     if (ud?.strava_fitness) {
       try { currentFitness = typeof ud.strava_fitness === 'string' ? JSON.parse(ud.strava_fitness) : ud.strava_fitness; } catch(e) {}
     }
-    if (!currentFitness?.connected) return;
+    // If current fitness unavailable (Strava refresh failed), fall back to baseline — show card with "no change"
+    const usingFallback = !currentFitness?.connected;
+    if (usingFallback) currentFitness = initialFitness;
 
     // Build comparison rows using real Strava data
     const fmtPace = s => { if(!s) return null; return Math.floor(s/60)+':'+ String(Math.round(s%60)).padStart(2,'0'); };
@@ -1336,6 +1339,9 @@ async function loadPaceImprovement() {
     const card = document.getElementById('pace-card');
     const rowsEl = document.getElementById('pace-rows');
     card.style.display = 'block';
+    // Show stale data notice if Strava refresh failed
+    const staleNotice = document.getElementById('pace-stale-notice');
+    if (staleNotice) staleNotice.style.display = usingFallback ? 'block' : 'none';
     rowsEl.innerHTML = rows.map(r => `<div class="pace-row"><div class="pace-sport">${r.meta.icon}</div><div class="pace-label">${r.meta.label}</div><div class="pace-bar-wrap"><div class="pace-bar" style="width:${r.barPct}%;background:${r.improved?r.meta.color:'rgba(255,255,255,0.15)'}"></div></div><div class="pace-values"><span class="pace-from">${r.fromStr}</span><span style="color:rgba(255,255,255,0.45);font-size:11px;">→</span><span class="pace-to">${r.toStr}</span><span class="pace-delta ${r.same?'same':r.improved?'better':'worse'}">${r.same?'no change':r.deltaStr}</span></div></div>`).join('');
     if (dashUnits === 'imperial') setDashUnits('imperial');
     else { const m=document.getElementById('dash-metric'); if(m){m.style.background='#1E90FF';m.style.color='#fff';} }
