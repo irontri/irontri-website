@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { planId, userId, targetWeeks } = req.body;
+  const { planId, userId, targetWeeks, stravaFitness } = req.body;
   if (!planId || !userId) return res.status(400).json({ error: 'Missing planId or userId' });
 
   try {
@@ -247,7 +247,7 @@ export default async function handler(req, res) {
             'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
-            model: 'claude-haiku-4-5',
+            model: 'claude-sonnet-4-5',
             max_tokens: 16000,
             messages: [{ role: 'user', content: prompt }]
           })
@@ -965,6 +965,10 @@ export default async function handler(req, res) {
     fixConsecutiveRestDays(allWeeks);
 
     const updated = { ...planData, weeks: allWeeks };
+    // Preserve stravaFitness from request or existing planData
+    if (stravaFitness && !updated.stravaFitness) {
+      updated.stravaFitness = JSON.stringify(stravaFitness);
+    }
     const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/plans?id=eq.${plan.id}`, {
       method: 'PATCH',
       headers: {
