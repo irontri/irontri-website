@@ -1859,11 +1859,9 @@ async function loadCompletions() {
 // ── STRAVA AUTO-MATCH ──────────────────────────────────────────────────────
 // Maps Strava sport types to plan session types
 const STRAVA_TO_PLAN = {
-  'Swim': 'Swim',
-  'Ride': 'Bike',
-  'VirtualRide': 'Bike',
-  'Run': 'Run',
-  'VirtualRun': 'Run',
+  'Swim': 'Swim', 'OpenWaterSwim': 'Swim',
+  'Ride': 'Bike', 'VirtualRide': 'Bike', 'EBikeRide': 'Bike', 'GravelRide': 'Bike', 'MountainBikeRide': 'Bike',
+  'Run': 'Run', 'VirtualRun': 'Run', 'TrailRun': 'Run',
 };
 
 async function syncStravaActivities() {
@@ -1918,21 +1916,25 @@ async function syncStravaActivities() {
       if (diffDays < 0) continue;
 
       const weekNum = Math.floor(diffDays / 7);
-      const dayOfWeek = diffDays % 7; // 0=Mon, 6=Sun
-
       if (weekNum >= planData.weeks.length) continue;
       const week = planData.weeks[weekNum];
       if (!week) continue;
 
-      const planDay = week.days[dayOfWeek];
-      if (!planDay) continue;
+      // Match by day name — same as dashboard and plan rendering logic
+      const _allDayNamesSync = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+      const _sunFirstSync = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const actDayName = _sunFirstSync[actDate.getDay()];
+      const matchingSession = (week.days || []).find(d =>
+        d.day === actDayName && (d.type === planType || (d.type === 'Brick' && (planType === 'Bike' || planType === 'Run')))
+      );
+      if (!matchingSession) continue;
 
-      // Match: sport type must align (Brick counts if Run or Bike)
-      const typeMatch =
-        planDay.type === planType ||
-        (planDay.type === 'Brick' && (planType === 'Bike' || planType === 'Run'));
-
-      if (!typeMatch) continue;
+      // Slot index: rotate from plan start day — matches completions storage
+      const _planStartDowSync = planStart.getDay();
+      const _planStartIdxSync = _planStartDowSync === 0 ? 6 : _planStartDowSync - 1;
+      const _rotatedSync = [..._allDayNamesSync.slice(_planStartIdxSync), ..._allDayNamesSync.slice(0, _planStartIdxSync)];
+      const dayOfWeek = _rotatedSync.indexOf(actDayName);
+      if (dayOfWeek === -1) continue;
 
       const key = `${weekNum}-${dayOfWeek}`;
       if (completions.has(key)) continue; // already marked
