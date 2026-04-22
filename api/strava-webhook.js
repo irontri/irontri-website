@@ -9,9 +9,11 @@ const AUTO_TAG_TEXT = '\n\nTrained with irontri - irontriapp.com';
 const TYPE_MAP = {
   'Run': 'Run', 'TrailRun': 'Run', 'Walk': 'Run',
   'Ride': 'Bike', 'VirtualRide': 'Bike', 'EBikeRide': 'Bike',
+  'GravelRide': 'Bike', 'MountainBikeRide': 'Bike', 'Velomobile': 'Bike',
   'Swim': 'Swim', 'OpenWaterSwim': 'Swim'
 };
 
+const ALL_DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 async function sbFetch(path, options) {
@@ -102,7 +104,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const sessionType = TYPE_MAP[activity.type];
+    const sessionType = TYPE_MAP[activity.sport_type] || TYPE_MAP[activity.type];
     if (sessionType && activity.start_date_local) {
       const activityDate = activity.start_date_local.split('T')[0];
       const planRes = await sbFetch(
@@ -122,25 +124,29 @@ export default async function handler(req, res) {
         const startDate = new Date((planData.startDate || planData.start_date) + 'T00:00:00');
         const actDate = new Date(activityDate + 'T00:00:00');
         const daysDiff = Math.floor((actDate - startDate) / (1000 * 60 * 60 * 24));
-        const weekIdx = Math.floor(daysDiff / 7);
-        const weekNum = weekIdx + 1; // 1-indexed to match cron and app
-        const dayName = DAY_NAMES[actDate.getDay()]; // day name not index
+        const weekIdx = Math.floor(daysDiff / 7); // 0-indexed — matches app
+        const dayName = DAY_NAMES[actDate.getDay()];
 
-        if (weekIdx >= 0 && planData.weeks && planData.weeks[weekIdx]) {
+        if (daysDiff >= 0 && planData.weeks && planData.weeks[weekIdx]) {
           const days = planData.weeks[weekIdx].days || [];
 
-          // Match by day name and session type
-          const matchingSession = days.find(d => d.type === sessionType && d.day === dayName);
+          // Match by day name and session type (also match Brick sessions)
+          const matchingSession = days.find(d =>
+            d.day === dayName && (d.type === sessionType || (d.type === 'Brick' && (sessionType === 'Bike' || sessionType === 'Run')))
+          );
 
           if (matchingSession) {
-            // Use slot index format (0=Monday...6=Sunday) matching the app
-            const DAY_NAME_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-            const slotIndex = DAY_NAME_ORDER.indexOf(dayName);
+            // Slot index: rotate from plan start day — matches PlanScreen and DashboardScreen
+            const planStartDow = startDate.getDay(); // 0=Sun
+            const planStartIdx = planStartDow === 0 ? 6 : planStartDow - 1; // Mon=0
+            const rotatedDayOrder = [...ALL_DAY_NAMES.slice(planStartIdx), ...ALL_DAY_NAMES.slice(0, planStartIdx)];
+            const slotIndex = rotatedDayOrder.indexOf(dayName);
+
             if (slotIndex !== -1) {
               const existingRes = await sbFetch(
                 '/rest/v1/completions?user_id=eq.' + user.id +
                 '&plan_id=eq.' + String(plan.id) +
-                '&week_num=eq.' + weekNum +
+                '&week_num=eq.' + String(weekIdx) +
                 '&day=eq.' + String(slotIndex) +
                 '&select=id'
               );
@@ -153,13 +159,13 @@ export default async function handler(req, res) {
                   body: JSON.stringify({
                     user_id: user.id,
                     plan_id: String(plan.id),
-                    week_num: weekNum,
+                    week_num: weekIdx,
                     day: String(slotIndex),
                     source: 'strava',
                     strava_activity_id: String(activityId)
                   })
                 });
-                console.log(`Strava completion: user ${user.id} week ${weekNum} slot ${slotIndex} ${dayName} ${sessionType}`);
+                console.log(`Strava completion: user ${user.id} weekIdx ${weekIdx} slot ${slotIndex} ${dayName} ${sessionType}`);
               }
             }
           }
