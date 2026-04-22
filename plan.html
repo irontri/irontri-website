@@ -2169,6 +2169,37 @@ async function saveRpe(dayIndex, rating, btnEl) {
 // ── STRAVA FITNESS DATA ───────────────────────────────────────────────────────
 let stravaFitnessData = null;
 
+async function loadStravaFitnessWithUserId(overrideUserId) {
+  try {
+    const { data: { session } } = await sb2.auth.getSession();
+    const userId = overrideUserId || (session && session.user.id);
+    if (!userId) { document.getElementById('strava-connect-card').style.display = 'block'; return; }
+    document.getElementById('strava-fitness-card').style.display = 'block';
+    document.getElementById('strava-fitness-preview').textContent = 'Analysing your last 8 weeks of training...';
+    const res = await fetch('/api/strava-fitness', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId })
+    });
+    const data = await res.json();
+    if (!data.connected || !data.hasData) {
+      document.getElementById('strava-fitness-card').style.display = 'none';
+      return;
+    }
+    stravaFitnessData = data;
+    const lines = [];
+    if (data.run) lines.push('🏃 Run: avg pace ' + (data.run.avgPace||'—') + '/km · max HR ' + (data.run.maxHR||'—') + 'bpm');
+    if (data.bike) lines.push(data.bike.hasPowerMeter ? '🚴 Bike: ' + (data.bike.avgSpeedKmh||'—') + 'km/h · FTP ~' + (data.bike.ftpEstimate||'—') + 'w' : '🚴 Bike: avg ' + (data.bike.avgSpeedKmh||'—') + 'km/h');
+    if (data.swim) lines.push('🏊 Swim: avg ' + (data.swim.avgPacePer100m||'—') + '/100m');
+    if (data.hrZones) lines.push('❤️ HR zones: Z1 ' + data.hrZones.zone1.min + '-' + data.hrZones.zone1.max + ' · Z2 ' + data.hrZones.zone2.min + '-' + data.hrZones.zone2.max + ' · Z4 ' + data.hrZones.zone4.min + '-' + data.hrZones.zone4.max + 'bpm');
+    lines.push('📊 ' + data.activitiesAnalysed + ' activities analysed over 8 weeks');
+    document.getElementById('strava-fitness-preview').innerHTML = lines.join('<br>');
+  } catch(e) {
+    console.log('Strava fitness load error:', e);
+    document.getElementById('strava-fitness-card').style.display = 'none';
+  }
+}
+
 async function loadStravaFitness() {
   try {
     const { data: { session } } = await sb2.auth.getSession();
@@ -2430,18 +2461,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         if (sb2 && accessToken) {
           const { data: { session } } = await sb2.auth.getSession();
-          if (session) {
+          const userId = (session && session.user.id) || urlParams.get('user_id');
+          if (userId) {
             await sb2.from('users').update({
               strava_access_token: accessToken,
               strava_refresh_token: refreshToken,
               strava_token_expires_at: parseInt(expiresAt),
               strava_athlete_id: athleteId
-            }).eq('id', session.user.id);
+            }).eq('id', userId);
           }
         }
       } catch(e) { console.error('Strava token save error:', e); }
       go(7);
-      setTimeout(() => loadStravaFitness(), 1000);
+      setTimeout(() => loadStravaFitnessWithUserId(urlParams.get('user_id')), 1000);
     }, 500);
   }
 
