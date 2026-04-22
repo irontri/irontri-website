@@ -649,7 +649,9 @@ async function runFitnessUpdate(btn) {
     }
 
     // Step 5: Save updated fitness data and plan back to Supabase
+    // Only update stravaFitness (current) — never touch baselineFitness (day 1 snapshot)
     planData.stravaFitness = JSON.stringify(newFitness);
+    if (!planData.baselineFitness) planData.baselineFitness = JSON.stringify(newFitness);
     await Promise.all([
       sb.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', plan.id),
       sb.from('users').update({
@@ -1037,10 +1039,11 @@ async function loadFinishTime() {
     const { data: ud } = await sb.from('users').select('strava_fitness, strava_access_token').eq('id', session.user.id).single();
     if (ud?.strava_access_token && ud?.strava_fitness) {
       const fitnessStr = typeof ud.strava_fitness === 'string' ? ud.strava_fitness : JSON.stringify(ud.strava_fitness);
-      planData.stravaFitness = fitnessStr;
+      // Use local copy for finish time calc — never overwrite planData.stravaFitness (that is the day 1 baseline)
+      const planDataForCalc = Object.assign({}, planData, { stravaFitness: fitnessStr });
       const nudge = document.getElementById('strava-finish-nudge');
       if (nudge) nudge.style.display = 'none';
-      calcFinishTime(planData, plan.race || '', plan.id);
+      calcFinishTime(planDataForCalc, plan.race || '', plan.id);
     } else {
       const card = document.getElementById('finish-card');
       if (card) card.style.display = 'none';
@@ -1257,10 +1260,18 @@ async function loadPaceImprovement() {
     let planData;
     try { let txt = activePlan.plan_data || ''; txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1); planData = JSON.parse(txt); } catch(e) { return; }
 
-    // Initial fitness = stravaFitness saved when plan was created
+    // Initial fitness = baselineFitness (set once at plan creation, never overwritten)
+    // Fall back to stravaFitness for existing users who don't have baselineFitness yet, then save it
     let initialFitness = null;
-    if (planData.stravaFitness) {
+    if (planData.baselineFitness) {
+      try { initialFitness = JSON.parse(planData.baselineFitness); } catch(e) {}
+    } else if (planData.stravaFitness) {
       try { initialFitness = JSON.parse(planData.stravaFitness); } catch(e) {}
+      // Bootstrap baselineFitness once so it never gets overwritten going forward
+      if (initialFitness?.connected && activePlan?.id) {
+        planData.baselineFitness = planData.stravaFitness;
+        sb.from('plans').update({ plan_data: JSON.stringify(planData) }).eq('id', activePlan.id).then(() => console.log('baselineFitness bootstrapped'));
+      }
     }
     if (!initialFitness?.connected) return;
 
