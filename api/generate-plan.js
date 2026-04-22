@@ -106,45 +106,37 @@ function sanitizePlan(pd) {
     week.days = keep;
   });
 
-  // Spread taper sessions evenly across the week - prevent clustering at end
-  // Rotate week days from plan start day to match the visual calendar
+  // Fix taper weeks with too few sessions - add easy sessions on empty days at start of week
+  const ALL_TAPER_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   pd.weeks.forEach(week => {
-    if (!week.days) return;
-    const phase = week.phase || 'Base';
-    if (phase !== 'Taper') return; // only fix taper weeks
+    if (!week.days || week.phase !== 'Taper') return;
+    const trainingSessions = week.days.filter(d => d.type !== 'Rest');
+    if (trainingSessions.length >= 3) return;
 
-    const ALL_DAYS_MON = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const usedDays = new Set(week.days.map(d => d.day));
+    const sessionPositions = trainingSessions.map(d => ALL_TAPER_DAYS.indexOf(d.day)).filter(i => i !== -1);
+    const firstSessionPos = sessionPositions.length > 0 ? Math.min(...sessionPositions) : 6;
 
-    // Get plan start day index to rotate the week view
-    const planStartStr = pd.startDate || '';
-    const planStartDow = planStartStr ? new Date(planStartStr + 'T00:00:00').getDay() : 1;
-    const planStartIdx = planStartDow === 0 ? 6 : planStartDow - 1;
-    // Rotated week order as seen in the calendar (starts from plan start day)
-    const WEEK_ORDER = [...ALL_DAYS_MON.slice(planStartIdx), ...ALL_DAYS_MON.slice(0, planStartIdx)];
-
-    // Find training sessions and their positions in the rotated week
-    const sessionMap = {};
-    week.days.forEach(d => { if (d.day && d.type !== 'Rest') sessionMap[d.day] = d; });
-    const sessionDays = WEEK_ORDER.filter(d => sessionMap[d]);
-    if (sessionDays.length === 0) return;
-
-    // Find first session position in rotated week
-    const firstPos = WEEK_ORDER.indexOf(sessionDays[0]);
-
-    // If more than 3 rest days before first session, redistribute
-    if (firstPos > 3) {
-      // Spread sessions evenly: place first session at position 1, rest proportionally
-      const totalSessions = sessionDays.length;
-      const spacing = Math.floor(6 / Math.max(totalSessions, 1));
-      const allSessions = sessionDays.map(d => sessionMap[d]);
-      allSessions.forEach((session, i) => {
-        const newPos = Math.min(i * spacing + 1, 6);
-        const newDay = WEEK_ORDER[newPos];
-        if (newDay && !sessionMap[newDay]) {
-          console.log('sanitizePlan: taper spread ' + session.day + ' -> ' + newDay + ' week ' + week.weekNumber);
-          session.day = newDay;
-        }
-      });
+    const sessionsNeeded = 3 - trainingSessions.length;
+    let added = 0;
+    for (let i = 0; i < firstSessionPos && added < sessionsNeeded; i++) {
+      const day = ALL_TAPER_DAYS[i];
+      if (!usedDays.has(day)) {
+        week.days.push({
+          day: day, type: 'Run', name: 'Easy Taper Run',
+          duration: 20, effort: 4, zone: 2,
+          purpose: 'Short easy run to stay loose and maintain feel without adding fatigue.',
+          warmup: '5min easy walk/jog',
+          mainset: '10min easy Zone 2 run - conversational pace, focus on cadence and form.',
+          cooldown: '5min easy walk',
+          coachNote: 'Keep this very easy. The goal is to stay loose and activated, not to train.',
+          paceTarget: 'Zone 2 easy',
+          heartRateZone: 'Zone 2'
+        });
+        usedDays.add(day);
+        added++;
+        console.log('sanitizePlan: added taper run on ' + day + ' week ' + week.weekNumber);
+      }
     }
   });
 
