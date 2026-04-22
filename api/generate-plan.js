@@ -106,55 +106,45 @@ function sanitizePlan(pd) {
     week.days = keep;
   });
 
-  // Fix consecutive rest days - spread sessions evenly, max 2 consecutive rest in any week
-  const ALL_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-
+  // Spread taper sessions evenly across the week - prevent clustering at end
+  // Rotate week days from plan start day to match the visual calendar
   pd.weeks.forEach(week => {
     if (!week.days) return;
     const phase = week.phase || 'Base';
-    const isRaceWeek = phase === 'Race Week';
-    if (isRaceWeek) return; // never touch race week structure
+    if (phase !== 'Taper') return; // only fix taper weeks
 
-    // Build day map
+    const ALL_DAYS_MON = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+    // Get plan start day index to rotate the week view
+    const planStartStr = pd.startDate || '';
+    const planStartDow = planStartStr ? new Date(planStartStr + 'T00:00:00').getDay() : 1;
+    const planStartIdx = planStartDow === 0 ? 6 : planStartDow - 1;
+    // Rotated week order as seen in the calendar (starts from plan start day)
+    const WEEK_ORDER = [...ALL_DAYS_MON.slice(planStartIdx), ...ALL_DAYS_MON.slice(0, planStartIdx)];
+
+    // Find training sessions and their positions in the rotated week
     const sessionMap = {};
-    week.days.forEach(d => { if (d.day) sessionMap[d.day] = d; });
+    week.days.forEach(d => { if (d.day && d.type !== 'Rest') sessionMap[d.day] = d; });
+    const sessionDays = WEEK_ORDER.filter(d => sessionMap[d]);
+    if (sessionDays.length === 0) return;
 
-    // Find all training sessions (non-rest) and their current days
-    const trainingSessions = week.days.filter(d => d.type !== 'Rest');
-    if (trainingSessions.length === 0) return;
+    // Find first session position in rotated week
+    const firstPos = WEEK_ORDER.indexOf(sessionDays[0]);
 
-    // Count max consecutive rest days
-    let maxConsec = 0, consec = 0;
-    for (const dayName of ALL_DAYS) {
-      const s = sessionMap[dayName];
-      if (!s || s.type === 'Rest') { consec++; maxConsec = Math.max(maxConsec, consec); }
-      else consec = 0;
-    }
-
-    // If max consecutive rest <= 2, no fix needed
-    if (maxConsec <= 2) return;
-
-    // For taper: try to spread sessions more evenly by moving clustered sessions earlier
-    // Find the first and last session days
-    const sessionDays = ALL_DAYS.filter(d => sessionMap[d] && sessionMap[d].type !== 'Rest');
-    if (sessionDays.length < 2) return;
-
-    // Check if all sessions are in the last N days of the week
-    const lastSessionIdx = ALL_DAYS.indexOf(sessionDays[sessionDays.length - 1]);
-    const firstSessionIdx = ALL_DAYS.indexOf(sessionDays[0]);
-    const sessionSpan = lastSessionIdx - firstSessionIdx;
-
-    // If sessions span less than half the week and there are too many rest days before them, move first session earlier
-    if (sessionSpan < 3 && firstSessionIdx > 2) {
-      // Move the first session to 2 days after the start of the week (index 2 = Wednesday if Mon-start)
-      const targetIdx = Math.max(0, firstSessionIdx - 3);
-      const targetDay = ALL_DAYS[targetIdx];
-      if (!sessionMap[targetDay] || sessionMap[targetDay].type === 'Rest') {
-        const sessionToMove = trainingSessions[0];
-        const oldDay = sessionToMove.day;
-        sessionToMove.day = targetDay;
-        console.log('sanitizePlan: moved session from ' + oldDay + ' to ' + targetDay + ' to spread taper week ' + week.weekNumber);
-      }
+    // If more than 3 rest days before first session, redistribute
+    if (firstPos > 3) {
+      // Spread sessions evenly: place first session at position 1, rest proportionally
+      const totalSessions = sessionDays.length;
+      const spacing = Math.floor(6 / Math.max(totalSessions, 1));
+      const allSessions = sessionDays.map(d => sessionMap[d]);
+      allSessions.forEach((session, i) => {
+        const newPos = Math.min(i * spacing + 1, 6);
+        const newDay = WEEK_ORDER[newPos];
+        if (newDay && !sessionMap[newDay]) {
+          console.log('sanitizePlan: taper spread ' + session.day + ' -> ' + newDay + ' week ' + week.weekNumber);
+          session.day = newDay;
+        }
+      });
     }
   });
 
