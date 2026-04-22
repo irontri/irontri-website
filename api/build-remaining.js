@@ -964,34 +964,38 @@ export default async function handler(req, res) {
     fixFifoViolations(newWeeks);
     fixConsecutiveRestDays(allWeeks);
 
-    // Fix taper weeks with too few sessions — add easy sessions on empty days at start of week
+    // Fix taper weeks with too few sessions - add easy sessions spread across the rotated week
     const ALL_WEEK_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
     allWeeks.forEach(wk => {
       if (!wk.days || wk.phase !== 'Taper') return;
       const trainingSessions = wk.days.filter(d => d.type !== 'Rest');
       if (trainingSessions.length >= 3) return; // enough sessions already
 
-      // Find days that already have sessions
-      const usedDays = new Set(wk.days.map(d => d.day));
+      const usedDays = new Set(wk.days.filter(d => d.type !== 'Rest').map(d => d.day));
 
-      // Find session days and their earliest position in the week
-      const sessionPositions = trainingSessions.map(d => ALL_WEEK_DAYS.indexOf(d.day)).filter(i => i !== -1);
-      const firstSessionPos = sessionPositions.length > 0 ? Math.min(...sessionPositions) : 6;
+      // Rotate week from plan start day so we add sessions at the visual start of the week
+      const planStartDow = planData.startDate ? new Date(planData.startDate + 'T00:00:00').getDay() : 1;
+      const planStartIdx = planStartDow === 0 ? 6 : planStartDow - 1;
+      const ROTATED_DAYS = [...ALL_WEEK_DAYS.slice(planStartIdx), ...ALL_WEEK_DAYS.slice(0, planStartIdx)];
 
-      // Add easy sessions on days before the first session
+      // Find where sessions sit in the rotated week
+      const sessionRotPos = trainingSessions.map(d => ROTATED_DAYS.indexOf(d.day)).filter(i => i !== -1);
+      const firstRotPos = sessionRotPos.length > 0 ? Math.min(...sessionRotPos) : 6;
+
+      // Add sessions on empty days at visual start of week (before first existing session)
       const sessionsNeeded = 3 - trainingSessions.length;
       let added = 0;
-      for (let i = 0; i < firstSessionPos && added < sessionsNeeded; i++) {
-        const day = ALL_WEEK_DAYS[i];
+      for (let i = 0; i < firstRotPos && added < sessionsNeeded; i++) {
+        const day = ROTATED_DAYS[i];
         if (!usedDays.has(day)) {
           wk.days.push({
             day: day, type: 'Run', name: 'Easy Taper Run',
             duration: 20, effort: 4, zone: 2,
             purpose: 'Short easy run to stay loose and maintain feel without adding fatigue.',
             warmup: '5min easy walk/jog',
-            mainset: '10min easy Zone 2 run — conversational pace, focus on cadence and form.',
+            mainset: '10min easy Zone 2 run - conversational pace, focus on cadence and form.',
             cooldown: '5min easy walk',
-            coachNote: 'Keep this very easy. The goal is to stay loose and activated, not to train. Short and sharp.',
+            coachNote: 'Keep this very easy. The goal is to stay loose and activated, not to train.',
             paceTarget: 'Zone 2 easy',
             heartRateZone: 'Zone 2'
           });
