@@ -106,14 +106,12 @@ function sanitizePlan(pd) {
     week.days = keep;
   });
 
-  // Fix taper weeks with too few sessions - add easy sessions using rotated week order
+  // Fix taper weeks with sessions crammed into last 2 days - spread them across the week
   const ALL_TAPER_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   pd.weeks.forEach(week => {
     if (!week.days || week.phase !== 'Taper') return;
     const trainingSessions = week.days.filter(d => d.type !== 'Rest');
-    if (trainingSessions.length >= 3) return;
-
-    const usedDays = new Set(week.days.filter(d => d.type !== 'Rest').map(d => d.day));
+    if (trainingSessions.length === 0) return;
 
     // Rotate from plan start day to match visual calendar
     const planStartDow = pd.startDate ? new Date(pd.startDate + 'T00:00:00').getDay() : 1;
@@ -123,26 +121,28 @@ function sanitizePlan(pd) {
     const sessionRotPos = trainingSessions.map(d => ROTATED.indexOf(d.day)).filter(i => i !== -1);
     const firstRotPos = sessionRotPos.length > 0 ? Math.min(...sessionRotPos) : 6;
 
-    const sessionsNeeded = 3 - trainingSessions.length;
-    let added = 0;
-    for (let i = 0; i < firstRotPos && added < sessionsNeeded; i++) {
-      const day = ROTATED[i];
-      if (!usedDays.has(day)) {
-        week.days.push({
-          day: day, type: 'Run', name: 'Easy Taper Run',
-          duration: 20, effort: 4, zone: 2,
-          purpose: 'Short easy run to stay loose and maintain feel without adding fatigue.',
-          warmup: '5min easy walk/jog',
-          mainset: '10min easy Zone 2 run - conversational pace, focus on cadence and form.',
-          cooldown: '5min easy walk',
-          coachNote: 'Keep this very easy. The goal is to stay loose and activated, not to train.',
-          paceTarget: 'Zone 2 easy',
-          heartRateZone: 'Zone 2'
-        });
-        usedDays.add(day);
-        added++;
-        console.log('sanitizePlan: added taper run on ' + day + ' week ' + week.weekNumber);
-      }
+    // If sessions all crammed into last 3 days of visual week, add easy sessions earlier
+    if (firstRotPos >= 4) {
+      const usedDays = new Set(trainingSessions.map(d => d.day));
+      const targetPositions = [1, 3].filter(p => p < firstRotPos);
+      targetPositions.forEach(pos => {
+        const day = ROTATED[pos];
+        if (day && !usedDays.has(day)) {
+          week.days.push({
+            day: day, type: 'Run', name: 'Easy Taper Run',
+            duration: 20, effort: 4, zone: 2,
+            purpose: 'Short easy run to stay loose and maintain feel without adding fatigue.',
+            warmup: '5min easy walk/jog',
+            mainset: '10min easy Zone 2 run - conversational pace, focus on cadence and form.',
+            cooldown: '5min easy walk',
+            coachNote: 'Keep this very easy. Stay loose and activated - not a training session.',
+            paceTarget: 'Zone 2 easy',
+            heartRateZone: 'Zone 2'
+          });
+          usedDays.add(day);
+          console.log('sanitizePlan: added taper run on ' + day + ' week ' + week.weekNumber);
+        }
+      });
     }
   });
 
