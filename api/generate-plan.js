@@ -106,7 +106,17 @@ function sanitizePlan(pd) {
     week.days = keep;
   });
 
-  // Enforce progressive volume in Base phase weeks 1-4
+  // Remove fake Race Day sessions from non-final weeks
+  pd.weeks.forEach((week, idx) => {
+    const isFinalWeek = idx === pd.weeks.length - 1;
+    if (!isFinalWeek && week.days) {
+      week.days = week.days.filter(d => d.type !== 'Race');
+      if (week.days.filter(d => d.type !== 'Rest').length === 0) {
+        // Week is now all rest — add a placeholder easy run
+        week.days.push({ day: 'Wednesday', type: 'Run', name: 'Easy Aerobic Run', duration: 30, effort: 4, zone: 2, purpose: 'Easy aerobic session to maintain fitness.', warmup: '5min easy jog', mainset: '20min easy Zone 2 run', cooldown: '5min easy jog', coachNote: 'Keep it easy and conversational.', paceTarget: 'Zone 2', heartRateZone: 'Zone 2' });
+      }
+    }
+  });
   // If any week has LESS volume than the previous, boost it by extending sessions
   const baseWeeks = pd.weeks.filter(w => w.weekNumber <= 4 && w.days);
   for (let i = 1; i < baseWeeks.length; i++) {
