@@ -106,6 +106,52 @@ function sanitizePlan(pd) {
     week.days = keep;
   });
 
+  // Fix consecutive rest days — max 2 in a row for Base/Build/Peak, max 3 for Taper, max 2 for Race Week
+  const ALL_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const EASY_SESSION = { type: 'Run', name: 'Easy Activation Run', duration: 20, effort: 3, zone: 1,
+    purpose: 'Short activation run to break up rest days and keep legs fresh.',
+    warmup: '5min easy walk', mainset: '10min easy jog at RPE 3/10', cooldown: '5min easy walk',
+    coachNote: 'Keep this very easy — just moving the legs. Not a training session.', paceTarget: 'Easy', heartRateZone: 'Zone 1' };
+
+  pd.weeks.forEach(week => {
+    if (!week.days) return;
+    const phase = week.phase || 'Base';
+    const isTaper = phase === 'Taper' || phase === 'Race Week';
+    const maxConsecutive = isTaper ? 3 : 2;
+
+    // Build a full 7-day map with rest for missing days
+    const sessionMap = {};
+    week.days.forEach(d => { if (d.day) sessionMap[d.day] = d; });
+
+    // Count consecutive rest days and break them up if over limit
+    let consecutiveRest = 0;
+    let breakDay = null;
+    for (let i = 0; i < ALL_DAYS.length; i++) {
+      const dayName = ALL_DAYS[i];
+      const session = sessionMap[dayName];
+      const isRest = !session || session.type === 'Rest';
+      if (isRest) {
+        consecutiveRest++;
+        if (consecutiveRest > maxConsecutive && !breakDay) {
+          breakDay = dayName;
+        }
+      } else {
+        consecutiveRest = 0;
+      }
+    }
+
+    // If we found a day to break up, insert a short easy session there
+    if (breakDay && !isTaper) {
+      // Only insert for non-taper — taper allows more rest
+      const existing = week.days.find(d => d.day === breakDay);
+      if (!existing || existing.type === 'Rest') {
+        week.days = week.days.filter(d => d.day !== breakDay);
+        week.days.push({ ...EASY_SESSION, day: breakDay });
+        console.log(\`sanitizePlan: inserted activation session on \${breakDay} week \${week.weekNumber} to break consecutive rest\`);
+      }
+    }
+  });
+
   // If any week has LESS volume than the previous, boost it by extending sessions
   const baseWeeks = pd.weeks.filter(w => w.weekNumber <= 4 && w.days);
   for (let i = 1; i < baseWeeks.length; i++) {
