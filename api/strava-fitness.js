@@ -11,13 +11,14 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { userId } = req.body;
-  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const { userId, user_id } = req.body;
+  const resolvedUserId = userId || user_id;
+  if (!resolvedUserId) return res.status(400).json({ error: 'Missing userId' });
 
   try {
     // Get user Strava tokens
     const userRes = await fetch(
-      SUPABASE_URL + '/rest/v1/users?id=eq.' + userId +
+      SUPABASE_URL + '/rest/v1/users?id=eq.' + resolvedUserId +
       '&select=id,strava_access_token,strava_refresh_token,strava_token_expires_at,strava_athlete_id',
       { headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY } }
     );
@@ -45,7 +46,7 @@ export default async function handler(req, res) {
       if (!refreshRes.ok) return res.status(200).json({ connected: false });
       accessToken = refreshData.access_token;
       // Use service key for token refresh write
-      await fetch(SUPABASE_URL + '/rest/v1/users?id=eq.' + userId, {
+      await fetch(SUPABASE_URL + '/rest/v1/users?id=eq.' + resolvedUserId, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -287,7 +288,7 @@ export default async function handler(req, res) {
     };
 
     // Save fitness data to user record — use service key to avoid RLS issues
-    await fetch(SUPABASE_URL + '/rest/v1/users?id=eq.' + userId, {
+    await fetch(SUPABASE_URL + '/rest/v1/users?id=eq.' + resolvedUserId, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
