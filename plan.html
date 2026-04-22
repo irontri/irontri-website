@@ -3165,7 +3165,7 @@ async function autoGenerateRemainingWeeks(tw){
       const built=planData.weeks.length;
       const ph=built<tw*0.3?"Base":built<tw*0.65?"Build":built<tw*0.85?"Peak":"Taper";
       if(bT)bT.textContent="Building weeks "+(built+1)+" of "+tw+" ("+ph+")...";
-      const r=await fetch("/api/build-remaining",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({planId:pid,userId,targetWeeks:tw})});
+      const r=await fetch("/api/build-remaining",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({planId:pid,userId,targetWeeks:tw,stravaFitness:A.stravaFitness||null})});
       if(!r.ok)throw new Error("API "+r.status);
       const data=await r.json();
       if(!data.success)throw new Error(data.error||"build-remaining failed");
