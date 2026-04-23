@@ -167,6 +167,19 @@ function sanitizePlan(pd) {
   }
 }
 
+// Sanitize any user-supplied string before embedding in prompts or JSON
+function sanitizeInput(str) {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/\\/g, ' ')       // backslashes
+    .replace(/"/g, "'")        // double quotes -> single quotes
+    .replace(/[\u0000-\u001F\u007F]/g, ' ') // control characters
+    .replace(/\u2014|\u2013/g, '-') // em/en dashes
+    .replace(/[\u2018\u2019]/g, "'") // smart single quotes
+    .replace(/[\u201C\u201D]/g, "'") // smart double quotes
+    .trim();
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -174,7 +187,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { prompt, userId, race } = req.body;
+  let { prompt, userId, race } = req.body;
+
+  // Sanitize prompt to prevent JSON parse errors from user-supplied special characters
+  if (prompt) prompt = sanitizeInput(prompt);
 
   // Detect units from prompt
   const isImperial = prompt && prompt.includes('imperial');
@@ -374,7 +390,7 @@ JSON structure for weeks:
     try {
       const txt = planText.substring(planText.indexOf('{'), planText.lastIndexOf('}') + 1);
       const pd = JSON.parse(txt);
-      pd.basePrompt = prompt;
+      pd.basePrompt = sanitizeInput(prompt);
       sanitizePlan(pd);
       planDataToSave = JSON.stringify(pd);
     } catch(e) {
