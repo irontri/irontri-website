@@ -372,11 +372,41 @@ JSON structure for weeks:
     // Inject basePrompt into plan_data so build-remaining can use it for weeks 5+
     let planDataToSave = planText;
     try {
-      const startIdx = planText.indexOf('{');
-      const endIdx = planText.lastIndexOf('}');
-      if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
-        throw new Error('No valid JSON object found in response');
+      const txt = planText.substring(planText.indexOf('{'), planText.lastIndexOf('}') + 1);
+      const pd = JSON.parse(txt);
+      pd.basePrompt = prompt;
+      sanitizePlan(pd);
+      planDataToSave = JSON.stringify(pd);
+    } catch(e) {
+      console.log('Could not inject basePrompt:', e);
+    }
+
+    if (userId) {
+      try {
+        const saveRes = await fetch(process.env.SUPABASE_URL + '/rest/v1/plans', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': process.env.SUPABASE_SERVICE_KEY,
+            'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify({ user_id: userId, plan_data: planDataToSave, race: race || 'Triathlon' })
+        });
+        if (!saveRes.ok) {
+          const err = await saveRes.text();
+          console.error('Plan save failed:', err);
+        } else {
+          console.log('Plan saved successfully for user:', userId);
+        }
+      } catch(e) {
+        console.log('Could not save plan:', e);
       }
-      let txt = planText.substring(startIdx, endIdx + 1);
-      // Strip control characters and fix common AI JSON issues
-      txt = txt.replace(/[
+    }
+
+    return res.status(200).json({ plan: planText });
+  } catch(e) {
+    console.error('Handler error:', e);
+    return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+  }
+}
