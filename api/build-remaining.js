@@ -41,6 +41,9 @@ export default async function handler(req, res) {
     const totalNeeded = targetWeeks || planData.totalWeeksPlanned || 0;
     const basePrompt = planData.basePrompt || '';
 
+    const startWk = builtSoFar + 1;
+    const endWk = Math.min(builtSoFar + 2, totalNeeded);
+
     // Build FIFO block from planData if athlete is a FIFO worker
     let fifoBlock = '';
     if (planData.fifo) {
@@ -88,9 +91,6 @@ export default async function handler(req, res) {
     console.log('builtSoFar:', builtSoFar, 'totalNeeded:', totalNeeded, 'hasPrompt:', !!basePrompt);
 
     if (builtSoFar >= totalNeeded) return res.status(200).json({ success: true, done: true, builtSoFar, totalNeeded });
-
-    const startWk = builtSoFar + 1;
-    const endWk = Math.min(builtSoFar + 2, totalNeeded);
 
     const isFinalBatch = endWk >= totalNeeded;
     const raceDistanceLower = (basePrompt || planData.race || '').toLowerCase();
