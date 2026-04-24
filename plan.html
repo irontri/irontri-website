@@ -2595,11 +2595,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           const _start = A.startDate ? new Date(A.startDate+"T00:00:00") : new Date();
           const raceWks = Math.ceil((new Date(planData.raceDate+"T00:00:00") - _start) / (7*24*60*60*1000));
           const targetW = Math.min(Math.max(raceWks, 8), 52);
-          if(planData.weeks.length < targetW){
-            window._targetWeeks = targetW;
-            planData.totalWeeksPlanned = targetW;
+          // Only auto-generate if plan is genuinely incomplete vs its own totalWeeksPlanned
+          // Do NOT use targetW to inflate a plan that was intentionally shorter (e.g. short race date)
+          const plannedTarget = planData.totalWeeksPlanned || targetW;
+          if(planData.weeks.length < plannedTarget){
+            window._targetWeeks = plannedTarget;
+            planData.totalWeeksPlanned = plannedTarget;
             planData.raceDate = planData.raceDate || A.date;
-            setTimeout(()=>autoGenerateRemainingWeeks(targetW), 3000);
+            setTimeout(()=>autoGenerateRemainingWeeks(plannedTarget), 3000);
           }
         }
       } else {
