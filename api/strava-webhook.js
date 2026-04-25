@@ -76,7 +76,15 @@ export default async function handler(req, res) {
         })
       });
       const refreshData = await refreshRes.json();
-      if (!refreshRes.ok) return res.status(200).json({ ok: true });
+      if (!refreshRes.ok) {
+        console.error('Strava token refresh failed for athlete ' + stravaAthleteId + ' user ' + user.id + ': ' + (refreshData.message || refreshRes.status));
+        await sbFetch('/rest/v1/users?id=eq.' + user.id, {
+          method: 'PATCH',
+          headers: { 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ strava_token_invalid: true })
+        });
+        return res.status(200).json({ ok: true });
+      }
       accessToken = refreshData.access_token;
       await sbFetch('/rest/v1/users?id=eq.' + user.id, {
         method: 'PATCH',
