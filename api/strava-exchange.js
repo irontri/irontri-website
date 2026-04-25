@@ -20,6 +20,7 @@ async function saveStravaTokens(athleteId, accessToken, refreshToken, expiresAt)
       strava_refresh_token: refreshToken,
       strava_token_expires_at: parseInt(expiresAt),
       strava_athlete_id: String(athleteId),
+      strava_token_invalid: false,
     }),
   });
   return r.ok;
@@ -93,6 +94,7 @@ export default async function handler(req, res) {
               strava_refresh_token: refreshToken,
               strava_token_expires_at: parseInt(expiresAt),
               strava_athlete_id: String(athleteId),
+              strava_token_invalid: false,
             }),
           });
         } else if (athleteId) {
