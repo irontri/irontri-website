@@ -2776,6 +2776,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           A.fifoCurrentStatus = planData.fifoCurrentStatus || A.fifoCurrentStatus || null;
           A.fifoCurrentWeek = planData.fifoCurrentWeek || A.fifoCurrentWeek || null;
         }
+        // Restore B race and re-inject session so it survives plan reloads
+        if (planData.bRaceDate && planData.bRaceDist) {
+          A.bRaceDate = planData.bRaceDate;
+          A.bRaceDist = planData.bRaceDist;
+          injectBRaceSession(planData);
+        }
 
         document.getElementById('gen').style.display = 'none';
         document.getElementById('plan').style.display = 'block';
