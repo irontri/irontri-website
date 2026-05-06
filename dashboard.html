@@ -882,6 +882,10 @@ async function loadPlans() {
 function viewPlan(id) { window.location.href = '/plan.html?load=' + id; }
 
 async function dashboardStartCheckout() {
+  if (typeof _paywallPlan !== 'undefined' && _paywallPlan === 'yearly') {
+    window.location.href = 'https://buy.stripe.com/8x29AT3xs2wbfCn8VJ1wY02';
+    return;
+  }
   const btn = document.getElementById('dashboard-checkout-btn');
   if (btn) { btn.textContent = 'Redirecting...'; btn.disabled = true; }
   try {
@@ -1622,9 +1626,15 @@ init();
   <div style="background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:36px 28px;max-width:420px;width:100%;text-align:center;">
     <div style="font-size:40px;margin-bottom:16px;">🏊‍♂️🚴‍♂️🏃‍♂️</div>
     <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px;">Your free trial has ended</div>
-    <div style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:28px;">Keep training with your personalised plan — every session, every week, all the way to race day.</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:20px;">Keep training with your personalised plan — every session, every week, all the way to race day.</div>
+    <!-- Plan Toggle -->
+    <div style="display:flex;background:#0f172a;border-radius:10px;padding:4px;margin-bottom:16px;gap:4px;">
+      <button onclick="setPaywallPlan('monthly')" id="pw-monthly-btn" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;background:#1E90FF;color:#fff;">Monthly</button>
+      <button onclick="setPaywallPlan('yearly')" id="pw-yearly-btn" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;background:transparent;color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;gap:6px;">Yearly <span style="background:rgba(255,255,255,0.15);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;">Save 17%</span></button>
+    </div>
     <div style="background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:14px;padding:20px;margin-bottom:24px;">
-      <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#1E90FF;">$20<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.5)">/month</span></div>
+      <div id="pw-price-display" style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#1E90FF;">$20<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.5)">/month</span></div>
+      <div id="pw-price-equiv" style="font-size:12px;color:rgba(74,222,128,0.9);margin-top:2px;font-weight:600;display:none;">That's just $16.67/mo</div>
       <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;">Cancel anytime</div>
       <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;text-align:left;">
         <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Full plan to race day</div>
@@ -1636,6 +1646,34 @@ init();
     <button id="dashboard-checkout-btn" onclick="dashboardStartCheckout()" style="width:100%;padding:16px;background:#1E90FF;border:none;color:#fff;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:12px;">Continue my plan — $20/month</button>
   </div>
 </div>
+<script>
+var _paywallPlan = 'monthly';
+function setPaywallPlan(plan) {
+  _paywallPlan = plan;
+  var monthlyBtn = document.getElementById('pw-monthly-btn');
+  var yearlyBtn = document.getElementById('pw-yearly-btn');
+  var priceDisplay = document.getElementById('pw-price-display');
+  var priceEquiv = document.getElementById('pw-price-equiv');
+  var checkoutBtn = document.getElementById('dashboard-checkout-btn');
+  if (plan === 'yearly') {
+    monthlyBtn.style.background = 'transparent';
+    monthlyBtn.style.color = 'rgba(255,255,255,0.5)';
+    yearlyBtn.style.background = '#1E90FF';
+    yearlyBtn.style.color = '#fff';
+    priceDisplay.innerHTML = '$199.99<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.5)">/year</span>';
+    priceEquiv.style.display = 'block';
+    checkoutBtn.textContent = 'Continue my plan — $199.99/year';
+  } else {
+    monthlyBtn.style.background = '#1E90FF';
+    monthlyBtn.style.color = '#fff';
+    yearlyBtn.style.background = 'transparent';
+    yearlyBtn.style.color = 'rgba(255,255,255,0.5)';
+    priceDisplay.innerHTML = '$20<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.5)">/month</span>';
+    priceEquiv.style.display = 'none';
+    checkoutBtn.textContent = 'Continue my plan — $20/month';
+  }
+}
+</script>
 <!-- END PAYWALL MODAL -->
 
 <!-- ── TRIXY AI COACH ── -->
