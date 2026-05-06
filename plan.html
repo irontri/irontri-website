@@ -1214,6 +1214,8 @@ function cf(){
       _warnEl.style.display='none';
     }
   }
+  // Re-check B race conflict now that main race date may have changed
+  if (A.bRaceDate && A.bRaceDist) updateBraceSummary();
 }
 function wks(d){if(!d){const def={'Sprint':12,'Olympic':16,'Half Ironman 70.3':20,'T100 Triathlon':20,'Full Ironman':24};return def[A.race]||16;}const start=A.startDate?new Date(A.startDate+"T00:00:00"):new Date();const w=Math.ceil((new Date(d+"T00:00:00")-start)/(7*24*60*60*1000));return Math.min(Math.max(w,8),52);}
 
