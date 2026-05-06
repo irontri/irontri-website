@@ -404,7 +404,7 @@
         </div>
         <div style="flex:1;min-width:140px;">
           <label style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Distance</label>
-          <select id="brace-dist" onchange="updateBrace()" style="width:100%;padding:10px 12px;background:#111827;border:1px solid var(--border);border-radius:12px;color:#fff;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;">
+          <select id="brace-dist" onchange="updateBrace()" style="width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;">
             <option value="">Select distance</option>
           </select>
         </div>
@@ -1012,8 +1012,7 @@ function updateBrace() {
 function pg(el,key,val){
   // Show B race section when race distance is selected
   if(key==='race') { document.getElementById('brace-section').style.display='block'; }
-el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;
-  if(key==='race') { populateBraceDist(); }}
+el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
 function pickStrength(val){
   A.strength=val;
   document.getElementById('strength-yes').classList.toggle('sel',val===true);
@@ -1160,6 +1159,8 @@ const typeInfo={
 
 function resolveType(rawType, name, warmup, mainset) {
   if (!rawType) return typeInfo['Rest'];
+  // Detect B race sessions by name before anything else
+  if ((name||'').match(/\b(race|b race|10k race|5k race|half marathon race|marathon race)\b/i)) return typeInfo['Race'];
   if (typeInfo[rawType]) return typeInfo[rawType];
   // Combine all text for keyword detection
   const combined = ((name||'')+' '+(warmup||'')+' '+(mainset||'')).toLowerCase();
@@ -1214,7 +1215,7 @@ function correctPhases(weeks, targetWeeks) {
     const isFinalWeek = isPlanComplete && i === total - 1;
     if (!isFinalWeek && w.days) {
       w.days.forEach(d => {
-        // Don't convert Race type — keep it so B race shows correctly on calendar
+        if ((d.type || '').toLowerCase() === 'race') { d.type = 'Run'; d.name = d.name || 'Run Session'; }
       });
     }
   });
