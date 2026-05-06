@@ -225,12 +225,53 @@ export default async function handler(req, res) {
     const strengthRule = `STRENGTH SESSIONS: If strength training is requested, include 1 strength session per week in Base and Build phases ONLY. NEVER in Peak, Taper or Race Week. Strength is type Strength, effort 5/10, 30-40 min. PLACEMENT: pair strength as a double session on the same day as an easy or aerobic Swim session — athlete does the swim in the morning, strength in the afternoon. NEVER pair with a hard bike, brick, long run or track session. Use the same day name as the swim session to create a double session entry.`;
     const doubleSessionRule = (isFull || isHalf) ? `DOUBLE SESSION PROGRAMMING: Professional triathlon coaches use double session days to build volume efficiently. Scale based on experience level in the prompt: BEGINNER — no doubles in Base, max 1 per week in Build/Peak (short easy sessions only, both under 45min, coachNote must reassure them this is a big step). INTERMEDIATE — 1 double in Base, up to 2 per week in Build/Peak. ADVANCED — 2 doubles in Base, up to 3 per week in Build/Peak. Valid pairings (all morning+afternoon): Swim+EasyBike, Swim+EasyRun, Swim+Strength. NEVER pair two hard sessions. NEVER doubles in Taper or Race Week. Use the same day name to create a double session entry.` : '';
 
+    // B race taper/recovery rule — only applies if B race falls within this batch
+    const bRaceTaperRule = (() => {
+      if (!planData.bRaceDate || !planData.bRaceDist || !planData.startDate) return '';
+      const startDate = new Date(planData.startDate + 'T00:00:00');
+      const bRaceDate = new Date(planData.bRaceDate + 'T00:00:00');
+      if (isNaN(startDate) || isNaN(bRaceDate)) return '';
+      const diffDays = Math.round((bRaceDate - startDate) / (1000*60*60*24));
+      if (diffDays < 0) return '';
+      const bRaceWeek = Math.floor(diffDays / 7) + 1; // 1-based
+      const dist = planData.bRaceDist;
+      // Taper and recovery windows per distance
+      let taperDays, recoveryWeeks, taperDesc, recoveryDesc;
+      if (dist === '5k' || dist === '10k') {
+        taperDays = 4; recoveryWeeks = 1;
+        taperDesc = '3-4 days before the B race: reduce run volume by 40%, drop all run intensity (no intervals, no threshold). Swim and bike remain completely normal.';
+        recoveryDesc = 'The week after the B race: run sessions are easy Zone 2 only, no intervals, reduce run volume by 30%. Swim and bike completely normal.';
+      } else if (dist === 'Half Marathon') {
+        taperDays = 6; recoveryWeeks = 1;
+        taperDesc = '5-6 days before the B race: reduce run volume by 50%, no run intensity at all (easy Zone 2 only). Swim and bike completely normal.';
+        recoveryDesc = 'The full week after the B race: run is easy Zone 2 only, max 30 min per run session, no intervals or hard efforts. Swim and bike normal.';
+      } else if (dist === 'Marathon') {
+        taperDays = 14; recoveryWeeks = 2;
+        taperDesc = '2 weeks before the B race: week 1 reduce run volume by 20% and drop intensity. Week of B race reduce run volume by 40%, no long run, easy efforts only. Swim and bike normal throughout.';
+        recoveryDesc = 'Week 1 after B race: very easy running only, max 30 min, Zone 1-2. Week 2: gradual return, Zone 2 running, no intensity. Swim and bike normal.';
+      } else return '';
+
+      // Check if this batch overlaps with taper or recovery window
+      const bRaceTaperStartWeek = bRaceWeek - Math.ceil(taperDays / 7);
+      const bRaceRecoveryEndWeek = bRaceWeek + recoveryWeeks;
+      const batchOverlapsTaper = startWk <= bRaceWeek && endWk >= bRaceTaperStartWeek;
+      const batchOverlapsRecovery = startWk <= bRaceRecoveryEndWeek && endWk >= bRaceWeek;
+
+      if (!batchOverlapsTaper && !batchOverlapsRecovery) return '';
+
+      let rule = `B RACE TAPER/RECOVERY — The athlete has a ${dist} B race on ${planData.bRaceDate} (week ${bRaceWeek} of the plan). `;
+      if (batchOverlapsTaper) rule += `TAPER: ${taperDesc} `;
+      if (batchOverlapsRecovery) rule += `RECOVERY: ${recoveryDesc} `;
+      rule += `DO NOT generate a session on ${planData.bRaceDate} itself — the B race session is injected separately. Swim and bike sessions are NEVER affected by the B race taper or recovery — only run sessions change.`;
+      return rule;
+    })();
+
     const _baseEnd=Math.floor(totalNeeded*0.30);const _buildEnd=Math.floor(totalNeeded*0.65);const _peakEnd=Math.floor(totalNeeded*0.85);const _taperEnd=totalNeeded-1;
     const _getPhase=(wk)=>wk<=_baseEnd?'Base':wk<=_buildEnd?'Build':wk<=_peakEnd?'Peak':wk<totalNeeded?'Taper':'Race Week';
     const _phaseForBatch=_getPhase(startWk);
     const intensityRule = `INTENSITY DISTRIBUTION (80/20 polarised training — enforced every week): A minimum of 80% of weekly sessions must be Zone 1-2 (effort 1-6/10). A maximum of 20% may be Zone 4-5 (effort 7-9/10). ZERO Zone 3 moderate sessions — every session is either clearly easy OR clearly hard. In a 7-session week: maximum 1-2 hard sessions. In a 5-session week: maximum 1 hard session. Hard sessions are: track runs, threshold bike intervals, VO2max efforts, race pace brick runs. Long ride and long run are ALWAYS Zone 2 easy — never make them hard.`;
 
-    const structureInstructions = `${intensityRule} Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${doubleSessionRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${raceDayRule}`;
+    const structureInstructions = `${intensityRule} Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${doubleSessionRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${bRaceTaperRule} ${raceDayRule}`;
 
     const prompt = basePrompt + fifoBlock + structureInstructions;
 
