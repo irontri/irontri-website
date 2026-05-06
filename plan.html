@@ -1083,19 +1083,18 @@ function injectBRaceSession(pd) {
   const bRaceDate = new Date(pd.bRaceDate + 'T00:00:00');
   const startDate = new Date((pd.startDate || A.startDate) + 'T00:00:00');
   if (isNaN(bRaceDate) || isNaN(startDate)) return;
-  // Figure out which week and day of week this falls in
   const diffDays = Math.round((bRaceDate - startDate) / (1000*60*60*24));
   if (diffDays < 0) return;
   const weekIdx = Math.floor(diffDays / 7); // 0-based
-  const dayOfWeek = diffDays % 7; // 0=Mon, 6=Sun
-  const DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const dayName = DAY_NAMES[dayOfWeek];
   if (weekIdx >= pd.weeks.length) return;
   const wk = pd.weeks[weekIdx];
   if (!wk || !wk.days) return;
+  // Get the actual day name from the date — don't assume Monday start
+  const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dayName = DAY_NAMES[bRaceDate.getDay()];
   // Remove any existing session on that day (replace with B race)
   wk.days = wk.days.filter(d => d.day !== dayName);
-  const distLabel = pd.bRaceDist; // e.g. "10k", "Half Marathon"
+  const distLabel = pd.bRaceDist;
   const raceSession = {
     day: dayName,
     type: 'Race',
@@ -1112,7 +1111,6 @@ function injectBRaceSession(pd) {
     heartRateZone: 'Zone 4-5'
   };
   wk.days.push(raceSession);
-  // Sort days Mon-Sun
   const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   wk.days.sort((a, b) => dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day));
 }
