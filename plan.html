@@ -1030,7 +1030,8 @@ function updateBrace() {
 function pg(el,key,val){
   // Show B race section when race distance is selected
   if(key==='race') { document.getElementById('brace-section').style.display='block'; }
-el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
+el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;
+  if(key==='race') { populateBraceDist(); }}
 function pickStrength(val){
   A.strength=val;
   document.getElementById('strength-yes').classList.toggle('sel',val===true);
