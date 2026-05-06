@@ -404,12 +404,8 @@
         </div>
         <div style="flex:1;min-width:140px;">
           <label style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Distance</label>
-          <select id="brace-dist" onchange="updateBrace()" style="width:100%;padding:10px 12px;background:#1a1a2e;border:1px solid rgba(255,255,255,0.2);border-radius:9px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+          <select id="brace-dist" onchange="updateBrace()" style="width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;">
             <option value="">Select distance</option>
-            <option value="5k">5k</option>
-            <option value="10k">10k</option>
-            <option value="Half Marathon">Half Marathon</option>
-            <option value="Marathon">Marathon</option>
           </select>
         </div>
       </div>
@@ -960,8 +956,28 @@ function updateGoalTime(){
   document.getElementById('n3').disabled=false;
 }
 
+function populateBraceDist() {
+  var race = (A.race || '').toLowerCase();
+  var sel = document.getElementById('brace-dist');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select distance</option>';
+  var opts = [];
+  if (race.includes('sprint')) {
+    opts = ['5k', '10k'];
+  } else if (race.includes('olympic')) {
+    opts = ['5k', '10k', 'Half Marathon'];
+  } else {
+    opts = ['5k', '10k', 'Half Marathon', 'Marathon'];
+  }
+  opts.forEach(function(o) {
+    var opt = document.createElement('option');
+    opt.value = o; opt.textContent = o;
+    sel.appendChild(opt);
+  });
+}
 function setBrace(yes) {
   A.braceRace = yes ? {} : null;
+  if (yes) populateBraceDist();
   document.getElementById('brace-yes').style.background = yes ? '#1E90FF' : 'transparent';
   document.getElementById('brace-yes').style.color = yes ? '#fff' : 'rgba(255,255,255,0.5)';
   document.getElementById('brace-no').style.background = yes ? 'transparent' : '#1E90FF';
