@@ -398,7 +398,7 @@
         <div style="flex:1;min-width:140px;">
           <label style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Race date</label>
           <div style="position:relative;display:flex;align-items:center;">
-            <input type="date" id="brace-date" oninput="updateBrace()" style="width:100%;padding:10px 42px 10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;">
+            <input type="date" id="brace-date" oninput="updateBrace()" style="width:100%;padding:10px 42px 10px 12px;background:#111827;border:1px solid rgba(255,255,255,0.2);border-radius:12px;color:#fff;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;">
             <button onclick="document.getElementById('brace-date').showPicker?document.getElementById('brace-date').showPicker():document.getElementById('brace-date').click()" type="button" style="position:absolute;right:8px;background:transparent;border:none;cursor:pointer;font-size:18px;line-height:1;padding:4px;opacity:0.7;" title="Pick a date">📆</button>
           </div>
         </div>
@@ -1012,7 +1012,8 @@ function updateBrace() {
 function pg(el,key,val){
   // Show B race section when race distance is selected
   if(key==='race') { document.getElementById('brace-section').style.display='block'; }
-el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
+el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;
+  if(key==='race') { populateBraceDist(); }}
 function pickStrength(val){
   A.strength=val;
   document.getElementById('strength-yes').classList.toggle('sel',val===true);
