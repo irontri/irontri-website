@@ -397,7 +397,23 @@
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <div style="flex:1;min-width:140px;">
           <label style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Race date</label>
-          <input type="date" id="brace-date" onchange="updateBrace()" style="width:100%;padding:10px 12px;background:#1a1a2e;border:1px solid rgba(255,255,255,0.2);border-radius:9px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;box-sizing:border-box;color-scheme:dark;">
+          <div style="display:flex;gap:6px;">
+            <select id="brace-day" onchange="updateBraceDate()" style="flex:1;padding:10px 8px;background:#1a1a2e;border:1px solid rgba(255,255,255,0.2);border-radius:9px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;">
+              <option value="">Day</option>
+              <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option>
+            </select>
+            <select id="brace-month" onchange="updateBraceDate()" style="flex:2;padding:10px 8px;background:#1a1a2e;border:1px solid rgba(255,255,255,0.2);border-radius:9px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;">
+              <option value="">Month</option>
+              <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option>
+              <option value="04">Apr</option><option value="05">May</option><option value="06">Jun</option>
+              <option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option>
+              <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+            </select>
+            <select id="brace-year" onchange="updateBraceDate()" style="flex:1.5;padding:10px 8px;background:#1a1a2e;border:1px solid rgba(255,255,255,0.2);border-radius:9px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;">
+              <option value="">Year</option>
+              <option value="2026">2026</option><option value="2027">2027</option>
+            </select>
+          </div>
         </div>
         <div style="flex:1;min-width:140px;">
           <label style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Distance</label>
@@ -966,11 +982,23 @@ function setBrace(yes) {
   document.getElementById('brace-fields').style.display = yes ? 'block' : 'none';
   if (!yes) { document.getElementById('brace-summary').style.display = 'none'; A.braceRace = null; }
 }
+function updateBraceDate() {
+  var day = document.getElementById('brace-day').value;
+  var month = document.getElementById('brace-month').value;
+  var year = document.getElementById('brace-year').value;
+  if (day && month && year) {
+    var paddedDay = day.padStart(2,'0');
+    document.getElementById('brace-date-hidden') && (document.getElementById('brace-date-hidden').value = year+'-'+month+'-'+paddedDay);
+    if (!A.braceRace) A.braceRace = {};
+    A.braceRace.date = year+'-'+month+'-'+paddedDay;
+    updateBrace();
+  }
+}
 function updateBrace() {
-  var d = document.getElementById('brace-date').value;
+  var d = A.braceRace && A.braceRace.date ? A.braceRace.date : null;
   var dist = document.getElementById('brace-dist').value;
   if (d && dist) {
-    var dateStr = new Date(d).toLocaleDateString('en-AU', {day:'numeric',month:'long',year:'numeric'});
+    var dateStr = new Date(d + 'T00:00:00').toLocaleDateString('en-AU', {day:'numeric',month:'long',year:'numeric'});
     A.braceRace = { date: d, distance: dist };
     var taperMsg = dist === 'Marathon' ? '2-week taper before this race' : dist === 'Half Marathon' ? '5-6 day taper before this race' : '3-4 day taper before this race';
     var recoveryMsg = dist === 'Marathon' ? '2 weeks recovery after' : '1 week recovery after';
