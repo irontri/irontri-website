@@ -1213,7 +1213,7 @@ function correctPhases(weeks, targetWeeks) {
     const isFinalWeek = isPlanComplete && i === total - 1;
     if (!isFinalWeek && w.days) {
       w.days.forEach(d => {
-        if ((d.type || '').toLowerCase() === 'race') { d.type = 'Run'; d.name = d.name || 'Run Session'; }
+        // Don't convert Race type — keep it so B race shows correctly on calendar
       });
     }
   });
