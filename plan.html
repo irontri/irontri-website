@@ -766,6 +766,7 @@
     </div>
   </div>
   <div id="plan-length-warning" style="display:none;margin-bottom:16px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:10px;padding:12px 14px;font-size:13px;color:rgba(251,191,36,0.9);line-height:1.6;"></div>
+  <div id="brace-conflict-q12" style="display:none;margin-bottom:16px;background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.3);border-radius:10px;padding:12px 14px;font-size:13px;color:rgba(251,146,60,0.9);line-height:1.6;"></div>
   <div class="qnav"><button class="bb" onclick="go(11)">← Back</button><button class="bn" id="n12" onclick="showSum()" disabled="">See my plan summary →</button></div>
 </div>
 
@@ -1053,16 +1054,22 @@ function updateBraceSummary() {
   if (!taper) return;
   // Check conflict — within 3 weeks of main race
   let conflictWarn = false;
-  if (A.date) {
-    const mainRace = new Date(A.date + 'T00:00:00');
+  let conflictText = '';
+  const mainRaceDate = A.date || (document.getElementById('idate') && document.getElementById('idate').value);
+  if (mainRaceDate) {
+    const mainRace = new Date(mainRaceDate + 'T00:00:00');
     const bRace = new Date(A.bRaceDate + 'T00:00:00');
     const diffDays = Math.round((mainRace - bRace) / (1000*60*60*24));
     if (diffDays >= 0 && diffDays <= 21) {
       conflictWarn = true;
-      conflictMsg.textContent = 'Your B race is within 3 weeks of your main race. Recovery may overlap with your final taper — consider choosing an earlier date.';
+      conflictText = '⚠️ Your ' + A.bRaceDist + ' B race is only ' + diffDays + ' days before your main race. Recovery will overlap with your final taper — consider choosing an earlier date.';
     }
   }
   conflict.style.display = conflictWarn ? 'block' : 'none';
+  if (conflictWarn) conflictMsg.textContent = conflictText.replace('⚠️ ','');
+  // Also show/hide warning in Q12
+  const q12warn = document.getElementById('brace-conflict-q12');
+  if (q12warn) { q12warn.style.display = conflictWarn ? 'block' : 'none'; if (conflictWarn) q12warn.textContent = conflictText; }
   // Format date nicely
   const bDate = new Date(A.bRaceDate + 'T00:00:00');
   const dateStr = bDate.toLocaleDateString('en-AU', {day:'numeric',month:'long',year:'numeric'});
