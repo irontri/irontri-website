@@ -1892,7 +1892,7 @@ async function buildPlan(){
     // Ensure start date is a Monday (plans run Mon-Sun)
     planData.startDate = planData.startDate || A.startDate;
     planData.basePrompt = planData.basePrompt || prompt;
-    // Save B race into planData
+    // Save B race into planData and inject session — must be after startDate is set
     if (A.bRaceDate && A.bRaceDist) {
       planData.bRaceDate = A.bRaceDate;
       planData.bRaceDist = A.bRaceDist;
@@ -3399,7 +3399,8 @@ async function autoGenerateRemainingWeeks(tw){
       const data=await r.json();
       if(!data.success)throw new Error(data.error||"build-remaining failed");
       // Reload planData from Supabase to get updated weeks
-      if(sb2){const{data:{session}}=await sb2.auth.getSession();if(session){const pr2=await sb2.from("plans").select("plan_data").eq("id",pid).single();if(pr2.data&&pr2.data.plan_data){let txt=pr2.data.plan_data;txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const pd=JSON.parse(txt);if(pd.weeks)planData.weeks=pd.weeks;}}}
+      if(sb2){const{data:{session}}=await sb2.auth.getSession();if(session){const pr2=await sb2.from("plans").select("plan_data").eq("id",pid).single();if(pr2.data&&pr2.data.plan_data){let txt=pr2.data.plan_data;txt=txt.substring(txt.indexOf("{"),txt.lastIndexOf("}")+1);const pd=JSON.parse(txt);if(pd.weeks){planData.weeks=pd.weeks;// Re-inject B race after reload — Supabase may not have it yet for early weeks
+if(planData.bRaceDate&&planData.bRaceDist)injectBRaceSession(planData);}}}}
       renderRoadmap();
       fails=0;
       if(data.done){console.log("autoGen: complete, "+planData.weeks.length+" weeks built");break;}
@@ -3408,6 +3409,11 @@ async function autoGenerateRemainingWeeks(tw){
   }
   if(A.fifo)fixFifoViolations(planData.weeks);
   correctPhases(planData.weeks);
+  // Re-inject B race now that all weeks are available
+  if (planData.bRaceDate && planData.bRaceDist) {
+    injectBRaceSession(planData);
+    checkAndSavePlan(JSON.stringify(planData));
+  }
   renderRoadmap();
   try{renderGraph();}catch(e){}
 }
