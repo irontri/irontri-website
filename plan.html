@@ -956,25 +956,11 @@ function updateGoalTime(){
   document.getElementById('n3').disabled=false;
 }
 
-function toggleBraceDist() {
-  var menu = document.getElementById('brace-dist-menu');
-  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-}
-function selectBraceDist(val) {
-  document.getElementById('brace-dist').value = val;
-  document.getElementById('brace-dist-label').textContent = val;
-  document.getElementById('brace-dist-label').style.color = '#fff';
-  document.getElementById('brace-dist-menu').style.display = 'none';
-  updateBrace();
-}
 function populateBraceDist() {
   var race = (A.race || '').toLowerCase();
-  var menu = document.getElementById('brace-dist-menu');
-  if (!menu) return;
-  menu.innerHTML = '';
-  document.getElementById('brace-dist').value = '';
-  document.getElementById('brace-dist-label').textContent = 'Select distance';
-  document.getElementById('brace-dist-label').style.color = 'rgba(255,255,255,0.5)';
+  var sel = document.getElementById('brace-dist');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select distance</option>';
   var opts = [];
   if (race.includes('sprint')) {
     opts = ['5k', '10k'];
@@ -984,13 +970,9 @@ function populateBraceDist() {
     opts = ['5k', '10k', 'Half Marathon', 'Marathon'];
   }
   opts.forEach(function(o) {
-    var div = document.createElement('div');
-    div.textContent = o;
-    div.style.cssText = 'padding:10px 14px;color:#fff;font-size:14px;cursor:pointer;font-family:Inter,sans-serif;';
-    div.onmouseover = function() { this.style.background = 'rgba(30,144,255,0.2)'; };
-    div.onmouseout = function() { this.style.background = 'transparent'; };
-    div.onclick = function() { selectBraceDist(o); };
-    menu.appendChild(div);
+    var opt = document.createElement('option');
+    opt.value = o; opt.textContent = o;
+    sel.appendChild(opt);
   });
 }
 function setBrace(yes) {
@@ -1005,7 +987,7 @@ function setBrace(yes) {
 }
 function updateBrace() {
   var d = document.getElementById('brace-date').value;
-  var dist = document.getElementById('brace-dist') ? document.getElementById('brace-dist').value : '';
+  var dist = document.getElementById('brace-dist').value;
   if (d && dist) {
     var dateStr = new Date(d + 'T00:00:00').toLocaleDateString('en-AU', {day:'numeric',month:'long',year:'numeric'});
     A.braceRace = { date: d, distance: dist };
@@ -1030,8 +1012,7 @@ function updateBrace() {
 function pg(el,key,val){
   // Show B race section when race distance is selected
   if(key==='race') { document.getElementById('brace-section').style.display='block'; }
-el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;
-  if(key==='race') { populateBraceDist(); }}
+el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
 function pickStrength(val){
   A.strength=val;
   document.getElementById('strength-yes').classList.toggle('sel',val===true);
