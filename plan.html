@@ -397,8 +397,8 @@
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <div style="flex:1;min-width:140px;">
           <label style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Race date</label>
-          <div style="position:relative;display:flex;align-items:center;">
-            <input type="date" id="brace-date" oninput="updateBrace()" style="width:100%;padding-right:42px;">
+          <div class="is" style="position:relative;display:flex;align-items:center;">
+            <input type="date" id="brace-date" oninput="updateBrace()" style="padding-right:42px;">
             <button onclick="document.getElementById('brace-date').showPicker?document.getElementById('brace-date').showPicker():document.getElementById('brace-date').click()" type="button" style="position:absolute;right:8px;background:transparent;border:none;cursor:pointer;font-size:18px;line-height:1;padding:4px;opacity:0.7;" title="Pick a date">📆</button>
           </div>
         </div>
