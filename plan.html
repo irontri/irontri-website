@@ -386,6 +386,34 @@
     <div class="og" onclick="pg(this,'race','Half Ironman 70.3')"><span class="ogi">🔥</span><div class="ogt">Half Ironman</div><div class="ogs">1.9km · 90km · 21km</div></div>
     <div class="og" onclick="pg(this,'race','Full Ironman')"><span class="ogi">🦾</span><div class="ogt">Full Ironman</div><div class="ogs">3.8km · 180km · 42km</div></div>
   </div>
+  <!-- B Race -->
+  <div id="brace-section" style="display:none;margin-top:8px;margin-bottom:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:18px;">
+    <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:14px;">Any running races before then?</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button onclick="setBrace(false)" id="brace-no" style="flex:1;padding:9px;border:1px solid rgba(255,255,255,0.15);border-radius:9px;background:#1E90FF;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">No</button>
+      <button onclick="setBrace(true)" id="brace-yes" style="flex:1;padding:9px;border:1px solid rgba(255,255,255,0.15);border-radius:9px;background:transparent;color:rgba(255,255,255,0.5);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Yes</button>
+    </div>
+    <div id="brace-fields" style="display:none;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:140px;">
+          <label style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Race date</label>
+          <input type="date" id="brace-date" onchange="updateBrace()" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:9px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+        </div>
+        <div style="flex:1;min-width:140px;">
+          <label style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Distance</label>
+          <select id="brace-dist" onchange="updateBrace()" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:9px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+            <option value="">Select distance</option>
+            <option value="5k">5k</option>
+            <option value="10k">10k</option>
+            <option value="Half Marathon">Half Marathon</option>
+            <option value="Marathon">Marathon</option>
+          </select>
+        </div>
+      </div>
+      <div id="brace-summary" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:9px;font-size:13px;color:rgba(255,255,255,0.7);"></div>
+    </div>
+  </div>
+
   <div class="qnav"><button class="bb" onclick="go(1)">← Back</button><button class="bn" id="n2" onclick="go(3)" disabled="">Continue →</button></div>
 </div>
 
@@ -928,7 +956,44 @@ function updateGoalTime(){
   breakdown.innerHTML=`<div style="font-weight:500;margin-bottom:8px;color:#fff;">Target split breakdown:</div>🏊 Swim: ${swimMins} min (${Math.floor(swimPace)}:${String(Math.round((swimPace%1)*60)).padStart(2,'0')}/100m) &nbsp;·&nbsp; 🚴 Bike: ${bikeMins} min (${bikeSpeed}km/h) &nbsp;·&nbsp; 🏃 Run: ${runMins} min (${runPaceMin}:${String(runPaceSec).padStart(2,'0')}/km)<br><span style="color:var(--faint);font-size:12px;">Transitions: ~${transMins} min · Total: ${h}h ${m}m</span>`;
   document.getElementById('n3').disabled=false;
 }
-function pg(el,key,val){el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
+
+function setBrace(yes) {
+  A.braceRace = yes ? {} : null;
+  document.getElementById('brace-yes').style.background = yes ? '#1E90FF' : 'transparent';
+  document.getElementById('brace-yes').style.color = yes ? '#fff' : 'rgba(255,255,255,0.5)';
+  document.getElementById('brace-no').style.background = yes ? 'transparent' : '#1E90FF';
+  document.getElementById('brace-no').style.color = yes ? 'rgba(255,255,255,0.5)' : '#fff';
+  document.getElementById('brace-fields').style.display = yes ? 'block' : 'none';
+  if (!yes) { document.getElementById('brace-summary').style.display = 'none'; A.braceRace = null; }
+}
+function updateBrace() {
+  var d = document.getElementById('brace-date').value;
+  var dist = document.getElementById('brace-dist').value;
+  if (d && dist) {
+    var dateStr = new Date(d).toLocaleDateString('en-AU', {day:'numeric',month:'long',year:'numeric'});
+    A.braceRace = { date: d, distance: dist };
+    var taperMsg = dist === 'Marathon' ? '2-week taper before this race' : dist === 'Half Marathon' ? '5-6 day taper before this race' : '3-4 day taper before this race';
+    var recoveryMsg = dist === 'Marathon' ? '2 weeks recovery after' : '1 week recovery after';
+    var conflictMsg = '';
+    if (A.raceDate) {
+      var mainDate = new Date(A.raceDate + 'T00:00:00');
+      var braceDate = new Date(d + 'T00:00:00');
+      var weeksApart = Math.round((mainDate - braceDate) / (7*24*60*60*1000));
+      if (weeksApart < 3) {
+        conflictMsg = ' ⚠️ This is only ' + weeksApart + ' week(s) before your main race — we recommend at least 3 weeks between races.';
+      }
+    }
+    var summary = document.getElementById('brace-summary');
+    summary.style.display = 'block';
+    summary.style.borderColor = conflictMsg ? 'rgba(251,146,60,0.4)' : 'rgba(30,144,255,0.2)';
+    summary.style.background = conflictMsg ? 'rgba(251,146,60,0.08)' : 'rgba(30,144,255,0.08)';
+    summary.textContent = '🏃 ' + dist + ' on ' + dateStr + ' — ' + taperMsg + ' · ' + recoveryMsg + conflictMsg;
+  }
+}
+function pg(el,key,val){
+  // Show B race section when race distance is selected
+  if(key==='race') { document.getElementById('brace-section').style.display='block'; }
+el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
 function pickStrength(val){
   A.strength=val;
   document.getElementById('strength-yes').classList.toggle('sel',val===true);
@@ -1611,7 +1676,40 @@ async function buildPlan(){
       "\n\nThis is a CRITICAL hard constraint. ABSOLUTELY DO NOT schedule any banned session types in work weeks. Replace any banned session with Rest or an allowed type. Violation of this rule makes the plan completely unusable for the athlete."+
       "\n=============================================";
   }
-  const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", strength training: "+(A.strength?"YES — include 1 strength session per week (core stability, glutes, single-leg exercises, 30-45 mins). Label as type Strength.":"No strength sessions — swim, bike and run only")+", age: "+A.age+", goal race time (for motivation and narrative context ONLY — do NOT use this to set training pace targets, use Strava fitness data for all paces): "+(A.goaltimeText||"finish — no time target")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.units==="imperial"?", UNITS: IMPERIAL — use miles, yards, min/mile, min/100yd, mph for ALL distances and paces throughout the ENTIRE plan. NEVER use km, km/h, /km or /100m anywhere in any session. Every single pace target, distance and speed must be in imperial.":"")+
+  const braceStr = (A.braceRace && A.braceRace.date && A.braceRace.distance)
+    ? (function() {
+      var dist = A.braceRace.distance;
+      var date = A.braceRace.date;
+      var taperDays, recoveryWeeks, taperNote, recoveryNote, conflictNote = "";
+      if (dist === "5k" || dist === "10k") {
+        taperDays = 3;
+        recoveryWeeks = 1;
+        taperNote = "3-4 days before the race: reduce run volume by 40%, keep runs short (20-30 min, Zone 1-2 only). Swim and bike training continues normally.";
+        recoveryNote = "2-3 easy recovery runs the week after before resuming normal training.";
+      } else if (dist === "Half Marathon") {
+        taperDays = 6;
+        recoveryWeeks = 1;
+        taperNote = "5-6 days before the race: replace all run sessions with easy short runs (30-40 min, Zone 1-2 only). No long runs. Swim and bike training continues normally.";
+        recoveryNote = "Full week of easy running after before resuming normal training.";
+      } else if (dist === "Marathon") {
+        taperDays = 14;
+        recoveryWeeks = 2;
+        taperNote = "2 weeks before the race: Week 1 — reduce long run by 30%, no speed work. Week 2 (race week) — only short easy runs (20-30 min), no hard efforts. Swim and bike training continues normally throughout taper.";
+        recoveryNote = "2 full weeks of easy running after before resuming normal Ironman build training.";
+      }
+      // Conflict detection — warn if B race is within 3 weeks of main race
+      if (A.raceDate) {
+        var mainDate = new Date(A.raceDate + "T00:00:00");
+        var braceDate = new Date(date + "T00:00:00");
+        var weeksApart = Math.round((mainDate - braceDate) / (7*24*60*60*1000));
+        if (weeksApart < 3) {
+          conflictNote = " WARNING: This B race is only " + weeksApart + " week(s) before the main event — keep the B race effort controlled (no more than 80% effort) to protect the main race.";
+        }
+      }
+      return "\n\nB RACE (RUNNING): The athlete has a " + dist + " running race on " + date + "." + conflictNote + " TAPER: " + taperNote + " Race day: label as type Run, name '" + dist + " Race', effort 4, coach note acknowledging it is a B race, run to effort but not all-out — protect the Ironman build. RECOVERY: " + recoveryNote;
+    })()
+    : "";
+  const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", strength training: "+(A.strength?"YES — include 1 strength session per week (core stability, glutes, single-leg exercises, 30-45 mins). Label as type Strength.":"No strength sessions — swim, bike and run only")+", age: "+A.age+", goal race time (for motivation and narrative context ONLY — do NOT use this to set training pace targets, use Strava fitness data for all paces): "+(A.goaltimeText||"finish — no time target")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.units==="imperial"?", UNITS: IMPERIAL — use miles, yards, min/mile, min/100yd, mph for ALL distances and paces throughout the ENTIRE plan. NEVER use km, km/h, /km or /100m anywhere in any session. Every single pace target, distance and speed must be in imperial.":"") + braceStr+
   (A.stravaFitness ? "\n\nSTRAVA FITNESS DATA — CRITICAL: Use these EXACT numbers in every session. Do NOT use % FTP or zone labels when actual watts/BPM are provided:\n" +
     (A.stravaFitness.run ? "- Run: avg pace "+(A.units==="imperial" ? (()=>{const p=A.stravaFitness.run.avgPace;const [m,s]=p.split(':').map(Number);const totalSec=m*60+s;const mpm=totalSec*1.60934;const mm=Math.floor(mpm/60);const ss=Math.round(mpm%60);return mm+':'+(ss<10?'0':'')+ss})()+" min/mile" : A.stravaFitness.run.avgPace+"/km")+", threshold pace "+(A.units==="imperial" ? (()=>{const p=A.stravaFitness.run.thresholdPace;const [m,s]=p.split(':').map(Number);const totalSec=m*60+s;const mpm=totalSec*1.60934;const mm=Math.floor(mpm/60);const ss=Math.round(mpm%60);return mm+':'+(ss<10?'0':'')+ss})()+" min/mile" : A.stravaFitness.run.thresholdPace+"/km")+", max HR "+A.stravaFitness.run.maxHR+"bpm, weekly volume "+(A.units==="imperial" ? Math.round(A.stravaFitness.run.weeklyDistanceKm*0.621)+"mi" : A.stravaFitness.run.weeklyDistanceKm+"km")+"\n" : "") +
     (A.stravaFitness.bike ? "- Bike: avg speed "+(A.units==="imperial" ? Math.round(A.stravaFitness.bike.avgSpeedKmh*0.621)+"mph" : A.stravaFitness.bike.avgSpeedKmh+"km/h")+(A.stravaFitness.bike.ftpEstimate?", FTP = "+A.stravaFitness.bike.ftpEstimate+"w (use actual watts in sessions, e.g. Zone 2 = "+(Math.round(A.stravaFitness.bike.ftpEstimate*0.56))+"-"+(Math.round(A.stravaFitness.bike.ftpEstimate*0.75))+"w, Threshold = "+(Math.round(A.stravaFitness.bike.ftpEstimate*0.91))+"-"+(Math.round(A.stravaFitness.bike.ftpEstimate*1.05))+"w)":"")+", weekly volume "+(A.units==="imperial" ? Math.round(A.stravaFitness.bike.weeklyDistanceKm*0.621)+"mi" : A.stravaFitness.bike.weeklyDistanceKm+"km")+"\n" : "") +
