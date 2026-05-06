@@ -3111,6 +3111,10 @@ function downloadPDF(){
     return;
   }if(!planData||!planData.weeks)return;const race=planData.raceDate||A.date||"",name=A.name||localStorage.getItem("irontri_user_name")||"Athlete";let html="<html><head><meta charset=\"UTF-8\"><style>body{font-family:Arial,sans-serif;font-size:12px;color:#111;max-width:800px;margin:0 auto;padding:20px;}h2{font-size:15px;color:#1E90FF;border-bottom:2px solid #1E90FF;padding-bottom:4px;margin:18px 0 6px;}.s{margin-bottom:8px;padding:8px 10px;border-left:3px solid #ccc;background:#f9f9f9;}.swim{border-color:#38bdf8;}.bike{border-color:#fb923c;}.run{border-color:#4ade80;}.brick{border-color:#a78bfa;}</style></head><body>";html+="<h1>"+name+"'s "+(A.race||planData.race||"Training Plan")+"</h1><p>"+planData.weeks.length+" weeks"+(race?" · Race: "+new Date(race+"T00:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"long",year:"numeric"}):"")+"</p>";planData.weeks.forEach((wk,wi)=>{const tm=wk.days.reduce((a,d)=>a+(d.duration||0),0);html+="<h2>Week "+(wi+1)+" — "+(wk.phase||"")+" · "+fmtDur(tm)+"</h2>";if(wk.weeklyNarrative)html+="<p style=\"font-style:italic;font-size:11px;color:#555;\">"+ wk.weeklyNarrative+"</p>";wk.days.forEach(d=>{const t=(d.type||"Rest").toLowerCase();if(t==="rest")return;html+="<div class=\"s "+t+"\"><strong>"+(d.name||d.type)+"</strong> · "+fmtDur(d.duration||0)+(d.effort?" · RPE "+d.effort+"/10":"")+"<br>"+(d.mainset?"<span style=\"font-size:11px;\">"+ d.mainset+"</span><br>":"")+(d.coachNote?"<em style=\"font-size:10px;color:#666;\">"+ d.coachNote+"</em>":"")+"</div>";});});html+="</body></html>";const blob=new Blob([html],{type:"text/html"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name.replace(/[^a-z0-9]/gi,"_")+"_Training_Plan.html";a.click();}
 async function startCheckout() {
+  if (typeof _planPaywallPlan !== 'undefined' && _planPaywallPlan === 'yearly') {
+    window.location.href = 'https://buy.stripe.com/8x29AT3xs2wbfCn8VJ1wY02';
+    return;
+  }
   const btn = document.getElementById('checkout-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Redirecting...'; }
   try {
@@ -3230,9 +3234,14 @@ async function autoGenerateRemainingWeeks(tw){
   <div style="background:#161616;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:36px 28px;max-width:420px;width:100%;text-align:center;animation:fu 0.3s ease both;">
     <div style="font-size:40px;margin-bottom:16px;">🏊‍♂️🚴‍♂️🏃‍♂️</div>
     <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px;">Your free trial has ended</div>
-    <div style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:28px;">Keep training with your personalised plan — every session, every week, all the way to race day.</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:20px;">Keep training with your personalised plan — every session, every week, all the way to race day.</div>
+    <div style="display:flex;background:#0f172a;border-radius:10px;padding:4px;margin-bottom:16px;gap:4px;">
+      <button onclick="setPlanPaywallPlan('monthly')" id="plan-pw-monthly-btn" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;background:#1E90FF;color:#fff;">Monthly</button>
+      <button onclick="setPlanPaywallPlan('yearly')" id="plan-pw-yearly-btn" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;background:transparent;color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;gap:6px;">Yearly <span style="background:rgba(255,255,255,0.15);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;">Save 17%</span></button>
+    </div>
     <div style="background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:14px;padding:20px;margin-bottom:24px;">
-      <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#1E90FF;">$20<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.5)">/month</span></div>
+      <div id="plan-pw-price" style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#1E90FF;">$20<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.5)">/month</span></div>
+      <div id="plan-pw-equiv" style="font-size:12px;color:rgba(74,222,128,0.9);margin-top:2px;font-weight:600;display:none;">That's just $16.67/mo</div>
       <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;">Cancel anytime</div>
       <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;text-align:left;">
         <div style="font-size:13px;color:rgba(255,255,255,0.75);">✅ Full plan to race day</div>
@@ -3245,6 +3254,30 @@ async function autoGenerateRemainingWeeks(tw){
     <a href="/dashboard.html" style="display:block;font-size:13px;color:rgba(255,255,255,0.35);text-decoration:none;">Go to dashboard</a>
   </div>
 </div>
+<script>
+var _planPaywallPlan = 'monthly';
+function setPlanPaywallPlan(plan) {
+  _planPaywallPlan = plan;
+  var mb = document.getElementById('plan-pw-monthly-btn');
+  var yb = document.getElementById('plan-pw-yearly-btn');
+  var pr = document.getElementById('plan-pw-price');
+  var eq = document.getElementById('plan-pw-equiv');
+  var cb = document.getElementById('checkout-btn');
+  if (plan === 'yearly') {
+    mb.style.background = 'transparent'; mb.style.color = 'rgba(255,255,255,0.5)';
+    yb.style.background = '#1E90FF'; yb.style.color = '#fff';
+    pr.innerHTML = '$199.99<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.5)">/year</span>';
+    eq.style.display = 'block';
+    cb.textContent = 'Continue my plan — $199.99/year';
+  } else {
+    mb.style.background = '#1E90FF'; mb.style.color = '#fff';
+    yb.style.background = 'transparent'; yb.style.color = 'rgba(255,255,255,0.5)';
+    pr.innerHTML = '$20<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.5)">/month</span>';
+    eq.style.display = 'none';
+    cb.textContent = 'Continue my plan — $20/month';
+  }
+}
+</script>
 <!-- END PAYWALL MODAL -->
 
 <!-- BOTTOM TAB BAR -->
