@@ -329,7 +329,9 @@
     .trixy-suggestions{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px;}
     .trixy-sug{background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.25);color:#4da8ff;font-size:13px;padding:8px 14px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;transition:all 0.15s;}
     .trixy-sug:hover{background:rgba(30,144,255,0.22);border-color:rgba(30,144,255,0.5);color:#fff;}
-  </style>
+  #brace-dist option { background:#111827; color:#fff; }
+#brace-dist { color-scheme: dark; }
+</style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
 <!-- Google Analytics -->
 <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
@@ -956,11 +958,21 @@ function updateGoalTime(){
   document.getElementById('n3').disabled=false;
 }
 
+function selectBraceDist(val) {
+  document.getElementById('brace-dist').value = val;
+  document.getElementById('brace-dist-label').textContent = val;
+  document.getElementById('brace-dist-label').style.color = '#fff';
+  document.getElementById('brace-dist-menu').style.display = 'none';
+  updateBrace();
+}
 function populateBraceDist() {
   var race = (A.race || '').toLowerCase();
-  var sel = document.getElementById('brace-dist');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">Select distance</option>';
+  var menu = document.getElementById('brace-dist-menu');
+  if (!menu) return;
+  menu.innerHTML = '';
+  document.getElementById('brace-dist').value = '';
+  document.getElementById('brace-dist-label').textContent = 'Select distance';
+  document.getElementById('brace-dist-label').style.color = 'rgba(255,255,255,0.5)';
   var opts = [];
   if (race.includes('sprint')) {
     opts = ['5k', '10k'];
@@ -970,9 +982,13 @@ function populateBraceDist() {
     opts = ['5k', '10k', 'Half Marathon', 'Marathon'];
   }
   opts.forEach(function(o) {
-    var opt = document.createElement('option');
-    opt.value = o; opt.textContent = o;
-    sel.appendChild(opt);
+    var div = document.createElement('div');
+    div.textContent = o;
+    div.style.cssText = 'padding:10px 14px;color:#fff;font-size:14px;cursor:pointer;font-family:Inter,sans-serif;';
+    div.onmouseover = function() { this.style.background = 'rgba(30,144,255,0.2)'; };
+    div.onmouseout = function() { this.style.background = 'transparent'; };
+    div.onclick = function() { selectBraceDist(o); };
+    menu.appendChild(div);
   });
 }
 function setBrace(yes) {
@@ -987,7 +1003,7 @@ function setBrace(yes) {
 }
 function updateBrace() {
   var d = document.getElementById('brace-date').value;
-  var dist = document.getElementById('brace-dist').value;
+  var dist = document.getElementById('brace-dist') ? document.getElementById('brace-dist').value : '';
   if (d && dist) {
     var dateStr = new Date(d + 'T00:00:00').toLocaleDateString('en-AU', {day:'numeric',month:'long',year:'numeric'});
     A.braceRace = { date: d, distance: dist };
@@ -1012,7 +1028,8 @@ function updateBrace() {
 function pg(el,key,val){
   // Show B race section when race distance is selected
   if(key==='race') { document.getElementById('brace-section').style.display='block'; }
-el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;}
+el.closest('.ogrid').querySelectorAll('.og').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');A[key]=val;const m={race:'n2',age:'n11'};if(m[key])document.getElementById(m[key]).disabled=false;
+  if(key==='race'){populateBraceDist();}}
 function pickStrength(val){
   A.strength=val;
   document.getElementById('strength-yes').classList.toggle('sel',val===true);
