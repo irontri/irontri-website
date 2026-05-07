@@ -2648,7 +2648,15 @@ async function checkAndSavePlan(planText) {
           const { data: existingPlans } = await sb2.from('plans').select('is_founding_member').eq('user_id', session.user.id).eq('is_founding_member', true).limit(1);
           foundingFlag = existingPlans && existingPlans.length > 0;
         }
-        const { data: inserted, error } = await sb2.from('plans').insert({user_id: session.user.id, plan_data: planText, race: A.race || 'Triathlon', is_founding_member: foundingFlag}).select('id').single();
+        // Carry is_paid from session metadata or existing paid plan so paid users don't lose access on new plan creation
+        const isPaidMeta = session.user.user_metadata && session.user.user_metadata.is_paid === true;
+        let isPaidFlag = isPaidMeta;
+        if (!isPaidFlag) {
+          const { data: paidPlans } = await sb2.from('plans').select('is_paid, stripe_subscription_id').eq('user_id', session.user.id).eq('is_paid', true).limit(1);
+          isPaidFlag = paidPlans && paidPlans.length > 0;
+        }
+        const stripeSubId = isPaidFlag ? (session.user.user_metadata?.stripe_subscription_id || null) : null;
+        const { data: inserted, error } = await sb2.from('plans').insert({user_id: session.user.id, plan_data: planText, race: A.race || 'Triathlon', is_founding_member: foundingFlag, is_paid: isPaidFlag, stripe_subscription_id: stripeSubId}).select('id').single();
         if (!error && inserted) { window.currentPlanId = inserted.id; const b = document.getElementById('saved-banner'); if(b) b.style.display='block'; }
         else { localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race})); const b = document.getElementById('save-banner'); if(b) b.style.display='block'; }
       }
