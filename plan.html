@@ -1884,7 +1884,7 @@ async function buildPlan(){
     loadCompletions().then(() => { renderWeek(); syncStravaActivities(); });
     if(A.date){planData.raceDate=A.date;}
     if(A.units){planData.units=A.units;}
-    if(A.stravaFitness){planData.stravaFitness=JSON.stringify(A.stravaFitness);}
+    if(A.stravaFitness){planData.stravaFitness=JSON.stringify(A.stravaFitness);planData.baselineFitness=JSON.stringify(A.stravaFitness);}
     // Save FIFO settings into planData so they survive plan reloads and pauses
     if(A.fifo){
       planData.fifo=true;
@@ -2405,6 +2405,7 @@ async function loadStravaFitnessWithUserId(overrideUserId) {
       return;
     }
     stravaFitnessData = data;
+    A.stravaFitness = data; // Auto-set so it's always captured even if user doesn't click Apply
     const lines = [];
     if (data.run) lines.push('🏃 Run: avg pace ' + (data.run.avgPace||'—') + '/km · max HR ' + (data.run.maxHR||'—') + 'bpm');
     if (data.bike) lines.push(data.bike.hasPowerMeter ? '🚴 Bike: ' + (data.bike.avgSpeedKmh||'—') + 'km/h · FTP ~' + (data.bike.ftpEstimate||'—') + 'w' : '🚴 Bike: avg ' + (data.bike.avgSpeedKmh||'—') + 'km/h');
@@ -2448,6 +2449,7 @@ async function loadStravaFitness() {
       return;
     }
     stravaFitnessData = data;
+    A.stravaFitness = data; // Auto-set so it's always captured even if user doesn't click Apply
     const lines = [];
     if (data.run) lines.push('🏃 Run: avg pace ' + (data.run.avgPace||'—') + '/km · max HR ' + (data.run.maxHR||'—') + 'bpm');
     if (data.bike) lines.push(data.bike.hasPowerMeter ? '🚴 Bike: ' + (data.bike.avgSpeedKmh||'—') + 'km/h · FTP ~' + (data.bike.ftpEstimate||'—') + 'w' : '🚴 Bike: avg ' + (data.bike.avgSpeedKmh||'—') + 'km/h');
