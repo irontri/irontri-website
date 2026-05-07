@@ -68,6 +68,14 @@ export default async function handler(req, res) {
       })
     });
     console.log('Plan patch status:', patchRes.status, 'for:', email);
+
+    // Also update auth.users raw_user_meta_data so app/web session reflects is_paid immediately
+    const metaPatchRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+      method: 'PUT',
+      headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_metadata: { is_paid: true, stripe_subscription_id: subscriptionId || null } })
+    });
+    console.log('Auth meta patch status:', metaPatchRes.status, 'for:', email);
   }
 
   async function sendWelcomeEmail(email, name) {
