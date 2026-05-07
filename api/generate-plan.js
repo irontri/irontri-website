@@ -392,6 +392,24 @@ JSON structure for weeks:
       const pd = JSON.parse(txt);
       pd.basePrompt = sanitizeInput(prompt);
       sanitizePlan(pd);
+      // Strip sessions on disallowed days — extract allowed days from prompt
+      const _ALL_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+      const _daysMatch = prompt.match(/days?:\s*([A-Za-z/,\s]+?)(?:\.|,|\s{2}|training|pool|injury|race|start)/i);
+      if (_daysMatch) {
+        const _raw = _daysMatch[1];
+        const _allowed = _ALL_DAYS.filter(d => _raw.toLowerCase().includes(d.toLowerCase()));
+        if (_allowed.length > 0) {
+          const _rest = { type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Recovery day', warmup: '', mainset: 'Full rest.', cooldown: '', coachNote: 'Rest is training. Sleep, nutrition, recovery.', paceTarget: 'N/A', heartRateZone: 'Zone 1' };
+          (pd.weeks || []).forEach(wk => {
+            if (!wk.days) return;
+            wk.days = wk.days.map(d => {
+              if (d.type === 'Rest' || d.type === 'Race') return d;
+              if (!_allowed.includes(d.day)) return { ..._rest, day: d.day };
+              return d;
+            });
+          });
+        }
+      }
       planDataToSave = JSON.stringify(pd);
     } catch(e) {
       console.log('Could not inject basePrompt:', e);
