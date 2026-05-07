@@ -271,7 +271,19 @@ export default async function handler(req, res) {
     const _phaseForBatch=_getPhase(startWk);
     const intensityRule = `INTENSITY DISTRIBUTION (80/20 polarised training — enforced every week): A minimum of 80% of weekly sessions must be Zone 1-2 (effort 1-6/10). A maximum of 20% may be Zone 4-5 (effort 7-9/10). ZERO Zone 3 moderate sessions — every session is either clearly easy OR clearly hard. In a 7-session week: maximum 1-2 hard sessions. In a 5-session week: maximum 1 hard session. Hard sessions are: track runs, threshold bike intervals, VO2max efforts, race pace brick runs. Long ride and long run are ALWAYS Zone 2 easy — never make them hard.`;
 
-    const structureInstructions = `${intensityRule} Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${doubleSessionRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${bRaceTaperRule} ${raceDayRule}`;
+    // Extract allowed training days from basePrompt to enforce hard constraint
+    const ALL_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const _daysMatch = basePrompt.match(/days?:\s*([A-Za-z/,\s]+?)(?:\.|,|\s{2}|training|pool|injury|race|start)/i);
+    let allowedDays = [];
+    if (_daysMatch) {
+      const _raw = _daysMatch[1];
+      allowedDays = ALL_DAYS.filter(d => _raw.toLowerCase().includes(d.toLowerCase()));
+    }
+    const trainingDaysRule = allowedDays.length > 0
+      ? `CRITICAL TRAINING DAYS RULE: The athlete can ONLY train on these days: ${allowedDays.join(', ')}. You MUST place Rest sessions on ALL other days (${ALL_DAYS.filter(d => !allowedDays.includes(d)).join(', ')}). This is a hard constraint — NEVER place a training session on a day not in this list, no exceptions.`
+      : '';
+
+    const structureInstructions = `${intensityRule} ${trainingDaysRule} Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${doubleSessionRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${bRaceTaperRule} ${raceDayRule}`;
 
     const prompt = basePrompt + fifoBlock + structureInstructions;
 
@@ -567,6 +579,22 @@ export default async function handler(req, res) {
         }
       }
     });
+
+    // Post-process: hard-strip any sessions on disallowed days — AI sometimes ignores the rule
+    if (allowedDays.length > 0) {
+      const restSession = { type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Recovery day', warmup: '', mainset: 'Full rest — allow your body to recover and adapt.', cooldown: '', coachNote: 'Rest is training. Use this day for sleep, nutrition and mental recovery.', paceTarget: 'N/A', heartRateZone: 'Zone 1' };
+      newWeeks.forEach(wk => {
+        if (!wk.days) return;
+        wk.days = wk.days.map(d => {
+          if (d.type === 'Rest') return d;
+          if (!allowedDays.includes(d.day)) {
+            console.log(`Stripping session on disallowed day ${d.day} (week ${wk.weekNumber})`);
+            return { ...restSession, day: d.day };
+          }
+          return d;
+        });
+      });
+    }
 
     // Post-process: pair strength sessions with a swim day (double session)
     // Professional triathlon programming: strength in afternoon after morning swim
