@@ -3074,8 +3074,22 @@ function closeModal(e) {
 }
 
 // ── SKIP SESSION ──────────────────────────────────────────────────────────────
-function skipSession(weekIdx, dayIdx) {
-  const day = planData.weeks[weekIdx].days[dayIdx];
+function skipSession(weekIdx, slotIdx, sessionType) {
+  const w = planData.weeks[weekIdx];
+  if (!w || !w.days) return;
+  // Find the correct day index — for double sessions slotIdx is the calendar slot,
+  // not the days array index. Match by session type if provided, otherwise by day name.
+  const slot = window._daySlots ? window._daySlots[slotIdx] : null;
+  const slotSessions = slot ? slot.sessions : null;
+  const activeTab = (window._activeSessionTab && window._activeSessionTab[slotIdx]) || 0;
+  const targetSession = slotSessions ? slotSessions[sessionType !== undefined ? activeTab : 0] : null;
+  // Find the actual index in the days array
+  let dayIdx = slotIdx;
+  if (targetSession) {
+    const foundIdx = w.days.findIndex(d => d === targetSession || (d.day === targetSession.day && d.type === targetSession.type && d.name === targetSession.name));
+    if (foundIdx !== -1) dayIdx = foundIdx;
+  }
+  const day = w.days[dayIdx];
   if (!day || day.type === 'Rest') return;
   if (!confirm('Skip "' + (day.name || day.type) + '"?\n\nThis session will be removed from your week. You can always build a new plan.')) return;
   // Replace with a Rest day, keeping the day name
