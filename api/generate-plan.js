@@ -438,7 +438,7 @@ JSON structure for weeks:
       }
     }
 
-    return res.status(200).json({ plan: planText });
+    return res.status(200).json({ plan: planDataToSave });
   } catch(e) {
     console.error('Handler error:', e);
     return res.status(500).json({ error: 'Something went wrong. Please try again.' });
