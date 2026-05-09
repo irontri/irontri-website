@@ -262,12 +262,12 @@ FITNESS LEVEL SCALING (apply based on "fitness" field in prompt):
 - MANDATORY REST DAY: Regardless of fitness level, weeks 1 and 2 of ANY plan MUST include at least 1 full rest day. No exceptions - even elite athletes need structural rest in week 1. This overrides all other scheduling rules.
 - BASE PHASE VOLUME PROGRESSION: Volume MUST build progressively week over week in Base phase. Follow this exact structure regardless of fitness level: Week 1 = 55-65% of stated weekly hours. Week 2 = 65-70% of stated weekly hours. Week 3 = 70-78% of stated weekly hours. Week 4 = 78-85% of stated weekly hours. CRITICAL: Week 2 must always have MORE total volume than Week 1. Week 3 must always have MORE than Week 2. Week 4 must always have MORE than Week 3. NEVER generate weeks that decrease in volume during Base phase unless it is a planned recovery week. Example for 16hr/week athlete: week 1 = ~9hrs, week 2 = ~10.5hrs, week 3 = ~11.5hrs, week 4 = ~13hrs. Double sessions in weeks 1-2 must stay within the volume cap for that week.
 
-WEAKNESS TARGETING (apply based on "weakness" field in prompt - this shapes the entire plan):
-- "Swim": Add a THIRD swim session per week in Build and Peak phases (replace one rest day). Make swim the longest single-discipline session in peak week. Include more open water sessions. Add technique drills to every swim.
-- "Bike": Add an extra mid-week bike session in Build and Peak (replace one rest day). Extend long ride by 15-20% vs standard. Include more threshold bike work in Build/Peak.
-- "Run": Add an extra run session in Build and Peak. Extend long run by 15-20% vs standard. Include more track work and tempo runs.
+WEAKNESS TARGETING (apply based on "weakness" field in prompt - this shapes the ENTIRE plan — this is a HARD SESSION COUNT RULE not just a suggestion):
+- "Swim": Every week MUST have MORE swim sessions than any other discipline. Base: minimum 2 swims. Build/Peak: minimum 3 swims. Make swim the longest single-discipline session in peak week. Include technique drills in every swim. Add open water swims in Build/Peak.
+- "Bike": Every week MUST have MORE bike sessions than any other discipline. Base: minimum 2 bikes. Build/Peak: minimum 3 bikes. Extend long ride by 15-20% vs standard. Include more threshold bike work in Build/Peak. The long ride is the most important session — NEVER shorten or replace it.
+- "Run": Every week MUST have MORE run sessions than any other discipline. Base: minimum 2 runs. Build/Peak: minimum 3 runs. Extend long run by 15-20% vs standard. Include more track work and tempo runs in Build/Peak.
 - "Transition / T1 and T2 speed": Include transition practice notes in every brick session coachNote. Add specific T1/T2 drill notes.
-- "All three equally" or "Balanced": Standard distribution - no single discipline dominates.
+- "All three equally" or "Balanced": Standard distribution — no single discipline dominates.
 - Always acknowledge the weakness in the weeklyNarrative for the first week: "This plan prioritises [weakness] to address your biggest area for improvement."
 
 REALISTIC PACE TARGETS BY LEVEL:
