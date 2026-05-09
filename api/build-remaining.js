@@ -181,6 +181,23 @@ export default async function handler(req, res) {
     })();
 
     // Progressive bike volume — calculated per batch so AI always gets exact targets
+    // Extract weakness from basePrompt and build a hard session count rule
+    const _weakMatch = basePrompt.match(/weakness:\s*([^,\.]+)/i);
+    const _weak = _weakMatch ? _weakMatch[1].toLowerCase().trim() : '';
+    const weaknessRule = (() => {
+      const phase = _phaseForBatch.toLowerCase();
+      const isTaper = phase === 'taper' || phase === 'race week';
+      if (isTaper) return ''; // no weakness weighting in taper/race week
+      if (_weak.includes('bike')) {
+        return `WEAKNESS — BIKE: The athlete identified bike as their weakness. Every week MUST have MORE bike sessions than any other discipline. In Base: minimum 2 bike sessions. In Build/Peak: minimum 3 bike sessions. The long ride is the most important session of the week — NEVER shorten or replace it. Add an extra mid-week bike session on any available training day before adding extra swim or run sessions.`;
+      } else if (_weak.includes('swim')) {
+        return `WEAKNESS — SWIM: The athlete identified swim as their weakness. Every week MUST have MORE swim sessions than any other discipline. In Base: minimum 2 swim sessions. In Build/Peak: minimum 3 swim sessions. Include technique drills in every swim. Make swim the longest single-discipline time investment in peak weeks.`;
+      } else if (_weak.includes('run')) {
+        return `WEAKNESS — RUN: The athlete identified run as their weakness. Every week MUST have MORE run sessions than any other discipline. In Base: minimum 2 run sessions. In Build/Peak: minimum 3 run sessions. Extend the long run by 15-20% vs a balanced plan. Include tempo and track work in Build/Peak phases.`;
+      }
+      return '';
+    })();
+
     const bikeVolumeRule = (() => {
       if (isFull) {
         const pct = startWk / totalNeeded;
@@ -283,7 +300,7 @@ export default async function handler(req, res) {
       ? `CRITICAL TRAINING DAYS RULE: The athlete can ONLY train on these days: ${allowedDays.join(', ')}. You MUST place Rest sessions on ALL other days (${ALL_DAYS.filter(d => !allowedDays.includes(d)).join(', ')}). This is a hard constraint — NEVER place a training session on a day not in this list, no exceptions.`
       : '';
 
-    const structureInstructions = `${intensityRule} ${trainingDaysRule} Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${doubleSessionRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${bRaceTaperRule} ${raceDayRule}`;
+    const structureInstructions = `${intensityRule} ${trainingDaysRule} ${weaknessRule} Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${doubleSessionRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${bRaceTaperRule} ${raceDayRule}`;
 
     const prompt = basePrompt + fifoBlock + structureInstructions;
 
