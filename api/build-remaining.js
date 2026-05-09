@@ -181,23 +181,6 @@ export default async function handler(req, res) {
     })();
 
     // Progressive bike volume — calculated per batch so AI always gets exact targets
-    // Extract weakness from basePrompt and build a hard session count rule
-    const _weakMatch = basePrompt.match(/weakness:\s*([^,\.]+)/i);
-    const _weak = _weakMatch ? _weakMatch[1].toLowerCase().trim() : '';
-    const weaknessRule = (() => {
-      const phase = _phaseForBatch.toLowerCase();
-      const isTaper = phase === 'taper' || phase === 'race week';
-      if (isTaper) return ''; // no weakness weighting in taper/race week
-      if (_weak.includes('bike')) {
-        return `WEAKNESS — BIKE: The athlete identified bike as their weakness. Every week MUST have MORE bike sessions than any other discipline. In Base: minimum 2 bike sessions. In Build/Peak: minimum 3 bike sessions. The long ride is the most important session of the week — NEVER shorten or replace it. Add an extra mid-week bike session on any available training day before adding extra swim or run sessions.`;
-      } else if (_weak.includes('swim')) {
-        return `WEAKNESS — SWIM: The athlete identified swim as their weakness. Every week MUST have MORE swim sessions than any other discipline. In Base: minimum 2 swim sessions. In Build/Peak: minimum 3 swim sessions. Include technique drills in every swim. Make swim the longest single-discipline time investment in peak weeks.`;
-      } else if (_weak.includes('run')) {
-        return `WEAKNESS — RUN: The athlete identified run as their weakness. Every week MUST have MORE run sessions than any other discipline. In Base: minimum 2 run sessions. In Build/Peak: minimum 3 run sessions. Extend the long run by 15-20% vs a balanced plan. Include tempo and track work in Build/Peak phases.`;
-      }
-      return '';
-    })();
-
     const bikeVolumeRule = (() => {
       if (isFull) {
         const pct = startWk / totalNeeded;
@@ -286,6 +269,23 @@ export default async function handler(req, res) {
     const _baseEnd=Math.floor(totalNeeded*0.30);const _buildEnd=Math.floor(totalNeeded*0.65);const _peakEnd=Math.floor(totalNeeded*0.85);const _taperEnd=totalNeeded-1;
     const _getPhase=(wk)=>wk<=_baseEnd?'Base':wk<=_buildEnd?'Build':wk<=_peakEnd?'Peak':wk<totalNeeded?'Taper':'Race Week';
     const _phaseForBatch=_getPhase(startWk);
+
+    // Extract weakness from basePrompt and build a hard session count rule — MUST be after _phaseForBatch
+    const _weakMatch = basePrompt.match(/weakness:\s*([^,\.]+)/i);
+    const _weak = _weakMatch ? _weakMatch[1].toLowerCase().trim() : '';
+    const weaknessRule = (() => {
+      const phase = _phaseForBatch.toLowerCase();
+      const isTaper = phase === 'taper' || phase === 'race week';
+      if (isTaper) return '';
+      if (_weak.includes('bike')) {
+        return `WEAKNESS — BIKE: The athlete identified bike as their weakness. Every week MUST have MORE bike sessions than any other discipline. In Base: minimum 2 bike sessions. In Build/Peak: minimum 3 bike sessions. The long ride is the most important session of the week — NEVER shorten or replace it. Add an extra mid-week bike session on any available training day before adding extra swim or run sessions.`;
+      } else if (_weak.includes('swim')) {
+        return `WEAKNESS — SWIM: The athlete identified swim as their weakness. Every week MUST have MORE swim sessions than any other discipline. In Base: minimum 2 swim sessions. In Build/Peak: minimum 3 swim sessions. Include technique drills in every swim. Make swim the longest single-discipline time investment in peak weeks.`;
+      } else if (_weak.includes('run')) {
+        return `WEAKNESS — RUN: The athlete identified run as their weakness. Every week MUST have MORE run sessions than any other discipline. In Base: minimum 2 run sessions. In Build/Peak: minimum 3 run sessions. Extend the long run by 15-20% vs a balanced plan. Include tempo and track work in Build/Peak phases.`;
+      }
+      return '';
+    })();
     const intensityRule = `INTENSITY DISTRIBUTION (80/20 polarised training — enforced every week): A minimum of 80% of weekly sessions must be Zone 1-2 (effort 1-6/10). A maximum of 20% may be Zone 4-5 (effort 7-9/10). ZERO Zone 3 moderate sessions — every session is either clearly easy OR clearly hard. In a 7-session week: maximum 1-2 hard sessions. In a 5-session week: maximum 1 hard session. Hard sessions are: track runs, threshold bike intervals, VO2max efforts, race pace brick runs. Long ride and long run are ALWAYS Zone 2 easy — never make them hard.`;
 
     // Extract allowed training days from basePrompt to enforce hard constraint
