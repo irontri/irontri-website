@@ -2793,6 +2793,29 @@ document.addEventListener('DOMContentLoaded', async () => {
           injectBRaceSession(planData);
         }
 
+        // Strip sessions on disallowed days — fixes plans generated before the training days fix
+        if (planData.basePrompt && planData.weeks) {
+          const _ALL_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+          const _dm = planData.basePrompt.match(/days?:\s*([A-Za-z/,\s]+?)(?:\.|,|\s{2}|training|pool|injury|race|start)/i);
+          if (_dm) {
+            const _allowed = _ALL_DAYS.filter(d => _dm[1].toLowerCase().includes(d.toLowerCase()));
+            if (_allowed.length > 0 && _allowed.length < 7) {
+              const _rest = { type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Recovery day', warmup: '', mainset: 'Full rest — allow your body to recover and adapt.', cooldown: '', coachNote: 'Rest is training. Use this day for sleep, nutrition and mental recovery.', paceTarget: 'N/A', heartRateZone: 'Zone 1' };
+              let _stripped = false;
+              planData.weeks.forEach(wk => {
+                if (!wk.days) return;
+                wk.days = wk.days.map(d => {
+                  if (d.type === 'Rest' || d.type === 'Race') return d;
+                  if (!_allowed.includes(d.day)) { _stripped = true; return { ..._rest, day: d.day }; }
+                  return d;
+                });
+              });
+              // Save back to Supabase if we stripped anything
+              if (_stripped) checkAndSavePlan(JSON.stringify(planData));
+            }
+          }
+        }
+
         document.getElementById('gen').style.display = 'none';
         document.getElementById('plan').style.display = 'block';
         document.querySelector('.prog-wrap').style.display = 'none';
