@@ -37,8 +37,13 @@ export default async function handler(req, res) {
         <tr>
           <td style="background:#141414;border:1px solid rgba(255,255,255,0.08);padding:40px;border-radius:0 0 16px 16px;">
 
-            <p style="font-size:22px;font-weight:700;color:#fff;margin:0 0 8px 0;line-height:1.3;">Hey ${firstName}, welcome to irontri 👋</p>
-            <p style="font-size:15px;color:rgba(255,255,255,0.6);margin:0 0 28px 0;line-height:1.6;">Your account is set up and your plan is ready. Here's everything you need to get started.</p>
+            <p style="font-size:22px;font-weight:700;color:#fff;margin:0 0 8px 0;line-height:1.3;">Hey ${firstName}, your plan is ready 🎉</p>
+            <p style="font-size:15px;color:rgba(255,255,255,0.6);margin:0 0 8px 0;line-height:1.6;">Welcome to irontri. Your 7-day free trial starts now — here's how to make the most of it.</p>
+
+            <!-- TRIAL BANNER -->
+            <div style="background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.25);border-radius:12px;padding:14px 18px;margin-bottom:28px;font-size:14px;color:rgba(255,255,255,0.7);line-height:1.6;">
+              ⏳ <strong style="color:#fff;">7-day free trial</strong> — full access to your plan, AI coach and Strava sync. No credit card needed to get started.
+            </div>
 
             <!-- DIVIDER -->
             <div style="height:1px;background:rgba(255,255,255,0.08);margin-bottom:28px;"></div>
@@ -51,7 +56,7 @@ export default async function handler(req, res) {
                 </td>
                 <td valign="top" style="padding-left:12px;">
                   <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:4px;">Open your training plan</div>
-                  <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.5;">Your personalised plan is waiting. Every session is built around your fitness, your schedule, and your race.</div>
+                  <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.5;">Every session is built around your fitness, your schedule, and your race — all the way to race day. Tap "Today" to see what's on.</div>
                 </td>
               </tr>
             </table>
@@ -63,21 +68,38 @@ export default async function handler(req, res) {
                   <div style="width:32px;height:32px;background:rgba(30,144,255,0.15);border:1px solid rgba(30,144,255,0.3);border-radius:50%;text-align:center;line-height:32px;font-size:14px;font-weight:700;color:#1E90FF;">2</div>
                 </td>
                 <td valign="top" style="padding-left:12px;">
-                  <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:4px;">Check today's session</div>
-                  <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.5;">Tap "Today" in the bottom nav — it'll always show you exactly what's on for the day, with full coaching notes.</div>
+                  <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:4px;">Connect Strava</div>
+                  <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.5;">Link Strava and irontri will auto-tick sessions when you complete them. Your HR zones, pace and power targets are calculated from your real data.</div>
                 </td>
               </tr>
             </table>
 
             <!-- STEP 3 -->
-            <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:28px;">
+            <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:20px;">
               <tr>
                 <td width="40" valign="top">
                   <div style="width:32px;height:32px;background:rgba(30,144,255,0.15);border:1px solid rgba(30,144,255,0.3);border-radius:50%;text-align:center;line-height:32px;font-size:14px;font-weight:700;color:#1E90FF;">3</div>
                 </td>
                 <td valign="top" style="padding-left:12px;">
-                  <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:4px;">Connect Strava (optional)</div>
-                  <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.5;">Link your Strava account and irontri will auto-tick sessions when you complete them. No manual logging needed.</div>
+                  <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:4px;">Ask Trixy anything</div>
+                  <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.5;">Trixy is your AI triathlon coach — tap the Coach tab and ask anything about your plan, your sessions, your race, or your training. Available 24/7.</div>
+                </td>
+              </tr>
+            </table>
+
+            <!-- STEP 4 -->
+            <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:28px;">
+              <tr>
+                <td width="40" valign="top">
+                  <div style="width:32px;height:32px;background:rgba(30,144,255,0.15);border:1px solid rgba(30,144,255,0.3);border-radius:50%;text-align:center;line-height:32px;font-size:14px;font-weight:700;color:#1E90FF;">4</div>
+                </td>
+                <td valign="top" style="padding-left:12px;">
+                  <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:4px;">Download the app</div>
+                  <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.5;">Train on the go — irontri is available on iOS and Android. Same plan, same coach, everywhere.</div>
+                  <div style="margin-top:8px;">
+                    <a href="https://apps.apple.com/au/app/irontri-triathlon-training/id6762278379" style="display:inline-block;background:rgba(255,255,255,0.08);color:#fff;font-size:12px;font-weight:600;text-decoration:none;padding:6px 14px;border-radius:8px;margin-right:8px;border:1px solid rgba(255,255,255,0.12);">🍎 App Store</a>
+                    <a href="https://play.google.com/store/apps/details?id=com.irontri.app" style="display:inline-block;background:rgba(255,255,255,0.08);color:#fff;font-size:12px;font-weight:600;text-decoration:none;padding:6px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);">🤖 Google Play</a>
+                  </div>
                 </td>
               </tr>
             </table>
@@ -96,7 +118,7 @@ export default async function handler(req, res) {
 
             <!-- PERSONAL NOTE -->
             <div style="margin-top:36px;padding:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;">
-              <p style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.6;margin:0 0 12px 0;">I built irontri because I couldn't find a training plan that actually fit my life — so I made one that adapts to yours. If anything feels off about your plan, just reply to this email and I'll sort it out personally.</p>
+              <p style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.6;margin:0 0 12px 0;">I built irontri because I couldn't find a training plan that actually fit my life — so I made one that adapts to yours. I'm currently training on it myself for Ironman Busselton in December. If anything feels off about your plan, just reply to this email and I'll sort it personally.</p>
               <p style="font-size:14px;color:rgba(255,255,255,0.5);margin:0;">— Dean, founder of irontri</p>
             </div>
 
@@ -127,7 +149,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         from: 'Dean from irontri <coach@irontriapp.com>',
         to: [email],
-        subject: `Welcome to irontri, ${firstName} 🎉`,
+        subject: `Your irontri plan is ready, ${firstName} 🏊🚴🏃`,
         html
       })
     });
