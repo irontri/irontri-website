@@ -262,6 +262,16 @@
   <div id="content" style="display:none;">
     <div class="welcome">
 
+    <!-- STRAVA DISCONNECTED BANNER -->
+    <div id="strava-disconnected-banner" style="display:none;background:rgba(252,76,2,0.1);border:1px solid rgba(252,76,2,0.35);border-radius:14px;padding:14px 16px;margin-bottom:16px;align-items:center;gap:12px;">
+      <span style="font-size:24px;">🟠</span>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:600;color:#FC4C02;margin-bottom:2px;">Strava disconnected</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.55);">Reconnect to keep your fitness data and activity sync working.</div>
+      </div>
+      <a id="strava-reconnect-btn" href="#" style="background:#FC4C02;color:#fff;font-size:12px;font-weight:700;padding:8px 14px;border-radius:8px;text-decoration:none;white-space:nowrap;">Reconnect →</a>
+    </div>
+
     <!-- INSTALL APP BANNER -->
     <div id="install-banner" style="display:none;background:rgba(30,144,255,0.1);border:1px solid rgba(30,144,255,0.25);border-radius:14px;padding:14px 16px;margin-bottom:16px;align-items:center;gap:12px;">
       <span style="font-size:26px;">📲</span>
@@ -463,6 +473,8 @@ async function loadStravaSection() {
   const section = document.getElementById('strava-section');
   if (!userData?.strava_access_token) {
     const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=https://irontriapp.com/strava-callback.html&approval_prompt=force&scope=activity:read_all,activity:write`;
+    const banner = document.getElementById('strava-disconnected-banner');
+    if (banner) { banner.style.display = 'flex'; document.getElementById('strava-reconnect-btn').href = authUrl; }
     section.innerHTML = `<div class="strava-banner"><div class="strava-logo">🟠</div><div class="strava-text"><h3>Connect Strava</h3><p>Sync your swims, rides and runs automatically. <span style="color:rgba(252,76,2,0.8);font-size:12px;font-weight:600;">Expanding to all users soon.</span></p></div><a href="${authUrl}" class="btn-strava">Connect Strava →</a></div>`;
     return;
   }
@@ -471,7 +483,10 @@ async function loadStravaSection() {
     accessToken = await refreshStravaToken(userData.strava_refresh_token);
   }
   if (!accessToken) {
-    section.innerHTML = `<div class="strava-banner"><div class="strava-logo">🟠</div><div class="strava-text"><h3>Strava needs reconnecting</h3><p>Your connection expired.</p></div><a href="https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=https://irontriapp.com/strava-callback.html&approval_prompt=force&scope=activity:read_all,activity:write" class="btn-strava">Reconnect →</a></div>`;
+    const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=https://irontriapp.com/strava-callback.html&approval_prompt=force&scope=activity:read_all,activity:write`;
+    const banner = document.getElementById('strava-disconnected-banner');
+    if (banner) { banner.style.display = 'flex'; document.getElementById('strava-reconnect-btn').href = authUrl; }
+    section.innerHTML = `<div class="strava-banner"><div class="strava-logo">🟠</div><div class="strava-text"><h3>Strava needs reconnecting</h3><p>Your connection expired.</p></div><a href="${authUrl}" class="btn-strava">Reconnect →</a></div>`;
     return;
   }
 
