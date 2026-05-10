@@ -1324,15 +1324,20 @@ async function loadPaceImprovement() {
     const runFromSecs = initialFitness.run?.thresholdPaceSecs || (initialFitness.run?.thresholdPaceMin ? initialFitness.run.thresholdPaceMin * 60 + (initialFitness.run.thresholdPaceSec || 0) : initialFitness.run?.avgPaceSecs || null);
     const runToSecs = currentFitness.run?.thresholdPaceSecs || (currentFitness.run?.thresholdPaceMin ? currentFitness.run.thresholdPaceMin * 60 + (currentFitness.run.thresholdPaceSec || 0) : currentFitness.run?.avgPaceSecs || null);
     const runLabel = (initialFitness.run?.thresholdPaceMin || currentFitness.run?.thresholdPaceMin) ? 'Run threshold' : 'Run pace';
-    if (runFrom && runTo && runFromSecs && runToSecs) {
-      const improved = runToSecs < runFromSecs;
-      const same = runFromSecs === runToSecs;
-      const diffSec = Math.round(Math.abs(runToSecs - runFromSecs));
-      const sign = improved ? '-' : '+';
-      const m = Math.floor(diffSec / 60); const s = diffSec % 60;
-      const deltaStr = sign + (m > 0 ? m + 'm ' : '') + s + 's';
-      const barPct = same ? 50 : improved ? Math.min(95, 50 + 45) : Math.max(5, 50 - 30);
-      rows.push({ sport: 'Run', meta: sportMeta['Run'], label: runLabel, fromStr: runFrom + '/km', toStr: runTo + '/km', fromVal: runFromSecs, toVal: runToSecs, improved, same, deltaStr, barPct });
+    if (runTo && runToSecs) {
+      if (runFrom && runFromSecs) {
+        const improved = runToSecs < runFromSecs;
+        const same = runFromSecs === runToSecs;
+        const diffSec = Math.round(Math.abs(runToSecs - runFromSecs));
+        const sign = improved ? '-' : '+';
+        const m = Math.floor(diffSec / 60); const s = diffSec % 60;
+        const deltaStr = sign + (m > 0 ? m + 'm ' : '') + s + 's';
+        const barPct = same ? 50 : improved ? Math.min(95, 50 + 45) : Math.max(5, 50 - 30);
+        rows.push({ sport: 'Run', meta: sportMeta['Run'], label: runLabel, fromStr: runFrom + '/km', toStr: runTo + '/km', fromVal: runFromSecs, toVal: runToSecs, improved, same, deltaStr, barPct });
+      } else {
+        // Baseline missing — show current only
+        rows.push({ sport: 'Run', meta: sportMeta['Run'], label: runLabel, fromStr: 'N/A', toStr: runTo + '/km', fromVal: runToSecs, toVal: runToSecs, improved: false, same: true, deltaStr: 'New data', barPct: 50 });
+      }
     }
 
     // Swim CSS pace
