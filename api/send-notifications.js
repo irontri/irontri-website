@@ -8,20 +8,41 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY
 );
 
-// Work out today's session for a user's plan
-function getTodaySession(planData) {
+// Check if it's currently 7am in a given timezone
+function isSevenAM(timezone) {
+  try {
+    if (!timezone) return false;
+    const now = new Date();
+    const hour = parseInt(new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: 'numeric',
+      hour12: false
+    }).format(now), 10);
+    return hour === 7;
+  } catch(e) {
+    return false;
+  }
+}
+
+// Get today's session for a user's plan (in their local timezone)
+function getTodaySession(planData, timezone) {
   try {
     if (!planData?.weeks || !planData?.startDate) return null;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+
+    // Get today's date in user's local timezone
+    const now = new Date();
+    const localDateStr = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone || 'UTC',
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(now);
+
+    const today = new Date(localDateStr + 'T00:00:00');
     const start = new Date(planData.startDate + 'T00:00:00');
-    start.setHours(0, 0, 0, 0);
     const diffDays = Math.round((today - start) / 86400000);
     if (diffDays < 0) return null;
     const weekIdx = Math.floor(diffDays / 7);
     if (weekIdx >= planData.weeks.length) return null;
     const week = planData.weeks[weekIdx];
-    // Match by day name not array index — days aren't stored in Mon-Sun order
     const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     const todayName = DAY_NAMES[today.getDay()];
     const day = week?.days?.find(d => d.day === todayName && d.type !== 'Rest');
@@ -97,20 +118,39 @@ function fmtDuration(mins) {
   return ` · ${m}min`;
 }
 
+// Check if it's Monday in a user's local timezone
+function isLocalMonday(timezone) {
+  try {
+    const now = new Date();
+    const day = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone || 'UTC',
+      weekday: 'long'
+    }).format(now);
+    return day === 'Monday';
+  } catch(e) {
+    return false;
+  }
+}
+
 // Build notification content for a user
-function buildNotificationContent(planData, userCompletions, isMonday) {
-  const session = getTodaySession(planData);
+function buildNotificationContent(planData, userCompletions, timezone) {
+  const session = getTodaySession(planData, timezone);
   const { streak, atRisk } = getStreakInfo(userCompletions);
+  const isMonday = isLocalMonday(timezone);
   let title, body;
 
   if (isMonday) {
     const lastWeekSessions = getWeeklySummary(userCompletions);
     if (lastWeekSessions !== null && lastWeekSessions > 0) {
       title = `Last week: ${lastWeekSessions} session${lastWeekSessions !== 1 ? 's' : ''} completed 💪`;
-      body = 'New week starts today — let\'s go! Open your plan 🏊🚴🏃';
+      body = session
+        ? `New week starts today — first up: ${session.name} ${getEmoji(session.type)}${fmtDuration(session.duration)}`
+        : 'New week starts today — let\'s go! Open your plan 🏊🚴🏃';
     } else if (lastWeekSessions === 0) {
       title = 'New week, fresh start 🏁';
-      body = 'Last week is done — this week is your chance. Open your plan now.';
+      body = session
+        ? `Last week is done — kick off with ${session.name} today`
+        : 'Last week is done — this week is your chance. Open your plan now.';
     } else {
       title = session ? `Today: ${session.name}` : 'irontri — Training Reminder';
       body = session
@@ -124,8 +164,8 @@ function buildNotificationContent(planData, userCompletions, isMonday) {
     title = `Today: ${session.name}`;
     body = `${getEmoji(session.type)} ${session.type}${fmtDuration(session.duration)} — tap to open your session`;
   } else {
-    title = 'irontri — Training Reminder';
-    body = '🏊🚴🏃 Check today\'s session on your dashboard';
+    title = 'irontri — Rest day 😴';
+    body = 'No session today — recover well. You\'ve earned it.';
   }
 
   return { title, body };
@@ -141,11 +181,8 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const todayDayOfWeek = new Date().getDay();
-  const isMonday = todayDayOfWeek === 1;
-
   try {
-    // Fetch all push subscriptions (web)
+    // Fetch all push subscriptions (web) with timezone
     const subsRes = await fetch(
       process.env.SUPABASE_URL + '/rest/v1/push_subscriptions?select=user_id,subscription',
       {
@@ -157,9 +194,9 @@ export default async function handler(req, res) {
     );
     const subscriptions = await subsRes.json();
 
-    // Fetch all app users with expo push tokens
+    // Fetch all app users with expo push tokens + timezone
     const appUsersRes = await fetch(
-      process.env.SUPABASE_URL + '/rest/v1/users?select=id,expo_push_token&expo_push_token=not.is.null',
+      process.env.SUPABASE_URL + '/rest/v1/users?select=id,expo_push_token,timezone&expo_push_token=not.is.null',
       {
         headers: {
           'apikey': process.env.SUPABASE_ANON_KEY,
@@ -169,7 +206,24 @@ export default async function handler(req, res) {
     );
     const appUsers = await appUsersRes.json();
 
-    // Fetch all plans for each user — pick the active one (startDate in past, raceDate in future)
+    // Fetch timezone for web push users
+    const webUserIds = (subscriptions || []).map(s => s.user_id).filter(Boolean);
+    let webUserTimezones = {};
+    if (webUserIds.length > 0) {
+      const tzRes = await fetch(
+        process.env.SUPABASE_URL + '/rest/v1/users?select=id,timezone&id=in.(' + webUserIds.join(',') + ')',
+        {
+          headers: {
+            'apikey': process.env.SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY
+          }
+        }
+      );
+      const tzData = await tzRes.json();
+      for (const u of (tzData || [])) webUserTimezones[u.id] = u.timezone;
+    }
+
+    // Fetch all plans
     const plansRes = await fetch(
       process.env.SUPABASE_URL + '/rest/v1/plans?select=user_id,plan_data&order=created_at.desc',
       {
@@ -183,26 +237,22 @@ export default async function handler(req, res) {
     const planMap = {};
     const now = new Date();
     for (const plan of allPlans) {
-      if (planMap[plan.user_id]) continue; // already found best plan for this user
+      if (planMap[plan.user_id]) continue;
       try {
         let txt = plan.plan_data || '';
         txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1);
         const pd = JSON.parse(txt);
         const startDate = pd.startDate ? new Date(pd.startDate + 'T00:00:00') : null;
         const raceDate = pd.raceDate ? new Date(pd.raceDate + 'T00:00:00') : null;
-        // Active plan = has started and race hasn't happened yet
         const isActive = startDate && startDate <= now && (!raceDate || raceDate >= now);
-        if (isActive) {
-          planMap[plan.user_id] = plan.plan_data;
-        }
+        if (isActive) planMap[plan.user_id] = plan.plan_data;
       } catch(e) {}
     }
-    // Fallback: if no active plan found, use most recent
     for (const plan of allPlans) {
       if (!planMap[plan.user_id]) planMap[plan.user_id] = plan.plan_data;
     }
 
-    // Fetch completions for all users
+    // Fetch completions
     const completionsRes = await fetch(
       process.env.SUPABASE_URL + '/rest/v1/completions?select=user_id,created_at&order=created_at.desc',
       {
@@ -219,13 +269,17 @@ export default async function handler(req, res) {
       completionsMap[c.user_id].push(c);
     }
 
-    let sent = 0, failed = 0;
+    let sent = 0, failed = 0, skipped = 0;
     const expiredUsers = [];
 
-    // ── WEB PUSH (existing) ──────────────────────────────────────
+    // ── WEB PUSH ──────────────────────────────────────────────────
     if (subscriptions?.length) {
       for (const row of subscriptions) {
         try {
+          const timezone = webUserTimezones[row.user_id] || 'Australia/Perth';
+          // Only send if it's 7am in user's local timezone
+          if (!isSevenAM(timezone)) { skipped++; continue; }
+
           let planData = null;
           if (planMap[row.user_id]) {
             try {
@@ -236,19 +290,16 @@ export default async function handler(req, res) {
           }
 
           const userCompletions = completionsMap[row.user_id] || [];
-          const { title, body } = buildNotificationContent(planData, userCompletions, isMonday);
+          const { title, body } = buildNotificationContent(planData, userCompletions, timezone);
           const payload = JSON.stringify({ title, body, url: '/dashboard.html' });
           await webpush.sendNotification(row.subscription, payload);
           sent++;
         } catch(e) {
-          if (e.statusCode === 410 || e.statusCode === 404) {
-            expiredUsers.push(row.user_id);
-          }
+          if (e.statusCode === 410 || e.statusCode === 404) expiredUsers.push(row.user_id);
           failed++;
         }
       }
 
-      // Remove expired web subscriptions
       for (const uid of expiredUsers) {
         await fetch(
           process.env.SUPABASE_URL + '/rest/v1/push_subscriptions?user_id=eq.' + uid,
@@ -263,13 +314,17 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── EXPO PUSH (app) ──────────────────────────────────────────
+    // ── EXPO PUSH (app) ───────────────────────────────────────────
     if (appUsers?.length) {
       const expoMessages = [];
       const invalidTokenUsers = [];
 
       for (const user of appUsers) {
         try {
+          const timezone = user.timezone || 'Australia/Perth';
+          // Only send if it's 7am in user's local timezone
+          if (!isSevenAM(timezone)) { skipped++; continue; }
+
           let planData = null;
           if (planMap[user.id]) {
             try {
@@ -280,7 +335,7 @@ export default async function handler(req, res) {
           }
 
           const userCompletions = completionsMap[user.id] || [];
-          const { title, body } = buildNotificationContent(planData, userCompletions, isMonday);
+          const { title, body } = buildNotificationContent(planData, userCompletions, timezone);
 
           expoMessages.push({
             to: user.expo_push_token,
@@ -288,14 +343,13 @@ export default async function handler(req, res) {
             title,
             body,
             data: { screen: 'Dashboard' },
-            _userId: user.id, // track for cleanup
+            _userId: user.id,
           });
         } catch(e) {
           failed++;
         }
       }
 
-      // Send to Expo push API in chunks of 100
       const chunks = [];
       for (let i = 0; i < expoMessages.length; i += 100) {
         chunks.push(expoMessages.slice(i, i + 100));
@@ -314,17 +368,13 @@ export default async function handler(req, res) {
           });
           const expoData = await expoRes.json();
 
-          // Check for invalid tokens and clean up
           if (expoData?.data) {
             expoData.data.forEach((receipt, i) => {
-              if (receipt.status === 'ok') {
-                sent++;
-              } else if (receipt.details?.error === 'DeviceNotRegistered') {
+              if (receipt.status === 'ok') sent++;
+              else if (receipt.details?.error === 'DeviceNotRegistered') {
                 invalidTokenUsers.push(chunk[i]._userId);
                 failed++;
-              } else {
-                failed++;
-              }
+              } else failed++;
             });
           }
         } catch(e) {
@@ -333,7 +383,6 @@ export default async function handler(req, res) {
         }
       }
 
-      // Clear invalid expo tokens
       for (const uid of invalidTokenUsers) {
         await fetch(
           process.env.SUPABASE_URL + '/rest/v1/users?id=eq.' + uid,
@@ -350,7 +399,7 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.status(200).json({ sent, failed, expired: expiredUsers.length });
+    return res.status(200).json({ sent, failed, skipped, expired: expiredUsers.length });
   } catch(e) {
     console.error('send-notifications error:', e);
     return res.status(500).json({ error: e.message });
