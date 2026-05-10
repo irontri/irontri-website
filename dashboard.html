@@ -1305,13 +1305,25 @@ async function loadPaceImprovement() {
       const deltaStr = (diff > 0 ? '+' : '') + diff + 'w';
       const barPct = same ? 50 : improved ? Math.min(95, 50 + 45) : Math.max(5, 50 - 30);
       rows.push({ sport: 'Bike', meta: sportMeta['Bike'], fromStr: ftpFrom + 'w FTP', toStr: ftpTo + 'w FTP', fromVal: ftpFrom, toVal: ftpTo, improved, same, deltaStr, barPct });
+    } else {
+      const speedFrom = initialFitness.bike?.avgSpeedKmh;
+      const speedTo = currentFitness.bike?.avgSpeedKmh;
+      if (speedFrom && speedTo) {
+        const improved = speedTo > speedFrom;
+        const same = speedFrom === speedTo;
+        const diff = parseFloat((speedTo - speedFrom).toFixed(1));
+        const deltaStr = (improved ? '+' : '') + diff + 'km/h';
+        const barPct = same ? 50 : improved ? Math.min(95, 50 + 45) : Math.max(5, 50 - 30);
+        rows.push({ sport: 'Bike', meta: sportMeta['Bike'], fromStr: speedFrom + 'km/h avg', toStr: speedTo + 'km/h avg', fromVal: speedFrom, toVal: speedTo, improved, same, deltaStr, barPct });
+      }
     }
 
     // Run threshold pace
-    const runFrom = initialFitness.run?.thresholdPace;
-    const runTo = currentFitness.run?.thresholdPace;
-    const runFromSecs = initialFitness.run?.thresholdPaceSecs || (initialFitness.run?.thresholdPaceMin ? initialFitness.run.thresholdPaceMin * 60 + (initialFitness.run.thresholdPaceSec || 0) : null);
-    const runToSecs = currentFitness.run?.thresholdPaceSecs || (currentFitness.run?.thresholdPaceMin ? currentFitness.run.thresholdPaceMin * 60 + (currentFitness.run.thresholdPaceSec || 0) : null);
+    const runFrom = initialFitness.run?.thresholdPace || initialFitness.run?.avgPace;
+    const runTo = currentFitness.run?.thresholdPace || currentFitness.run?.avgPace;
+    const runFromSecs = initialFitness.run?.thresholdPaceSecs || (initialFitness.run?.thresholdPaceMin ? initialFitness.run.thresholdPaceMin * 60 + (initialFitness.run.thresholdPaceSec || 0) : initialFitness.run?.avgPaceSecs || null);
+    const runToSecs = currentFitness.run?.thresholdPaceSecs || (currentFitness.run?.thresholdPaceMin ? currentFitness.run.thresholdPaceMin * 60 + (currentFitness.run.thresholdPaceSec || 0) : currentFitness.run?.avgPaceSecs || null);
+    const runLabel = (initialFitness.run?.thresholdPaceMin || currentFitness.run?.thresholdPaceMin) ? 'Run threshold' : 'Run pace';
     if (runFrom && runTo && runFromSecs && runToSecs) {
       const improved = runToSecs < runFromSecs;
       const same = runFromSecs === runToSecs;
@@ -1320,7 +1332,7 @@ async function loadPaceImprovement() {
       const m = Math.floor(diffSec / 60); const s = diffSec % 60;
       const deltaStr = sign + (m > 0 ? m + 'm ' : '') + s + 's';
       const barPct = same ? 50 : improved ? Math.min(95, 50 + 45) : Math.max(5, 50 - 30);
-      rows.push({ sport: 'Run', meta: sportMeta['Run'], fromStr: runFrom + '/km', toStr: runTo + '/km', fromVal: runFromSecs, toVal: runToSecs, improved, same, deltaStr, barPct });
+      rows.push({ sport: 'Run', meta: sportMeta['Run'], label: runLabel, fromStr: runFrom + '/km', toStr: runTo + '/km', fromVal: runFromSecs, toVal: runToSecs, improved, same, deltaStr, barPct });
     }
 
     // Swim CSS pace
