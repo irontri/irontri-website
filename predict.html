@@ -390,17 +390,16 @@
     const t2Min     = parseFloat(document.getElementById('t2-min').value)     || d.t2[0];
     const t2Sec     = parseFloat(document.getElementById('t2-sec').value)     || d.t2[1];
 
-    // Swim — 5% open water penalty on pool pace
-    const swimPer100m = (swimMin * 60 + swimSec) * 1.05;
+    // Swim — pure pace * distance
+    const swimPer100m = swimMin * 60 + swimSec;
     const swimSecs = (d.swim / 100) * swimPer100m;
 
-    // Bike — 8% real-world reduction from average speed
-    const bikeSecs = (d.bike / (bikeSpeed * 0.92)) * 3600;
+    // Bike — pure distance / speed
+    const bikeSecs = (d.bike / bikeSpeed) * 3600;
 
-    // Run — fatigue factor applied to pace per km
-    const fatigue = { sprint:1.05, olympic:1.08, half:1.14, full:1.22, custom:1.08 };
+    // Run — pure pace * distance
     const runPacePerKm = runMin * 60 + runSec;
-    const runSecs = runPacePerKm * fatigue[selectedDist] * d.run;
+    const runSecs = runPacePerKm * d.run;
 
     // Transitions
     const t1Secs = t1Min * 60 + t1Sec;
@@ -420,11 +419,11 @@
     document.getElementById('r-bike').textContent   = fmtTime(bikeSecs);
     document.getElementById('r-bike-pace').textContent = `${(d.bike/(bikeSecs/3600)).toFixed(1)} km/h`;
     document.getElementById('r-run').textContent    = fmtTime(runSecs);
-    document.getElementById('r-run-pace').textContent  = `${fmtMins(runPacePerKm * fatigue[selectedDist])}/km`;
+    document.getElementById('r-run-pace').textContent  = `${fmtMins(runPacePerKm)}/km`;
 
     const bikePct = Math.round(bikeSecs / totalSecs * 100);
     const tPct    = Math.round((t1Secs + t2Secs) / totalSecs * 100);
-    const bikeSave = fmtMins((d.bike / (bikeSpeed * 0.92) - d.bike / ((bikeSpeed + 1) * 0.92)) * 3600);
+    const bikeSave = fmtMins((d.bike / bikeSpeed - d.bike / (bikeSpeed + 1)) * 3600);
 
     const insights = [
       `Your bike leg is ${bikePct}% of your total time. Adding just 1 km/h saves ${bikeSave} off your finish.`,
