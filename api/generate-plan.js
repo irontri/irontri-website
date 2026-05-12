@@ -299,6 +299,7 @@ FULL IRONMAN (140.6) LONG SESSION REQUIREMENTS:
 - LONG RUN REQUIREMENT: Every plan MUST include a dedicated long run session each week (separate from brick runs). For Full Ironman: long run builds from 60min (Base) → 90min (Build) → 120min (Peak) → 75min (Taper week 1). For Half Ironman: 50min (Base) → 75min (Build) → 90-100min (Peak) → 60min (Taper week 1). For Olympic: 40min (Base) → 60min (Build) → 75min (Peak). The long run is always Zone 2 aerobic effort in Base, and includes race-pace segments in Build/Peak. NEVER let the longest standalone run be under 75min for Full Ironman in Peak phase or under 60min for 70.3 in Peak phase.
 - Weekly bike volume: 6-10 hours total at peak. Never less than 3 hours in any non-taper week.
 - Never cap long ride at under 3.5 hours in Build or Peak phase for Full Ironman.
+- WEEKEND LONG SESSIONS: The long ride and long run MUST always be scheduled on Saturday or Sunday — never on weekdays. Most athletes work Monday-Friday and their longest sessions belong on weekends. If the athlete only has one weekend day available, the long ride takes priority on that day. If both Saturday and Sunday are available, long ride goes Saturday, long run goes Sunday. NEVER place a long ride or long run on a weekday unless the athlete has not selected any weekend days at all.
 - Swim volume: 2 sessions per week. Long swim builds from 45 min in Base to 75 min in Peak. Second swim 45-60 min. Total weekly swim ~2-2.5 hours at peak.
 
 HALF IRONMAN (70.3) LONG SESSION REQUIREMENTS:
