@@ -1,4 +1,3 @@
-// api/delete-account.js
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://aezfxagplaxlmovqbmfd.supabase.co';
@@ -13,9 +12,11 @@ export default async function handler(req, res) {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    // Delete user's plans and completions (cascades from auth.users if FK set, but explicit is safer)
+    // Delete all user data
     await supabase.from('completions').delete().eq('user_id', userId);
     await supabase.from('plans').delete().eq('user_id', userId);
+    await supabase.from('push_subscriptions').delete().eq('user_id', userId);
+    await supabase.from('users').delete().eq('id', userId);
 
     // Delete the auth user (requires service key)
     const { error } = await supabase.auth.admin.deleteUser(userId);
