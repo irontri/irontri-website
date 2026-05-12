@@ -203,7 +203,7 @@ export default async function handler(req, res) {
         const minRide = Math.max(1.5, longRide - 0.3);
         const maxRide = longRide + 0.3;
         const continuityNote = lastBikeDuration ? ` Previous week long ride was ${lastBikeDuration}h — continue from there, do NOT drop below it.` : '';
-        return `BIKE VOLUME FOR WEEKS ${startWk}-${endWk}: Long ride must be ${longRide}h (${Math.round(longRide*30)}-${Math.round(longRide*32)}km). NEVER shorter than ${minRide}h or longer than ${maxRide}h. Total weekly bike = ${weeklyBike}h. Each week slightly more than the previous.${continuityNote} NEVER generate a short ride where a long ride is scheduled.`;
+        return `BIKE VOLUME FOR WEEKS ${startWk}-${endWk}: Long ride must be ${longRide}h (${Math.round(longRide*30)}-${Math.round(longRide*32)}km). NEVER shorter than ${minRide}h or longer than ${maxRide}h. Total weekly bike = ${weeklyBike}h. Each week slightly more than the previous.${continuityNote} NEVER generate a short ride where a long ride is scheduled. WEEKEND SESSIONS: The long ride MUST be on Saturday or Sunday — never a weekday. The long run MUST also be on Saturday or Sunday. If both weekend days are available, long ride = Saturday, long run = Sunday. Only place long sessions on weekdays if the athlete has no weekend days in their schedule.`;
       } else if (isHalf) {
         const pct = startWk / totalNeeded;
         let longRide;
