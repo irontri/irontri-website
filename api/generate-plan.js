@@ -223,6 +223,7 @@ SESSION QUALITY RULES (apply to every session):
 - paceTarget: MUST be in ${isImperial ? 'min/mile or min/100yd or mph' : 'min/km or min/100m or km/h'} - NEVER mix units
 - heartRateZone: When HR zone BPM data is provided, use actual BPM ranges (e.g. "130-145 bpm") not generic labels like "Zone 2". When no HR data available, use zone labels.
 - CRITICAL: If the prompt contains "STRAVA FITNESS DATA" with actual watts and BPM values - USE THOSE EXACT VALUES throughout the entire plan. Do not substitute percentages or zone labels for actual numbers.
+- STRAVA FITNESS CALIBRATION: When STRAVA FITNESS DATA is present in the prompt, the athlete has demonstrated real fitness. Do NOT be conservative — bias session intensity and volume toward the UPPER end of each range. If a session calls for 45-60min, default to 55-60min. If pace target is a range, use the faster end. If FTP is provided, programme intervals at the higher watts. The athlete's data proves their capability — trust it and challenge them accordingly. Conservative planning with fit athletes leads to under-training and boredom.
 - coachNote: explain WHY this session exists this week
 - weeklyNarrative: 2 sentences on the week's purpose
 - day field: day name e.g. "Monday" not a number
