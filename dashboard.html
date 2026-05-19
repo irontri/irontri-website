@@ -1487,6 +1487,11 @@ function calcFinishTime(planData, planRace, planId) {
     const disciplinesFound = [swimPaceSec, bikeSpeedKmh, runPaceSec].filter(Boolean).length;
     if (disciplinesFound < 2) return;
 
+    // Fallback defaults if bike speed still missing — use average age grouper speeds by distance
+    if (!bikeSpeedKmh) {
+      bikeSpeedKmh = swimKm >= 3 ? 30 : swimKm >= 1.5 ? 32 : 28; // Full=30, Half=32, Olympic/Sprint=28
+    }
+
     function secsToHMS(s) {
       s = Math.round(s);
       const h = Math.floor(s / 3600);
