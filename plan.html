@@ -936,6 +936,8 @@ let planData=null;
 let curWeek=0;
 let curDay=null;
 let completions = new Set();
+let stravaCompletions = new Set(); // keys of completions that came from Strava (should not be deleted by button)
+let ratedSessions = new Set(); // keys that have already been rated this session (suppress re-prompt)
 
 function prog(n){const p=Math.round(n/T*100);document.getElementById('pf').style.width=p+'%';document.getElementById('pt').textContent='Question '+n+' of '+T;document.getElementById('pp').textContent=p+'%';}
 function go(n){document.querySelectorAll('.q').forEach(q=>q.classList.remove('active'));const t=document.getElementById('q'+n);if(t){t.classList.add('active');prog(n);}window.scrollTo({top:0,behavior:'smooth'});if(n===7){loadStravaFitness();}}
@@ -2066,8 +2068,12 @@ async function loadCompletions() {
     if (!session) return;
     const planId = new URLSearchParams(location.search).get('load') || window.currentPlanId;
     if (!planId) return;
-    const { data } = await sb2.from('completions').select('week_num,day').eq('user_id', session.user.id).eq('plan_id', String(planId));
-    if (data) data.forEach(c => completions.add(`${c.week_num}-${c.day}`));
+    const { data } = await sb2.from('completions').select('week_num,day,source').eq('user_id', session.user.id).eq('plan_id', String(planId));
+    if (data) data.forEach(c => {
+      const key = `${c.week_num}-${c.day}`;
+      completions.add(key);
+      if (c.source === 'strava') stravaCompletions.add(key);
+    });
   } catch(e) {}
 }
 
@@ -2337,6 +2343,10 @@ async function saveRpe(dayIndex, rating, btnEl) {
   document.querySelectorAll('.rpe-btn').forEach(b => b.classList.remove('selected'));
   btnEl.classList.add('selected');
 
+  // Mark as rated so re-renders don't re-show the prompt
+  const rateKey = `${curWeek}-${dayIndex}`;
+  ratedSessions.add(rateKey);
+
   // Save to Supabase completions — update the row with rpe rating
   if (!sb2) return;
   try {
@@ -2516,8 +2526,20 @@ async function toggleComplete(dayIndex) {
     const { data: { session } } = await sb2.auth.getSession();
     if (!session) { window.location.href = '/auth.html'; return; }
     if (completions.has(key)) {
+      // If this completion came from Strava, don't let the button delete it —
+      // just show the rating prompt so they can rate it
+      if (stravaCompletions.has(key)) {
+        if (!ratedSessions.has(key)) {
+          renderWeek();
+          selectDay(dayIndex);
+          showRpePrompt(dayIndex);
+          showCoachInsight(dayIndex);
+        }
+        return;
+      }
       await sb2.from('completions').delete().eq('user_id', session.user.id).eq('week_num', curWeek).eq('day', String(dayIndex));
       completions.delete(key);
+      ratedSessions.delete(key);
       btn.textContent = '✓ Mark as complete';
       btn.style.background = 'rgba(74,222,128,0.08)';
     } else {
@@ -2528,7 +2550,7 @@ async function toggleComplete(dayIndex) {
     }
     renderWeek();
     selectDay(dayIndex);
-    if (completions.has(key)) {
+    if (completions.has(key) && !ratedSessions.has(key)) {
       showRpePrompt(dayIndex);
       showCoachInsight(dayIndex);
     }
