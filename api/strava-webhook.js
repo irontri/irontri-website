@@ -4,7 +4,14 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 const STRAVA_VERIFY_TOKEN = process.env.STRAVA_WEBHOOK_VERIFY_TOKEN || 'irontri_strava_webhook';
-const AUTO_TAG_TEXT = '\n\nTrained with irontri - irontriapp.com';
+const SPORT_EMOJI = { 'Run': '🏃', 'Bike': '🚴', 'Swim': '🏊', 'Brick': '🧱' };
+
+function buildTagText(session, weekIdx) {
+  const emoji = SPORT_EMOJI[session.type] || '🏋️';
+  const weekLabel = 'Week ' + (weekIdx + 1);
+  const sessionName = session.description || session.name || session.type;
+  return '\n\n' + emoji + ' ' + weekLabel + ' · ' + sessionName + ' — Trained with irontriapp.com 🔥';
+}
 
 const TYPE_MAP = {
   'Run': 'Run', 'TrailRun': 'Run', 'Walk': 'Run',
@@ -103,15 +110,6 @@ export default async function handler(req, res) {
     const activity = await actRes.json();
     if (!actRes.ok) return res.status(200).json({ ok: true });
 
-    // Auto-tag activity description
-    if (!activity.description || !activity.description.includes('irontriapp.com')) {
-      await fetch('https://www.strava.com/api/v3/activities/' + activityId, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
-        body: JSON.stringify({ description: (activity.description || '') + AUTO_TAG_TEXT })
-      });
-    }
-
     const sessionType = TYPE_MAP[activity.sport_type] || TYPE_MAP[activity.type];
     if (sessionType && activity.start_date_local) {
       const activityDate = activity.start_date_local.split('T')[0];
@@ -144,6 +142,14 @@ export default async function handler(req, res) {
           );
 
           if (matchingSession) {
+            // Auto-tag: only tag activities that match a plan session, using session name in label
+            if (!activity.description || !activity.description.includes('irontriapp.com')) {
+              await fetch('https://www.strava.com/api/v3/activities/' + activityId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+                body: JSON.stringify({ description: (activity.description || '') + buildTagText(matchingSession, weekIdx) })
+              });
+            }
             // Slot index: rotate from plan start day — matches PlanScreen and DashboardScreen
             const planStartDow = startDate.getDay(); // 0=Sun
             const planStartIdx = planStartDow === 0 ? 6 : planStartDow - 1; // Mon=0
