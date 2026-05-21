@@ -2118,6 +2118,7 @@ const STRAVA_TO_PLAN = {
   'Swim': 'Swim', 'OpenWaterSwim': 'Swim',
   'Ride': 'Bike', 'VirtualRide': 'Bike', 'EBikeRide': 'Bike', 'GravelRide': 'Bike', 'MountainBikeRide': 'Bike',
   'Run': 'Run', 'VirtualRun': 'Run', 'TrailRun': 'Run',
+  'WeightTraining': 'Strength', 'Workout': 'Strength', 'Crossfit': 'Strength',
 };
 
 async function syncStravaActivities() {
@@ -2303,7 +2304,7 @@ async function shareToStrava(dayIndex, btnEl) {
     });
     const activities = await r.json();
 
-    const STRAVA_TO_PLAN = { Swim:'Swim', Ride:'Bike', VirtualRide:'Bike', Run:'Run', VirtualRun:'Run' };
+    const STRAVA_TO_PLAN = { Swim:'Swim', Ride:'Bike', VirtualRide:'Bike', Run:'Run', VirtualRun:'Run', WeightTraining:'Strength', Workout:'Strength', Crossfit:'Strength' };
     const matchingActivity = activities?.find(a => {
       const planType = STRAVA_TO_PLAN[a.sport_type] || STRAVA_TO_PLAN[a.type];
       return planType === sessionType || (sessionType === 'Brick' && (planType === 'Bike' || planType === 'Run'));
