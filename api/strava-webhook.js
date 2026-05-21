@@ -4,7 +4,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 const STRAVA_VERIFY_TOKEN = process.env.STRAVA_WEBHOOK_VERIFY_TOKEN || 'irontri_strava_webhook';
-const SPORT_EMOJI = { 'Run': '🏃', 'Bike': '🚴', 'Swim': '🏊', 'Brick': '🧱' };
+const SPORT_EMOJI = { 'Run': '🏃', 'Bike': '🚴', 'Swim': '🏊', 'Brick': '🧱', 'Strength': '🏋️' };
 
 function buildTagText(session, weekIdx) {
   const emoji = SPORT_EMOJI[session.type] || '🏋️';
@@ -17,7 +17,8 @@ const TYPE_MAP = {
   'Run': 'Run', 'TrailRun': 'Run', 'Walk': 'Run',
   'Ride': 'Bike', 'VirtualRide': 'Bike', 'EBikeRide': 'Bike',
   'GravelRide': 'Bike', 'MountainBikeRide': 'Bike', 'Velomobile': 'Bike',
-  'Swim': 'Swim', 'OpenWaterSwim': 'Swim'
+  'Swim': 'Swim', 'OpenWaterSwim': 'Swim',
+  'WeightTraining': 'Strength', 'Workout': 'Strength', 'Crossfit': 'Strength',
 };
 
 const ALL_DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -138,7 +139,7 @@ export default async function handler(req, res) {
 
           // Match by day name and session type (also match Brick sessions)
           const matchingSession = days.find(d =>
-            d.day === dayName && (d.type === sessionType || (d.type === 'Brick' && (sessionType === 'Bike' || sessionType === 'Run')))
+            d.day === dayName && (d.type === sessionType || (d.type === 'Brick' && (sessionType === 'Bike' || sessionType === 'Run')) || (d.type === 'Strength' && sessionType === 'Strength'))
           );
 
           if (matchingSession) {
