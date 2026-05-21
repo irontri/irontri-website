@@ -2127,11 +2127,12 @@ async function syncStravaActivities() {
     const { data: { session } } = await sb2.auth.getSession();
     if (!session) return;
 
-    // Get Strava tokens
+    // Get Strava tokens + auto_tag preference
     const { data: userData } = await sb2.from('users')
-      .select('strava_access_token, strava_refresh_token, strava_token_expires_at')
+      .select('strava_access_token, strava_refresh_token, strava_token_expires_at, strava_auto_tag')
       .eq('id', session.user.id).single();
     if (!userData?.strava_access_token) return;
+    const autoTag = userData.strava_auto_tag !== false; // default true
     const _sb=document.getElementById('strava-sync-btn');if(_sb)_sb.style.display='flex';
 
     // Refresh token if needed
@@ -2201,11 +2202,31 @@ async function syncStravaActivities() {
         user_id: session.user.id,
         plan_id: String(_planId),
         week_num: weekNum,
-        day: String(dayOfWeek)
+        day: String(dayOfWeek),
+        source: 'strava'
       });
       if (!error) {
         completions.add(key);
         newMatches++;
+
+        // Auto-tag the Strava activity if toggle is on and not already tagged
+        if (autoTag && (!act.description || !act.description.includes('irontriapp.com'))) {
+          try {
+            const SPORT_EMOJI = { Run: '🏃', Bike: '🚴', Swim: '🏊', Brick: '🧱' };
+            const emoji = SPORT_EMOJI[matchingSession.type] || '🏋️';
+            const tagText = '\n\n' + emoji + ' Week ' + (weekNum + 1) + ' · ' + (matchingSession.name || matchingSession.type) + ' — Trained with irontriapp.com 🔥';
+            await fetch('/api/strava-exchange', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'update_activity',
+                access_token: token,
+                activity_id: act.id,
+                description: (act.description || '') + tagText,
+              })
+            });
+          } catch(tagErr) { console.log('Auto-tag error:', tagErr); }
+        }
       }
     }
 
