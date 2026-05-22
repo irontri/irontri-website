@@ -3673,30 +3673,85 @@ function buildTrixyCtx(){
   var wk=planData.weeks&&planData.weeks[curWeek];
   var phase=(wk&&wk.phase)||'Base';
   var totalWeeks=planData.weeks?planData.weeks.length:0;
-  var sessions=wk&&wk.days?wk.days.filter(function(d){return d.type!=='Rest';}):[]; 
-  var sessionNames=sessions.map(function(s){return s.name||s.type;}).join(', ');
-  var today=wk&&wk.days&&wk.days[curDay||0];
   var race=planData.race||(A&&A.race)||'Triathlon';
   var rd=planData.raceDate||(A&&A.date)||'';
-  var days='';
-  if(rd){var n=new Date();n.setHours(0,0,0,0);days=Math.round((new Date(rd+'T00:00:00')-n)/86400000);}
-  var done=0;
-  sessions.forEach(function(_,i){if(completions.has(curWeek+'-'+i)||completions.has(curWeek+'-'+i+'-0'))done++;});
-  // Strava fitness from plan data
+  var daysToRace='';
+  if(rd){var n=new Date();n.setHours(0,0,0,0);daysToRace=Math.round((new Date(rd+'T00:00:00')-n)/86400000);}
+  var athleteName=(A&&A.name)||localStorage.getItem('irontri_user_name')||'Athlete';
+  var firstName=athleteName.split(' ')[0];
+
+  // Today's session with full detail
+  var today=wk&&wk.days&&wk.days[curDay||0];
+  var todayDetail='Rest day';
+  if(today&&today.type!=='Rest'){
+    todayDetail=today.name+' ('+today.type+', '+(today.duration||'?')+'min, RPE target '+today.effort+'/10)';
+    if(today.mainset)todayDetail+='. Main set: '+today.mainset;
+    if(today.paceTarget)todayDetail+='. Target: '+today.paceTarget;
+    if(today.heartRateZone)todayDetail+='. HR Zone: '+today.heartRateZone;
+  }
+
+  // This week sessions + completion status
+  var weekSummary=[];
+  if(wk&&wk.days){
+    wk.days.forEach(function(d,i){
+      if(d.type==='Rest')return;
+      var key=curWeek+'-'+i;
+      var done=completions.has(key)||completions.has(key+'-0');
+      var fromStrava=stravaCompletions&&(stravaCompletions.has(key)||stravaCompletions.has(key+'-0'));
+      weekSummary.push(d.day+': '+d.name+' ('+(done?(fromStrava?'done via Strava':'done'):'pending')+')');
+    });
+  }
+
+  // Recent weeks completion rate (last 3 weeks)
+  var recentWeeks=[];
+  for(var w=Math.max(0,curWeek-3);w<curWeek;w++){
+    var wkData=planData.weeks[w];
+    if(!wkData)continue;
+    var wkSessions=(wkData.days||[]).filter(function(d){return d.type!=='Rest';}).length;
+    var wkDone=0;
+    for(var d2=0;d2<7;d2++){var k=w+'-'+d2;if(completions.has(k)||completions.has(k+'-0'))wkDone++;}
+    recentWeeks.push('Week '+(w+1)+' ('+wkData.phase+'): '+wkDone+'/'+wkSessions+' sessions');
+  }
+
+  // Strava fitness + HR zones
   var fitness='';
+  var hrZones='';
   try{
     var sf=planData.stravaFitness?JSON.parse(planData.stravaFitness):null;
     if(sf&&sf.hasData){
       var fp=[];
-      if(sf.run)fp.push('Run threshold: '+sf.run.thresholdPace+'/km');
-      if(sf.bike&&sf.bike.ftpEstimate)fp.push('Bike FTP: '+sf.bike.ftpEstimate+'w');
-      if(sf.swim)fp.push('Swim CSS: '+sf.swim.avgPacePer100m+'/100m');
+      if(sf.run){fp.push('Run threshold: '+sf.run.thresholdPace+'/km');if(sf.run.maxHR)fp.push('Max HR: '+sf.run.maxHR+'bpm');}
+      if(sf.bike&&sf.bike.ftpEstimate){fp.push('Bike FTP: '+sf.bike.ftpEstimate+'w');if(sf.bike.avgSpeedKmh)fp.push('Avg speed: '+sf.bike.avgSpeedKmh+'km/h');}
+      if(sf.swim&&sf.swim.avgPacePer100m)fp.push('Swim CSS: '+sf.swim.avgPacePer100m+'/100m');
       fitness=fp.join(', ');
+      if(sf.hrZones)hrZones='Z1:'+sf.hrZones.zone1.min+'-'+sf.hrZones.zone1.max+' Z2:'+sf.hrZones.zone2.min+'-'+sf.hrZones.zone2.max+' Z3:'+sf.hrZones.zone3.min+'-'+sf.hrZones.zone3.max+' Z4:'+sf.hrZones.zone4.min+'-'+sf.hrZones.zone4.max+' Z5:'+sf.hrZones.zone5.min+'-'+sf.hrZones.zone5.max+'bpm';
     }
   }catch(e){}
-  var planCtx='Race: '+race+'. Week '+(curWeek+1)+' of '+totalWeeks+' ('+phase+' phase). Days to race: '+(days||'unknown')+'. Sessions this week: '+sessionNames+'. Completed: '+done+' of '+sessions.length+'. Today\'s session: '+((today&&today.name)||'rest')+'.';
-  if(fitness)planCtx+=' Fitness: '+fitness+'.';
-  return planCtx;
+  if(planData.maxHR){var mhr=parseInt(planData.maxHR);hrZones='Z1:'+Math.round(mhr*0.50)+'-'+Math.round(mhr*0.60)+' Z2:'+Math.round(mhr*0.60)+'-'+Math.round(mhr*0.70)+' Z3:'+Math.round(mhr*0.70)+'-'+Math.round(mhr*0.80)+' Z4:'+Math.round(mhr*0.80)+'-'+Math.round(mhr*0.90)+' Z5:'+Math.round(mhr*0.90)+'-'+mhr+'bpm';}
+
+  // Athlete profile from basePrompt
+  var athleteProfile='';
+  try{
+    var bp=planData.basePrompt||'';
+    var profileParts=[];
+    var expM=bp.match(/exp:[^,]+/);if(expM)profileParts.push('Experience: '+expM[0].replace('exp:','').trim());
+    var fitM=bp.match(/fitness:[^,]+/);if(fitM)profileParts.push('Fitness: '+fitM[0].replace('fitness:','').trim());
+    var weakM=bp.match(/weakness:[^,]+/);if(weakM)profileParts.push('Weakness: '+weakM[0].replace('weakness:','').trim());
+    var hrsM=bp.match(/[0-9]+hrs/);if(hrsM)profileParts.push('Hours/week: '+hrsM[0].replace('hrs',''));
+    var ageM=bp.match(/age:[^,\n]+/);if(ageM)profileParts.push('Age: '+ageM[0].replace('age:','').trim());
+
+    athleteProfile=profileParts.join('. ');
+  }catch(e){}
+
+  var ctx='ATHLETE: '+firstName+'. Race: '+race+'. Race date: '+(rd||'TBD')+'. Days to race: '+(daysToRace||'unknown')+'.';
+  if(athleteProfile)ctx+='\nPROFILE: '+athleteProfile+'.';
+  ctx+='\nPLAN: Week '+(curWeek+1)+' of '+totalWeeks+' — '+phase+' phase. Total sessions completed: '+completions.size+'.';
+  ctx+='\nTODAY: '+todayDetail;
+  if(weekSummary.length)ctx+='\nTHIS WEEK:\n'+weekSummary.join('\n');
+  if(recentWeeks.length)ctx+='\nRECENT WEEKS:\n'+recentWeeks.join('\n');
+  if(fitness)ctx+='\nFITNESS: '+fitness+'.';
+  if(hrZones)ctx+='\nHR ZONES: '+hrZones+'.';
+  return ctx;
 }
 function trixyAddMsg(role,text){
   var m=document.getElementById('trixy-messages');
