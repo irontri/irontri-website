@@ -58,18 +58,28 @@ function sanitizePlan(pd) {
       }
     }
 
-    // 2. Deduplicate: remove same-day + same-type duplicates
-    //    Keep the first occurrence; try to reschedule the duplicate to the next available day
+    // 2. Deduplicate: remove same-day duplicates (both same-type and different-type)
+    //    Keep the training session over rest; reschedule same-day extras to next free day
     const seen = {}; // "Day|Type" -> true
+    const seenDay = {}; // "Day" -> true (catches same-day different-type duplicates)
     const keep = [];
     const duplicates = [];
 
-    for (const session of week.days) {
-      const key = `${session.day}|${session.type}`;
-      if (!seen[key]) {
-        seen[key] = true;
+    // Sort so training sessions come before Rest (prefer keeping training over rest on same day)
+    const sorted = [...week.days].sort((a, b) => {
+      if (a.type === 'Rest' && b.type !== 'Rest') return 1;
+      if (a.type !== 'Rest' && b.type === 'Rest') return -1;
+      return 0;
+    });
+
+    for (const session of sorted) {
+      const typeKey = `${session.day}|${session.type}`;
+      if (!seen[typeKey] && !seenDay[session.day]) {
+        seen[typeKey] = true;
+        seenDay[session.day] = true;
         keep.push(session);
       } else {
+        // Same day (any type) — reschedule
         duplicates.push(session);
       }
     }
@@ -84,13 +94,12 @@ function sanitizePlan(pd) {
 
       for (let offset = 1; offset <= 6; offset++) {
         const candidateDay = DAY_ORDER[(currentDayIdx + offset) % 7];
-        const candidateKey = `${candidateDay}|${dup.type}`;
-
-        // Also don't place on a day that's already a Rest day in keep[]
+        const candidateTypeKey = `${candidateDay}|${dup.type}`;
         const hasRest = keep.some(s => s.day === candidateDay && s.type === 'Rest');
-        if (!seen[candidateKey] && !hasRest) {
+        if (!seen[candidateTypeKey] && !seenDay[candidateDay] && !hasRest) {
           dup.day = candidateDay;
-          seen[candidateKey] = true;
+          seen[candidateTypeKey] = true;
+          seenDay[candidateDay] = true;
           keep.push(dup);
           placed = true;
           break;
