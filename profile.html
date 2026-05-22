@@ -337,18 +337,27 @@
       if (typeof pd === 'string') pd = JSON.parse(pd);
 
       // Pre-fill from plan_data fields
-      if (pd.maxHR) document.getElementById('z-maxhr').value = pd.maxHR;
+      if (pd.maxHR) {
+        document.getElementById('z-maxhr').value = pd.maxHR;
+      } else if (pd.stravaFitness) {
+        // Fall back to Strava-derived max HR
+        try {
+          const sf = typeof pd.stravaFitness === 'string' ? JSON.parse(pd.stravaFitness) : pd.stravaFitness;
+          if (sf?.hrZones?.maxHR) document.getElementById('z-maxhr').value = sf.hrZones.maxHR;
+          else if (sf?.run?.maxHR) document.getElementById('z-maxhr').value = sf.run.maxHR;
+        } catch(e) {}
+      }
 
       // Parse basePrompt for FTP, CSS, run threshold
       const bp = pd.basePrompt || '';
       const ftpMatch = bp.match(/bike FTP:\s*(\d+)w/);
       if (ftpMatch) document.getElementById('z-ftp').value = ftpMatch[1];
 
-      const cssMatch = bp.match(/swim CSS:\s*(\d+):(\d+)/);
-      if (cssMatch) { document.getElementById('z-css-min').value = cssMatch[1]; document.getElementById('z-css-sec').value = cssMatch[2]; }
+      const cssMatch = bp.match(/swim CSS:\s*(\d+):(\d{1,2})\/100m/);
+      if (cssMatch) { document.getElementById('z-css-min').value = cssMatch[1]; document.getElementById('z-css-sec').value = cssMatch[2].padStart(2,'0'); }
 
-      const runMatch = bp.match(/run threshold:\s*(\d+):(\d+)/);
-      if (runMatch) { document.getElementById('z-run-min').value = runMatch[1]; document.getElementById('z-run-sec').value = runMatch[2]; }
+      const runMatch = bp.match(/run threshold:\s*(\d+):(\d{1,2})\/km/);
+      if (runMatch) { document.getElementById('z-run-min').value = runMatch[1]; document.getElementById('z-run-sec').value = runMatch[2].padStart(2,'0'); }
     } catch(e) { console.log('loadZones error:', e); }
   }
 
