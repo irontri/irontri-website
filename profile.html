@@ -65,6 +65,26 @@
 
     .loading{text-align:center;padding:80px;color:var(--muted);}
 
+    /* TRAINING ZONES */
+    .zones-section{background:#111;border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:12px;}
+    .zones-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+    .zones-title{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--faint);font-weight:600;}
+    .zones-subtitle{font-size:12px;color:var(--muted);}
+    .zone-input-row{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border);}
+    .zone-input-row:last-of-type{border-bottom:none;}
+    .zone-input-left{display:flex;flex-direction:column;gap:2px;}
+    .zone-input-label{font-size:14px;color:#fff;font-weight:500;}
+    .zone-input-desc{font-size:12px;color:var(--muted);}
+    .zone-input-right{display:flex;align-items:center;gap:8px;}
+    .zone-input{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;padding:8px 12px;width:90px;text-align:center;outline:none;transition:border-color 0.2s;}
+    .zone-input:focus{border-color:var(--blue);}
+    .zone-input-sep{color:var(--muted);font-size:16px;font-weight:300;}
+    .zone-unit{font-size:13px;color:var(--muted);white-space:nowrap;}
+    .zones-save-btn{width:100%;padding:16px;background:rgba(30,144,255,0.08);border:none;border-top:1px solid rgba(30,144,255,0.15);color:#1E90FF;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+    .zones-save-btn:hover{background:rgba(30,144,255,0.15);}
+    .zones-save-btn:disabled{opacity:0.5;cursor:not-allowed;}
+    .zones-saved-msg{display:none;padding:12px 20px;font-size:13px;color:#4ade80;text-align:center;border-top:1px solid rgba(74,222,128,0.15);background:rgba(74,222,128,0.05);}
+
     @media(max-width:480px){.hero-card{padding:24px 20px;}.stat-val{font-size:22px;}}
   </style>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-BDZ8K3RR10"></script>
@@ -111,6 +131,69 @@
       <div class="info-row"><span class="info-key">Email</span><span class="info-val" id="p-email2">—</span></div>
       <div class="info-row"><span class="info-key">Member since</span><span class="info-val" id="p-joined">—</span></div>
       <div class="info-row"><span class="info-key">Plan</span><span class="info-val" id="p-plan-status">—</span></div>
+    </div>
+
+    <!-- TRAINING ZONES -->
+    <div class="zones-section">
+      <div class="zones-header">
+        <div class="zone-input-label" style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--faint);font-weight:600;">Training Zones</div>
+        <div class="zones-subtitle">Updates future plan weeks</div>
+      </div>
+
+      <!-- Max HR -->
+      <div class="zone-input-row">
+        <div class="zone-input-left">
+          <span class="zone-input-label">❤️ Max Heart Rate</span>
+          <span class="zone-input-desc">Your highest recorded HR</span>
+        </div>
+        <div class="zone-input-right">
+          <input class="zone-input" id="z-maxhr" type="number" min="140" max="220" placeholder="e.g. 190" />
+          <span class="zone-unit">bpm</span>
+        </div>
+      </div>
+
+      <!-- FTP -->
+      <div class="zone-input-row">
+        <div class="zone-input-left">
+          <span class="zone-input-label">⚡ Bike FTP</span>
+          <span class="zone-input-desc">Functional Threshold Power</span>
+        </div>
+        <div class="zone-input-right">
+          <input class="zone-input" id="z-ftp" type="number" min="50" max="500" placeholder="e.g. 220" />
+          <span class="zone-unit">watts</span>
+        </div>
+      </div>
+
+      <!-- CSS -->
+      <div class="zone-input-row">
+        <div class="zone-input-left">
+          <span class="zone-input-label">🏊 Swim CSS</span>
+          <span class="zone-input-desc">Critical Swim Speed</span>
+        </div>
+        <div class="zone-input-right">
+          <input class="zone-input" id="z-css-min" type="number" min="1" max="5" placeholder="1" style="width:54px;" />
+          <span class="zone-input-sep">:</span>
+          <input class="zone-input" id="z-css-sec" type="number" min="0" max="59" placeholder="45" style="width:54px;" />
+          <span class="zone-unit">/100m</span>
+        </div>
+      </div>
+
+      <!-- Run Threshold -->
+      <div class="zone-input-row">
+        <div class="zone-input-left">
+          <span class="zone-input-label">🏃 Run Threshold</span>
+          <span class="zone-input-desc">1-hour race pace</span>
+        </div>
+        <div class="zone-input-right">
+          <input class="zone-input" id="z-run-min" type="number" min="3" max="10" placeholder="4" style="width:54px;" />
+          <span class="zone-input-sep">:</span>
+          <input class="zone-input" id="z-run-sec" type="number" min="0" max="59" placeholder="30" style="width:54px;" />
+          <span class="zone-unit">/km</span>
+        </div>
+      </div>
+
+      <button class="zones-save-btn" id="zones-save-btn" onclick="saveZones()">💾 Save & update my plan</button>
+      <div class="zones-saved-msg" id="zones-saved-msg">✅ Zones saved — future weeks will use these values</div>
     </div>
 
     <!-- ACTIONS -->
@@ -198,6 +281,8 @@
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('profile-content').style.display = 'block';
+
+    loadZones(user.id);
   }
 
   async function upgradeNow() {
@@ -242,6 +327,95 @@
       alert('Something went wrong. Please try again.');
     }
     if (btn) { btn.textContent = '⚙️ Manage subscription'; btn.disabled = false; }
+  }
+
+  async function loadZones(userId) {
+    try {
+      const { data: plans } = await sb.from('plans').select('plan_data').eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
+      if (!plans || plans.length === 0) return;
+      let pd = plans[0].plan_data;
+      if (typeof pd === 'string') pd = JSON.parse(pd);
+
+      // Pre-fill from plan_data fields
+      if (pd.maxHR) document.getElementById('z-maxhr').value = pd.maxHR;
+
+      // Parse basePrompt for FTP, CSS, run threshold
+      const bp = pd.basePrompt || '';
+      const ftpMatch = bp.match(/bike FTP:\s*(\d+)w/);
+      if (ftpMatch) document.getElementById('z-ftp').value = ftpMatch[1];
+
+      const cssMatch = bp.match(/swim CSS:\s*(\d+):(\d+)/);
+      if (cssMatch) { document.getElementById('z-css-min').value = cssMatch[1]; document.getElementById('z-css-sec').value = cssMatch[2]; }
+
+      const runMatch = bp.match(/run threshold:\s*(\d+):(\d+)/);
+      if (runMatch) { document.getElementById('z-run-min').value = runMatch[1]; document.getElementById('z-run-sec').value = runMatch[2]; }
+    } catch(e) { console.log('loadZones error:', e); }
+  }
+
+  async function saveZones() {
+    const btn = document.getElementById('zones-save-btn');
+    const msg = document.getElementById('zones-saved-msg');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return;
+
+      const maxHR = parseInt(document.getElementById('z-maxhr').value) || null;
+      const ftp = parseInt(document.getElementById('z-ftp').value) || null;
+      const cssMin = document.getElementById('z-css-min').value;
+      const cssSec = document.getElementById('z-css-sec').value;
+      const runMin = document.getElementById('z-run-min').value;
+      const runSec = document.getElementById('z-run-sec').value;
+      const css = (cssMin && cssSec) ? `${cssMin}:${cssSec.padStart(2,'0')}/100m` : null;
+      const runThreshold = (runMin && runSec) ? `${runMin}:${runSec.padStart(2,'0')}/km` : null;
+
+      // Load current plan
+      const { data: plans } = await sb.from('plans').select('id,plan_data').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1);
+      if (!plans || plans.length === 0) { btn.disabled = false; btn.textContent = '💾 Save & update my plan'; return; }
+
+      let pd = plans[0].plan_data;
+      if (typeof pd === 'string') pd = JSON.parse(pd);
+
+      // Update maxHR in plan_data
+      if (maxHR) pd.maxHR = maxHR;
+
+      // Patch basePrompt with new values
+      let bp = pd.basePrompt || '';
+      if (ftp) bp = bp.replace(/bike FTP:\s*\d+w/, `bike FTP: ${ftp}w`);
+      if (css) bp = bp.replace(/swim CSS:\s*[\d:]+\/100m/, `swim CSS: ${css}`);
+      if (runThreshold) bp = bp.replace(/run threshold:\s*[\d:]+\/km/, `run threshold: ${runThreshold}`);
+
+      // If maxHR set, update HR zones in basePrompt
+      if (maxHR) {
+        const z1=[Math.round(maxHR*0.50),Math.round(maxHR*0.60)];
+        const z2=[Math.round(maxHR*0.60),Math.round(maxHR*0.70)];
+        const z3=[Math.round(maxHR*0.70),Math.round(maxHR*0.80)];
+        const z4=[Math.round(maxHR*0.80),Math.round(maxHR*0.90)];
+        const z5=[Math.round(maxHR*0.90),maxHR];
+        const hrBlock = `, ATHLETE MAX HEART RATE: ${maxHR}bpm — use this to calculate exact HR zones: Z1 ${z1[0]}-${z1[1]}bpm, Z2 ${z2[0]}-${z2[1]}bpm (aerobic base), Z3 ${z3[0]}-${z3[1]}bpm (tempo), Z4 ${z4[0]}-${z4[1]}bpm (threshold), Z5 ${z5[0]}-${maxHR}bpm (VO2max). OVERRIDE any Strava-derived HR zones with these values.`;
+        // Replace existing maxHR block or append before stravaFitness
+        if (bp.includes('ATHLETE MAX HEART RATE:')) {
+          bp = bp.replace(/, ATHLETE MAX HEART RATE:.*?values\./, hrBlock);
+        } else {
+          bp = bp.replace(/(STRAVA FITNESS DATA|Plan:)/, hrBlock + ' $1');
+        }
+      }
+
+      pd.basePrompt = bp;
+
+      await sb.from('plans').update({ plan_data: pd }).eq('id', plans[0].id);
+
+      msg.style.display = 'block';
+      btn.textContent = '✅ Saved';
+      setTimeout(() => { msg.style.display = 'none'; btn.textContent = '💾 Save & update my plan'; btn.disabled = false; }, 3000);
+    } catch(e) {
+      console.error('saveZones error:', e);
+      btn.textContent = '💾 Save & update my plan';
+      btn.disabled = false;
+      alert('Something went wrong saving zones. Please try again.');
+    }
   }
 
   async function logOut() {
