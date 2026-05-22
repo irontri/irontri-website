@@ -538,6 +538,39 @@ export default async function handler(req, res) {
     const allWeeks = [...(planData.weeks || []), ...newWeeks];
     allWeeks.forEach((wk, i) => { wk.weekNumber = i + 1; });
 
+    // Deduplicate same-day sessions in every week (catches same-day same-type AND same-day different-type)
+    const DAY_ORDER_BR = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    allWeeks.forEach(wk => {
+      if (!wk.days) return;
+      const seenType = {};
+      const seenDay = {};
+      const keep = [];
+      const dups = [];
+      const sorted = [...wk.days].sort((a, b) => {
+        if (a.type === 'Rest' && b.type !== 'Rest') return 1;
+        if (a.type !== 'Rest' && b.type === 'Rest') return -1;
+        return 0;
+      });
+      for (const s of sorted) {
+        const tk = `${s.day}|${s.type}`;
+        if (!seenType[tk] && !seenDay[s.day]) {
+          seenType[tk] = true; seenDay[s.day] = true; keep.push(s);
+        } else { dups.push(s); }
+      }
+      for (const dup of dups) {
+        if (dup.type === 'Rest') continue;
+        const idx = DAY_ORDER_BR.indexOf(dup.day);
+        for (let o = 1; o <= 6; o++) {
+          const cd = DAY_ORDER_BR[(idx + o) % 7];
+          const ctk = `${cd}|${dup.type}`;
+          if (!seenType[ctk] && !seenDay[cd]) {
+            dup.day = cd; seenType[ctk] = true; seenDay[cd] = true; keep.push(dup); break;
+          }
+        }
+      }
+      wk.days = keep;
+    });
+
     // Force correct phase labels on ALL weeks
     const _totalWks = totalNeeded;
     const _baseEndAll = Math.round(_totalWks * 0.30);
