@@ -416,9 +416,28 @@
 
       await sb.from('plans').update({ plan_data: pd }).eq('id', plans[0].id);
 
+      // Trigger build-remaining to regenerate unbuilt weeks with new thresholds
+      btn.textContent = '⏳ Updating plan...';
+      try {
+        const buildRes = await fetch('/api/build-remaining', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: session.user.id, planId: plans[0].id })
+        });
+        const buildData = await buildRes.json();
+        if (buildData.done) {
+          msg.textContent = '✅ Zones saved — your plan is fully built to race day';
+        } else {
+          msg.textContent = '✅ Zones saved & plan updated';
+        }
+      } catch(buildErr) {
+        console.warn('build-remaining error after zone save:', buildErr);
+        msg.textContent = '✅ Zones saved — plan will update on next generation';
+      }
+
       msg.style.display = 'block';
       btn.textContent = '✅ Saved';
-      setTimeout(() => { msg.style.display = 'none'; btn.textContent = '💾 Save & update my plan'; btn.disabled = false; }, 3000);
+      setTimeout(() => { msg.style.display = 'none'; msg.textContent = '✅ Zones saved — future weeks will use these values'; btn.textContent = '💾 Save & update my plan'; btn.disabled = false; }, 4000);
     } catch(e) {
       console.error('saveZones error:', e);
       btn.textContent = '💾 Save & update my plan';
