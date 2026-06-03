@@ -279,21 +279,30 @@ function calcMacros(weight, session) {
   const effort = session ? (parseFloat(session.effort) || 5) : 5;
   const durHrs = dur / 60;
 
-  // CARBOHYDRATE — g/kg/day scaled to training load (Burke et al. sports nutrition guidelines)
-  // Rest: 3-5g/kg, easy: 5-6g/kg, moderate: 6-8g/kg, hard: 8-10g/kg
+  // CARBOHYDRATE — g/kg/day (Burke et al. 2011, Jeukendrup 2017)
+  // Key principle: carb needs scale primarily with DURATION then intensity, not body weight linearly.
+  // We calculate a session carb demand in grams, then add a body-weight-adjusted baseline.
   let carbsPerKg;
   if (!session || type === 'Rest') {
     carbsPerKg = 3.5;
   } else {
-    const baseCarbRate = { Swim: 5.5, Bike: 6.5, Run: 6.0, Brick: 7.0, Strength: 4.5 };
-    carbsPerKg = baseCarbRate[type] || 5.5;
-    if (durHrs >= 2.5) carbsPerKg += 2.0;
-    else if (durHrs >= 2.0) carbsPerKg += 1.5;
-    else if (durHrs >= 1.5) carbsPerKg += 1.0;
+    // Step 1: baseline for a short easy session of this type (under 60min, easy effort)
+    const baseCarbRate = { Swim: 3.5, Bike: 4.0, Run: 3.5, Brick: 4.5, Strength: 3.0 };
+    carbsPerKg = baseCarbRate[type] || 3.5;
+    // Step 2: duration bonus — longer sessions need more carbs
+    if (durHrs >= 3.5) carbsPerKg += 4.0;
+    else if (durHrs >= 3.0) carbsPerKg += 3.0;
+    else if (durHrs >= 2.5) carbsPerKg += 2.5;
+    else if (durHrs >= 2.0) carbsPerKg += 2.0;
+    else if (durHrs >= 1.5) carbsPerKg += 1.25;
     else if (durHrs >= 1.0) carbsPerKg += 0.5;
+    // under 60min — no duration bonus
+    // Step 3: effort modifier
     if (effort >= 8) carbsPerKg += 1.0;
     else if (effort >= 6) carbsPerKg += 0.5;
+    else if (effort <= 3) carbsPerKg -= 0.5;
   }
+  carbsPerKg = Math.max(3.0, Math.min(carbsPerKg, 10.0));
   const carbsG = Math.round(w * carbsPerKg);
 
   // PROTEIN — 1.6-2.2g/kg (endurance athletes: Philips & Van Loon 2011)
