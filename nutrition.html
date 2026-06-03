@@ -477,20 +477,36 @@ async function init() {
     } catch(e) {}
   }
 
-  // Load today's plan session — prefer ?plan= param, then pinned, then most recent
+  // Load today's plan session — use most recent plan with a start date that has already begun
   try {
     const urlPlanId = new URLSearchParams(location.search).get('plan');
-    const pinnedId = localStorage.getItem('irontri_pinned_plan');
-    const planId = urlPlanId || pinnedId;
-    let planQuery;
-    if (planId) {
-      planQuery = sb.from('plans').select('plan_data').eq('id', planId).eq('user_id', session.user.id).limit(1);
-    } else {
-      planQuery = sb.from('plans').select('plan_data').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1);
+    let planData2 = null;
+    if (urlPlanId) {
+      // Came from plan.html with a specific plan ID — use it
+      const { data: plans } = await sb.from('plans').select('plan_data').eq('id', urlPlanId).eq('user_id', session.user.id).limit(1);
+      if (plans && plans.length) planData2 = typeof plans[0].plan_data === 'string' ? JSON.parse(plans[0].plan_data) : plans[0].plan_data;
     }
-    const { data: plans } = await planQuery;
-    if (plans && plans.length) {
-      planData = typeof plans[0].plan_data === 'string' ? JSON.parse(plans[0].plan_data) : plans[0].plan_data;
+    if (!planData2) {
+      // Load all plans and find the active one (start date <= today, most recently created)
+      const { data: plans } = await sb.from('plans').select('plan_data, created_at').eq('user_id', session.user.id).order('created_at', { ascending: false });
+      if (plans && plans.length) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        // Find first plan whose start date is on or before today
+        for (const p of plans) {
+          const pd = typeof p.plan_data === 'string' ? JSON.parse(p.plan_data) : p.plan_data;
+          if (pd && pd.startDate) {
+            const start = new Date(pd.startDate + 'T00:00:00');
+            if (start <= today) { planData2 = pd; break; }
+          }
+        }
+        // Fallback to most recent if none found
+        if (!planData2) {
+          planData2 = typeof plans[0].plan_data === 'string' ? JSON.parse(plans[0].plan_data) : plans[0].plan_data;
+        }
+      }
+    }
+    if (planData2) {
+      planData = planData2;
       todaySession = getTodaySession(planData);
     }
   } catch(e) { console.log('Plan load error:', e); }
