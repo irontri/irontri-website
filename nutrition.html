@@ -262,8 +262,13 @@ function getTodaySession(plan) {
     const startMon = startDow === 0 ? 6 : startDow - 1;
     const dayOrder = [...allDayNames.slice(startMon), ...allDayNames.slice(0, startMon)];
     const todayName = dayOrder[dayIdx];
-    const session = week.days.find(d => d.day === todayName);
-    return session ? { ...session, weekNum: weekIdx + 1, totalWeeks: plan.weeks.length, phase: week.phase || 'Base' } : null;
+    // Get all sessions for today — pick first non-rest, prefer Swim/Bike/Run/Brick over Strength
+    const todaySessions = week.days.filter(d => d.day === todayName && d.type !== 'Rest');
+    if (!todaySessions.length) return null;
+    const typeOrder = { Swim: 0, Bike: 1, Run: 2, Brick: 3, Strength: 4 };
+    todaySessions.sort((a, b) => (typeOrder[a.type] ?? 5) - (typeOrder[b.type] ?? 5));
+    const primary = todaySessions[0];
+    return { ...primary, weekNum: weekIdx + 1, totalWeeks: plan.weeks.length, phase: week.phase || 'Base' };
   } catch(e) { return null; }
 }
 
@@ -472,17 +477,23 @@ async function init() {
     } catch(e) {}
   }
 
-  // Load today's plan session
+  // Load today's plan session — prefer ?plan= param, then pinned, then most recent
   try {
+    const urlPlanId = new URLSearchParams(location.search).get('plan');
     const pinnedId = localStorage.getItem('irontri_pinned_plan');
-    let planQuery = sb.from('plans').select('plan_data').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1);
-    if (pinnedId) planQuery = sb.from('plans').select('plan_data').eq('id', pinnedId).limit(1);
+    const planId = urlPlanId || pinnedId;
+    let planQuery;
+    if (planId) {
+      planQuery = sb.from('plans').select('plan_data').eq('id', planId).eq('user_id', session.user.id).limit(1);
+    } else {
+      planQuery = sb.from('plans').select('plan_data').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1);
+    }
     const { data: plans } = await planQuery;
     if (plans && plans.length) {
-      planData = JSON.parse(plans[0].plan_data);
+      planData = typeof plans[0].plan_data === 'string' ? JSON.parse(plans[0].plan_data) : plans[0].plan_data;
       todaySession = getTodaySession(planData);
     }
-  } catch(e) {}
+  } catch(e) { console.log('Plan load error:', e); }
 
   document.getElementById('loading-screen').style.display = 'none';
 
