@@ -1,0 +1,500 @@
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>irontri — Nutrition</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+  <style>
+    :root{--blue:#1E90FF;--blue-dark:#1478d4;--bg:#0a0a0a;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--text:#fff;--muted:rgba(255,255,255,0.7);--faint:rgba(255,255,255,0.45);}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:80px;}
+    nav{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:68px;background:#1E90FF;}
+    .nav-logo{display:flex;align-items:center;text-decoration:none;}
+    .nav-logo img{height:auto;width:160px;display:block;mix-blend-mode:screen;filter:brightness(10);}
+    .nav-right{display:flex;align-items:center;gap:12px;}
+    .nav-user{font-size:14px;color:rgba(255,255,255,0.85);text-decoration:none;}
+    .btn-logout{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+    .wrap{max-width:680px;margin:0 auto;padding:28px 20px;}
+    .card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:20px;margin-bottom:16px;}
+    .section-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(30,144,255,0.8);font-weight:600;margin-bottom:6px;}
+    .page-title{font-family:'Syne',sans-serif;font-size:clamp(22px,4vw,30px);font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;}
+    .page-sub{font-size:14px;color:var(--muted);margin-bottom:24px;}
+    .macro-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+    .macro-card{border-radius:12px;padding:14px;text-align:center;}
+    .macro-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;line-height:1;}
+    .macro-lbl{font-size:11px;color:var(--muted);margin-top:5px;}
+    .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:0;}
+    .stat-box{background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;text-align:center;}
+    .stat-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--blue);}
+    .stat-lbl{font-size:11px;color:var(--faint);margin-top:4px;}
+    .meal-row{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
+    .meal-row:last-child{border-bottom:none;padding-bottom:0;}
+    .meal-icon{font-size:22px;flex-shrink:0;width:32px;text-align:center;}
+    .meal-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:3px;}
+    .meal-desc{font-size:13px;color:var(--muted);line-height:1.5;}
+    .trixy-insight{background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:12px;padding:16px;}
+    .trixy-label{font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:5px;letter-spacing:1px;text-transform:uppercase;}
+    .trixy-text{font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;}
+    .edit-link{font-size:12px;color:rgba(30,144,255,0.7);cursor:pointer;text-decoration:underline;background:none;border:none;font-family:'DM Sans',sans-serif;padding:0;margin-left:8px;}
+    .edit-link:hover{color:var(--blue);}
+    .loading-state{text-align:center;padding:60px 20px;color:var(--faint);}
+    .spinner{width:32px;height:32px;border:2px solid rgba(255,255,255,0.1);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .weight-setup{max-width:400px;margin:60px auto;text-align:center;padding:0 20px;}
+    .weight-setup h2{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px;}
+    .weight-setup p{font-size:15px;color:var(--muted);margin-bottom:28px;line-height:1.6;}
+    .weight-input-wrap{display:flex;gap:10px;align-items:center;justify-content:center;margin-bottom:20px;}
+    .weight-input{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:#fff;font-size:24px;font-family:'Syne',sans-serif;font-weight:700;padding:14px 20px;width:120px;text-align:center;outline:none;transition:border-color 0.2s;}
+    .weight-input:focus{border-color:var(--blue);}
+    .weight-unit{font-size:16px;color:var(--muted);}
+    .btn-primary{background:var(--blue);color:#fff;border:none;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;transition:background 0.2s;}
+    .btn-primary:hover{background:var(--blue-dark);}
+    .btn-primary:disabled{opacity:0.4;cursor:not-allowed;}
+    .inline-edit{display:none;margin-top:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;}
+    .inline-edit input{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;font-size:16px;font-family:'Syne',sans-serif;font-weight:700;padding:10px 14px;width:100px;text-align:center;outline:none;}
+    .inline-edit input:focus{border-color:var(--blue);}
+    .inline-edit-btns{display:flex;gap:8px;margin-top:10px;}
+    .btn-save-sm{background:var(--blue);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+    .btn-cancel-sm{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.15);padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+    .session-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:100px;padding:4px 12px;font-size:12px;color:var(--muted);margin-top:6px;}
+    .no-plan{text-align:center;padding:40px 20px;color:var(--faint);}
+    .no-plan a{color:var(--blue);text-decoration:none;}
+    @media(max-width:480px){.macro-grid{grid-template-columns:repeat(3,1fr);}.stat-grid{grid-template-columns:repeat(3,1fr);}.wrap{padding:20px 16px;}}
+  </style>
+</head>
+<body>
+<nav>
+  <a href="/dashboard.html" class="nav-logo"><img src="irontri_logo.png" alt="irontri"></a>
+  <div class="nav-right">
+    <a href="profile.html" class="nav-user" id="nav-user"></a>
+    <button class="btn-logout" onclick="logOut()">Log out</button>
+  </div>
+</nav>
+
+<!-- WEIGHT SETUP SCREEN -->
+<div id="weight-setup-screen" style="display:none;">
+  <div class="weight-setup">
+    <div style="font-size:48px;margin-bottom:16px;">🍽️</div>
+    <h2>Fuel your training</h2>
+    <p>Enter your body weight so we can calculate your daily calorie and macro targets based on your training load.</p>
+    <div class="weight-input-wrap">
+      <input type="number" class="weight-input" id="weight-input-setup" placeholder="75" min="40" max="200" step="0.5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="btn-primary" onclick="saveWeight()">Calculate my nutrition →</button>
+  </div>
+</div>
+
+<!-- MAIN NUTRITION SCREEN -->
+<div id="nutrition-screen" style="display:none;">
+  <div class="wrap">
+
+    <div class="section-label">Nutrition</div>
+    <h1 class="page-title" id="page-title">Fuel for today 🍽️</h1>
+    <div id="session-badge" class="session-badge" style="display:none;margin-bottom:16px;"></div>
+    <div style="height:12px;"></div>
+
+    <!-- STATS ROW -->
+    <div class="card">
+      <div class="section-label" style="margin-bottom:12px;">Your stats</div>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-val" id="stat-weight">—</div>
+          <div class="stat-lbl">kg <button class="edit-link" onclick="toggleWeightEdit()">Edit</button></div>
+          <div class="inline-edit" id="weight-edit-inline">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="number" id="weight-edit-input" min="40" max="200" step="0.5" placeholder="75">
+              <span style="font-size:14px;color:var(--muted);">kg</span>
+            </div>
+            <div class="inline-edit-btns">
+              <button class="btn-save-sm" onclick="saveWeightEdit()">Save</button>
+              <button class="btn-cancel-sm" onclick="toggleWeightEdit()">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="stat-calories" style="color:#4ade80;">—</div>
+          <div class="stat-lbl">kcal today</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="stat-protein" style="color:#fbbf24;">—</div>
+          <div class="stat-lbl">protein (g)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MACROS -->
+    <div class="macro-grid">
+      <div class="macro-card" style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);">
+        <div class="macro-val" style="color:#4ade80;" id="macro-carbs">—</div>
+        <div class="macro-lbl">Carbs (g)</div>
+      </div>
+      <div class="macro-card" style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);">
+        <div class="macro-val" style="color:#fbbf24;" id="macro-protein">—</div>
+        <div class="macro-lbl">Protein (g)</div>
+      </div>
+      <div class="macro-card" style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);">
+        <div class="macro-val" style="color:#a78bfa;" id="macro-fat">—</div>
+        <div class="macro-lbl">Fat (g)</div>
+      </div>
+    </div>
+
+    <!-- MEAL TIMING -->
+    <div class="card">
+      <div class="section-label" style="margin-bottom:14px;">Meal timing</div>
+      <div id="meal-timing-content">
+        <div class="loading-state" style="padding:20px;">
+          <div class="spinner"></div>
+          <div>Building your nutrition plan...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRIXY INSIGHT -->
+    <div class="trixy-insight">
+      <div class="trixy-label">Trixy says</div>
+      <div class="trixy-text" id="trixy-nutrition-text">Loading coach insight...</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-screen" style="text-align:center;padding:80px 20px;">
+  <div class="spinner"></div>
+  <div style="color:var(--faint);font-size:14px;">Loading your nutrition...</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav style="position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid rgba(255,255,255,0.08);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);">
+  <a href="/dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">📅</span>Today
+  </a>
+  <a href="#" onclick="goToMyPlan(event)" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <span style="font-size:20px;">🗓️</span>My Plan
+  </a>
+  <a href="/nutrition.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;text-decoration:none;color:var(--blue);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;border-top:2px solid var(--blue);">
+    <span style="font-size:20px;">🥗</span>Nutrition
+  </a>
+  <button onclick="window.location.href='/dashboard.html#coach'" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,0.4);font-size:10px;font-weight:600;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;">
+    <img src="/trixy.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" alt="Trixy">Coach
+  </button>
+</nav>
+
+<script>
+const SUPABASE_URL = 'https://aezfxagplaxlmovqbmfd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlemZ4YWdwbGF4bG1vdnFibWZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY2MzQsImV4cCI6MjA5MDA0MjYzNH0.jPyE36x0jEoX3qsCFBMpMewwmbUI0gRkAtj4EREpMSU';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } });
+
+let currentUser = null;
+let userWeight = null;
+let todaySession = null;
+let planData = null;
+
+async function logOut() {
+  await sb.auth.signOut();
+  window.location.href = '/auth.html';
+}
+
+async function goToMyPlan(e) {
+  e.preventDefault();
+  const pinned = localStorage.getItem('irontri_pinned_plan');
+  if (pinned) { window.location.href = '/plan.html?load=' + pinned; return; }
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  const { data: plans } = await sb.from('plans').select('id').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1);
+  if (plans && plans.length) window.location.href = '/plan.html?load=' + plans[0].id;
+}
+
+function toggleWeightEdit() {
+  const el = document.getElementById('weight-edit-inline');
+  const isOpen = el.style.display === 'block';
+  el.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    document.getElementById('weight-edit-input').value = userWeight || '';
+    document.getElementById('weight-edit-input').focus();
+  }
+}
+
+async function saveWeightEdit() {
+  const val = parseFloat(document.getElementById('weight-edit-input').value);
+  if (!val || val < 40 || val > 200) { alert('Please enter a valid weight between 40 and 200 kg'); return; }
+  userWeight = val;
+  localStorage.setItem('irontri_weight', String(val));
+  if (currentUser) {
+    await sb.from('profiles').upsert({ user_id: currentUser.id, weight_kg: val }, { onConflict: 'user_id' });
+  }
+  document.getElementById('weight-edit-inline').style.display = 'none';
+  document.getElementById('stat-weight').textContent = val;
+  calculateAndDisplay();
+}
+
+async function saveWeight() {
+  const val = parseFloat(document.getElementById('weight-input-setup').value);
+  if (!val || val < 40 || val > 200) { alert('Please enter a valid weight between 40 and 200 kg'); return; }
+  userWeight = val;
+  localStorage.setItem('irontri_weight', String(val));
+  if (currentUser) {
+    await sb.from('profiles').upsert({ user_id: currentUser.id, weight_kg: val }, { onConflict: 'user_id' });
+  }
+  document.getElementById('weight-setup-screen').style.display = 'none';
+  document.getElementById('nutrition-screen').style.display = 'block';
+  calculateAndDisplay();
+}
+
+function getTodaySession(plan) {
+  if (!plan || !plan.weeks) return null;
+  try {
+    const startDate = new Date(plan.startDate + 'T00:00:00');
+    const today = new Date(); today.setHours(0,0,0,0);
+    const diffDays = Math.round((today - startDate) / (1000*60*60*24));
+    if (diffDays < 0) return null;
+    const weekIdx = Math.floor(diffDays / 7);
+    const dayIdx = diffDays % 7;
+    if (weekIdx >= plan.weeks.length) return null;
+    const week = plan.weeks[weekIdx];
+    if (!week || !week.days) return null;
+    const allDayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const startDow = startDate.getDay();
+    const startMon = startDow === 0 ? 6 : startDow - 1;
+    const dayOrder = [...allDayNames.slice(startMon), ...allDayNames.slice(0, startMon)];
+    const todayName = dayOrder[dayIdx];
+    const session = week.days.find(d => d.day === todayName);
+    return session ? { ...session, weekNum: weekIdx + 1, totalWeeks: plan.weeks.length, phase: week.phase || 'Base' } : null;
+  } catch(e) { return null; }
+}
+
+function calcMacros(weight, session) {
+  const w = parseFloat(weight) || 70;
+  const type = session ? session.type : 'Rest';
+  const dur = session ? (parseFloat(session.duration) || 0) : 0;
+  const effort = session ? (parseFloat(session.effort) || 5) : 0;
+
+  // Base calories (BMR approx + activity multiplier)
+  let cal, carbsG, proteinG, fatG;
+  const bmr = w * 24;
+
+  if (!session || type === 'Rest') {
+    cal = Math.round(bmr * 1.3);
+    proteinG = Math.round(w * 1.6);
+    fatG = Math.round(w * 0.9);
+    carbsG = Math.round((cal - proteinG * 4 - fatG * 9) / 4);
+  } else {
+    const durHrs = dur / 60;
+    // Estimate session calories burned
+    const metByType = { Swim: 8, Bike: 7, Run: 9, Brick: 8.5, Strength: 5 };
+    const met = metByType[type] || 7;
+    const effortMult = 0.7 + (effort / 10) * 0.6;
+    const sessionCal = Math.round(met * w * durHrs * effortMult);
+
+    cal = Math.round(bmr * 1.5 + sessionCal);
+    proteinG = Math.round(w * 1.8);
+
+    // Carb loading for long or hard sessions
+    const isLong = durHrs >= 1.5;
+    const isHard = effort >= 7;
+    const carbMult = isLong && isHard ? 5.5 : isLong ? 5 : isHard ? 4.5 : 4;
+    carbsG = Math.round(w * carbMult * Math.min(durHrs, 2.5) / 2);
+    carbsG = Math.max(carbsG, Math.round(w * 3.5));
+
+    fatG = Math.round((cal - proteinG * 4 - carbsG * 4) / 9);
+    fatG = Math.max(fatG, Math.round(w * 0.7));
+    // Recalc cals to be consistent
+    cal = Math.round(carbsG * 4 + proteinG * 4 + fatG * 9);
+  }
+
+  return { cal, carbsG, proteinG, fatG };
+}
+
+function getMealTiming(session) {
+  const type = session ? session.type : 'Rest';
+  const dur = session ? (parseFloat(session.duration) || 0) : 0;
+  const durHrs = dur / 60;
+
+  if (!session || type === 'Rest') {
+    return [
+      { icon: '🌅', title: 'Breakfast', desc: 'Eggs on sourdough or overnight oats. Aim for 30g protein and moderate carbs to start the day.' },
+      { icon: '🍽️', title: 'Lunch', desc: 'Balanced meal with lean protein, whole grains and vegetables. Chicken rice bowl or a big salad with salmon.' },
+      { icon: '🌙', title: 'Dinner', desc: 'Lean protein and plenty of vegetables. Good recovery night — set yourself up for tomorrow\'s session.' },
+    ];
+  }
+  if (type === 'Swim') {
+    return [
+      { icon: '☀️', title: 'Pre-swim (1hr before)', desc: 'Light and easy to digest. Banana with peanut butter or a small bowl of oats. Avoid anything heavy.' },
+      { icon: '🏊', title: 'During', desc: durHrs > 1 ? 'For sessions over 1hr, sip an electrolyte drink on the wall. Avoid solids.' : 'Just water — short session.' },
+      { icon: '💪', title: 'Recovery (within 30min)', desc: 'Protein shake or chocolate milk. Pair with a banana to refuel glycogen fast.' },
+      { icon: '🍽️', title: 'Main meal after', desc: 'Salmon or chicken with rice and greens. Get your full protein target in here.' },
+    ];
+  }
+  if (type === 'Bike') {
+    return [
+      { icon: '☀️', title: 'Pre-ride (2hrs before)', desc: 'Oats with banana and honey. 80-100g carbs, easy to digest, nothing too fibrous.' },
+      { icon: '🚴', title: 'On the bike', desc: durHrs > 1.5 ? `60-90g carbs/hr — mix gels and real food after 1hr. Start fuelling at 20-30 min, don't wait until you're hungry.` : '30-60g carbs if over 60min. A gel or two and electrolytes.' },
+      { icon: '💪', title: 'Recovery (within 30min)', desc: 'Chocolate milk, a protein shake, or rice cakes with cheese. 3:1 carb to protein ratio is ideal.' },
+      { icon: '🌙', title: 'Evening meal', desc: 'Carb-rich recovery meal — pasta, rice or potato with lean protein. Replenish glycogen for tomorrow.' },
+    ];
+  }
+  if (type === 'Run') {
+    return [
+      { icon: '☀️', title: 'Pre-run (1-2hrs before)', desc: 'Simple carbs — white toast with jam, a banana or rice cakes. Avoid high fat or fibre before running.' },
+      { icon: '🏃', title: 'During', desc: durHrs > 1 ? 'Gel every 30-45min from the 30min mark. Practice your race-day fuelling strategy here.' : 'Water only if under 60min. Electrolytes if it\'s hot.' },
+      { icon: '💪', title: 'Recovery (within 30min)', desc: 'Protein shake with a banana or chocolate milk. Running breaks down muscle — get protein in fast.' },
+      { icon: '🍽️', title: 'Main meal', desc: 'Chicken or salmon with sweet potato and greens. High protein, moderate carbs.' },
+    ];
+  }
+  if (type === 'Brick') {
+    return [
+      { icon: '☀️', title: 'Pre-session (2-3hrs before)', desc: 'Oats with banana. Your biggest session of the week — fuel it properly.' },
+      { icon: '🚴', title: 'On the bike', desc: '60-90g carbs/hr. Eat more than you think you need — you\'ll bonk on the run if you don\'t.' },
+      { icon: '🏃', title: 'Into the run', desc: 'Gel immediately off the bike if your run is over 30min. Your body is already in deficit.' },
+      { icon: '💪', title: 'Recovery', desc: 'Biggest recovery meal of the week. Carb and protein rich — pasta with ground beef, a big burrito, or rice with chicken and avocado.' },
+    ];
+  }
+  if (type === 'Strength') {
+    return [
+      { icon: '☀️', title: 'Pre-session (1hr before)', desc: 'Light protein and carbs — Greek yoghurt with granola, or eggs on toast.' },
+      { icon: '💪', title: 'Post-session (within 30min)', desc: '30-40g protein to trigger muscle repair. Shake, Greek yoghurt or cottage cheese.' },
+      { icon: '🍽️', title: 'Main meal', desc: 'Protein-rich — chicken, beef or fish with vegetables and a moderate serve of carbs.' },
+    ];
+  }
+  return [
+    { icon: '🌅', title: 'Breakfast', desc: 'Balanced meal to start the day. Eggs, oats or yoghurt with fruit.' },
+    { icon: '🍽️', title: 'Lunch & dinner', desc: 'Lean protein, complex carbs and plenty of vegetables across both meals.' },
+  ];
+}
+
+function renderMealTiming(session) {
+  const meals = getMealTiming(session);
+  return meals.map(m => `
+    <div class="meal-row">
+      <div class="meal-icon">${m.icon}</div>
+      <div>
+        <div class="meal-title">${m.title}</div>
+        <div class="meal-desc">${m.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function getTrixyInsight(session, macros) {
+  const type = session ? session.type : 'Rest';
+  const dur = session ? (parseFloat(session.duration) || 0) : 0;
+  const phase = session ? session.phase : 'Base';
+  const durHrs = (dur / 60).toFixed(1);
+
+  const prompt = session && type !== 'Rest'
+    ? `The athlete has a ${durHrs}hr ${type} session today in ${phase} phase. Their targets are ${macros.cal} kcal, ${macros.carbsG}g carbs, ${macros.proteinG}g protein, ${macros.fatG}g fat. Give one specific, direct piece of nutrition advice for today — like a coach texting their athlete. 2 sentences max. No bullet points. No generic advice — make it specific to this session type and duration.`
+    : `The athlete has a rest day today. Their targets are ${macros.cal} kcal, ${macros.proteinG}g protein. Give one short piece of advice about fuelling on rest days and why it still matters for recovery. 2 sentences max. Be direct, like a coach.`;
+
+  try {
+    const res = await fetch('/api/trixy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemPrompt: 'You are Trixy, a world-class triathlon coach. You give short, direct, specific nutrition advice. Never generic. Sound like a coach texting their athlete. 2 sentences max.',
+        history: [],
+        message: prompt
+      })
+    });
+    const data = await res.json();
+    return data.reply || null;
+  } catch(e) { return null; }
+}
+
+function calculateAndDisplay() {
+  const w = userWeight;
+  document.getElementById('stat-weight').textContent = w;
+  document.getElementById('weight-edit-input').value = w;
+
+  const macros = calcMacros(w, todaySession);
+  document.getElementById('stat-calories').textContent = macros.cal.toLocaleString();
+  document.getElementById('stat-protein').textContent = macros.proteinG;
+  document.getElementById('macro-carbs').textContent = macros.carbsG;
+  document.getElementById('macro-protein').textContent = macros.proteinG;
+  document.getElementById('macro-fat').textContent = macros.fatG;
+
+  // Page title based on session
+  const type = todaySession ? todaySession.type : null;
+  const titleMap = { Swim: 'Fuel for your swim 🏊', Bike: 'Fuel for your ride 🚴', Run: 'Fuel for your run 🏃', Brick: 'Fuel for your brick 🧱', Strength: 'Fuel for strength day 💪', Rest: 'Rest day nutrition 😴' };
+  document.getElementById('page-title').textContent = type && type !== 'Rest' ? (titleMap[type] || 'Fuel for today 🍽️') : 'Fuel for today 🍽️';
+
+  // Session badge
+  if (todaySession && todaySession.type !== 'Rest') {
+    const badge = document.getElementById('session-badge');
+    const dur = parseFloat(todaySession.duration) || 0;
+    badge.textContent = `${todaySession.name || todaySession.type} · ${dur >= 60 ? Math.floor(dur/60) + 'hr' + (dur%60 ? ' ' + dur%60 + 'min' : '') : dur + 'min'} · ${todaySession.phase} phase`;
+    badge.style.display = 'inline-flex';
+  }
+
+  // Meal timing
+  document.getElementById('meal-timing-content').innerHTML = renderMealTiming(todaySession);
+
+  // Trixy insight async
+  getTrixyInsight(todaySession, macros).then(insight => {
+    if (insight) document.getElementById('trixy-nutrition-text').textContent = insight;
+    else {
+      const fallbacks = {
+        Bike: "Big ride today — don't undereat. Start fuelling earlier than you think you need to and keep carbs coming every 30min.",
+        Run: "Get your carbs in before you head out. Running on empty trashes your form and your recovery.",
+        Swim: "Easy to forget nutrition with swimming but your body still burns through glycogen. Get protein in within 30min of finishing.",
+        Brick: "Your hardest session of the week needs your best fuelling. Eat the full pre-session meal — no skipping.",
+        Strength: "Strength days are where the adaptation happens. Hit your protein target today — it's when your muscles actually rebuild.",
+        Rest: "Rest days aren't a free pass to undereat. Your body is repairing — hit your protein target even if you're not hungry.",
+      };
+      const type = todaySession ? todaySession.type : 'Rest';
+      document.getElementById('trixy-nutrition-text').textContent = fallbacks[type] || "Fuel consistently every day — not just on hard training days. Your recovery depends on what you eat right now.";
+    }
+  });
+}
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = '/auth.html'; return; }
+  currentUser = session.user;
+
+  const firstName = session.user.user_metadata?.full_name?.split(' ')[0] || session.user.email?.split('@')[0] || 'Athlete';
+  document.getElementById('nav-user').textContent = firstName;
+
+  // Load weight — check localStorage first, then profiles table
+  const localWeight = localStorage.getItem('irontri_weight');
+  if (localWeight) {
+    userWeight = parseFloat(localWeight);
+  } else {
+    try {
+      const { data: profile } = await sb.from('profiles').select('weight_kg').eq('user_id', session.user.id).single();
+      if (profile && profile.weight_kg) {
+        userWeight = profile.weight_kg;
+        localStorage.setItem('irontri_weight', String(userWeight));
+      }
+    } catch(e) {}
+  }
+
+  // Load today's plan session
+  try {
+    const pinnedId = localStorage.getItem('irontri_pinned_plan');
+    let planQuery = sb.from('plans').select('plan_data').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1);
+    if (pinnedId) planQuery = sb.from('plans').select('plan_data').eq('id', pinnedId).limit(1);
+    const { data: plans } = await planQuery;
+    if (plans && plans.length) {
+      planData = JSON.parse(plans[0].plan_data);
+      todaySession = getTodaySession(planData);
+    }
+  } catch(e) {}
+
+  document.getElementById('loading-screen').style.display = 'none';
+
+  if (!userWeight) {
+    document.getElementById('weight-setup-screen').style.display = 'block';
+  } else {
+    document.getElementById('nutrition-screen').style.display = 'block';
+    calculateAndDisplay();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
