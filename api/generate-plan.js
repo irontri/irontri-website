@@ -421,6 +421,20 @@ JSON structure for weeks:
           });
         }
       }
+      // Recalculate duration from actual warmup/mainset/cooldown text
+      const _extractMins = (text) => {
+        if (!text) return 0;
+        let total = 0;
+        for (const m of (text.matchAll(/(\d+)\s*min/gi))) total += parseInt(m[1]);
+        return total;
+      };
+      (pd.weeks || []).forEach(wk => {
+        (wk.days || []).forEach(d => {
+          if (d.type === 'Rest' || d.type === 'Race') return;
+          const parsed = _extractMins(d.warmup) + _extractMins(d.mainset) + _extractMins(d.cooldown);
+          if (parsed > 0) d.duration = parsed;
+        });
+      });
       planDataToSave = JSON.stringify(pd);
     } catch(e) {
       console.log('Could not inject basePrompt:', e);
