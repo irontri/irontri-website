@@ -1333,9 +1333,9 @@ async function loadPaceImprovement() {
     const runLabel = (initialFitness.run?.thresholdPaceMin || currentFitness.run?.thresholdPaceMin) ? 'Run threshold' : 'Run pace';
     if (runTo && runToSecs) {
       if (runFrom && runFromSecs) {
-        const improved = runToSecs < runFromSecs;
-        const same = runFromSecs === runToSecs;
         const diffSec = Math.round(Math.abs(runToSecs - runFromSecs));
+        const improved = runToSecs < runFromSecs - 4;
+        const same = diffSec < 5;
         const sign = improved ? '-' : '+';
         const m = Math.floor(diffSec / 60); const s = diffSec % 60;
         const deltaStr = sign + (m > 0 ? m + 'm ' : '') + s + 's';
