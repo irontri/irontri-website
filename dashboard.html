@@ -756,40 +756,14 @@ async function loadStreakAndRing() {
     const today=toLocal(new Date());
     const yd=new Date();yd.setDate(yd.getDate()-1);
     const yesterday=toLocal(yd);
-    // Build a set of all scheduled rest day dates from the plan
-    const restDates = new Set();
-    try {
-      const { data: planRows } = await sb.from('plans').select('plan_data,created_at').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(1);
-      if (planRows?.[0]) {
-        const pd = JSON.parse(planRows[0].plan_data);
-        const planStart = new Date((pd.startDate || planRows[0].created_at.slice(0,10)) + 'T00:00:00');
-        (pd.weeks || []).forEach((wk, wkIdx) => {
-          const DAY_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-          (wk.days || []).forEach(day => {
-            if (day.type === 'Rest') {
-              const dayOffset = wkIdx * 7 + DAY_ORDER.indexOf(day.day);
-              if (dayOffset >= 0) {
-                const d = new Date(planStart);
-                d.setDate(planStart.getDate() + dayOffset);
-                restDates.add(d.toISOString().slice(0,10));
-              }
-            }
-          });
-        });
-      }
-    } catch(e) {}
+    
 
-    // Check if all dates between two completion dates are rest days
+    // Check if gap between two completion dates is small enough to continue streak
+    // Allow up to 2 day gap (1 rest day between sessions)
     function gapIsAllRestDays(dateA, dateB) {
       const a = new Date(dateA), b = new Date(dateB);
       const diff = Math.round((a - b) / 86400000);
-      if (diff <= 1) return true;
-      for (let d = 1; d < diff; d++) {
-        const mid = new Date(b);
-        mid.setDate(b.getDate() + d);
-        if (!restDates.has(mid.toISOString().slice(0,10))) return false;
-      }
-      return true;
+      return diff <= 2;
     }
 
     const startDate=dates[0]===today||dates[0]===yesterday?dates[0]:null;
