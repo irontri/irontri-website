@@ -104,11 +104,11 @@ export default async function handler(req, res) {
       // Threshold pace — priority order:
       // 1. Races (workout_type=1) over 4km — race pace is a strong threshold signal
       // 2. Hard workout efforts (workout_type=2 or 3) over 4km
-      // 3. Longer runs (8km+) regardless of workout type — best pace with small buffer
+      // 3. Any run over 4km regardless of workout type — best pace with small buffer
       // 4. Fallback: best pace * 1.10 (more conservative — avoids setting threshold from a sprint)
       const raceRuns = validRuns.filter(r => r.workout_type === 1 && r.distance >= 4000);
       const workoutRuns = validRuns.filter(r => (r.workout_type === 2 || r.workout_type === 3) && r.distance >= 4000);
-      const longerEasyRuns = validRuns.filter(r => r.distance >= 8000);
+      const longerEasyRuns = validRuns.filter(r => r.distance >= 4000);
 
       let thresholdPaceSecs = null;
       if (raceRuns.length > 0) {
@@ -120,7 +120,7 @@ export default async function handler(req, res) {
         const bestWorkoutPace = Math.min(...workoutRuns.map(r => r.moving_time / (r.distance / 1000)));
         thresholdPaceSecs = bestWorkoutPace * 1.03;
       } else if (longerEasyRuns.length > 0) {
-        // Longer runs (8km+) are a good threshold proxy — best pace with tighter buffer
+        // Any run over 4km — best pace with tighter buffer
         const bestLongPace = Math.min(...longerEasyRuns.map(r => r.moving_time / (r.distance / 1000)));
         thresholdPaceSecs = bestLongPace * 1.08;
       } else if (bestPaceSecs) {
