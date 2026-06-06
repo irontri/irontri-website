@@ -754,7 +754,8 @@ async function loadStreakAndRing() {
     const dates = [...new Set(completions.map(c=>toLocal(new Date(c.created_at))))].sort().reverse();
     let streak=0,best=0,tempStreak=1;
     const today=toLocal(new Date());
-    const yesterday=toLocal(new Date(Date.now()-86400000));
+    const yd=new Date();yd.setDate(yd.getDate()-1);
+    const yesterday=toLocal(yd);
     // Build a set of all scheduled rest day dates from the plan
     const restDates = new Set();
     try {
@@ -795,6 +796,7 @@ async function loadStreakAndRing() {
     if(startDate){streak=1;for(let i=1;i<dates.length;i++){if(gapIsAllRestDays(dates[i-1],dates[i])){streak++;}else{break;}}}
     tempStreak=1;for(let i=1;i<dates.length;i++){if(gapIsAllRestDays(dates[i-1],dates[i])){tempStreak++;best=Math.max(best,tempStreak);}else{tempStreak=1;}}
     best=Math.max(best,streak,1);
+    window.currentStreak=streak;
     document.getElementById('streak-num').textContent=streak;
     if(streak>0)document.getElementById('streak-card').classList.add('active');
     if(best>streak)document.getElementById('streak-best').textContent='Best: '+best+' days';
@@ -1139,7 +1141,7 @@ async function loadTodaySession() {
       const secondSession = hasDouble ? todaySessions[1] : null;
       const t2 = secondSession ? (TYPE_INFO[secondSession.type] || TYPE_INFO['Rest']) : null;
       document.getElementById('today-card-inner').innerHTML = `
-        <div class="today-icon">${done ? '✅' : t.icon}</div>
+        <div class="today-icon">${done ? ((window.currentStreak >= 2) ? '🔥' : '✅') : t.icon}</div>
         <div class="today-info">
           <div class="today-name" style="color:${done ? '#4ade80' : '#fff'}">${day.name || day.type + ' Session'}${done ? ' — Done!' : ''}</div>
           <div class="today-meta">
