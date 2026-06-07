@@ -1631,7 +1631,7 @@ function selectDay(i){
             <div class="target-label">🎯 Pace target</div>
             <div class="target-value">${(() => {
               try {
-                const sf = planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null);
+                const sf = window.currentStravaFitness || (planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null));
                 if (dActive.type === 'Bike' || dActive.type === 'Brick') {
                   const zMatch = String(dActive.heartRateZone || dActive.zone || '2').match(/\d/);
                   const zNum = zMatch ? parseInt(zMatch[0]) : 2;
@@ -1904,7 +1904,7 @@ async function buildPlan(){
     renderWeek();
     try { renderGraph(); } catch(eg) {}
     renderRoadmap();
-    loadCompletions().then(() => { renderWeek(); syncStravaActivities(); refreshPaceTargets(); });
+    loadCompletions().then(() => { renderWeek(); syncStravaActivities(); loadCurrentFitness(); });
     if(A.date){planData.raceDate=A.date;}
     if(A.units){planData.units=A.units;}
     if(A.stravaFitness){planData.stravaFitness=JSON.stringify(A.stravaFitness);planData.baselineFitness=JSON.stringify(A.stravaFitness);}
@@ -2095,91 +2095,19 @@ async function loadNextWeeks() {
   }
 }
 
-async function refreshPaceTargets() {
+async function loadCurrentFitness() {
   try {
-    if (!sb2 || !planData?.weeks) return;
+    if (!sb2) return;
     const { data: { session } } = await sb2.auth.getSession();
     if (!session) return;
-
-    // Fetch current Strava fitness from users table
     const { data: ud } = await sb2.from('users').select('strava_fitness').eq('id', session.user.id).single();
     if (!ud?.strava_fitness) return;
     const sf = typeof ud.strava_fitness === 'string' ? JSON.parse(ud.strava_fitness) : ud.strava_fitness;
-    if (!sf?.connected) return;
-
-    // Calculate paces from current fitness
-    const swimSecs = sf.swim?.avgPaceSecs || null;
-    const ftpW = sf.bike?.ftpEstimate || null;
-    const bikeKmh = sf.bike?.avgSpeedKmh || null;
-    const runSecs = sf.run?.avgPaceSecs || null;
-
-    const fmtPace = s => Math.floor(s/60) + ':' + String(Math.round(s%60)).padStart(2,'0');
-
-    // Today's date for skipping completed/past sessions
-    const today = new Date(); today.setHours(0,0,0,0);
-    const planStart = A.startDate ? new Date(A.startDate + 'T00:00:00') : null;
-
-    let changed = false;
-    planData.weeks.forEach((wk, wkIdx) => {
-      if (!wk.days) return;
-      // Calculate week start date
-      const weekStart = planStart ? new Date(planStart.getTime() + wkIdx * 7 * 86400000) : null;
-      const weekIsPast = weekStart ? weekStart < today : false;
-      if (weekIsPast) return; // Skip past weeks entirely
-
-      wk.days.forEach(day => {
-        if (!day.type || day.type === 'Rest' || day.type === 'Race') return;
-        if (completions.has(`${wkIdx}-${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].indexOf(day.day)}`)) return; // Skip completed sessions
-
-        let newPace = null;
-        if (day.type === 'Swim' && swimSecs) {
-          const zone = day.zone || day.effort <= 4 ? 1 : day.effort <= 6 ? 2 : 3;
-          const offset = zone === 1 ? 30 : zone === 2 ? 15 : 0;
-          const easySecs = swimSecs + offset;
-          const hardSecs = swimSecs + Math.max(0, offset - 5);
-          newPace = fmtPace(easySecs) + '-' + fmtPace(hardSecs) + '/100m';
-          if (day.effort <= 3) newPace = fmtPace(swimSecs + 35) + '-' + fmtPace(swimSecs + 25) + '/100m';
-          else if (day.effort <= 5) newPace = fmtPace(swimSecs + 20) + '-' + fmtPace(swimSecs + 10) + '/100m';
-          else newPace = fmtPace(swimSecs + 5) + '-' + fmtPace(swimSecs) + '/100m';
-        } else if (day.type === 'Bike' || day.type === 'Brick') {
-          if (ftpW) {
-            const z2lo = Math.round(ftpW * 0.56), z2hi = Math.round(ftpW * 0.75);
-            const z3lo = Math.round(ftpW * 0.76), z3hi = Math.round(ftpW * 0.90);
-            const z4lo = Math.round(ftpW * 0.91), z4hi = Math.round(ftpW * 1.05);
-            if (day.effort <= 5) newPace = `${z2lo}-${z2hi}w (Zone 2)`;
-            else if (day.effort <= 7) newPace = `${z3lo}-${z3hi}w (Zone 3)`;
-            else newPace = `${z4lo}-${z4hi}w (Threshold)`;
-          } else if (bikeKmh) {
-            const easy = (bikeKmh * 0.85).toFixed(1), hard = (bikeKmh * 0.95).toFixed(1);
-            newPace = day.effort <= 5 ? `${easy}-${hard} km/h` : `${bikeKmh} km/h`;
-          }
-        } else if (day.type === 'Run' && runSecs) {
-          if (day.effort <= 5) newPace = fmtPace(runSecs + 45) + '-' + fmtPace(runSecs + 60) + '/km';
-          else if (day.effort <= 7) newPace = fmtPace(runSecs + 15) + '-' + fmtPace(runSecs + 30) + '/km';
-          else newPace = fmtPace(runSecs) + '-' + fmtPace(runSecs + 10) + '/km';
-        }
-
-        if (newPace && day.paceTarget !== newPace) {
-          day.paceTarget = newPace;
-          changed = true;
-        }
-      });
-    });
-
-    if (!changed) return;
-
-    // Save updated plan_data back to Supabase
-    const planId = new URLSearchParams(location.search).get('load') || window.currentPlanId;
-    if (!planId) return;
-    const { data: existingPlan } = await sb2.from('plans').select('plan_data').eq('id', planId).single();
-    if (!existingPlan) return;
-    const existing = JSON.parse(existingPlan.plan_data);
-    existing.weeks = planData.weeks;
-    await sb2.from('plans').update({ plan_data: JSON.stringify(existing) }).eq('id', planId);
-    renderWeek(); // Re-render with updated paces
-  } catch(e) {
-    console.log('refreshPaceTargets error:', e);
-  }
+    if (sf?.connected) {
+      window.currentStravaFitness = sf;
+      renderWeek();
+    }
+  } catch(e) {}
 }
 
 async function loadCompletions() {
