@@ -7,11 +7,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { systemPrompt, history, message } = req.body;
+  const { systemPrompt, history, message, max_tokens } = req.body;
   if (!message) return res.status(400).json({ error: 'Missing message' });
 
   try {
-    // Build messages array from history
     const messages = [];
     if (history && Array.isArray(history)) {
       history.forEach(m => {
@@ -31,7 +30,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
-        max_tokens: 300,
+        max_tokens: max_tokens || 300,
         system: systemPrompt || 'You are Trixy, a personal triathlon coach. Be warm, direct and concise.',
         messages
       })
