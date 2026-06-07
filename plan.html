@@ -1553,11 +1553,15 @@ function selectDay(i){
     el.classList.toggle('active',idx===i);
   });
 
-  // Silently regenerate session descriptions with current fitness if needed
-  if (window.currentStravaFitness && d.type !== 'Rest' && d.type !== 'Race' && !d.pacesRefreshed) {
-    const DAY_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-    const dayIdx = DAY_ORDER.indexOf(d.day);
-    setTimeout(() => regenerateSessionDescriptions(d, curWeek, dayIdx >= 0 ? dayIdx : i), 300);
+  // Silently regenerate session descriptions if fitness has been updated since last refresh
+  if (window.currentStravaFitness && d.type !== 'Rest' && d.type !== 'Race') {
+    const fitnessUpdated = window.currentStravaFitness.fetchedAt || Date.now();
+    const lastRefreshed = d.pacesRefreshedAt || 0;
+    if (fitnessUpdated > lastRefreshed) {
+      const DAY_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+      const dayIdx = DAY_ORDER.indexOf(d.day);
+      setTimeout(() => regenerateSessionDescriptions(d, curWeek, dayIdx >= 0 ? dayIdx : i), 300);
+    }
   }
 
   // Set the coloured left border on the session card
@@ -2106,7 +2110,7 @@ async function loadNextWeeks() {
 async function regenerateSessionDescriptions(session, weekIdx, dayIdx) {
   try {
     if (!session || session.type === 'Rest' || session.type === 'Race') return;
-    if (session.pacesRefreshed) return; // Already done
+    if (session.pacesRefreshedAt) return; // Already checked in selectDay — shouldn't reach here
     if (!window.currentStravaFitness?.connected) return;
 
     // Check session is not already completed
@@ -2173,7 +2177,7 @@ Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No pr
     if (parsed.warmup) session.warmup = parsed.warmup;
     if (parsed.mainset) session.mainset = parsed.mainset;
     if (parsed.cooldown) session.cooldown = parsed.cooldown;
-    session.pacesRefreshed = true;
+    session.pacesRefreshedAt = Date.now();
 
     // Save back to Supabase
     const planId = new URLSearchParams(location.search).get('load') || window.currentPlanId;
@@ -2205,6 +2209,7 @@ async function loadCurrentFitness() {
     if (!ud?.strava_fitness) return;
     const sf = typeof ud.strava_fitness === 'string' ? JSON.parse(ud.strava_fitness) : ud.strava_fitness;
     if (sf?.connected) {
+      sf.fetchedAt = Date.now();
       window.currentStravaFitness = sf;
       renderWeek();
     }
