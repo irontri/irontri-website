@@ -1905,6 +1905,7 @@ async function buildPlan(){
     try { renderGraph(); } catch(eg) {}
     renderRoadmap();
     loadCompletions().then(() => { renderWeek(); syncStravaActivities(); loadCurrentFitness(); });
+    setTimeout(loadCurrentFitness, 1500); // Fallback in case chain hasn't resolved
     if(A.date){planData.raceDate=A.date;}
     if(A.units){planData.units=A.units;}
     if(A.stravaFitness){planData.stravaFitness=JSON.stringify(A.stravaFitness);planData.baselineFitness=JSON.stringify(A.stravaFitness);}
