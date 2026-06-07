@@ -1553,11 +1553,11 @@ function selectDay(i){
     el.classList.toggle('active',idx===i);
   });
 
-  // Silently regenerate session descriptions if fitness has been updated since last refresh
+  // Silently regenerate session descriptions with current fitness if needed
   if (window.currentStravaFitness && d.type !== 'Rest' && d.type !== 'Race') {
-    const fitnessUpdated = window.currentStravaFitness.fetchedAt || Date.now();
+    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
     const lastRefreshed = d.pacesRefreshedAt || 0;
-    if (fitnessUpdated > lastRefreshed) {
+    if (lastRefreshed < oneDayAgo) {
       const DAY_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
       const dayIdx = DAY_ORDER.indexOf(d.day);
       setTimeout(() => regenerateSessionDescriptions(d, curWeek, dayIdx >= 0 ? dayIdx : i), 300);
