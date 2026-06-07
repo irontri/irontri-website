@@ -756,14 +756,40 @@ async function loadStreakAndRing() {
     const today=toLocal(new Date());
     const yd=new Date();yd.setDate(yd.getDate()-1);
     const yesterday=toLocal(yd);
-    
+    // Build a set of all scheduled rest day dates from the plan
+    const restDates = new Set();
+    try {
+      const { data: planRows } = await sb.from('plans').select('plan_data,created_at').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(1);
+      if (planRows?.[0]) {
+        const pd = JSON.parse(planRows[0].plan_data);
+        const planStart = new Date((pd.startDate || planRows[0].created_at.slice(0,10)) + 'T00:00:00');
+        (pd.weeks || []).forEach((wk, wkIdx) => {
+          const DAY_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+          (wk.days || []).forEach(day => {
+            if (day.type === 'Rest') {
+              const dayOffset = wkIdx * 7 + DAY_ORDER.indexOf(day.day);
+              if (dayOffset >= 0) {
+                const d = new Date(planStart);
+                d.setDate(planStart.getDate() + dayOffset);
+                restDates.add(d.toISOString().slice(0,10));
+              }
+            }
+          });
+        });
+      }
+    } catch(e) {}
 
-    // Check if gap between two completion dates is small enough to continue streak
-    // Allow up to 2 day gap (1 rest day between sessions)
+    // Check if all dates between two completion dates are rest days
     function gapIsAllRestDays(dateA, dateB) {
       const a = new Date(dateA), b = new Date(dateB);
       const diff = Math.round((a - b) / 86400000);
-      return diff <= 2;
+      if (diff <= 1) return true;
+      for (let d = 1; d < diff; d++) {
+        const mid = new Date(b);
+        mid.setDate(b.getDate() + d);
+        if (!restDates.has(mid.toISOString().slice(0,10))) return false;
+      }
+      return true;
     }
 
     const startDate=dates[0]===today||dates[0]===yesterday?dates[0]:null;
@@ -1835,6 +1861,7 @@ COMMUNICATION RULES:
 - NEVER ask the athlete to send a screenshot — you cannot see images. If they mention something visual, ask them to describe it in words (e.g. "what does the total time show for that week?")
 - If you don't know something, say so honestly
 - Never make up session details or paces not in the context above — say "check your plan for the exact numbers"
+- NEVER mention a "settings" page, "settings menu", or "app settings" — there is no settings section in irontri. If asked about settings, direct them to their Profile page instead.
 - RESPONSE LENGTH: Keep replies SHORT. 2-3 sentences max for simple questions. Only go longer if they explicitly ask for a detailed breakdown or plan. Never write paragraphs when a sentence will do.`
     };
     return trixyContext;
