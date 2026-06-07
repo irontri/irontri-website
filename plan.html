@@ -1665,7 +1665,7 @@ function selectDay(i){
                 if (dActive.type === 'Run') {
                   if (sf?.run?.avgPace) {
                     const fmtPace = s => Math.floor(s/60) + ':' + String(Math.round(s%60)).padStart(2,'0');
-                    const runSecs = sf.run.avgPaceSecs;
+                    const runSecs = sf.run.thresholdPaceSecs || sf.run.avgPaceSecs;
                     const zMatch2 = String(dActive.heartRateZone || dActive.zone || '2').match(/\d/);
                     const zNum2 = zMatch2 ? parseInt(zMatch2[0]) : 2;
                     if (runSecs) {
@@ -2139,7 +2139,7 @@ async function regenerateSessionDescriptions(session, weekIdx, dayIdx) {
     const swimSecs = sf.swim?.avgPaceSecs || null;
     const ftp = sf.bike?.ftpEstimate || null;
     const runPace = sf.run?.avgPace || null;
-    const runSecs = sf.run?.avgPaceSecs || null;
+    const runSecs = sf.run?.thresholdPaceSecs || sf.run?.avgPaceSecs || null;
 
     if (!swimPacePer100m && !ftp && !runPace) return;
 
