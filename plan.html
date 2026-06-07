@@ -2773,6 +2773,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     attempts++;
   }
 
+  // Load current Strava fitness for live pace targets
+  setTimeout(loadCurrentFitness, 2000);
+
   const urlParams = new URLSearchParams(window.location.search);
   const loadId = urlParams.get('load');
   if (loadId) window.currentPlanId = loadId;
