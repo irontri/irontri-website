@@ -1553,6 +1553,13 @@ function selectDay(i){
     el.classList.toggle('active',idx===i);
   });
 
+  // Silently regenerate session descriptions with current fitness if needed
+  if (window.currentStravaFitness && d.type !== 'Rest' && d.type !== 'Race' && !d.pacesRefreshed) {
+    const DAY_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const dayIdx = DAY_ORDER.indexOf(d.day);
+    setTimeout(() => regenerateSessionDescriptions(d, curWeek, dayIdx >= 0 ? dayIdx : i), 300);
+  }
+
   // Set the coloured left border on the session card
   sd.setAttribute('data-type', d.type||'Rest');
 
@@ -2093,6 +2100,92 @@ async function loadNextWeeks() {
     console.error('loadNextWeeks error:', e);
     btn.textContent = 'Error — try again';
     btn.disabled = false;
+  }
+}
+
+async function regenerateSessionDescriptions(session, weekIdx, dayIdx) {
+  try {
+    if (!session || session.type === 'Rest' || session.type === 'Race') return;
+    if (session.pacesRefreshed) return; // Already done
+    if (!window.currentStravaFitness?.connected) return;
+
+    // Check session is in the future
+    const planStart = A.startDate ? new Date(A.startDate + 'T00:00:00') : null;
+    if (planStart) {
+      const sessionDate = new Date(planStart.getTime() + (weekIdx * 7 + dayIdx) * 86400000);
+      const today = new Date(); today.setHours(0,0,0,0);
+      if (sessionDate < today) return; // Past session - don't touch
+    }
+
+    const sf = window.currentStravaFitness;
+    const swimPace = sf.swim?.avgPacePer100m || null;
+    const ftp = sf.bike?.ftpEstimate || null;
+    const runPace = sf.run?.avgPace || null;
+
+    if (!swimPace && !ftp && !runPace) return;
+
+    const fitnessContext = [
+      swimPace ? `Swim CSS: ${swimPace}/100m. Zone 2 swim = ${swimPace} + 15-25sec/100m` : '',
+      ftp ? `Bike FTP: ${ftp}w. Zone 2 = ${Math.round(ftp*0.56)}-${Math.round(ftp*0.75)}w. Threshold = ${Math.round(ftp*0.91)}-${Math.round(ftp*1.05)}w` : '',
+      runPace ? `Run threshold pace: ${runPace}/km. Zone 2 = ${runPace} + 45-60sec/km` : ''
+    ].filter(Boolean).join('. ');
+
+    const prompt = `You are a triathlon coach. Rewrite the warmup, mainset and cooldown for this session using the athlete's EXACT current fitness data. Do NOT change anything else.
+
+SESSION:
+Type: ${session.type}
+Name: ${session.name}
+Duration: ${session.duration}min
+Effort: ${session.effort}/10
+Current warmup: ${session.warmup}
+Current mainset: ${session.mainset}
+Current cooldown: ${session.cooldown}
+
+ATHLETE FITNESS (use these EXACT values):
+${fitnessContext}
+
+Return ONLY valid JSON with keys: warmup, mainset, cooldown. No preamble, no markdown.`;
+
+    const response = await fetch('/api/trixy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemPrompt: 'You are a triathlon coach. Return ONLY valid JSON with keys: warmup, mainset, cooldown. No preamble, no markdown, no backticks.',
+        message: prompt,
+        history: [],
+        max_tokens: 800
+      })
+    });
+
+    if (!response.ok) return;
+    const data = await response.json();
+    const text = data.reply || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    if (parsed.warmup) session.warmup = parsed.warmup;
+    if (parsed.mainset) session.mainset = parsed.mainset;
+    if (parsed.cooldown) session.cooldown = parsed.cooldown;
+    session.pacesRefreshed = true;
+
+    // Save back to Supabase
+    const planId = new URLSearchParams(location.search).get('load') || window.currentPlanId;
+    if (planId && sb2) {
+      const { data: { session: authSession } } = await sb2.auth.getSession();
+      if (authSession) {
+        const { data: existing } = await sb2.from('plans').select('plan_data').eq('id', planId).single();
+        if (existing) {
+          const pd = JSON.parse(existing.plan_data);
+          pd.weeks = planData.weeks;
+          await sb2.from('plans').update({ plan_data: JSON.stringify(pd) }).eq('id', planId);
+        }
+      }
+    }
+
+    // Re-render to show updated descriptions
+    selectDay(dayIdx);
+  } catch(e) {
+    console.log('regenerateSessionDescriptions error:', e);
   }
 }
 
