@@ -1410,7 +1410,7 @@ async function refreshFitnessCard() {
   }
 }
 
-function calcFinishTime(planData, planRace, planId) {
+async function calcFinishTime(planData, planRace, planId) {
   try {
     const race = (planRace || planData.raceDistance || planData.goalRace || planData.race || '').toLowerCase();
 
@@ -1447,9 +1447,19 @@ function calcFinishTime(planData, planRace, planId) {
     const T1 = swimKm >= 3 ? 420 : swimKm >= 1.5 ? 300 : 180;
     const T2 = swimKm >= 3 ? 240 : swimKm >= 1.5 ? 180 : 90;
 
-    // Pull fitness from stravaFitness if available, else fall back to week 1 pace targets
+    // Pull fitness — prefer current from users table, fall back to plan's stravaFitness
     let fitness = null;
-    if (planData.stravaFitness) {
+    try {
+      const { data: { session: _s } } = await sb.auth.getSession();
+      if (_s) {
+        const { data: _ud } = await sb.from('users').select('strava_fitness').eq('id', _s.user.id).single();
+        if (_ud?.strava_fitness) {
+          const _cf = typeof _ud.strava_fitness === 'string' ? JSON.parse(_ud.strava_fitness) : _ud.strava_fitness;
+          if (_cf?.connected) fitness = _cf;
+        }
+      }
+    } catch(e) {}
+    if (!fitness && planData.stravaFitness) {
       try { fitness = JSON.parse(planData.stravaFitness); } catch(e) {}
     }
 
