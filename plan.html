@@ -1646,15 +1646,16 @@ function selectDay(i){
                 if (dActive.type === 'Bike' || dActive.type === 'Brick') {
                   const zMatch = String(dActive.heartRateZone || dActive.zone || '2').match(/\d/);
                   const zNum = zMatch ? parseInt(zMatch[0]) : 2;
-                  const speedMatch = dActive.paceTarget.match(/([\d.]+(?:-[\d.]+)?)\s*km\/h/i);
-                  const speedStr = speedMatch ? speedMatch[1] + ' km/h' : dActive.paceTarget;
                   if (sf?.bike?.ftpEstimate) {
                     const ftp = sf.bike.ftpEstimate;
                     const wattRanges = { 1: [Math.round(ftp*0.45), Math.round(ftp*0.55)], 2: [Math.round(ftp*0.56), Math.round(ftp*0.75)], 3: [Math.round(ftp*0.76), Math.round(ftp*0.90)], 4: [Math.round(ftp*0.91), Math.round(ftp*1.05)], 5: [Math.round(ftp*1.06), Math.round(ftp*1.20)] };
                     const w = wattRanges[zNum] || wattRanges[2];
-                    return speedStr + ' · ' + w[0] + '-' + w[1] + 'w';
+                    const speedStr = sf.bike.avgSpeedKmh ? sf.bike.avgSpeedKmh + ' km/h' : '';
+                    return (speedStr ? speedStr + ' · ' : '') + w[0] + '-' + w[1] + 'w';
                   }
-                  return speedStr;
+                  if (sf?.bike?.avgSpeedKmh) return sf.bike.avgSpeedKmh + ' km/h';
+                  const speedMatch = dActive.paceTarget.match(/([\d.]+(?:-[\d.]+)?)\s*km\/h/i);
+                  return speedMatch ? speedMatch[1] + ' km/h' : dActive.paceTarget;
                 }
                 if (dActive.type === 'Swim') {
                   if (sf?.swim?.avgPacePer100m) return sf.swim.avgPacePer100m + ' /100m';
@@ -1662,6 +1663,23 @@ function selectDay(i){
                   return swimMatch ? swimMatch[1] + ' /100m' : dActive.paceTarget;
                 }
                 if (dActive.type === 'Run') {
+                  if (sf?.run?.avgPace) {
+                    const fmtPace = s => Math.floor(s/60) + ':' + String(Math.round(s%60)).padStart(2,'0');
+                    const runSecs = sf.run.avgPaceSecs;
+                    const zMatch2 = String(dActive.heartRateZone || dActive.zone || '2').match(/\d/);
+                    const zNum2 = zMatch2 ? parseInt(zMatch2[0]) : 2;
+                    if (runSecs) {
+                      const paceRanges = {
+                        1: fmtPace(runSecs+75) + '-' + fmtPace(runSecs+90),
+                        2: fmtPace(runSecs+45) + '-' + fmtPace(runSecs+60),
+                        3: fmtPace(runSecs+15) + '-' + fmtPace(runSecs+30),
+                        4: fmtPace(runSecs) + '-' + fmtPace(runSecs+10),
+                        5: fmtPace(runSecs-10) + '-' + fmtPace(runSecs)
+                      };
+                      return (paceRanges[zNum2] || paceRanges[2]) + ' /km';
+                    }
+                    return sf.run.avgPace + ' /km';
+                  }
                   const runMatch = dActive.paceTarget.match(/(\d+:\d+)\s*(?:\/\s*km)?/i);
                   return runMatch ? runMatch[1] + ' /km' : dActive.paceTarget;
                 }
