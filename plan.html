@@ -2109,42 +2109,49 @@ async function regenerateSessionDescriptions(session, weekIdx, dayIdx) {
     if (session.pacesRefreshed) return; // Already done
     if (!window.currentStravaFitness?.connected) return;
 
-    // Check session is in the future
-    const planStart = A.startDate ? new Date(A.startDate + 'T00:00:00') : null;
-    if (planStart) {
-      const sessionDate = new Date(planStart.getTime() + (weekIdx * 7 + dayIdx) * 86400000);
-      const today = new Date(); today.setHours(0,0,0,0);
-      if (sessionDate < today) return; // Past session - don't touch
-    }
+    // Check session is not already completed
+    if (completions.has(`${curWeek}-${dayIdx}`) || completions.has(`${curWeek}-${dayIdx}-0`)) return;
 
     const sf = window.currentStravaFitness;
-    const swimPace = sf.swim?.avgPacePer100m || null;
+    const swimPacePer100m = sf.swim?.avgPacePer100m || null;
+    const swimSecs = sf.swim?.avgPaceSecs || null;
     const ftp = sf.bike?.ftpEstimate || null;
     const runPace = sf.run?.avgPace || null;
+    const runSecs = sf.run?.avgPaceSecs || null;
 
-    if (!swimPace && !ftp && !runPace) return;
+    if (!swimPacePer100m && !ftp && !runPace) return;
+
+    // Calculate proper swim zones from CSS
+    const fmtPace = s => Math.floor(s/60) + ':' + String(Math.round(s%60)).padStart(2,'0');
+    const swimZ2 = swimSecs ? `${fmtPace(swimSecs + 15)}-${fmtPace(swimSecs + 25)}/100m` : null;
+    const swimZ3 = swimSecs ? `${fmtPace(swimSecs + 5)}-${fmtPace(swimSecs + 15)}/100m` : null;
+    const swimEasy = swimSecs ? `${fmtPace(swimSecs + 25)}-${fmtPace(swimSecs + 35)}/100m` : null;
+
+    // Calculate run zones
+    const runZ2 = runSecs ? `${fmtPace(runSecs + 45)}-${fmtPace(runSecs + 60)}/km` : null;
+    const runZ3 = runSecs ? `${fmtPace(runSecs + 15)}-${fmtPace(runSecs + 30)}/km` : null;
 
     const fitnessContext = [
-      swimPace ? `Swim CSS: ${swimPace}/100m. Zone 2 swim = ${swimPace} + 15-25sec/100m` : '',
-      ftp ? `Bike FTP: ${ftp}w. Zone 2 = ${Math.round(ftp*0.56)}-${Math.round(ftp*0.75)}w. Threshold = ${Math.round(ftp*0.91)}-${Math.round(ftp*1.05)}w` : '',
-      runPace ? `Run threshold pace: ${runPace}/km. Zone 2 = ${runPace} + 45-60sec/km` : ''
-    ].filter(Boolean).join('. ');
+      swimPacePer100m ? `Swim CSS (threshold pace): ${swimPacePer100m}/100m. Easy/Zone 1 = ${swimEasy}. Zone 2 aerobic = ${swimZ2}. Zone 3 tempo = ${swimZ3}. NEVER use CSS pace for easy sessions — always add the correct offset.` : '',
+      ftp ? `Bike FTP: ${ftp}w. Zone 2 = ${Math.round(ftp*0.56)}-${Math.round(ftp*0.75)}w. Zone 3 = ${Math.round(ftp*0.76)}-${Math.round(ftp*0.90)}w. Threshold = ${Math.round(ftp*0.91)}-${Math.round(ftp*1.05)}w.` : '',
+      runPace ? `Run threshold pace: ${runPace}/km. Zone 2 easy = ${runZ2}. Zone 3 tempo = ${runZ3}.` : ''
+    ].filter(Boolean).join(' ');
 
-    const prompt = `You are a triathlon coach. Rewrite the warmup, mainset and cooldown for this session using the athlete's EXACT current fitness data. Do NOT change anything else.
+    const prompt = `You are an expert triathlon coach writing personalised training sessions. Rewrite the warmup, mainset and cooldown using the athlete's EXACT fitness data below. Keep the same structure and approximate distances/durations. Use specific paces, not generic zone labels. Sound like a professional coach — specific, motivating, precise.
 
 SESSION:
 Type: ${session.type}
 Name: ${session.name}
 Duration: ${session.duration}min
-Effort: ${session.effort}/10
+Effort: RPE ${session.effort}/10
 Current warmup: ${session.warmup}
 Current mainset: ${session.mainset}
 Current cooldown: ${session.cooldown}
 
-ATHLETE FITNESS (use these EXACT values):
+ATHLETE FITNESS — USE THESE EXACT PACES:
 ${fitnessContext}
 
-Return ONLY valid JSON with keys: warmup, mainset, cooldown. No preamble, no markdown.`;
+Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No preamble, no markdown.`;
 
     const response = await fetch('/api/trixy', {
       method: 'POST',
