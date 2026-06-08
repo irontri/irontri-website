@@ -231,6 +231,23 @@ export default async function handler(req, res) {
     }
 
     // ── SWIM DATA ──────────────────────────────────────────────────────────────
+    // Try to get user's CSS from their plan data first (more accurate than Strava)
+    let userCSSSecs = null;
+    try {
+      const planRes = await fetch(
+        SUPABASE_URL + '/rest/v1/plans?user_id=eq.' + resolvedUserId + '&order=created_at.desc&limit=1&select=plan_data',
+        { headers: { 'apikey': process.env.SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY } }
+      );
+      const planRows = await planRes.json();
+      if (planRows?.[0]?.plan_data) {
+        const pd = JSON.parse(planRows[0].plan_data);
+        if (pd.css) {
+          const cssMatch = pd.css.match(/(\d+):(\d+)/);
+          if (cssMatch) userCSSSecs = parseInt(cssMatch[1]) * 60 + parseInt(cssMatch[2]);
+        }
+      }
+    } catch(e) {}
+
     let swimData = null;
     if (swims.length >= 1) {
       const validSwims = swims.filter(s => s.distance > 200 && s.moving_time > 0);
@@ -238,14 +255,18 @@ export default async function handler(req, res) {
       const avgPaceSecs = avg(swimPaces);
       const bestPaceSecs = swimPaces.length ? Math.min(...swimPaces) : null;
 
+      // Use user-entered CSS if available, otherwise fall back to Strava average
+      const effectivePaceSecs = userCSSSecs || avgPaceSecs;
+
       swimData = {
         count: swims.length,
         totalDistanceKm: parseFloat(swims.reduce((a, s) => a + s.distance / 1000, 0).toFixed(1)),
         avgDistanceM: validSwims.length ? Math.round(avg(validSwims.map(s => s.distance))) : null,
-        avgPacePer100m: fmtPace(avgPaceSecs),
-        avgPaceSecs: avgPaceSecs ? Math.round(avgPaceSecs) : null,
+        avgPacePer100m: fmtPace(effectivePaceSecs),
+        avgPaceSecs: effectivePaceSecs ? Math.round(effectivePaceSecs) : null,
         bestPacePer100m: fmtPace(bestPaceSecs),
-        weeklyDistanceKm: parseFloat((swims.reduce((a, s) => a + s.distance / 1000, 0) / 8).toFixed(2))
+        weeklyDistanceKm: parseFloat((swims.reduce((a, s) => a + s.distance / 1000, 0) / 8).toFixed(2)),
+        cssSource: userCSSSecs ? 'manual' : 'strava'
       };
     }
 
