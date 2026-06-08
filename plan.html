@@ -2185,22 +2185,45 @@ ${fitnessContext}
 
 Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No preamble, no markdown. Each component must clearly describe activities that fill its allocated time.`;
 
-    const response = await fetch('/api/trixy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemPrompt: 'You are a triathlon coach. Return ONLY valid JSON with keys: warmup, mainset, cooldown. No preamble, no markdown, no backticks.',
-        message: prompt,
-        history: [],
-        max_tokens: 800
-      })
-    });
+    // Helper to extract total minutes from text
+    function _extractMins(text) {
+      let total = 0;
+      for (const m of (text.matchAll(/(\d+)\s*h(?:r|our)?s?\b/gi) || [])) total += parseInt(m[1]) * 60;
+      for (const m of (text.matchAll(/(\d+)\s*min(?:ute)?s?\b/gi) || [])) total += parseInt(m[1]);
+      return total;
+    }
 
-    if (!response.ok) return;
-    const data = await response.json();
-    const text = data.reply || '';
-    const clean = text.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
+    async function _callTrixy(promptText) {
+      const r = await fetch('/api/trixy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemPrompt: 'You are a triathlon coach. Return ONLY valid JSON with keys: warmup, mainset, cooldown. No preamble, no markdown, no backticks.', message: promptText, history: [], max_tokens: 800 })
+      });
+      if (!r.ok) return null;
+      const d = await r.json();
+      const clean = (d.reply || '').replace(/```json|```/g, '').trim();
+      return JSON.parse(clean);
+    }
+
+    let parsed = await _callTrixy(prompt);
+    if (!parsed) return;
+
+    // Validate durations add up — retry once if off by more than 10 mins
+    const _totalParsed = _extractMins(parsed.warmup||'') + _extractMins(parsed.mainset||'') + _extractMins(parsed.cooldown||'');
+    if (Math.abs(_totalParsed - session.duration) > 10) {
+      console.log('[regen] duration mismatch:', _totalParsed, 'vs', session.duration, '— retrying');
+      const retried = await _callTrixy(prompt + `\n\nYOUR PREVIOUS RESPONSE HAD WRONG TOTAL DURATION (${_totalParsed}min instead of ${session.duration}min). Warmup MUST be exactly ${_warmupMins}min, mainset MUST be exactly ${_mainsetMins}min, cooldown MUST be exactly ${_cooldownMins}min.`);
+      if (retried) {
+        const _retryTotal = _extractMins(retried.warmup||'') + _extractMins(retried.mainset||'') + _extractMins(retried.cooldown||'');
+        if (Math.abs(_retryTotal - session.duration) <= 10) {
+          parsed = retried;
+        } else {
+          console.log('[regen] retry also failed, keeping original');
+          session.pacesRefreshedAt = Date.now();
+          return;
+        }
+      }
+    }
 
     if (parsed.warmup) session.warmup = parsed.warmup;
     if (parsed.mainset) session.mainset = parsed.mainset;
