@@ -2159,21 +2159,31 @@ async function regenerateSessionDescriptions(session, weekIdx, dayIdx) {
       runPace ? `Run threshold pace: ${runPace}/km. Zone 2 easy = ${runZ2}. Zone 3 tempo = ${runZ3}.` : ''
     ].filter(Boolean).join(' ');
 
-    const prompt = `You are an expert triathlon coach writing personalised training sessions. Rewrite the warmup, mainset and cooldown using the athlete's EXACT fitness data below. Keep the same structure and approximate distances/durations. Use specific paces, not generic zone labels. Sound like a professional coach — specific, motivating, precise.
+const _warmupMins = Math.round(session.duration * 0.15);
+    const _mainsetMins = Math.round(session.duration * 0.70);
+    const _cooldownMins = session.duration - _warmupMins - _mainsetMins;
+
+    const prompt = `You are an expert triathlon coach writing personalised training sessions. Rewrite the warmup, mainset and cooldown using the athlete's EXACT fitness data below. Use specific paces, not generic zone labels. Sound like a professional coach — specific, motivating, precise.
 
 SESSION:
 Type: ${session.type}
 Name: ${session.name}
-Duration: ${session.duration}min
+Total duration: ${session.duration} minutes
 Effort: RPE ${session.effort}/10
 Current warmup: ${session.warmup}
 Current mainset: ${session.mainset}
 Current cooldown: ${session.cooldown}
 
+DURATION BREAKDOWN — YOU MUST FOLLOW THIS EXACTLY:
+- Warmup: ${_warmupMins} minutes
+- Main set: ${_mainsetMins} minutes  
+- Cooldown: ${_cooldownMins} minutes
+- Total: ${session.duration} minutes
+
 ATHLETE FITNESS — USE THESE EXACT PACES:
 ${fitnessContext}
 
-Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No preamble, no markdown. CRITICAL: The warmup + mainset + cooldown durations must add up to exactly ${session.duration} minutes total.`;
+Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No preamble, no markdown. Each component must clearly describe activities that fill its allocated time.`;
 
     const response = await fetch('/api/trixy', {
       method: 'POST',
