@@ -389,6 +389,9 @@
 
       // Update maxHR in plan_data
       if (maxHR) pd.maxHR = maxHR;
+      if (css) pd.css = css;
+      if (runThreshold) pd.runThreshold = runThreshold;
+      if (ftp) pd.ftp = ftp;
 
       // Patch basePrompt with new values
       let bp = pd.basePrompt || '';
