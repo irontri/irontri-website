@@ -9,12 +9,10 @@ export default async function handler(req, res) {
   const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-  // Read raw body
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
   const rawBody = Buffer.concat(chunks).toString('utf8');
 
-  // Verify Stripe signature
   const sig = req.headers['stripe-signature'];
   let event;
   try {
@@ -43,7 +41,6 @@ export default async function handler(req, res) {
     if (!email) return;
     console.log('Marking paid:', email);
 
-    // Look up user by email via auth admin API (correct endpoint)
     const userRes = await fetch(
       `${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=1000`,
       { headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY } }
@@ -69,11 +66,18 @@ export default async function handler(req, res) {
     });
     console.log('Plan patch status:', patchRes.status, 'for:', email);
 
-    // Also update auth.users raw_user_meta_data so app/web session reflects is_paid immediately
+    // Merge is_paid and is_pro into existing metadata — never overwrite
+    const existingMeta = user?.user_metadata || {};
+    const mergedMeta = {
+      ...existingMeta,
+      is_paid: true,
+      is_pro: true,
+      stripe_subscription_id: subscriptionId || null
+    };
     const metaPatchRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
       method: 'PUT',
       headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_metadata: { is_paid: true, stripe_subscription_id: subscriptionId || null } })
+      body: JSON.stringify({ user_metadata: mergedMeta })
     });
     console.log('Auth meta patch status:', metaPatchRes.status, 'for:', email);
   }
