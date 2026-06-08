@@ -2324,8 +2324,11 @@ async function syncStravaActivities() {
       const _allDayNamesSync = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
       const _sunFirstSync = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
       const actDayName = _sunFirstSync[actDate.getDay()];
-      const matchingSession = (week.days || []).find(d =>
-        d.day === actDayName && (d.type === planType || (d.type === 'Brick' && (planType === 'Bike' || planType === 'Run')))
+
+      // Find all sessions on this day
+      const _daySessions = (week.days || []).filter(d => d.day === actDayName && d.type !== 'Rest');
+      const matchingSession = _daySessions.find(d =>
+        d.type === planType || (d.type === 'Brick' && (planType === 'Bike' || planType === 'Run'))
       );
       if (!matchingSession) continue;
 
@@ -2336,7 +2339,9 @@ async function syncStravaActivities() {
       const dayOfWeek = _rotatedSync.indexOf(actDayName);
       if (dayOfWeek === -1) continue;
 
-      const key = `${weekNum}-${dayOfWeek}`;
+      // For double sessions, use slot index (0 = first session, 1 = second) to avoid collision
+      const _sessionSlot = _daySessions.length > 1 ? _daySessions.indexOf(matchingSession) : 0;
+      const key = _sessionSlot > 0 ? `${weekNum}-${dayOfWeek}-${_sessionSlot}` : `${weekNum}-${dayOfWeek}`;
       if (completions.has(key)) continue; // already marked
 
       // Auto-tick it
@@ -2345,7 +2350,7 @@ async function syncStravaActivities() {
         user_id: session.user.id,
         plan_id: String(_planId),
         week_num: weekNum,
-        day: String(dayOfWeek),
+        day: _sessionSlot > 0 ? String(dayOfWeek) + '-' + _sessionSlot : String(dayOfWeek),
         source: 'strava'
       });
       if (!error) {
