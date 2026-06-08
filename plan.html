@@ -2173,7 +2173,7 @@ Current cooldown: ${session.cooldown}
 ATHLETE FITNESS — USE THESE EXACT PACES:
 ${fitnessContext}
 
-Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No preamble, no markdown.`;
+Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No preamble, no markdown. CRITICAL: The warmup + mainset + cooldown durations must add up to exactly ${session.duration} minutes total.`;
 
     const response = await fetch('/api/trixy', {
       method: 'POST',
@@ -2197,7 +2197,7 @@ Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No pr
     if (parsed.cooldown) session.cooldown = parsed.cooldown;
     session.pacesRefreshedAt = Date.now();
 
-    // Save back to Supabase
+    // Save back to Supabase — only update the specific week to avoid overwriting other changes
     const planId = new URLSearchParams(location.search).get('load') || window.currentPlanId;
     if (planId && sb2) {
       const { data: { session: authSession } } = await sb2.auth.getSession();
@@ -2205,14 +2205,17 @@ Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No pr
         const { data: existing } = await sb2.from('plans').select('plan_data').eq('id', planId).single();
         if (existing) {
           const pd = JSON.parse(existing.plan_data);
-          pd.weeks = planData.weeks;
+          // Only update the specific week that changed
+          if (pd.weeks && pd.weeks[weekIdx]) {
+            pd.weeks[weekIdx] = planData.weeks[weekIdx];
+          }
           await sb2.from('plans').update({ plan_data: JSON.stringify(pd) }).eq('id', planId);
         }
       }
     }
 
-    // Re-render to show updated descriptions
-    selectDay(dayIdx);
+    // Re-render just the session detail without triggering another regeneration
+    renderWeek();
   } catch(e) {
     console.log('regenerateSessionDescriptions error:', e);
   }
