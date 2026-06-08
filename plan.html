@@ -2848,6 +2848,14 @@ Rules:
 
 async function checkAndSavePlan(planText) {
   try {
+    // Inject quiz threshold values into plan_data so they persist for strava-fitness.js
+    try {
+      const pd = JSON.parse(planText);
+      if (A.css) pd.css = A.css;
+      if (A.ftp) pd.ftp = A.ftp;
+      if (A.runThreshold) pd.runThreshold = A.runThreshold;
+      planText = JSON.stringify(pd);
+    } catch(e) {}
     if (!sb2) { localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race})); document.getElementById('save-banner').style.display='block'; return; }
     let session = null;
     for (let attempt = 0; attempt < 5; attempt++) {
