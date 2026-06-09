@@ -2358,11 +2358,12 @@ async function syncStravaActivities() {
       const _sunFirstSync = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
       const actDayName = _sunFirstSync[actDate.getDay()];
 
-      // Find all sessions on this day
+      // Find all sessions on this day — prefer Brick over plain Bike/Run so a Ride activity
+      // doesn't steal a completion from a different day's standalone Bike session
       const _daySessions = (week.days || []).filter(d => d.day === actDayName && d.type !== 'Rest');
-      const matchingSession = _daySessions.find(d =>
-        d.type === planType || (d.type === 'Brick' && (planType === 'Bike' || planType === 'Run'))
-      );
+      const matchingSession =
+        _daySessions.find(d => d.type === 'Brick' && (planType === 'Bike' || planType === 'Run')) ||
+        _daySessions.find(d => d.type === planType);
       if (!matchingSession) continue;
 
       // Slot index: rotate from plan start day — matches completions storage
