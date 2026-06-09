@@ -45,7 +45,6 @@ export default async function handler(req, res) {
       const refreshData = await refreshRes.json();
       if (!refreshRes.ok) return res.status(200).json({ connected: false });
       accessToken = refreshData.access_token;
-      // Use service key for token refresh write
       await fetch(SUPABASE_URL + '/rest/v1/users?id=eq.' + resolvedUserId, {
         method: 'PATCH',
         headers: {
@@ -82,10 +81,36 @@ export default async function handler(req, res) {
       return Math.floor(secs / 60) + ':' + String(Math.round(secs % 60)).padStart(2, '0');
     };
 
-    // Separate by sport — exclude e-bikes from ride data
+    // Separate by sport
     const runs  = activities.filter(a => ['Run','TrailRun','VirtualRun'].includes(a.type));
-    const rides = activities.filter(a => ['Ride','VirtualRide'].includes(a.type)); // EBikeRide excluded
+    const rides = activities.filter(a => ['Ride','VirtualRide'].includes(a.type));
     const swims = activities.filter(a => ['Swim','OpenWaterSwim'].includes(a.type));
+
+    // ── FETCH PLAN DATA (CSS, maxHR, FTP, runThreshold) ──────────────────────
+    let userCSSSecs = null;
+    let userMaxHR = null;
+    let userFTP = null;
+    let userRunThresholdSecs = null;
+    try {
+      const planRes = await fetch(
+        SUPABASE_URL + '/rest/v1/plans?user_id=eq.' + resolvedUserId + '&order=created_at.desc&limit=1&select=plan_data',
+        { headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY } }
+      );
+      const planRows = await planRes.json();
+      if (planRows?.[0]?.plan_data) {
+        const pd = JSON.parse(planRows[0].plan_data);
+        if (pd.css) {
+          const cssMatch = pd.css.match(/(\d+):(\d+)/);
+          if (cssMatch) userCSSSecs = parseInt(cssMatch[1]) * 60 + parseInt(cssMatch[2]);
+        }
+        if (pd.maxHR) userMaxHR = parseInt(pd.maxHR);
+        if (pd.ftp) userFTP = parseInt(String(pd.ftp).replace(/\D/g, ''));
+        if (pd.runThreshold) {
+          const rtMatch = String(pd.runThreshold).match(/(\d+):(\d+)/);
+          if (rtMatch) userRunThresholdSecs = parseInt(rtMatch[1]) * 60 + parseInt(rtMatch[2]);
+        }
+      }
+    } catch(e) {}
 
     // ── RUN DATA ──────────────────────────────────────────────────────────────
     let runData = null;
@@ -95,36 +120,26 @@ export default async function handler(req, res) {
       const runHRs = runs.filter(r => r.average_heartrate).map(r => r.average_heartrate);
       const maxRunHRs = runs.filter(r => r.max_heartrate).map(r => r.max_heartrate);
 
-      // Best effort pace from runs over 4km
       const longerRuns = validRuns.filter(r => r.distance >= 4000);
       const bestPaceSecs = longerRuns.length > 0
         ? Math.min(...longerRuns.map(r => r.moving_time / (r.distance / 1000)))
         : null;
 
-      // Threshold pace — priority order:
-      // 1. Races (workout_type=1) over 4km — race pace is a strong threshold signal
-      // 2. Hard workout efforts (workout_type=2 or 3) over 4km
-      // 3. Any run over 4km regardless of workout type — best pace with small buffer
-      // 4. Fallback: best pace * 1.10 (more conservative — avoids setting threshold from a sprint)
       const raceRuns = validRuns.filter(r => r.workout_type === 1 && r.distance >= 4000);
       const workoutRuns = validRuns.filter(r => (r.workout_type === 2 || r.workout_type === 3) && r.distance >= 4000);
       const longerEasyRuns = validRuns.filter(r => r.distance >= 4000);
 
       let thresholdPaceSecs = null;
-      if (raceRuns.length > 0) {
-        // Best race pace — races are the most reliable threshold indicator for age groupers
-        const bestRacePace = Math.min(...raceRuns.map(r => r.moving_time / (r.distance / 1000)));
-        thresholdPaceSecs = bestRacePace;
+      // Use user-entered run threshold if available
+      if (userRunThresholdSecs) {
+        thresholdPaceSecs = userRunThresholdSecs;
+      } else if (raceRuns.length > 0) {
+        thresholdPaceSecs = Math.min(...raceRuns.map(r => r.moving_time / (r.distance / 1000)));
       } else if (workoutRuns.length > 0) {
-        // Best hard workout pace — slightly slower than race pace
-        const bestWorkoutPace = Math.min(...workoutRuns.map(r => r.moving_time / (r.distance / 1000)));
-        thresholdPaceSecs = bestWorkoutPace * 1.03;
+        thresholdPaceSecs = Math.min(...workoutRuns.map(r => r.moving_time / (r.distance / 1000))) * 1.03;
       } else if (longerEasyRuns.length > 0) {
-        // Any run over 4km — best pace with tighter buffer
-        const bestLongPace = Math.min(...longerEasyRuns.map(r => r.moving_time / (r.distance / 1000)));
-        thresholdPaceSecs = bestLongPace * 1.08;
+        thresholdPaceSecs = Math.min(...longerEasyRuns.map(r => r.moving_time / (r.distance / 1000))) * 1.08;
       } else if (bestPaceSecs) {
-        // Fallback: best pace from any run with a more conservative buffer
         thresholdPaceSecs = bestPaceSecs * 1.10;
       }
 
@@ -159,27 +174,25 @@ export default async function handler(req, res) {
       const maxHR = max(maxRideHRs);
       const avgHR = avg(rideHRs);
 
-      // Best speed from longer rides
       const longerRides = validRides.filter(r => r.distance >= 20000);
       const bestSpeed = longerRides.length > 0
         ? max(longerRides.map(r => (r.distance / 1000) / (r.moving_time / 3600)))
         : null;
 
-      // ── FTP ESTIMATION ────────────────────────────────────────────────────
-      // Scenario 1: Has power meter — use all rides with power data (no time window restriction)
-      // Time window was too narrow — most triathlete rides are 60+ min
-      const poweredRides = rides.filter(r =>
-        r.average_watts && r.average_watts > 50 && r.moving_time > 0
-      );
+      const poweredRides = rides.filter(r => r.average_watts && r.average_watts > 50 && r.moving_time > 0);
 
       let ftpEstimate = null;
       let hasPowerMeter = false;
       let avgWatts = null;
 
-      if (poweredRides.length > 0) {
-        // Power meter path — use weighted average watts across all powered rides
-        // then multiply by 1.17 to estimate FTP (avg training power is ~85% of FTP)
-        // Sanity cap: FTP cannot exceed average watts * 1.25 to avoid outlier inflation
+      // Use user-entered FTP if available
+      if (userFTP) {
+        ftpEstimate = userFTP;
+        hasPowerMeter = poweredRides.length > 0;
+        if (poweredRides.length > 0) {
+          avgWatts = Math.round(avg(poweredRides.map(r => r.average_watts)));
+        }
+      } else if (poweredRides.length > 0) {
         hasPowerMeter = true;
         const allPoweredRides = rides.filter(r => r.average_watts && r.average_watts > 50);
         avgWatts = allPoweredRides.length > 0 ? Math.round(avg(allPoweredRides.map(r => r.average_watts))) : null;
@@ -187,32 +200,18 @@ export default async function handler(req, res) {
           const rawFtp = Math.round(avgWatts * 1.17);
           const cap = Math.round(avgWatts * 1.25);
           ftpEstimate = Math.min(rawFtp, cap);
-
         }
       } else {
-        // Scenario 2: No power meter — estimate FTP from speed and HR
-        // Method: use best average speed from 20-60 min rides as a proxy
-        // Then estimate FTP using a cycling power model: P ≈ speed^3 * 0.0085 (rough approximation for flat riding)
-        // This is a conservative estimate — better than nothing
         const noPoweRidesInRange = validRides.filter(r =>
           r.moving_time >= 1200 && r.moving_time <= 3600 && r.distance >= 10000
         );
         if (noPoweRidesInRange.length > 0) {
-          const bestSpeedMs = max(noPoweRidesInRange.map(r => r.distance / r.moving_time)); // m/s
-          // Rough power estimate: accounts for rolling resistance + aerodynamic drag at typical road cycling position
-          // P(watts) ≈ (speed_ms^3 * 0.24) + (speed_ms * 75 * 9.81 * 0.004) for ~75kg rider
+          const bestSpeedMs = max(noPoweRidesInRange.map(r => r.distance / r.moving_time));
           const estimatedPower = Math.round((Math.pow(bestSpeedMs, 3) * 0.24) + (bestSpeedMs * 75 * 9.81 * 0.004));
           ftpEstimate = Math.round(estimatedPower * 0.95);
-          hasPowerMeter = false;
-
         } else if (avgHR && maxHR) {
-          // Fallback: HR-based estimate if no suitable rides
-          // Athletes riding at ~75% max HR typically produce ~55% of max aerobic power
-          // Rough FTP for average recreational cyclist: use HR ratio as proxy
           const hrRatio = avgHR / maxHR;
-          // Typical recreational cyclist FTP range 150-280w, scale by HR effort
           ftpEstimate = Math.round(150 + (hrRatio * 150));
-          hasPowerMeter = false;
         }
       }
 
@@ -231,31 +230,12 @@ export default async function handler(req, res) {
     }
 
     // ── SWIM DATA ──────────────────────────────────────────────────────────────
-    // Try to get user's CSS from their plan data first (more accurate than Strava)
-    let userCSSSecs = null;
-    try {
-      const planRes = await fetch(
-        SUPABASE_URL + '/rest/v1/plans?user_id=eq.' + resolvedUserId + '&order=created_at.desc&limit=1&select=plan_data',
-        { headers: { 'apikey': process.env.SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY } }
-      );
-      const planRows = await planRes.json();
-      if (planRows?.[0]?.plan_data) {
-        const pd = JSON.parse(planRows[0].plan_data);
-        if (pd.css) {
-          const cssMatch = pd.css.match(/(\d+):(\d+)/);
-          if (cssMatch) userCSSSecs = parseInt(cssMatch[1]) * 60 + parseInt(cssMatch[2]);
-        }
-      }
-    } catch(e) {}
-
     let swimData = null;
     if (swims.length >= 1) {
       const validSwims = swims.filter(s => s.distance > 200 && s.moving_time > 0);
       const swimPaces = validSwims.map(s => (s.moving_time / (s.distance / 100)));
       const avgPaceSecs = avg(swimPaces);
       const bestPaceSecs = swimPaces.length ? Math.min(...swimPaces) : null;
-
-      // Use user-entered CSS if available, otherwise fall back to Strava average
       const effectivePaceSecs = userCSSSecs || avgPaceSecs;
 
       swimData = {
@@ -271,22 +251,24 @@ export default async function handler(req, res) {
     }
 
     // ── HEART RATE ZONES ──────────────────────────────────────────────────────
-    // Use 95th percentile of max HR across all activities to avoid outlier spikes
+    // Priority: user-entered maxHR > 95th percentile from Strava
     const allMaxHRs = [
       ...runs.filter(r => r.max_heartrate).map(r => r.max_heartrate),
       ...rides.filter(r => r.max_heartrate).map(r => r.max_heartrate),
       ...swims.filter(r => r.max_heartrate).map(r => r.max_heartrate)
     ].sort((a, b) => a - b);
 
-    // 95th percentile — avoids single spike from a bad reading
-    const overallMaxHR = allMaxHRs.length > 0
+    const stravaMaxHR = allMaxHRs.length > 0
       ? Math.round(allMaxHRs[Math.floor(allMaxHRs.length * 0.95)])
       : null;
+
+    const overallMaxHR = userMaxHR || stravaMaxHR;
 
     let hrZones = null;
     if (overallMaxHR) {
       hrZones = {
         maxHR: overallMaxHR,
+        maxHRSource: userMaxHR ? 'manual' : 'strava',
         zone1: { min: Math.round(overallMaxHR * 0.50), max: Math.round(overallMaxHR * 0.60), label: 'Recovery' },
         zone2: { min: Math.round(overallMaxHR * 0.60), max: Math.round(overallMaxHR * 0.70), label: 'Aerobic Base' },
         zone3: { min: Math.round(overallMaxHR * 0.70), max: Math.round(overallMaxHR * 0.80), label: 'Tempo' },
@@ -310,11 +292,10 @@ export default async function handler(req, res) {
       run: runData,
       bike: bikeData,
       swim: swimData,
-      hrZones: hrZones,
+      hrZones,
       totalWeeklyHoursEstimate: totalWeeklyHours
     };
 
-    // Save fitness data to user record — use service key to avoid RLS issues
     await fetch(SUPABASE_URL + '/rest/v1/users?id=eq.' + resolvedUserId, {
       method: 'PATCH',
       headers: {
