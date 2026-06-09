@@ -1147,6 +1147,18 @@ export default async function handler(req, res) {
       });
     });
 
+    // Clean up: strip "double session" language from purpose/coachNote on sessions that ended up standalone
+    (allWeeks || []).forEach(wk => {
+      (wk.days || []).forEach(d => {
+        if (d.type === 'Rest' || d.type === 'Race') return;
+        const isPaired = wk.days.some(s => s !== d && s.type !== 'Rest' && s.day === d.day);
+        if (!isPaired) {
+          if (d.purpose) d.purpose = d.purpose.replace(/\b(first |second |morning |afternoon )?(double session day[:\s\u2014-]*|double session[:\s\u2014-]*)/gi, '').replace(/^\s*[,;:\u2014-]+\s*/, '').trim();
+          if (d.coachNote) d.coachNote = d.coachNote.replace(/\b(morning swim before (your )?(afternoon|evening) [a-z]+\.?|two sessions (in a day|today)[.!]?|training twice in a day[.!]?)/gi, '').replace(/^\s*[,;:\u2014-]+\s*/, '').trim();
+        }
+      });
+    });
+
     const updated = { ...planData, weeks: allWeeks };
     // Preserve stravaFitness from request or existing planData
     if (stravaFitness && !updated.stravaFitness) {
