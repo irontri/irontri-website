@@ -427,15 +427,30 @@ JSON structure for weeks:
       // Recalculate duration from actual warmup/mainset/cooldown text
       const _extractMins = (text) => {
         if (!text) return 0;
-        let total = 0;
-        for (const m of (text.matchAll(/(\d+)\s*min/gi))) total += parseInt(m[1]);
-        return total;
+        // Match "1h 30min" or "1.5h" hour patterns first
+        const hourMatch = text.match(/(\d+(?:\.\d+)?)\s*h(?:our)?s?(?:\s*(\d+)\s*min(?:ute)?s?)?/i);
+        if (hourMatch) {
+          let t = parseFloat(hourMatch[1]) * 60;
+          if (hourMatch[2]) t += parseInt(hourMatch[2]);
+          return Math.round(t);
+        }
+        // Look for a clear continuous effort: "45min continuous/steady/easy/at/of/run/ride/swim"
+        const singleEffortMatch = text.match(/(\d+)\s*min(?:ute)?s?\s+(?:continuous|steady|easy|hard|at|of|run|ride|swim|jog|walk|spin)/i);
+        if (singleEffortMatch) return parseInt(singleEffortMatch[1]);
+        // Leading minute value is usually the block duration: "35min ..."
+        const leadingMatch = text.match(/^(\d+)\s*min/i);
+        if (leadingMatch) return parseInt(leadingMatch[1]);
+        // Fallback: largest single minute value in the text
+        const allMins = [...text.matchAll(/(\d+)\s*min/gi)].map(m => parseInt(m[1]));
+        if (allMins.length > 0) return Math.max(...allMins);
+        return 0;
       };
       (pd.weeks || []).forEach(wk => {
         (wk.days || []).forEach(d => {
           if (d.type === 'Rest' || d.type === 'Race') return;
           const parsed = _extractMins(d.warmup) + _extractMins(d.mainset) + _extractMins(d.cooldown);
-          if (parsed > 0) d.duration = parsed;
+          // Only override if parsed total is meaningful and differs from Trixy's value by >5min
+          if (parsed > 5 && Math.abs(parsed - (parseFloat(d.duration) || 0)) > 5) d.duration = parsed;
         });
       });
       // Clean up: strip double session language from sessions that ended up standalone
