@@ -792,7 +792,7 @@ async function loadStreakAndRing() {
       return true;
     }
 
-    const startDate=dates[0]===today||dates[0]===yesterday?dates[0]:null;
+    const startDate=dates[0]===today||dates[0]===yesterday||gapIsAllRestDays(today,dates[0])?dates[0]:null;
     if(startDate){streak=1;for(let i=1;i<dates.length;i++){if(gapIsAllRestDays(dates[i-1],dates[i])){streak++;}else{break;}}}
     tempStreak=1;for(let i=1;i<dates.length;i++){if(gapIsAllRestDays(dates[i-1],dates[i])){tempStreak++;best=Math.max(best,tempStreak);}else{tempStreak=1;}}
     best=Math.max(best,streak,1);
