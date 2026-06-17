@@ -1092,6 +1092,60 @@ export default async function handler(req, res) {
     fixFifoViolations(newWeeks);
     fixConsecutiveRestDays(allWeeks);
 
+    // Fix session durations — extract actual minutes from text and override duration field
+    function extractMins(text) {
+      if (!text) return 0;
+      let total = 0;
+      // Match patterns like "45min", "45 min", "45 minutes", "1h 30min", "1.5h", "1h", "1 hour"
+      const hourMatch = text.match(/(\d+(?:\.\d+)?)\s*h(?:our)?s?(?:\s*(\d+)\s*min(?:ute)?s?)?/i);
+      if (hourMatch) {
+        total += parseFloat(hourMatch[1]) * 60;
+        if (hourMatch[2]) total += parseInt(hourMatch[2]);
+        return Math.round(total);
+      }
+      // Match standalone minute patterns — sum ALL minute mentions in the text
+      const minMatches = [...text.matchAll(/(\d+)\s*min(?:ute)?s?/gi)];
+      if (minMatches.length > 0) {
+        // If multiple minute mentions, take the largest single value (avoids summing interval counts like "3x5min")
+        // But if only one, use it directly
+        if (minMatches.length === 1) {
+          return parseInt(minMatches[0][1]);
+        }
+        // Multiple — look for a clear "Xmin continuous/steady/easy" pattern first
+        const singleEffortMatch = text.match(/(\d+)\s*min(?:ute)?s?\s+(?:continuous|steady|easy|hard|at|of|run|ride|swim|jog|walk|spin)/i);
+        if (singleEffortMatch) return parseInt(singleEffortMatch[1]);
+        // Otherwise return the largest value mentioned
+        return Math.max(...minMatches.map(m => parseInt(m[1])));
+      }
+      return 0;
+    }
+
+    function fixSessionDurations(weeks) {
+      weeks.forEach(wk => {
+        if (!wk.days) return;
+        wk.days.forEach(d => {
+          if (d.type === 'Rest' || d.type === 'Race' || !d.duration) return;
+
+          const warmupMins = extractMins(d.warmup || '');
+          const mainsetMins = extractMins(d.mainset || '');
+          const cooldownMins = extractMins(d.cooldown || '');
+          const textTotal = warmupMins + mainsetMins + cooldownMins;
+
+          if (textTotal < 5) return; // Can't parse text, leave alone
+
+          const currentDuration = parseFloat(d.duration) || 0;
+          const diff = Math.abs(currentDuration - textTotal);
+
+          // Only fix if there's a meaningful discrepancy (>5 min off)
+          if (diff > 5) {
+            d.duration = textTotal;
+          }
+        });
+      });
+    }
+
+    fixSessionDurations(allWeeks);
+
     // Fix taper weeks with sessions crammed into last 2 days - spread them across the week
     const ALL_WEEK_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
     allWeeks.forEach(wk => {
