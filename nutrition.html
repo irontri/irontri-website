@@ -35,6 +35,7 @@
     .meal-icon{font-size:22px;flex-shrink:0;width:32px;text-align:center;}
     .meal-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:3px;}
     .meal-desc{font-size:13px;color:var(--muted);line-height:1.5;}
+    .meal-tag{display:inline-block;background:rgba(30,144,255,0.12);border:1px solid rgba(30,144,255,0.2);border-radius:6px;font-size:11px;color:rgba(30,144,255,0.9);padding:2px 8px;margin-top:5px;font-weight:500;}
     .trixy-insight{background:rgba(30,144,255,0.08);border:1px solid rgba(30,144,255,0.2);border-radius:12px;padding:16px;}
     .trixy-label{font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:5px;letter-spacing:1px;text-transform:uppercase;}
     .trixy-text{font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;}
@@ -49,7 +50,6 @@
     .weight-input-wrap{display:flex;gap:10px;align-items:center;justify-content:center;margin-bottom:20px;}
     .weight-input{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:#fff;font-size:24px;font-family:'Syne',sans-serif;font-weight:700;padding:14px 20px;width:120px;text-align:center;outline:none;transition:border-color 0.2s;}
     .weight-input:focus{border-color:var(--blue);}
-    .weight-unit{font-size:16px;color:var(--muted);}
     .btn-primary{background:var(--blue);color:#fff;border:none;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;transition:background 0.2s;}
     .btn-primary:hover{background:var(--blue-dark);}
     .btn-primary:disabled{opacity:0.4;cursor:not-allowed;}
@@ -60,6 +60,14 @@
     .btn-save-sm{background:var(--blue);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
     .btn-cancel-sm{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.15);padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
     .session-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:100px;padding:4px 12px;font-size:12px;color:var(--muted);margin-top:6px;}
+    .hydration-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(30,144,255,0.06);border:1px solid rgba(30,144,255,0.15);border-radius:10px;margin-top:12px;}
+    .hydration-icon{font-size:20px;}
+    .hydration-text{font-size:13px;color:var(--muted);line-height:1.5;}
+    .hydration-text strong{color:#fff;}
+    .phase-banner{padding:10px 14px;border-radius:10px;margin-bottom:16px;font-size:13px;line-height:1.5;}
+    .race-week-banner{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);color:rgba(251,191,36,0.9);}
+    .peak-banner{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:rgba(239,68,68,0.85);}
+    .base-banner{background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.18);color:rgba(74,222,128,0.85);}
     .no-plan{text-align:center;padding:40px 20px;color:var(--faint);}
     .no-plan a{color:var(--blue);text-decoration:none;}
     @media(max-width:480px){.macro-grid{grid-template-columns:repeat(3,1fr);}.stat-grid{grid-template-columns:repeat(3,1fr);}.wrap{padding:20px 16px;}}
@@ -95,6 +103,7 @@
     <div class="section-label">Nutrition</div>
     <h1 class="page-title" id="page-title">Fuel for today 🍽️</h1>
     <div id="session-badge" class="session-badge" style="display:none;margin-bottom:16px;"></div>
+    <div id="phase-banner" style="display:none;"></div>
     <div style="height:12px;"></div>
 
     <!-- STATS ROW -->
@@ -151,6 +160,7 @@
           <div>Building your nutrition plan...</div>
         </div>
       </div>
+      <div id="hydration-target" style="display:none;"></div>
     </div>
 
     <!-- TRIXY INSIGHT -->
@@ -262,7 +272,6 @@ function getTodaySession(plan) {
     const startMon = startDow === 0 ? 6 : startDow - 1;
     const dayOrder = [...allDayNames.slice(startMon), ...allDayNames.slice(0, startMon)];
     const todayName = dayOrder[dayIdx];
-    // Get all sessions for today — pick first non-rest, prefer Swim/Bike/Run/Brick over Strength
     const todaySessions = week.days.filter(d => d.day === todayName && d.type !== 'Rest');
     if (!todaySessions.length) return null;
     const typeOrder = { Swim: 0, Bike: 1, Run: 2, Brick: 3, Strength: 4 };
@@ -272,144 +281,302 @@ function getTodaySession(plan) {
   } catch(e) { return null; }
 }
 
+// ─── MACRO CALCULATIONS ───────────────────────────────────────────────────────
+// Based on Burke et al. 2011, Jeukendrup 2017, Phillips & Van Loon 2011
 function calcMacros(weight, session) {
   const w = parseFloat(weight) || 70;
   const type = session ? session.type : 'Rest';
   const dur = session ? (parseFloat(session.duration) || 0) : 0;
   const effort = session ? (parseFloat(session.effort) || 5) : 5;
+  const phase = session ? (session.phase || 'Base') : 'Base';
   const durHrs = dur / 60;
+  const isRaceWeek = phase === 'Race Week';
+  const isTaper = phase === 'Taper';
+  const isPeak = phase === 'Peak';
+  const isBase = phase === 'Base';
 
-  // CARBOHYDRATE — g/kg/day (Burke et al. 2011, Jeukendrup 2017)
-  // Key principle: carb needs scale primarily with DURATION then intensity, not body weight linearly.
-  // We calculate a session carb demand in grams, then add a body-weight-adjusted baseline.
+  // ── CARBOHYDRATE (g/kg/day) ──
+  // Base phase: slightly lower — encourage fat adaptation (Volek & Phinney 2012)
+  // Peak phase: higher — maximise glycogen stores for race-specific work
+  // Race week: carb load from day 3 onward
   let carbsPerKg;
-  if (!session || type === 'Rest') {
-    carbsPerKg = 3.5;
+
+  if (isRaceWeek) {
+    // Race day or day before: aggressive carb load 8-10g/kg
+    carbsPerKg = type === 'Race' ? 9.0 : 8.0;
+  } else if (!session || type === 'Rest') {
+    carbsPerKg = isBase ? 3.0 : isTaper ? 4.0 : 3.5;
   } else {
-    // Step 1: baseline for a short easy session of this type (under 60min, easy effort)
-    const baseCarbRate = { Swim: 3.5, Bike: 4.0, Run: 3.5, Brick: 4.5, Strength: 3.0 };
-    carbsPerKg = baseCarbRate[type] || 3.5;
-    // Step 2: duration bonus — longer sessions need more carbs
-    if (durHrs >= 3.5) carbsPerKg += 4.0;
+    // Base rates per discipline — fixed swim bug (was 3.5, same as rest)
+    const baseCarbRate = { Swim: 4.0, Bike: 4.5, Run: 4.0, Brick: 5.0, Strength: 3.0 };
+    carbsPerKg = baseCarbRate[type] || 4.0;
+
+    // Duration bonus — longer sessions need more carbs
+    if (durHrs >= 4.0) carbsPerKg += 4.5;
+    else if (durHrs >= 3.5) carbsPerKg += 4.0;
     else if (durHrs >= 3.0) carbsPerKg += 3.0;
     else if (durHrs >= 2.5) carbsPerKg += 2.5;
     else if (durHrs >= 2.0) carbsPerKg += 2.0;
     else if (durHrs >= 1.5) carbsPerKg += 1.25;
     else if (durHrs >= 1.0) carbsPerKg += 0.5;
-    // under 60min — no duration bonus
-    // Step 3: effort modifier
+    // Under 60min: small bump still warranted (was zero — fixed)
+    else carbsPerKg += 0.25;
+
+    // Effort modifier
     if (effort >= 8) carbsPerKg += 1.0;
     else if (effort >= 6) carbsPerKg += 0.5;
-    else if (effort <= 3) carbsPerKg -= 0.5;
+    else if (effort <= 3) carbsPerKg -= 0.25;
+
+    // Phase modifier
+    if (isBase) carbsPerKg *= 0.92;       // slightly lower in base — fat adaptation
+    else if (isPeak) carbsPerKg *= 1.05;  // slightly higher in peak — glycogen loading
+    else if (isTaper) carbsPerKg *= 1.08; // taper: reduce volume but top up carbs
   }
+
   carbsPerKg = Math.max(3.0, Math.min(carbsPerKg, 10.0));
   const carbsG = Math.round(w * carbsPerKg);
 
-  // PROTEIN — 1.6-2.2g/kg (endurance athletes: Philips & Van Loon 2011)
+  // ── PROTEIN (g/kg/day) ──
+  // Endurance athletes: 1.6-2.2g/kg (Phillips & Van Loon 2011)
+  // Higher on race week — muscle preservation during taper
   let proteinPerKg;
-  if (!session || type === 'Rest') {
-    proteinPerKg = 1.7;
+  if (isRaceWeek) {
+    proteinPerKg = type === 'Race' ? 1.6 : 2.0; // race day: lower protein, more carbs
+  } else if (!session || type === 'Rest') {
+    proteinPerKg = isTaper ? 2.0 : 1.7; // higher protein on rest/taper days — repair
   } else {
     const baseProteinRate = { Swim: 1.8, Bike: 1.8, Run: 2.0, Brick: 2.0, Strength: 2.2 };
     proteinPerKg = baseProteinRate[type] || 1.8;
     if (durHrs >= 2.0) proteinPerKg += 0.1;
+    if (effort >= 8) proteinPerKg += 0.1; // hard sessions = more muscle breakdown
   }
   const proteinG = Math.round(w * proteinPerKg);
 
-  // FAT — 0.8-1.2g/kg, reduced on high-carb days (Jeukendrup 2017)
+  // ── FAT (g/kg/day) ──
+  // Reduced on high-carb days (Jeukendrup 2017). Base phase: slightly higher for fat adaptation.
   let fatPerKg;
-  if (!session || type === 'Rest') {
-    fatPerKg = 1.2;
+  if (isRaceWeek) {
+    fatPerKg = type === 'Race' ? 0.7 : 0.8; // minimal fat race day/eve
+  } else if (!session || type === 'Rest') {
+    fatPerKg = isBase ? 1.3 : 1.1;
   } else {
-    fatPerKg = carbsPerKg >= 7 ? 0.8 : carbsPerKg >= 6 ? 0.9 : 1.0;
+    // Scale fat down as carbs go up
+    if (carbsPerKg >= 8.0) fatPerKg = 0.7;
+    else if (carbsPerKg >= 7.0) fatPerKg = 0.8;
+    else if (carbsPerKg >= 6.0) fatPerKg = 0.9;
+    else if (carbsPerKg >= 5.0) fatPerKg = 1.0;
+    else fatPerKg = isBase ? 1.2 : 1.0;
   }
   const fatG = Math.round(w * fatPerKg);
 
-  // CALORIES — derived from macros
+  // ── CALORIES (derived from macros) ──
   const cal = Math.round(carbsG * 4 + proteinG * 4 + fatG * 9);
 
-  return { cal, carbsG, proteinG, fatG };
+  return { cal, carbsG, proteinG, fatG, carbsPerKg, durHrs, phase };
 }
 
-function getMealTiming(session) {
+// ─── HYDRATION TARGET ─────────────────────────────────────────────────────────
+function getHydrationTarget(session, weight) {
+  if (!session || session.type === 'Rest') return null;
+  const w = parseFloat(weight) || 70;
+  const dur = parseFloat(session.duration) || 0;
+  const durHrs = dur / 60;
+  const type = session.type;
+
+  // Base sweat rate: ~0.8-1.2L/hr for endurance athletes (ACSM 2016)
+  // Adjust for session type — running loses more sweat than cycling
+  const sweatRateL = type === 'Run' ? 1.1 : type === 'Swim' ? 0.5 : type === 'Bike' ? 0.9 : 1.0;
+  const totalL = Math.round(sweatRateL * durHrs * 10) / 10;
+  const mlPerHr = Math.round(sweatRateL * 1000);
+
+  if (durHrs < 0.5) return null; // under 30min, not worth showing
+
+  return { totalL, mlPerHr, durHrs };
+}
+
+// ─── DURING-SESSION FUELLING ──────────────────────────────────────────────────
+function getDuringFuelling(session) {
+  if (!session) return null;
+  const type = session.type;
+  const dur = parseFloat(session.duration) || 0;
+  const durHrs = dur / 60;
+
+  if (type === 'Swim') return null; // can't eat while swimming
+  if (durHrs < 0.75) return null;  // under 45min, no fuelling needed
+
+  // Carb targets during exercise (Jeukendrup 2011):
+  // 45-75min: 30g/hr, 1-2.5hr: 60g/hr, 2.5hr+: 90g/hr (mixed sugars)
+  let carbsPerHr;
+  if (durHrs >= 2.5) carbsPerHr = 90;
+  else if (durHrs >= 1.0) carbsPerHr = 60;
+  else carbsPerHr = 30;
+
+  const totalCarbs = Math.round(carbsPerHr * durHrs);
+  const gelsNeeded = Math.ceil(totalCarbs / 25); // avg gel = 25g carbs
+
+  return { carbsPerHr, totalCarbs, gelsNeeded, durHrs };
+}
+
+// ─── MEAL TIMING ─────────────────────────────────────────────────────────────
+function getMealTiming(session, macros, weight) {
   const type = session ? session.type : 'Rest';
   const dur = session ? (parseFloat(session.duration) || 0) : 0;
   const durHrs = dur / 60;
+  const phase = session ? (session.phase || 'Base') : 'Base';
+  const w = parseFloat(weight) || 70;
+
+  // Per-meal protein target — spread evenly (Areta et al. 2013: 3-4 doses of ~0.3g/kg)
+  const mealProtein = Math.round(w * 0.3);
+  const preSessionCarbs = durHrs >= 2.0 ? '80-100g' : durHrs >= 1.0 ? '50-70g' : '30-50g';
+
+  if (phase === 'Race Week' && type === 'Race') {
+    return [
+      { icon: '🌅', title: 'Race morning (3hrs before)', desc: `Large carb meal: oats with banana and honey, white toast with jam. Aim for 150-200g carbs. Keep fat and fibre low. ${mealProtein}g protein from eggs or yoghurt.`, tag: 'Race day' },
+      { icon: '🚀', title: '60min before start', desc: 'Banana or white toast with jam. 30-40g fast carbs. Sip 500ml water or electrolyte drink. Nothing new — race-day nerves slow digestion.', tag: 'Pre-race' },
+      { icon: '🏊', title: 'On the swim', desc: 'Nothing. Focus on sighting and pacing.', tag: 'Swim' },
+      { icon: '🚴', title: 'On the bike', desc: `60-90g carbs/hr from minute 20. Mix gels with real food after 2hrs — rice balls, banana, dates. Drink 500-750ml/hr. Don't wait until you're hungry.`, tag: 'Bike fuel' },
+      { icon: '🏃', title: 'On the run', desc: `30-60g carbs/hr — gel every 30-40min. Walk aid stations to fuel properly. Cola in the final 10km gives a real caffeine and sugar boost.`, tag: 'Run fuel' },
+      { icon: '🎉', title: 'Post-race recovery', desc: `Within 30min: 50-60g carbs + ${mealProtein}g protein. Chocolate milk, a recovery shake, or a banana with peanut butter. Your body is depleted — eat even if you don't feel hungry.`, tag: 'Recovery' },
+    ];
+  }
+
+  if (phase === 'Race Week') {
+    // Days before race — carb loading
+    return [
+      { icon: '🍝', title: 'Carb loading focus', desc: `Race week means prioritising carbs. Every meal should feature rice, pasta, oats or potato. Target ${macros.carbsG}g carbs today — that's higher than normal and intentional.`, tag: 'Carb load' },
+      { icon: '🌅', title: 'Breakfast', desc: `Oats with banana, honey and a small amount of protein — Greek yoghurt on the side. Aim for 80-100g carbs and ${mealProtein}g protein.`, tag: null },
+      { icon: '🍽️', title: 'Lunch', desc: `White rice or pasta with lean protein (chicken, tuna). Keep fat low — fat slows glycogen absorption. 80-100g carbs, ${mealProtein}g protein.`, tag: null },
+      { icon: '🌙', title: 'Dinner', desc: `Pasta or rice with lean protein and a small amount of vegetables. No high-fibre foods tonight — save the salads for after race day. ${mealProtein}g protein.`, tag: null },
+      { icon: '💧', title: 'Hydration', desc: `Drink consistently through the day — aim for 2.5-3L total. Add electrolytes to one bottle. Avoid alcohol this week.`, tag: 'Hydration' },
+    ];
+  }
 
   if (!session || type === 'Rest') {
     return [
-      { icon: '🌅', title: 'Breakfast', desc: 'Eggs on sourdough or overnight oats. Aim for 30g protein and moderate carbs to start the day.' },
-      { icon: '🍽️', title: 'Lunch', desc: 'Balanced meal with lean protein, whole grains and vegetables. Chicken rice bowl or a big salad with salmon.' },
-      { icon: '🌙', title: 'Dinner', desc: 'Lean protein and plenty of vegetables. Good recovery night — set yourself up for tomorrow\'s session.' },
+      { icon: '🌅', title: 'Breakfast', desc: `Eggs on sourdough or overnight oats. Aim for ${mealProtein}g protein and moderate carbs to start the day.`, tag: null },
+      { icon: '🍽️', title: 'Lunch', desc: `Balanced meal with lean protein and whole grains. Chicken rice bowl or salmon salad — ${mealProtein}g protein per meal is your target.`, tag: null },
+      { icon: '🌙', title: 'Dinner', desc: `Lean protein and plenty of vegetables. Rest days are when muscle repair peaks — hit your ${macros.proteinG}g protein target across all meals.`, tag: 'Recovery day' },
     ];
   }
+
   if (type === 'Swim') {
     return [
-      { icon: '☀️', title: 'Pre-swim (1hr before)', desc: 'Light and easy to digest. Banana with peanut butter or a small bowl of oats. Avoid anything heavy.' },
-      { icon: '🏊', title: 'During', desc: durHrs > 1 ? 'For sessions over 1hr, sip an electrolyte drink on the wall. Avoid solids.' : 'Just water — short session.' },
-      { icon: '💪', title: 'Recovery (within 30min)', desc: 'Protein shake or chocolate milk. Pair with a banana to refuel glycogen fast.' },
-      { icon: '🍽️', title: 'Main meal after', desc: 'Salmon or chicken with rice and greens. Get your full protein target in here.' },
+      { icon: '☀️', title: `Pre-swim (1hr before)`, desc: `Light and easy to digest — banana with peanut butter or a small bowl of oats (${preSessionCarbs} carbs). Avoid anything high-fat or high-fibre.`, tag: null },
+      { icon: '🏊', title: 'During', desc: durHrs > 1 ? `Sip an electrolyte drink on the wall every 20-30min. Avoid solids in the water.` : 'Just water — sessions under 60min don\'t need carbs.', tag: durHrs > 1 ? 'Electrolytes' : null },
+      { icon: '💪', title: `Recovery (within 30min)`, desc: `Protein shake or chocolate milk with a banana. Target ${mealProtein}g protein to kick off muscle repair.`, tag: 'Priority' },
+      { icon: '🍽️', title: 'Main meal after', desc: `Salmon or chicken with rice and greens. Get ${mealProtein}g protein in here and top up your carbs (${Math.round(macros.carbsG * 0.35)}g).`, tag: null },
     ];
   }
+
   if (type === 'Bike') {
+    const during = getDuringFuelling(session);
     return [
-      { icon: '☀️', title: 'Pre-ride (2hrs before)', desc: 'Oats with banana and honey. 80-100g carbs, easy to digest, nothing too fibrous.' },
-      { icon: '🚴', title: 'On the bike', desc: durHrs > 1.5 ? `60-90g carbs/hr — mix gels and real food after 1hr. Start fuelling at 20-30 min, don't wait until you're hungry.` : '30-60g carbs if over 60min. A gel or two and electrolytes.' },
-      { icon: '💪', title: 'Recovery (within 30min)', desc: 'Chocolate milk, a protein shake, or rice cakes with cheese. 3:1 carb to protein ratio is ideal.' },
-      { icon: '🌙', title: 'Evening meal', desc: 'Carb-rich recovery meal — pasta, rice or potato with lean protein. Replenish glycogen for tomorrow.' },
+      { icon: '☀️', title: `Pre-ride (2hrs before)`, desc: `Oats with banana and honey — ${preSessionCarbs} carbs, easy to digest. Nothing too fibrous or fatty.`, tag: null },
+      { icon: '🚴', title: 'On the bike', desc: during
+          ? `Start fuelling at 20-30min — don't wait until you're hungry. Target ${during.carbsPerHr}g carbs/hr (${during.gelsNeeded} gels or equivalent over ${Math.round(durHrs)}hrs). Drink 500-750ml/hr.`
+          : 'Short session — water and electrolytes only.', tag: during ? `${during.totalCarbs}g carbs total` : null },
+      { icon: '💪', title: `Recovery (within 30min)`, desc: `Chocolate milk, a protein shake, or rice cakes with cheese. 3:1 carb to protein ratio — ${Math.round(mealProtein * 3)}g carbs and ${mealProtein}g protein.`, tag: 'Priority' },
+      { icon: '🌙', title: 'Evening meal', desc: `Carb-rich recovery meal — pasta, rice or potato with lean protein (${mealProtein}g). Replenish glycogen for tomorrow's session.`, tag: null },
     ];
   }
+
   if (type === 'Run') {
+    const during = getDuringFuelling(session);
     return [
-      { icon: '☀️', title: 'Pre-run (1-2hrs before)', desc: 'Simple carbs — white toast with jam, a banana or rice cakes. Avoid high fat or fibre before running.' },
-      { icon: '🏃', title: 'During', desc: durHrs > 1 ? 'Gel every 30-45min from the 30min mark. Practice your race-day fuelling strategy here.' : 'Water only if under 60min. Electrolytes if it\'s hot.' },
-      { icon: '💪', title: 'Recovery (within 30min)', desc: 'Protein shake with a banana or chocolate milk. Running breaks down muscle — get protein in fast.' },
-      { icon: '🍽️', title: 'Main meal', desc: 'Chicken or salmon with sweet potato and greens. High protein, moderate carbs.' },
+      { icon: '☀️', title: `Pre-run (1-2hrs before)`, desc: `Simple carbs — white toast with jam, a banana or rice cakes (${preSessionCarbs}). Avoid high fat or fibre before running.`, tag: null },
+      { icon: '🏃', title: 'During', desc: during
+          ? `Gel every 30-45min from the 30min mark — ${during.carbsPerHr}g carbs/hr (${during.gelsNeeded} gels total). Practice your exact race-day fuelling strategy here.`
+          : 'Water only if under 60min. Electrolytes if it\'s hot.', tag: during ? `${during.totalCarbs}g carbs total` : null },
+      { icon: '💪', title: `Recovery (within 30min)`, desc: `Protein shake with a banana — ${mealProtein}g protein minimum. Running breaks down muscle more than cycling — get protein in fast.`, tag: 'Priority' },
+      { icon: '🍽️', title: 'Main meal', desc: `Chicken or salmon with sweet potato and greens. High protein (${mealProtein}g), moderate carbs (${Math.round(macros.carbsG * 0.35)}g).`, tag: null },
     ];
   }
+
   if (type === 'Brick') {
+    const during = getDuringFuelling(session);
     return [
-      { icon: '☀️', title: 'Pre-session (2-3hrs before)', desc: 'Oats with banana. Your biggest session of the week — fuel it properly.' },
-      { icon: '🚴', title: 'On the bike', desc: '60-90g carbs/hr. Eat more than you think you need — you\'ll bonk on the run if you don\'t.' },
-      { icon: '🏃', title: 'Into the run', desc: 'Gel immediately off the bike if your run is over 30min. Your body is already in deficit.' },
-      { icon: '💪', title: 'Recovery', desc: 'Biggest recovery meal of the week. Carb and protein rich — pasta with ground beef, a big burrito, or rice with chicken and avocado.' },
+      { icon: '☀️', title: `Pre-session (2-3hrs before)`, desc: `Your biggest session of the week needs your best fuel — oats with banana and ${preSessionCarbs} carbs. Don't skip this.`, tag: 'Critical' },
+      { icon: '🚴', title: 'On the bike', desc: during
+          ? `${during.carbsPerHr}g carbs/hr — ${during.gelsNeeded} gels or equivalent. Start at 20min. Eat more than you think you need — you'll bonk on the run if you don't.`
+          : 'Drink electrolytes throughout.', tag: during ? `${during.totalCarbs}g carbs total` : null },
+      { icon: '🏃', title: 'Into the run', desc: `Gel immediately off the bike if your run is over 20min. Your body is already in deficit from the ride.`, tag: null },
+      { icon: '💪', title: 'Recovery', desc: `Biggest recovery meal of the week — pasta with meat, a burrito, or rice with chicken and avocado. ${macros.proteinG}g protein target across the day.`, tag: 'Priority' },
     ];
   }
+
   if (type === 'Strength') {
     return [
-      { icon: '☀️', title: 'Pre-session (1hr before)', desc: 'Light protein and carbs — Greek yoghurt with granola, or eggs on toast.' },
-      { icon: '💪', title: 'Post-session (within 30min)', desc: '30-40g protein to trigger muscle repair. Shake, Greek yoghurt or cottage cheese.' },
-      { icon: '🍽️', title: 'Main meal', desc: 'Protein-rich — chicken, beef or fish with vegetables and a moderate serve of carbs.' },
+      { icon: '☀️', title: `Pre-session (1hr before)`, desc: `Light protein and carbs — Greek yoghurt with granola (${preSessionCarbs}), or eggs on toast.`, tag: null },
+      { icon: '💪', title: `Post-session (within 30min)`, desc: `30-40g protein to trigger muscle repair — shake, Greek yoghurt or cottage cheese. Leucine-rich sources (whey, eggs) are most effective.`, tag: 'Priority' },
+      { icon: '🍽️', title: 'Main meal', desc: `Protein-rich — chicken, beef or fish with vegetables and a moderate serve of carbs (${Math.round(macros.carbsG * 0.35)}g). Strength days are where muscle is built.`, tag: null },
     ];
   }
+
   return [
-    { icon: '🌅', title: 'Breakfast', desc: 'Balanced meal to start the day. Eggs, oats or yoghurt with fruit.' },
-    { icon: '🍽️', title: 'Lunch & dinner', desc: 'Lean protein, complex carbs and plenty of vegetables across both meals.' },
+    { icon: '🌅', title: 'Breakfast', desc: `Balanced meal to start the day — eggs, oats or yoghurt with fruit. Aim for ${mealProtein}g protein.`, tag: null },
+    { icon: '🍽️', title: 'Lunch & dinner', desc: `Lean protein (${mealProtein}g per meal), complex carbs and plenty of vegetables across both meals.`, tag: null },
   ];
 }
 
-function renderMealTiming(session) {
-  const meals = getMealTiming(session);
+function renderMealTiming(session, macros, weight) {
+  const meals = getMealTiming(session, macros, weight);
   return meals.map(m => `
     <div class="meal-row">
       <div class="meal-icon">${m.icon}</div>
       <div>
         <div class="meal-title">${m.title}</div>
         <div class="meal-desc">${m.desc}</div>
+        ${m.tag ? `<span class="meal-tag">${m.tag}</span>` : ''}
       </div>
     </div>
   `).join('');
 }
 
+function renderHydration(session, weight) {
+  const h = getHydrationTarget(session, weight);
+  if (!h) return '';
+  return `
+    <div class="hydration-row">
+      <div class="hydration-icon">💧</div>
+      <div class="hydration-text">
+        <strong>Hydration target: ${h.totalL}L today</strong> — drink ${h.mlPerHr}ml/hr during your ${Math.round(h.durHrs * 60)}min session. Add electrolytes for sessions over 90min.
+      </div>
+    </div>
+  `;
+}
+
+function renderPhaseBanner(session) {
+  if (!session) return '';
+  const phase = session.phase || 'Base';
+  if (phase === 'Race Week') {
+    return `<div class="phase-banner race-week-banner">🏁 <strong>Race week.</strong> Every meal this week is part of your race preparation. Prioritise carbs, cut fat and fibre, stay hydrated.</div>`;
+  }
+  if (phase === 'Peak') {
+    return `<div class="phase-banner peak-banner">🔥 <strong>Peak phase.</strong> Highest training load of your plan — fuel aggressively. Don't undereat this week.</div>`;
+  }
+  if (phase === 'Base') {
+    return `<div class="phase-banner base-banner">🌱 <strong>Base phase.</strong> Slightly lower carbs supports fat adaptation. Keep protein high for recovery.</div>`;
+  }
+  return '';
+}
+
 async function getTrixyInsight(session, macros) {
   const type = session ? session.type : 'Rest';
   const dur = session ? (parseFloat(session.duration) || 0) : 0;
-  const phase = session ? session.phase : 'Base';
+  const phase = session ? (session.phase || 'Base') : 'Base';
   const durHrs = (dur / 60).toFixed(1);
+  const during = session ? getDuringFuelling(session) : null;
 
-  const prompt = session && type !== 'Rest'
-    ? `The athlete has a ${durHrs}hr ${type} session today in ${phase} phase. Their targets are ${macros.cal} kcal, ${macros.carbsG}g carbs, ${macros.proteinG}g protein, ${macros.fatG}g fat. Give one specific, direct piece of nutrition advice for today — like a coach texting their athlete. 2 sentences max. No bullet points. No generic advice — make it specific to this session type and duration.`
-    : `The athlete has a rest day today. Their targets are ${macros.cal} kcal, ${macros.proteinG}g protein. Give one short piece of advice about fuelling on rest days and why it still matters for recovery. 2 sentences max. Be direct, like a coach.`;
+  let prompt;
+  if (phase === 'Race Week' && type === 'Race') {
+    prompt = `It's race day. The athlete has targeted ${macros.cal} kcal with ${macros.carbsG}g carbs. Give one specific race-day nutrition tip — start execution, bike fuelling, or run fuelling. 2 sentences max. Direct, like a coach texting before the gun.`;
+  } else if (phase === 'Race Week') {
+    prompt = `It's race week. The athlete is carb loading — ${macros.carbsG}g carbs target today. Give one specific race-week nutrition tip about carb loading or hydration. 2 sentences max.`;
+  } else if (session && type !== 'Rest') {
+    prompt = `The athlete has a ${durHrs}hr ${type} session today in ${phase} phase (effort ${session.effort}/10). Their targets: ${macros.cal} kcal, ${macros.carbsG}g carbs, ${macros.proteinG}g protein.${during ? ` During-session target: ${during.carbsPerHr}g carbs/hr.` : ''} Give one specific, direct nutrition tip for today — make it specific to this session type, duration and phase. 2 sentences max. No bullet points. Sound like a coach texting their athlete.`;
+  } else {
+    prompt = `The athlete has a rest day in ${phase} phase. Their targets: ${macros.cal} kcal, ${macros.proteinG}g protein. Give one short piece of advice about fuelling on rest days in ${phase} phase specifically. 2 sentences max. Be direct.`;
+  }
 
   try {
     const res = await fetch('/api/trixy', {
@@ -438,10 +605,22 @@ function calculateAndDisplay() {
   document.getElementById('macro-protein').textContent = macros.proteinG;
   document.getElementById('macro-fat').textContent = macros.fatG;
 
-  // Page title based on session
+  // Page title
   const type = todaySession ? todaySession.type : null;
-  const titleMap = { Swim: 'Fuel for your swim 🏊', Bike: 'Fuel for your ride 🚴', Run: 'Fuel for your run 🏃', Brick: 'Fuel for your brick 🧱', Strength: 'Fuel for strength day 💪', Rest: 'Rest day nutrition 😴' };
-  document.getElementById('page-title').textContent = type && type !== 'Rest' ? (titleMap[type] || 'Fuel for today 🍽️') : 'Fuel for today 🍽️';
+  const phase = todaySession ? (todaySession.phase || 'Base') : 'Base';
+  const titleMap = {
+    Swim: 'Fuel for your swim 🏊',
+    Bike: 'Fuel for your ride 🚴',
+    Run: 'Fuel for your run 🏃',
+    Brick: 'Fuel for your brick 🧱',
+    Strength: 'Fuel for strength day 💪',
+    Rest: 'Rest day nutrition 😴',
+    Race: 'Race day 🏁'
+  };
+  const isRaceWeek = phase === 'Race Week';
+  document.getElementById('page-title').textContent = isRaceWeek && type === 'Race'
+    ? 'Race day 🏁'
+    : (type && type !== 'Rest' ? (titleMap[type] || 'Fuel for today 🍽️') : 'Fuel for today 🍽️');
 
   // Session badge
   if (todaySession && todaySession.type !== 'Rest') {
@@ -451,23 +630,45 @@ function calculateAndDisplay() {
     badge.style.display = 'inline-flex';
   }
 
+  // Phase banner
+  const bannerHtml = renderPhaseBanner(todaySession);
+  const bannerEl = document.getElementById('phase-banner');
+  if (bannerHtml) {
+    bannerEl.innerHTML = bannerHtml;
+    bannerEl.style.display = 'block';
+  } else {
+    bannerEl.style.display = 'none';
+  }
+
   // Meal timing
-  document.getElementById('meal-timing-content').innerHTML = renderMealTiming(todaySession);
+  document.getElementById('meal-timing-content').innerHTML = renderMealTiming(todaySession, macros, w);
+
+  // Hydration
+  const hydrationHtml = renderHydration(todaySession, w);
+  const hydrationEl = document.getElementById('hydration-target');
+  if (hydrationHtml) {
+    hydrationEl.innerHTML = hydrationHtml;
+    hydrationEl.style.display = 'block';
+  } else {
+    hydrationEl.style.display = 'none';
+  }
 
   // Trixy insight async
   getTrixyInsight(todaySession, macros).then(insight => {
-    if (insight) document.getElementById('trixy-nutrition-text').textContent = insight;
-    else {
+    if (insight) {
+      document.getElementById('trixy-nutrition-text').textContent = insight;
+    } else {
       const fallbacks = {
-        Bike: "Big ride today — don't undereat. Start fuelling earlier than you think you need to and keep carbs coming every 30min.",
+        Bike: "Big ride today — start fuelling earlier than you think you need to and keep carbs coming every 30min.",
         Run: "Get your carbs in before you head out. Running on empty trashes your form and your recovery.",
         Swim: "Easy to forget nutrition with swimming but your body still burns through glycogen. Get protein in within 30min of finishing.",
         Brick: "Your hardest session of the week needs your best fuelling. Eat the full pre-session meal — no skipping.",
         Strength: "Strength days are where the adaptation happens. Hit your protein target today — it's when your muscles actually rebuild.",
         Rest: "Rest days aren't a free pass to undereat. Your body is repairing — hit your protein target even if you're not hungry.",
+        Race: "Trust your fuelling plan and execute it. The biggest mistake on race day is waiting too long to eat on the bike.",
       };
-      const type = todaySession ? todaySession.type : 'Rest';
-      document.getElementById('trixy-nutrition-text').textContent = fallbacks[type] || "Fuel consistently every day — not just on hard training days. Your recovery depends on what you eat right now.";
+      const t = todaySession ? todaySession.type : 'Rest';
+      document.getElementById('trixy-nutrition-text').textContent = fallbacks[t] || "Fuel consistently every day — not just on hard training days. Your recovery depends on what you eat right now.";
     }
   });
 }
@@ -494,21 +695,18 @@ async function init() {
     } catch(e) {}
   }
 
-  // Load today's plan session — use most recent plan with a start date that has already begun
+  // Load today's plan session
   try {
     const urlPlanId = new URLSearchParams(location.search).get('plan');
     let planData2 = null;
     if (urlPlanId) {
-      // Came from plan.html with a specific plan ID — use it
       const { data: plans } = await sb.from('plans').select('plan_data').eq('id', urlPlanId).eq('user_id', session.user.id).limit(1);
       if (plans && plans.length) planData2 = typeof plans[0].plan_data === 'string' ? JSON.parse(plans[0].plan_data) : plans[0].plan_data;
     }
     if (!planData2) {
-      // Load all plans and find the active one (start date <= today, most recently created)
       const { data: plans } = await sb.from('plans').select('plan_data, created_at').eq('user_id', session.user.id).order('created_at', { ascending: false });
       if (plans && plans.length) {
         const today = new Date(); today.setHours(0,0,0,0);
-        // Find first plan whose start date is on or before today
         for (const p of plans) {
           const pd = typeof p.plan_data === 'string' ? JSON.parse(p.plan_data) : p.plan_data;
           if (pd && pd.startDate) {
@@ -516,10 +714,7 @@ async function init() {
             if (start <= today) { planData2 = pd; break; }
           }
         }
-        // Fallback to most recent if none found
-        if (!planData2) {
-          planData2 = typeof plans[0].plan_data === 'string' ? JSON.parse(plans[0].plan_data) : plans[0].plan_data;
-        }
+        if (!planData2) planData2 = typeof plans[0].plan_data === 'string' ? JSON.parse(plans[0].plan_data) : plans[0].plan_data;
       }
     }
     if (planData2) {
