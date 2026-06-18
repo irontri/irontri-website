@@ -1284,6 +1284,19 @@ const typeInfo={
   'Race':         {icon:'🏁', cls:'type-race',     color:'#f87171', label:'Race'},
 };
 
+// Convert standalone minute values >=60 to hours/mins in session text
+// e.g. "165min continuous ride" → "2h 45min continuous ride"
+function fmtSessionText(text) {
+  if (!text) return text;
+  return text.replace(/(\d+)\s*min(?:ute)?s?/gi, (match, num) => {
+    const n = parseInt(num);
+    if (n < 60) return match;
+    const hrs = Math.floor(n / 60);
+    const mins = n % 60;
+    return mins > 0 ? `${hrs}hr ${mins}min` : `${hrs}hr`;
+  });
+}
+
 function resolveType(rawType, name, warmup, mainset) {
   if (!rawType) return typeInfo['Rest'];
   if (typeInfo[rawType]) return typeInfo[rawType];
@@ -1715,9 +1728,9 @@ function selectDay(i){
           </div>` : ''}
         </div>`;
       })() : ''}
-      ${dActive.warmup?`<div class="sd-section"><div class="sd-sec-title">🔥 Warm up</div><div class="sd-sec-content">${dActive.warmup}</div></div>`:''}
-      ${dActive.mainset?`<div class="sd-section"><div class="sd-sec-title">💪 Main set</div><div class="sd-sec-content">${dActive.mainset}</div></div>`:''}
-      ${dActive.cooldown?`<div class="sd-section"><div class="sd-sec-title">❄️ Cool down</div><div class="sd-sec-content">${dActive.cooldown}</div></div>`:''}
+      ${dActive.warmup?`<div class="sd-section"><div class="sd-sec-title">🔥 Warm up</div><div class="sd-sec-content">${fmtSessionText(dActive.warmup)}</div></div>`:''}
+      ${dActive.mainset?`<div class="sd-section"><div class="sd-sec-title">💪 Main set</div><div class="sd-sec-content">${fmtSessionText(dActive.mainset)}</div></div>`:''}
+      ${dActive.cooldown?`<div class="sd-section"><div class="sd-sec-title">❄️ Cool down</div><div class="sd-sec-content">${fmtSessionText(dActive.cooldown)}</div></div>`:''}
       ${dActive.effort?`<div class="sd-section"><div class="sd-sec-title">📊 Effort level — RPE ${dActive.effort}/10 <button class="info-btn" onclick="showExplainer('RPE')">What is RPE? ℹ️</button></div><div class="effort-bar">${effortBars}</div></div>`:''}
       ${dActive.coachNote?`<div class="sd-section"><div class="sd-sec-title">💬 Coach note</div><div class="sd-sec-content" style="font-style:italic;color:var(--muted);">"${dActive.coachNote}"</div></div>`:''}
       ${strengthHTML}
