@@ -40,6 +40,7 @@ export default async function handler(req, res) {
     const builtSoFar = planData.weeks?.length || 0;
     const totalNeeded = targetWeeks || planData.totalWeeksPlanned || 0;
     const basePrompt = planData.basePrompt || '';
+    const wantsStrength = /strength training:\s*YES/i.test(basePrompt);
 
     const startWk = builtSoFar + 1;
     const endWk = Math.min(builtSoFar + 2, totalNeeded);
@@ -266,7 +267,7 @@ export default async function handler(req, res) {
       return rule;
     })();
 
-    const _baseEnd=Math.floor(totalNeeded*0.30);const _buildEnd=Math.floor(totalNeeded*0.65);const _peakEnd=Math.floor(totalNeeded*0.85);const _taperEnd=totalNeeded-1;
+    const _baseEnd=Math.round(totalNeeded*0.30);const _buildEnd=Math.round(totalNeeded*0.65);const _peakEnd=Math.round(totalNeeded*0.85);const _taperEnd=totalNeeded-1;
     const _getPhase=(wk)=>wk<=_baseEnd?'Base':wk<=_buildEnd?'Build':wk<=_peakEnd?'Peak':wk<totalNeeded?'Taper':'Race Week';
     const _phaseForBatch=_getPhase(startWk);
 
@@ -695,6 +696,34 @@ export default async function handler(req, res) {
         }
       });
     });
+
+    // Post-process: GUARANTEE strength in Base/Build weeks when the athlete opted in.
+    // The model is unreliable about the conditional strength rule in these small later
+    // batches, so enforce it deterministically rather than trusting the prompt.
+    if (wantsStrength) {
+      newWeeks.forEach(wk => {
+        const phase = (wk.phase || '').toLowerCase();
+        if (phase !== 'base' && phase !== 'build') return;
+        if (!wk.days || wk.days.some(d => d.type === 'Strength')) return;
+        const strengthSession = {
+          type: 'Strength', name: 'Functional Strength', duration: 35, effort: 5, zone: 2,
+          purpose: 'Afternoon strength paired with the morning swim. Triathlon-specific: core stability, glutes, hip flexors, single-leg work.',
+          warmup: '5 min easy mobility — leg swings, hip circles, bodyweight squats.',
+          mainset: 'Functional strength circuit — 35 min: core, glutes, hip flexors, single-leg work.',
+          cooldown: '5 min stretch — hip flexors, glutes, hamstrings.',
+          coachNote: 'Do this in the afternoon after your morning swim. Keep it functional — core, glutes, hip flexors. In and out in 35 minutes.',
+          paceTarget: 'N/A', heartRateZone: 'Zone 2'
+        };
+        const swimDays = wk.days.map((s, si) => ({ s, si })).filter(({ s }) => s.type === 'Swim');
+        if (swimDays.length > 0) {
+          swimDays.sort((a, b) => (parseFloat(a.s.duration) || 0) - (parseFloat(b.s.duration) || 0));
+          wk.days.push({ ...strengthSession, day: swimDays[0].s.day });
+        } else {
+          const restIdx = wk.days.findIndex(r => r.type === 'Rest');
+          if (restIdx !== -1) wk.days[restIdx] = { ...strengthSession, day: wk.days[restIdx].day };
+        }
+      });
+    }
 
     // Post-process: inject open water swims in Build/Peak phases
     // Monthly in Build (every 4 weeks), fortnightly in Peak (every 2 weeks)
