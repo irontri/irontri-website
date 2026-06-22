@@ -242,6 +242,7 @@
   gtag('js', new Date());
   gtag('config', 'G-BDZ8K3RR10');
 </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 <nav>
@@ -344,8 +345,9 @@
     </div>
     <div class="finish-splits" id="finish-splits"></div>
     <div class="finish-confidence" id="finish-confidence"></div>
-    <div style="margin-top:16px;">
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
       <a id="finish-view-plan-btn" href="/plan.html" style="display:inline-block;background:#1E90FF;color:#fff;text-decoration:none;padding:11px 24px;border-radius:9px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;">View my plan →</a>
+      <button id="finish-share-btn" onclick="shareFinishCard(this)" style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#fff;cursor:pointer;padding:11px 20px;border-radius:9px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">📲 Share</button>
     </div>
   </div>
 
@@ -1557,6 +1559,12 @@ async function calcFinishTime(planData, planRace, planId) {
       `<div class="finish-split ${s.cls}"><div class="finish-split-val">${s.val}</div><div class="finish-split-lbl">${s.label}</div></div>`
     ).join('');
     document.getElementById('finish-confidence').textContent = confidence;
+    // Stash values for the share card
+    window._finishShareData = {
+      total: secsToHMS(totalSecs),
+      raceLabel: raceLabel,
+      splits: splits.map(s => ({ label: s.label, val: s.val, cls: s.cls }))
+    };
   } catch(e) { console.log('Finish time calc error:', e); }
 }
 
@@ -1935,6 +1943,90 @@ async function trixyAsk(presetMsg) {
 
   if (sendBtn) sendBtn.disabled = false;
 }
+// ── SHARE FINISH CARD ──────────────────────────────────────────────────────────
+function _splitColors(cls){
+  return ({
+    swim:{bg:'#0f2733',br:'#38bdf8',lbl:'rgba(56,189,248,0.85)'},
+    bike:{bg:'#2a1c0f',br:'#fb923c',lbl:'rgba(251,146,60,0.85)'},
+    run:{bg:'#10241a',br:'#4ade80',lbl:'rgba(74,222,128,0.85)'},
+    trans:{bg:'#1a1a1a',br:'rgba(255,255,255,0.18)',lbl:'rgba(255,255,255,0.5)'}
+  })[cls] || {bg:'#1a1a1a',br:'rgba(255,255,255,0.18)',lbl:'rgba(255,255,255,0.5)'};
+}
+
+async function shareFinishCard(btn){
+  const d = window._finishShareData;
+  if(!d){ return; }
+  const original = btn.innerHTML;
+  btn.innerHTML = '⏳ Building...';
+  btn.disabled = true;
+
+  // Build the off-screen share card (1080x1350 — IG story/post friendly)
+  const splitsHtml = d.splits.map(s=>{
+    const c = _splitColors(s.cls);
+    return `<div style="flex:1;background:${c.bg};border:2px solid ${c.br};border-radius:18px;padding:22px 10px;text-align:center;">
+      <div style="font-family:'Syne',sans-serif;font-size:34px;font-weight:800;color:#fff;line-height:1;">${s.val}</div>
+      <div style="font-size:18px;margin-top:8px;color:${c.lbl};font-weight:600;">${s.label}</div>
+    </div>`;
+  }).join('');
+
+  const card = document.createElement('div');
+  card.style.cssText = 'position:fixed;left:-9999px;top:0;width:1080px;height:1350px;background:radial-gradient(circle at 30% 0%,#15243f 0%,#0a0a0a 55%);font-family:\'DM Sans\',sans-serif;overflow:hidden;';
+  card.innerHTML = `
+    <div style="position:absolute;top:0;left:0;right:0;height:8px;background:linear-gradient(90deg,#1E90FF,#a855f7,#1E90FF);"></div>
+    <div style="padding:90px 70px 0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-family:'Syne',sans-serif;font-size:46px;font-weight:800;color:#fff;letter-spacing:-1px;">iron<span style="color:#1E90FF;">tri</span></div>
+        <div style="font-size:20px;color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);padding:10px 24px;border-radius:30px;">${d.raceLabel}</div>
+      </div>
+
+      <div style="margin-top:180px;text-align:center;">
+        <div style="font-size:22px;letter-spacing:4px;text-transform:uppercase;color:rgba(30,144,255,0.9);font-weight:600;margin-bottom:26px;">🏁 Predicted Finish Time</div>
+        <div style="font-family:'Syne',sans-serif;font-size:170px;font-weight:800;color:#fff;letter-spacing:-6px;line-height:0.9;">${d.total}</div>
+      </div>
+
+      <div style="display:flex;gap:18px;margin-top:150px;">
+        ${splitsHtml}
+      </div>
+
+      <div style="margin-top:110px;text-align:center;">
+        <div style="font-size:26px;color:rgba(255,255,255,0.6);line-height:1.5;">Built from my real Strava data.<br/>Personalised swim, bike & run coaching.</div>
+      </div>
+    </div>
+    <div style="position:absolute;bottom:70px;left:0;right:0;text-align:center;">
+      <div style="font-size:30px;font-weight:700;color:#1E90FF;letter-spacing:0.5px;">irontriapp.com</div>
+    </div>
+  `;
+  document.body.appendChild(card);
+
+  try {
+    const canvas = await html2canvas(card, {backgroundColor:'#0a0a0a', scale:1, width:1080, height:1350, logging:false});
+    document.body.removeChild(card);
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png', 0.95));
+    const file = new File([blob], 'irontri-finish-time.png', {type:'image/png'});
+
+    // Native share sheet (mobile) — falls back to download (desktop)
+    if (navigator.canShare && navigator.canShare({files:[file]})) {
+      await navigator.share({
+        files:[file],
+        title:'My predicted finish time',
+        text:`My predicted ${d.raceLabel} finish: ${d.total} 🏁 Built on irontri from my real Strava data. irontriapp.com`
+      });
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'irontri-finish-time.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  } catch(e) {
+    console.log('Share error:', e);
+    if (card.parentNode) document.body.removeChild(card);
+  } finally {
+    btn.innerHTML = original;
+    btn.disabled = false;
+  }
+}
+// ── END SHARE FINISH CARD ──────────────────────────────────────────────────────
 </script>
 
 </body>
