@@ -464,6 +464,34 @@ JSON structure for weeks:
           }
         });
       });
+      // GUARANTEE strength in Base/Build weeks when the athlete opted in.
+      // The model applies the conditional strength rule inconsistently (and drops it
+      // entirely in later build-remaining batches), so we enforce it deterministically here.
+      const wantsStrength = /strength training:\s*YES/i.test(prompt);
+      if (wantsStrength) {
+        (pd.weeks || []).forEach(wk => {
+          const phase = (wk.phase || '').toLowerCase();
+          if (phase !== 'base' && phase !== 'build') return;
+          if (!wk.days || wk.days.some(d => d.type === 'Strength')) return;
+          const strengthSession = {
+            type: 'Strength', name: 'Functional Strength', duration: 35, effort: 5, zone: 2,
+            purpose: 'Afternoon strength paired with the morning swim. Triathlon-specific: core stability, glutes, hip flexors, single-leg work.',
+            warmup: '5 min easy mobility — leg swings, hip circles, bodyweight squats.',
+            mainset: 'Functional strength circuit — 35 min: core, glutes, hip flexors, single-leg work.',
+            cooldown: '5 min stretch — hip flexors, glutes, hamstrings.',
+            coachNote: 'Do this in the afternoon after your morning swim. Keep it functional — core, glutes, hip flexors. In and out in 35 minutes.',
+            paceTarget: 'N/A', heartRateZone: 'Zone 2'
+          };
+          const swimDays = wk.days.map((s, si) => ({ s, si })).filter(({ s }) => s.type === 'Swim');
+          if (swimDays.length > 0) {
+            swimDays.sort((a, b) => (parseFloat(a.s.duration) || 0) - (parseFloat(b.s.duration) || 0));
+            wk.days.push({ ...strengthSession, day: swimDays[0].s.day });
+          } else {
+            const restIdx = wk.days.findIndex(r => r.type === 'Rest');
+            if (restIdx !== -1) wk.days[restIdx] = { ...strengthSession, day: wk.days[restIdx].day };
+          }
+        });
+      }
       planDataToSave = JSON.stringify(pd);
     } catch(e) {
       console.log('Could not inject basePrompt:', e);
