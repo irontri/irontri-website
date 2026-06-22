@@ -241,7 +241,9 @@
       font-size: 13px;
       margin-bottom: 12px;
       display: none;
+      line-height: 1.5;
     }
+    .error-msg a { color: #ef9a9a; text-decoration: underline; }
 
     /* Step 2 — confirmation */
     .confirm-header {
@@ -464,18 +466,30 @@
     try {
       const feedback = document.getElementById('feedback').value.trim();
 
-      // Save churn reason before deleting
+      // Save churn reason before deleting (best-effort — never block deletion if this fails).
       await sb.from('churn_feedback').insert({
         user_id: currentUser.id,
         email: currentUser.email,
         reason: selectedReason,
         feedback: feedback || null,
-        is_paid: false // will be overridden by RLS-free insert via trigger if needed
+        is_paid: false
       });
 
-      // Delete the user via edge function / RPC
-      const { error } = await sb.rpc('delete_user');
-      if (error) throw error;
+      // Get a fresh session token to authorise the delete server-side.
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) throw new Error('Your session has expired. Please log in again.');
+
+      // Delete via the server endpoint — it uses the service key and validates this token,
+      // so we never run a privileged delete on the client/anon key.
+      const resp = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        }
+      });
+      const result = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(result.error || 'Delete failed. Please try again.');
 
       // Sign out
       await sb.auth.signOut();
@@ -486,8 +500,10 @@
 
     } catch (err) {
       console.error(err);
-      document.getElementById('step2Error').style.display = 'block';
-      document.getElementById('step2Error').textContent = 'Something went wrong: ' + (err.message || 'Please try again.');
+      const el = document.getElementById('step2Error');
+      el.style.display = 'block';
+      el.innerHTML = (err.message || 'Something went wrong.') +
+        ' If this keeps happening, email <a href="mailto:coach@irontriapp.com">coach@irontriapp.com</a> and we\'ll remove it for you.';
       btn.disabled = false;
       btn.innerHTML = 'Delete my account permanently';
     }
