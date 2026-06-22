@@ -2427,7 +2427,9 @@ async function syncStravaActivities() {
           try {
             const SPORT_EMOJI = { Run: '🏃', Bike: '🚴', Swim: '🏊', Brick: '🧱' };
             const emoji = SPORT_EMOJI[matchingSession.type] || '🏋️';
-            const tagText = '\n\n' + emoji + ' Week ' + (weekNum + 1) + ' · ' + (matchingSession.name || matchingSession.type) + ' — Trained with irontriapp.com 🔥';
+            const tagText = emoji + ' Week ' + (weekNum + 1) + ' · ' + (matchingSession.name || matchingSession.type) + ' — Trained with irontriapp.com 🔥';
+            const existingDesc = (act.description || '').trim();
+            const finalDesc = existingDesc ? tagText + '\n\n' + existingDesc : tagText;
             await fetch('/api/strava-exchange', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -2435,7 +2437,7 @@ async function syncStravaActivities() {
                 action: 'update_activity',
                 access_token: token,
                 activity_id: act.id,
-                description: (act.description || '') + tagText,
+                description: finalDesc,
               })
             });
           } catch(tagErr) { console.log('Auto-tag error:', tagErr); }
@@ -2532,8 +2534,9 @@ async function shareToStrava(dayIndex, btnEl) {
     // Build the description
     const weekLabel = `Week ${curWeek + 1}`;
     const typeEmoji = {Swim:'🏊',Bike:'🚴',Run:'🏃',Brick:'🏃🚴',Strength:'💪',Rest:'😴'}[sessionType] || '🏋️';
-    const separator = matchingActivity.description ? '\n' + matchingActivity.description : '';
-    const newDesc = `${typeEmoji} ${weekLabel} · ${sessionName} — Trained with irontriapp.com 🔥${separator}`;
+    const tagLine = `${typeEmoji} ${weekLabel} · ${sessionName} — Trained with irontriapp.com 🔥`;
+    const existingDesc = (matchingActivity.description || '').trim();
+    const newDesc = existingDesc ? `${tagLine}\n\n${existingDesc}` : tagLine;
 
     // Update via serverless (keeps token server-side safe — but we use the client token here)
     const updateR = await fetch('/api/strava-exchange', {
