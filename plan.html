@@ -151,9 +151,18 @@
     /* PHASE PILLS */
     .phases{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
     .phase-pill{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:500;border:1px solid;cursor:pointer;transition:all 0.2s;}
-    .phase-pill.active{background:var(--blue);border-color:var(--blue);color:#fff;}
-    .phase-pill:not(.active){background:transparent;border-color:var(--border);color:var(--muted);}
-    .phase-pill:not(.active):hover{border-color:rgba(30,144,255,0.4);color:#fff;}
+    .phase-pill{background:transparent;}
+    .phase-pill[data-phase="Base"]{border-color:rgba(74,222,128,0.4);color:#4ade80;}
+    .phase-pill[data-phase="Base"].active{background:#4ade80;border-color:#4ade80;color:#0b0e11;}
+    .phase-pill[data-phase="Build"]{border-color:rgba(251,146,60,0.4);color:#fb923c;}
+    .phase-pill[data-phase="Build"].active{background:#fb923c;border-color:#fb923c;color:#0b0e11;}
+    .phase-pill[data-phase="Peak"]{border-color:rgba(248,113,113,0.4);color:#f87171;}
+    .phase-pill[data-phase="Peak"].active{background:#f87171;border-color:#f87171;color:#0b0e11;}
+    .phase-pill[data-phase="Taper"]{border-color:rgba(56,189,248,0.4);color:#38bdf8;}
+    .phase-pill[data-phase="Taper"].active{background:#38bdf8;border-color:#38bdf8;color:#0b0e11;}
+    .phase-pill[data-phase="Race Week"]{border-color:rgba(251,191,36,0.4);color:#fbbf24;}
+    .phase-pill[data-phase="Race Week"].active{background:#fbbf24;border-color:#fbbf24;color:#0b0e11;}
+    .phase-pill:not(.active):hover{background:rgba(255,255,255,0.05);}
 
     /* WEEK SELECTOR */
     .week-nav{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
