@@ -33,6 +33,24 @@ export default async function handler(req, res) {
     const plan = plans.find(p => String(p.id) === String(planId)) || plans[0];
     console.log('Using plan id:', plan.id, 'requested planId:', planId);
 
+    // Fetch the athlete's live Strava fitness data (written by strava-fitness.js).
+    // This is the actual source of truth for swim pace, FTP, run threshold, HR zones, etc.
+    // Do NOT rely on req.body.stravaFitness — plan.html's autoGenerateRemainingWeeks() call
+    // never sends it, so that field is effectively always empty on this endpoint.
+    let liveFitness = null;
+    try {
+      const fitnessRes = await fetch(
+        SUPABASE_URL + '/rest/v1/users?id=eq.' + userId + '&select=strava_fitness',
+        { headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY } }
+      );
+      const fitnessRows = await fitnessRes.json();
+      if (fitnessRows?.[0]?.strava_fitness) {
+        liveFitness = typeof fitnessRows[0].strava_fitness === 'string'
+          ? JSON.parse(fitnessRows[0].strava_fitness)
+          : fitnessRows[0].strava_fitness;
+      }
+    } catch (e) { console.warn('build-remaining: failed to load live strava fitness:', e.message); }
+
     let txt = plan.plan_data || '';
     txt = txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1);
     const planData = JSON.parse(txt);
@@ -301,10 +319,31 @@ export default async function handler(req, res) {
       ? `CRITICAL TRAINING DAYS RULE: The athlete can ONLY train on these days: ${allowedDays.join(', ')}. You MUST place Rest sessions on ALL other days (${ALL_DAYS.filter(d => !allowedDays.includes(d)).join(', ')}). This is a hard constraint — NEVER place a training session on a day not in this list, no exceptions.`
       : '';
 
-    // Extract swim pace from basePrompt STRAVA FITNESS DATA and build hard rule
-    const _swimPaceMatch = basePrompt.match(/Swim[^-\n]*avg pace\s*([\d:]+)\s*\/100m/i);
-    const _swimPaceStr = _swimPaceMatch ? _swimPaceMatch[1] : null;
-    const swimPaceRule = _swimPaceStr ? `SWIM PACE RULE — CRITICAL: This athlete's actual swim pace is ${_swimPaceStr}/100m from their Strava data. Every swim session's warmup, mainset and cooldown text MUST use paces derived from this. Easy/Zone 2 pace = ${_swimPaceStr} to ${_swimPaceStr.replace(/^(\d+):(\d+)$/, (_, m, s) => { const secs = parseInt(m)*60+parseInt(s)+20; return Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0'); })}/100m. NEVER use generic placeholder paces like 3:46/100m or 4:00/100m — always calculate from the athlete's actual ${_swimPaceStr}/100m pace. CSS (threshold pace) = approximately ${_swimPaceStr}/100m. Zone 2 swim = CSS + 15-25 sec/100m.` : '';
+    // Get swim pace from the live fitness data fetched above (users.strava_fitness) — never trust
+    // regex extraction from basePrompt text. basePrompt phrasing can drift (different label, line
+    // wrap, missing block) and the regex silently fails, leaving the AI to fall back to generic
+    // beginner/intermediate placeholder paces. That mismatch (e.g. CSS 3:17/100m vs a generated
+    // 1:40-1:48/100m target) is what caused the swim-pace-too-fast bug. req.body.stravaFitness is
+    // kept as a secondary check since some callers may pass it, but plan.html currently does not.
+    // Regex extraction from basePrompt remains only as a final fallback.
+    let _swimPaceStr = null;
+    if (liveFitness?.swim?.avgPacePer100m) {
+      _swimPaceStr = liveFitness.swim.avgPacePer100m;
+    } else {
+      try {
+        const _fitnessObj = typeof stravaFitness === 'string' ? JSON.parse(stravaFitness) : stravaFitness;
+        if (_fitnessObj?.swim?.avgPacePer100m) {
+          _swimPaceStr = _fitnessObj.swim.avgPacePer100m;
+        }
+      } catch (e) {}
+    }
+
+    if (!_swimPaceStr) {
+      const _swimPaceMatch = basePrompt.match(/Swim[^-\n]*avg pace\s*([\d:]+)\s*\/100m/i);
+      _swimPaceStr = _swimPaceMatch ? _swimPaceMatch[1] : null;
+    }
+
+    const swimPaceRule = _swimPaceStr ? `SWIM PACE RULE — CRITICAL: This athlete's actual swim pace (CSS) is ${_swimPaceStr}/100m. This is a HARD, VERIFIED value from Strava/manual entry — do not deviate from it under any circumstances. Every swim session's warmup, mainset and cooldown text MUST use paces derived from this exact number. Easy/Zone 2 pace = ${_swimPaceStr} to ${_swimPaceStr.replace(/^(\d+):(\d+)$/, (_, m, s) => { const secs = parseInt(m)*60+parseInt(s)+20; return Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0'); })}/100m. NEVER use generic placeholder paces like 3:46/100m, 4:00/100m, 1:50-2:10/100m or any other example pace — always calculate from the athlete's actual ${_swimPaceStr}/100m CSS. Zone 2 swim = CSS + 15-25 sec/100m. SANITY CHECK: a Zone 2 aerobic swim pace must always be SLOWER (a higher min:sec number) than CSS — if you generate a swim pace target faster than ${_swimPaceStr}/100m for any non-sprint, non-VO2max session, that is an error and must be corrected before output.` : '';
 
     const durationRule = `DURATION RULE — CRITICAL: For every session, the warmup + mainset + cooldown text descriptions must represent times that add up to exactly the session's duration field in minutes. If duration is 55min, your warmup + mainset + cooldown must total 55 minutes. Never write warmup/mainset/cooldown that add up to more or less than the duration.`;
 
