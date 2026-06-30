@@ -325,7 +325,10 @@ export default async function handler(req, res) {
     // beginner/intermediate placeholder paces. That mismatch (e.g. CSS 3:17/100m vs a generated
     // 1:40-1:48/100m target) is what caused the swim-pace-too-fast bug. req.body.stravaFitness is
     // kept as a secondary check since some callers may pass it, but plan.html currently does not.
-    // Regex extraction from basePrompt remains only as a final fallback.
+    // For athletes without Strava connected (or with no swim activities yet), fall back to the
+    // manually-entered CSS captured at quiz time and saved as planData.css — this is the same
+    // field generate-plan.js's prompt already uses for the initial plan. Regex extraction from
+    // basePrompt remains only as a final fallback, and only matches Strava-flavoured phrasing.
     let _swimPaceStr = null;
     if (liveFitness?.swim?.avgPacePer100m) {
       _swimPaceStr = liveFitness.swim.avgPacePer100m;
@@ -338,12 +341,17 @@ export default async function handler(req, res) {
       } catch (e) {}
     }
 
+    if (!_swimPaceStr && planData.css) {
+      const _manualCssMatch = String(planData.css).match(/(\d+):(\d+)/);
+      if (_manualCssMatch) _swimPaceStr = _manualCssMatch[1] + ':' + _manualCssMatch[2];
+    }
+
     if (!_swimPaceStr) {
       const _swimPaceMatch = basePrompt.match(/Swim[^-\n]*avg pace\s*([\d:]+)\s*\/100m/i);
       _swimPaceStr = _swimPaceMatch ? _swimPaceMatch[1] : null;
     }
 
-    const swimPaceRule = _swimPaceStr ? `SWIM PACE RULE — CRITICAL: This athlete's actual swim pace (CSS) is ${_swimPaceStr}/100m. This is a HARD, VERIFIED value from Strava/manual entry — do not deviate from it under any circumstances. Every swim session's warmup, mainset and cooldown text MUST use paces derived from this exact number. Easy/Zone 2 pace = ${_swimPaceStr} to ${_swimPaceStr.replace(/^(\d+):(\d+)$/, (_, m, s) => { const secs = parseInt(m)*60+parseInt(s)+20; return Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0'); })}/100m. NEVER use generic placeholder paces like 3:46/100m, 4:00/100m, 1:50-2:10/100m or any other example pace — always calculate from the athlete's actual ${_swimPaceStr}/100m CSS. Zone 2 swim = CSS + 15-25 sec/100m. SANITY CHECK: a Zone 2 aerobic swim pace must always be SLOWER (a higher min:sec number) than CSS — if you generate a swim pace target faster than ${_swimPaceStr}/100m for any non-sprint, non-VO2max session, that is an error and must be corrected before output.` : '';
+    const swimPaceRule = _swimPaceStr ? `SWIM PACE RULE — CRITICAL: This athlete's actual swim pace (CSS) is ${_swimPaceStr}/100m. This is a HARD, VERIFIED value from Strava/manual entry — do not deviate from it under any circumstances. Every swim session's warmup, mainset and cooldown text MUST use paces derived from this exact number. Easy/Zone 2 pace = ${_swimPaceStr} to ${_swimPaceStr.replace(/^(\d+):(\d+)$/, (_, m, s) => { const secs = parseInt(m)*60+parseInt(s)+20; return Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0'); })}/100m. NEVER use generic placeholder paces like 3:46/100m, 4:00/100m, 1:50-2:10/100m or any other example pace — always calculate from the athlete's actual ${_swimPaceStr}/100m CSS. Zone 2 swim = CSS + 15-25 sec/100m. SANITY CHECK: a Zone 2 aerobic swim pace must always be SLOWER (a higher min:sec number) than CSS — if you generate a swim pace target faster than ${_swimPaceStr}/100m for any non-sprint, non-VO2max session, that is an error and must be corrected before output.` : `SWIM PACE RULE — CRITICAL: No verified swim pace (CSS) is available for this athlete. Use the experience-level fallback paces already defined elsewhere in this prompt (e.g. Beginner/Intermediate/Advanced swimmer ranges). NEVER invent a swim pace faster than 1:40/100m for an age-group athlete under any circumstances — that is a sprint-elite pace and is almost certainly an error.`;
 
     const durationRule = `DURATION RULE — CRITICAL: For every session, the warmup + mainset + cooldown text descriptions must represent times that add up to exactly the session's duration field in minutes. If duration is 55min, your warmup + mainset + cooldown must total 55 minutes. Never write warmup/mainset/cooldown that add up to more or less than the duration.`;
 
