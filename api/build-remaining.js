@@ -481,6 +481,10 @@ export default async function handler(req, res) {
           (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
         );
         longestBike.duration = targetBikeMins;
+        const _bikeMain = Math.max(targetBikeMins - 30, 10);
+        longestBike.warmup = '15 min easy spin, building gradually.';
+        longestBike.mainset = `${_bikeMain} min steady aerobic riding at Zone 2 — consistent cadence, controlled effort.`;
+        longestBike.cooldown = '15 min easy spin.';
       }
 
       // Apply run correction
@@ -490,6 +494,10 @@ export default async function handler(req, res) {
           (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
         );
         longestRun.duration = targetRunMins;
+        const _runMain = Math.max(targetRunMins - 20, 10);
+        longestRun.warmup = '10 min easy jog with dynamic stretching.';
+        longestRun.mainset = `${_runMain} min continuous aerobic run at Zone 2 — steady effort, focus on form and cadence.`;
+        longestRun.cooldown = '10 min easy jog and stretch.';
       }
 
       // Apply swim correction
@@ -499,6 +507,10 @@ export default async function handler(req, res) {
           (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
         );
         longestSwim.duration = targetSwimMins;
+        const _swimMain = Math.max(targetSwimMins - 15, 10);
+        longestSwim.warmup = '300m easy — focus on long, relaxed strokes.';
+        longestSwim.mainset = `${_swimMain} min continuous aerobic swim at Zone 2. Focus on technique and consistent stroke rate.`;
+        longestSwim.cooldown = '150m easy backstroke.';
       }
       // Enforce professional double session programming — scaled by experience level
       if ((isFull || isHalf) && wk.phase !== 'Race Week' && wk.phase !== 'Taper') {
@@ -1157,9 +1169,11 @@ export default async function handler(req, res) {
         if ((parseFloat(longestRun.duration)||0) < minRunMins) {
           longestRun.duration = minRunMins;
           longestRun.name = longestRun.name || 'Long Aerobic Run';
-          if (longestRun.mainset && !longestRun.mainset.includes(minRunMins + ' min')) {
-            longestRun.coachNote = (longestRun.coachNote || '') + ' This is your weekly long run — the cornerstone of run fitness. Build endurance and mental toughness at Zone 2 effort.';
-          }
+          const _runMain2 = Math.max(minRunMins - 20, 10);
+          longestRun.warmup = '10 min easy jog with dynamic stretching.';
+          longestRun.mainset = `${_runMain2} min continuous aerobic run at Zone 2 — steady effort, focus on form and cadence.`;
+          longestRun.cooldown = '10 min easy jog and stretch.';
+          longestRun.coachNote = (longestRun.coachNote || '') + ' This is your weekly long run — the cornerstone of run fitness. Build endurance and mental toughness at Zone 2 effort.';
         }
       });
     }
