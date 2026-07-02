@@ -1667,7 +1667,9 @@ function selectDay(i){
     <div class="sd-body">
       ${dActive.purpose?`<div class="sd-purpose">🎯 <strong>Purpose:</strong> ${!hasDouble ? dActive.purpose.replace(/\b(first |second |morning |afternoon )?(double session day[:\s—-]*|double session[:\s—-]*)/gi,'').replace(/^\s*[,;:—-]+\s*/,'').trim() : dActive.purpose}</div>`:''}
       ${(dActive.paceTarget && dActive.paceTarget !== 'N/A') || dActive.heartRateZone ? (() => {
-        const z = HR_ZONES[dActive.heartRateZone] || HR_ZONES[2];
+        const _rpeForZone = parseInt(dActive.effort) || 5;
+        const derivedZone = _rpeForZone <= 3 ? 1 : _rpeForZone <= 5 ? 2 : _rpeForZone <= 7 ? 3 : _rpeForZone === 8 ? 4 : 5;
+        const z = HR_ZONES[derivedZone] || HR_ZONES[2];
         return `<div class="targets-block">
           ${dActive.paceTarget && dActive.paceTarget !== 'N/A' ? `<div class="target-item">
             <div class="target-label">🎯 Pace target</div>
