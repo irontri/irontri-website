@@ -2173,7 +2173,11 @@ async function loadNextWeeks() {
 async function regenerateSessionDescriptions(session, weekIdx, dayIdx) {
   try {
     if (!session || session.type === 'Rest' || session.type === 'Race') return;
-    if (session.pacesRefreshedAt) return; // Already checked in selectDay — shouldn't reach here
+    // NOTE: no longer bail out just because pacesRefreshedAt has any value — the caller
+    // (selectDay) already checked it's older than 24h before calling this function.
+    // The previous check here (`if (session.pacesRefreshedAt) return;`) fired on ANY
+    // truthy timestamp, not just a recent one, so it permanently disabled refresh after
+    // the very first successful run for a session's entire lifetime. Removed.
     if (!window.currentStravaFitness?.connected) return;
 
     // Check session is not already completed
