@@ -748,6 +748,15 @@
       <button class="db sel" id="strength-no" onclick="pickStrength(false)" style="flex:1;padding:11px;font-size:13px;">🏊 No thanks</button>
     </div>
   </div>
+  <!-- Skip Base toggle inside Q10 -->
+  <div id="skipbase-toggle" style="margin-top:20px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.08);">
+    <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:10px;">🏁 Already race-fit? Skip the Base phase</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:12px;">If you've completed a similar race recently and kept training, you don't need a slow aerobic build-up — start straight into Build.</div>
+    <div style="display:flex;gap:10px;">
+      <button class="db" id="skipbase-yes" onclick="pickSkipBase(true)" style="flex:1;padding:11px;font-size:13px;">🏁 Yes — skip Base</button>
+      <button class="db sel" id="skipbase-no" onclick="pickSkipBase(false)" style="flex:1;padding:11px;font-size:13px;">🌱 No — I need Base</button>
+    </div>
+  </div>
   <div class="qnav"><button class="bb" onclick="go(9)">← Back</button><button class="bn" id="n10" onclick="go(11)" disabled="">Continue →</button></div>
 </div>
 
@@ -953,7 +962,7 @@
 </div>
 
 <script>
-const A={goal:'',race:'',goaltime:'',goaltimeText:'',exp:'',fitness:'',weak:'',hours:8,days:[],pool:'',injury:'',strength:false,age:'',name:'',email:'',startDate:'',date:'',ftp:'',css:'',runThreshold:'',maxHR:'',bRaceDate:'',bRaceDist:''};
+const A={goal:'',race:'',goaltime:'',goaltimeText:'',exp:'',fitness:'',weak:'',hours:8,days:[],pool:'',injury:'',strength:false,skipBase:false,age:'',name:'',email:'',startDate:'',date:'',ftp:'',css:'',runThreshold:'',maxHR:'',bRaceDate:'',bRaceDist:''};
 const T=12;
 let planData=null;
 let curWeek=0;
@@ -1150,6 +1159,11 @@ function pickStrength(val){
   A.strength=val;
   document.getElementById('strength-yes').classList.toggle('sel',val===true);
   document.getElementById('strength-no').classList.toggle('sel',val===false);
+}
+function pickSkipBase(val){
+  A.skipBase=val;
+  document.getElementById('skipbase-yes').classList.toggle('sel',val===true);
+  document.getElementById('skipbase-no').classList.toggle('sel',val===false);
 }
 function setH(v){A.hours=parseInt(v);document.getElementById('hv').innerHTML=v+' <span>hours/week</span>';const h={3:'Light — great for beginners',5:'Good starting point',7:'Solid volume',8:'Good balance for most',10:'Strong commitment',12:'Serious training load',15:'High performance',18:'Elite volume',20:'Maximum load'};const k=Object.keys(h).reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);document.getElementById('hh').textContent=h[k]||'';
 // Show warning if hours are high for race distance and plan length
@@ -1899,7 +1913,7 @@ async function buildPlan(){
     (A.stravaFitness.hrZones ? "- HR Zones (use actual BPM in all sessions): Z1 "+A.stravaFitness.hrZones.zone1.min+"-"+A.stravaFitness.hrZones.zone1.max+"bpm, Z2 "+A.stravaFitness.hrZones.zone2.min+"-"+A.stravaFitness.hrZones.zone2.max+"bpm (aerobic base), Z3 "+A.stravaFitness.hrZones.zone3.min+"-"+A.stravaFitness.hrZones.zone3.max+"bpm (tempo), Z4 "+A.stravaFitness.hrZones.zone4.min+"-"+A.stravaFitness.hrZones.zone4.max+"bpm (threshold), Z5 "+A.stravaFitness.hrZones.zone5.min+"-"+A.stravaFitness.hrZones.zone5.max+"bpm (VO2max)\n" : "") +
     "CRITICAL: Use exact pace targets, HR zones and power numbers above. ALL distances and paces must be in "+(A.units==="imperial"?"imperial (miles, yards, min/mile, mph)":"metric (km, metres, min/km, km/h)")+" units ONLY — never mix units."
   : "") +
-  ". Plan: "+w+" weeks, start date: "+(A.startDate||"soon")+" ("+startDayName+"), race date: "+(A.date||"TBD")+(A.bRaceDate&&A.bRaceDist?". B RACE: "+A.bRaceDist+" on "+A.bRaceDate+" — this is a running B race before the main event. Account for taper and recovery around this date: "+A.bRaceDist+" taper = "+(A.bRaceDist==='Marathon'?'2 weeks progressive run taper':A.bRaceDist==='Half Marathon'?'5-6 day run taper':' 3-4 day run taper')+", recovery after = "+(A.bRaceDist==='Marathon'?'2 weeks':A.bRaceDist==='Half Marathon'?'1 week':'2-3 days')+". The B race day session will be injected separately — do NOT generate sessions for that specific date. Adjust surrounding weeks to accommodate taper and recovery.":"")+". IMPORTANT: Week 1 starts on "+startDayName+". TAPER: ONLY week "+w+" = race week (easy 30-45min only). Week "+(w-1)+" = -50% taper. Week "+(w-2)+" = -30% taper. Week "+(w-3)+" = peak. Do NOT create race week content in any other week. CRITICAL: These first 4 weeks are Base phase ONLY — phase must be Base for all weeks in this batch. Never use Race Week, Taper or Peak phase labels in these first 4 weeks. SWIM PACE FORMAT: Always express swim pace as min:sec per 100m (e.g. 3:26/100m). Z2 pace is always 20-40 seconds SLOWER than CSS per 100m. Race pace ≈ CSS. VO2max is 5-10 sec/100m FASTER than CSS. NEVER use paces faster than 1:40/100m for age group athletes — if you calculate a pace faster than this it means you have made an error with the format."+fifoBlock+"\n\n";
+  ". Plan: "+w+" weeks, start date: "+(A.startDate||"soon")+" ("+startDayName+"), race date: "+(A.date||"TBD")+(A.bRaceDate&&A.bRaceDist?". B RACE: "+A.bRaceDist+" on "+A.bRaceDate+" — this is a running B race before the main event. Account for taper and recovery around this date: "+A.bRaceDist+" taper = "+(A.bRaceDist==='Marathon'?'2 weeks progressive run taper':A.bRaceDist==='Half Marathon'?'5-6 day run taper':' 3-4 day run taper')+", recovery after = "+(A.bRaceDist==='Marathon'?'2 weeks':A.bRaceDist==='Half Marathon'?'1 week':'2-3 days')+". The B race day session will be injected separately — do NOT generate sessions for that specific date. Adjust surrounding weeks to accommodate taper and recovery.":"")+". IMPORTANT: Week 1 starts on "+startDayName+". TAPER: ONLY week "+w+" = race week (easy 30-45min only). Week "+(w-1)+" = -50% taper. Week "+(w-2)+" = -30% taper. Week "+(w-3)+" = peak. Do NOT create race week content in any other week. "+(A.skipBase?'CRITICAL: SKIP BASE PHASE — this athlete already has a solid aerobic base (recent similar race or maintained fitness) and does NOT need a Base phase. Phase must be Build for all weeks in this batch — NEVER use Base as a phase label anywhere in this plan. Start immediately at Build-level intensity and volume, not a slow ramp-up.':'CRITICAL: These first 4 weeks are Base phase ONLY — phase must be Base for all weeks in this batch.')+" Never use Race Week, Taper or Peak phase labels in these first 4 weeks. SWIM PACE FORMAT: Always express swim pace as min:sec per 100m (e.g. 3:26/100m). Z2 pace is always 20-40 seconds SLOWER than CSS per 100m. Race pace ≈ CSS. VO2max is 5-10 sec/100m FASTER than CSS. NEVER use paces faster than 1:40/100m for age group athletes — if you calculate a pace faster than this it means you have made an error with the format."+fifoBlock+"\n\n";
   try{
         const prompt1 = prompt + '\n\nGenerate ONLY weeks 1 and 2. Return JSON with keys: intro, weeks (array of 2 weeks only).';
     const prompt2 = prompt + '\n\nGenerate ONLY weeks 3 and 4 (Build and Peak phases). Return JSON with keys: weeks (array of 2 weeks only, weekNumber starting at 3). No intro needed.';
@@ -2931,6 +2945,7 @@ async function checkAndSavePlan(planText) {
       if (A.css) pd.css = A.css;
       if (A.ftp) pd.ftp = A.ftp;
       if (A.runThreshold) pd.runThreshold = A.runThreshold;
+      if (A.skipBase) pd.skipBase = true;
       planText = JSON.stringify(pd);
     } catch(e) {}
     if (!sb2) { localStorage.setItem('irontri_pending_plan', JSON.stringify({plan: planText, race: A.race})); document.getElementById('save-banner').style.display='block'; return; }
