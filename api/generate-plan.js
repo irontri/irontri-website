@@ -204,6 +204,9 @@ export default async function handler(req, res) {
   // Detect units from prompt
   const isImperial = prompt && prompt.includes('imperial');
 
+  // Detect skip-base flag (athlete already has an aerobic base — e.g. recent similar race)
+  const skipBase = !!(prompt && prompt.includes('SKIP BASE PHASE'));
+
   const systemPrompt = `You are an elite triathlon coach generating structured training plans.
 
 ALWAYS return ONLY valid JSON - no markdown, no backticks, no explanation.
@@ -218,9 +221,9 @@ SESSION QUALITY RULES (apply to every session):
 - Swim: always include interval distance (${isImperial ? 'yards' : 'metres'}) + rest + technique cue
 - SWIM SESSIONS: Always include exactly 2 swim sessions per week for 70.3, T100 and Full Ironman plans. The LONG swim must be on its own standalone day - it is the key session (60-75 min at peak). The SECOND shorter swim (45-60 min, technique and aerobic base focus) must be paired on the same day as an existing session - add it as a SEPARATE entry in the days array with the SAME day name. This creates a double session day. The days array may have more than 7 entries when double sessions exist - this is correct and expected.
 - DOUBLE SESSION PROGRAMMING (professional triathlon coaching): Scale double sessions to the athlete's experience level stated in the prompt:
-  * BEGINNER: Weeks 1-4 are Base phase - NO double sessions at all. Single sessions only, build the habit first. coachNotes should be encouraging and reassuring.
-  * INTERMEDIATE: 1 double session per week in Base (swim + easy bike only). Up to 2 per week in Build/Peak.
-  * ADVANCED/COMPETITIVE: Up to 2 double session days in Base. Up to 3 per week in Build/Peak.
+  * BEGINNER: ${skipBase ? 'NO double sessions in weeks 1-4 (Build phase, no Base) - single sessions only, build the habit first.' : 'Weeks 1-4 are Base phase - NO double sessions at all. Single sessions only, build the habit first.'} coachNotes should be encouraging and reassuring.
+  * INTERMEDIATE: ${skipBase ? '1 double session per week from week 1 (swim + easy bike only). Up to 2 per week in Peak.' : '1 double session per week in Base (swim + easy bike only). Up to 2 per week in Build/Peak.'}
+  * ADVANCED/COMPETITIVE: ${skipBase ? 'Up to 2 double session days per week from week 1. Up to 3 per week in Peak.' : 'Up to 2 double session days in Base. Up to 3 per week in Build/Peak.'}
   Valid pairings (always morning + afternoon, never back-to-back hard efforts):
   * Swim + Easy Bike: morning swim, afternoon Zone 2 bike (45-75 min). Most common pairing.
   * Swim + Easy Run: morning swim, afternoon easy Zone 2 run (30-45 min). Build/Peak only.
@@ -261,11 +264,9 @@ BASE PHASE RULES (critical - strictly enforced):
 
 PHASE ASSIGNMENT RULES (critical - must follow exactly):
 - phase field MUST be one of: "Base", "Build", "Peak", "Taper", "Race Week"
-- CRITICAL - PHASE LABELS FOR WEEKS 1-4: The phase field for ALL of weeks 1, 2, 3, and 4 MUST be exactly the string "Base". This is non-negotiable. NEVER write "Build", "Peak", "Taper", "Race Week" or any other value for weeks 1-4. If you write anything other than "Base" for weeks 1-4 you have made a critical error. Check every single week before returning: week 1 phase = "Base", week 2 phase = "Base", week 3 phase = "Base", week 4 phase = "Base".
-- For a plan of N total weeks: Base = first 30%, Build = next 35%, Peak = next 20%, Taper = last 12%, Race Week = final 1 week
-- Example 36-week plan: Base weeks 1-11, Build weeks 12-23, Peak weeks 24-29, Taper weeks 30-35, Race Week 36
-- Example 20-week plan: Base weeks 1-6, Build weeks 7-13, Peak weeks 14-17, Taper weeks 18-19, Race Week 20
-- Never assign "Base" to more than 35% of total weeks
+${skipBase ? '- CRITICAL - PHASE LABELS FOR WEEKS 1-4: This athlete is skipping Base phase entirely (already has an aerobic base from a recent similar race or maintained fitness). The phase field for ALL of weeks 1, 2, 3, and 4 MUST be exactly the string "Build". This is non-negotiable. NEVER write "Base" anywhere in this plan — start immediately at Build-level intensity and volume, not a slow ramp-up. Check every single week before returning: week 1 phase = "Build", week 2 phase = "Build", week 3 phase = "Build", week 4 phase = "Build".' : '- CRITICAL - PHASE LABELS FOR WEEKS 1-4: The phase field for ALL of weeks 1, 2, 3, and 4 MUST be exactly the string "Base". This is non-negotiable. NEVER write "Build", "Peak", "Taper", "Race Week" or any other value for weeks 1-4. If you write anything other than "Base" for weeks 1-4 you have made a critical error. Check every single week before returning: week 1 phase = "Base", week 2 phase = "Base", week 3 phase = "Base", week 4 phase = "Base".'}
+${skipBase ? '- For a plan of N total weeks with Base SKIPPED: Build = first 65%, Peak = next 20%, Taper = next 14%, Race Week = final 1 week. Never assign "Base" to any week in this plan.' : '- For a plan of N total weeks: Base = first 30%, Build = next 35%, Peak = next 20%, Taper = last 12%, Race Week = final 1 week'}
+${skipBase ? '- Example 36-week plan with Base skipped: Build weeks 1-23, Peak weeks 24-29, Taper weeks 30-35, Race Week 36\n- Example 20-week plan with Base skipped: Build weeks 1-13, Peak weeks 14-17, Taper weeks 18-19, Race Week 20\n- NEVER assign "Base" to any week in this plan' : '- Example 36-week plan: Base weeks 1-11, Build weeks 12-23, Peak weeks 24-29, Taper weeks 30-35, Race Week 36\n- Example 20-week plan: Base weeks 1-6, Build weeks 7-13, Peak weeks 14-17, Taper weeks 18-19, Race Week 20\n- Never assign "Base" to more than 35% of total weeks'}
 - Recovery weeks within a phase keep the current phase label (e.g. a recovery week during Build is still "Build")
 
 FITNESS LEVEL SCALING (apply based on "fitness" field in prompt):
