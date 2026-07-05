@@ -859,6 +859,8 @@ async function loadPlans() {
     try { const fresh = JSON.parse(p.plan_data); weeks = fresh?.weeks?.length || weeks; } catch(e) {}
     const savedNames = JSON.parse(localStorage.getItem('irontri_plan_names') || '{}');
     const displayName = savedNames[p.id] || p.name || planObj?.planName || p.race || 'Training Plan';
+    const escName = String(displayName).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const escDate = String(date).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return `
       <div class="plan-card" onclick="viewPlan('${p.id}')">
         <div class="plan-card-top">
@@ -883,7 +885,7 @@ async function loadPlans() {
           <button class="btn-view" onclick="event.stopPropagation();viewPlan('${p.id}')">View plan →</button>
           <button class="btn-date" onclick="event.stopPropagation();showStartDateEditor('${p.id}', '${planObj?.startDate || ''}')" >📅 Change date</button>
           ${planIndex > 0 ? `<button onclick="pinPlan('${p.id}', event)" style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">📌 Move to top</button>` : ''}
-          <button class="btn-delete" onclick="event.stopPropagation();deletePlan('${p.id}')">Delete</button>
+          <button class="btn-delete" onclick="event.stopPropagation();deletePlan('${p.id}', '${escName}', '${escDate}')">Delete</button>
         </div>
         <div id="start-date-editor-${p.id}" style="display:none;" onclick="event.stopPropagation()"></div>
       </div>`;
@@ -971,15 +973,17 @@ async function saveRename(id) {
   } catch(e) { saveBtn.textContent = 'Save'; saveBtn.disabled = false; alert('Could not save: ' + e.message); }
 }
 
-async function deletePlan(id) {
+async function deletePlan(id, planName, planDate) {
   const { data:{ session } } = await sb.auth.getSession();
 
   // Count completions for this specific plan
   const { count } = await sb.from('completions').select('id', { count: 'exact', head: true }).eq('plan_id', id).eq('user_id', session.user.id);
 
+  const label = planName ? `"${planName}"${planDate ? ' — Created ' + planDate : ''}` : 'this plan';
+
   const msg = count > 0
-    ? `This plan has ${count} completed session${count === 1 ? '' : 's'}. Deleting it will permanently remove these completions and any streak attached to this plan. This cannot be undone. Are you sure?`
-    : 'Delete this plan? This cannot be undone.';
+    ? `Delete ${label}?\n\nThis plan has ${count} completed session${count === 1 ? '' : 's'}. Deleting it will permanently remove these completions and any streak attached to this plan. This cannot be undone. Are you sure?`
+    : `Delete ${label}?\n\nThis cannot be undone.`;
 
   if (!confirm(msg)) return;
 
