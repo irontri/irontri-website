@@ -1237,6 +1237,102 @@ export default async function handler(req, res) {
 
     fixSessionDurations(allWeeks);
 
+    // Fix swim distance/pace/duration mismatches — catches cases where the labelled
+    // minutes in a segment (e.g. "30 minutes: 3000m...") sum correctly to the duration
+    // field, so fixSessionDurations sees no discrepancy, but the STATED DISTANCE is not
+    // actually achievable in that time at the stated pace (e.g. 3000m at 2:07/100m is
+    // ~62min, not 30min). This is a distinct failure mode from label-vs-duration mismatch.
+    function parsePaceSecondsPer100(paceStr) {
+      if (!paceStr) return null;
+      const range = paceStr.match(/(\d+):(\d+)\s*-\s*(\d+):(\d+)\s*\/\s*100\s*m/i);
+      if (range) {
+        const s1 = parseInt(range[1]) * 60 + parseInt(range[2]);
+        const s2 = parseInt(range[3]) * 60 + parseInt(range[4]);
+        return (s1 + s2) / 2;
+      }
+      const single = paceStr.match(/(\d+):(\d+)\s*\/\s*100\s*m/i);
+      if (single) return parseInt(single[1]) * 60 + parseInt(single[2]);
+      return null;
+    }
+
+    // Extracts total metres from a segment of swim text. Rep-based sets ("8x100m") are
+    // genuinely additive and safely summed. Otherwise this takes the FIRST standalone
+    // metres mention as the segment's stated total — later mentions in coach-written text
+    // are almost always sub-portions or subdivisions of that total (e.g. "350m choice...
+    // start with 200m freestyle" or "3000m steady... break into 1000m efforts"), not
+    // additional volume, so summing every mention would double-count. Excludes the "100m"
+    // that appears as a pace denominator (e.g. "/100m").
+    function extractSwimMetres(text) {
+      if (!text) return 0;
+      let working = text;
+
+      const repMatches = [...working.matchAll(/(\d+)\s*[x×]\s*(\d+)\s*m\b/gi)];
+      let repTotal = 0;
+      for (const m of repMatches) repTotal += parseInt(m[1]) * parseInt(m[2]);
+      working = working.replace(/(\d+)\s*[x×]\s*(\d+)\s*m\b/gi, ' ');
+
+      const standalone = [...working.matchAll(/(?<!\/\s{0,2})\b(\d{2,5})\s*m\b/g)];
+      const firstStandalone = standalone.length > 0 ? parseInt(standalone[0][1]) : 0;
+
+      return repTotal + firstStandalone;
+    }
+
+    // Extracts the minute label at the start of a segment, e.g. "30 minutes: 3000m..." -> 30
+    function extractSegmentLabelMins(text) {
+      if (!text) return 0;
+      const lead = text.match(/^\s*(\d+)\s*min(?:ute)?s?\b/i);
+      if (lead) return parseInt(lead[1]);
+      return extractMins(text);
+    }
+
+    function fixSwimDistanceDurationMismatch(weeks) {
+      weeks.forEach(wk => {
+        if (!wk.days) return;
+        wk.days.forEach(d => {
+          if (d.type !== 'Swim') return;
+
+          const paceSec = parsePaceSecondsPer100(d.paceTarget);
+          if (!paceSec) return; // can't validate without a parseable pace
+
+          ['warmup', 'mainset', 'cooldown'].forEach(field => {
+            const text = d[field];
+            if (!text) return;
+
+            const labelMins = extractSegmentLabelMins(text);
+            const metres = extractSwimMetres(text);
+            if (labelMins < 2 || metres < 50) return; // nothing meaningful to check
+
+            const impliedMins = (metres / 100) * paceSec / 60;
+            const diff = Math.abs(impliedMins - labelMins);
+
+            // Only correct meaningful mismatches (>20% off or >4min off, whichever is stricter)
+            if (diff > Math.max(4, labelMins * 0.2)) {
+              const correctMetres = Math.round((labelMins * 60) / paceSec * 100 / 25) * 25;
+
+              // Replace the largest standalone metres figure in the text with the corrected
+              // value, preserving the surrounding narrative rather than wiping it.
+              let replaced = false;
+              d[field] = text.replace(/(?<!\/\s{0,2})\b(\d{2,5})\s*m\b/g, (match, num) => {
+                if (!replaced && !/[x×]\s*\d+\s*m\b/i.test(match)) {
+                  replaced = true;
+                  return correctMetres + 'm';
+                }
+                return match;
+              });
+
+              console.log(
+                `Swim distance/duration fix: week ${wk.weekNumber}, ${d.day} ${field} — ` +
+                `label said ${labelMins}min but ${metres}m at ${Math.round(paceSec)}s/100m ` +
+                `implies ${Math.round(impliedMins)}min. Corrected distance to ${correctMetres}m.`
+              );
+            }
+          });
+        });
+      });
+    }
+
+    fixSwimDistanceDurationMismatch(allWeeks);
+
     // Fix taper weeks with sessions crammed into last 2 days - spread them across the week
     const ALL_WEEK_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
     allWeeks.forEach(wk => {
