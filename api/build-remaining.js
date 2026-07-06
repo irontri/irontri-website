@@ -203,7 +203,7 @@ export default async function handler(req, res) {
     // Progressive bike volume — calculated per batch so AI always gets exact targets
     const bikeVolumeRule = (() => {
       if (isFull) {
-        const pct = startWk / totalNeeded;
+        const pct = _skipBase ? (0.30 + (startWk / totalNeeded) * 0.70) : (startWk / totalNeeded);
         let longRide, weeklyBike;
         if (pct < 0.30) {
           const p = pct / 0.30;
@@ -225,7 +225,7 @@ export default async function handler(req, res) {
         const continuityNote = lastBikeDuration ? ` Previous week long ride was ${lastBikeDuration}h — continue from there, do NOT drop below it.` : '';
         return `BIKE VOLUME FOR WEEKS ${startWk}-${endWk}: Long ride must be ${longRide}h (${Math.round(longRide*30)}-${Math.round(longRide*32)}km). NEVER shorter than ${minRide}h or longer than ${maxRide}h. Total weekly bike = ${weeklyBike}h. Each week slightly more than the previous.${continuityNote} NEVER generate a short ride where a long ride is scheduled. WEEKEND SESSIONS: The long ride MUST be on Saturday or Sunday — never a weekday. The long run MUST also be on Saturday or Sunday. If both weekend days are available, long ride = Saturday, long run = Sunday. Only place long sessions on weekdays if the athlete has no weekend days in their schedule.`;
       } else if (isHalf) {
-        const pct = startWk / totalNeeded;
+        const pct = _skipBase ? (0.30 + (startWk / totalNeeded) * 0.70) : (startWk / totalNeeded);
         let longRide;
         if (pct < 0.35) longRide = Math.round((1.5 + (pct/0.35) * 1.5) * 10) / 10;
         else if (pct < 0.75) longRide = Math.round((3 + ((pct-0.35)/0.40)) * 10) / 10;
@@ -423,7 +423,10 @@ export default async function handler(req, res) {
     newWeeks.forEach((wk) => {
       if (wk.phase === 'Race Week') return; // Never override race week volumes
       const weekNum = (planData.weeks?.length || 0) + newWeeks.indexOf(wk) + 1;
-      const pct = weekNum / totalNeeded;
+      // For skip-base plans, remap pct so week 1 starts at the volume a normal athlete
+      // would have reached by the END of Base (30% mark) instead of ramping up from zero —
+      // preserves the same Build/Peak/Taper ramp shape and peak volumes, just skips the slow start.
+      const pct = _skipBase ? (0.30 + (weekNum / totalNeeded) * 0.70) : (weekNum / totalNeeded);
 
       // Calculate target bike duration based on race distance and plan position
       let targetBikeMins, targetRunMins, targetSwimMins;
@@ -1188,7 +1191,9 @@ export default async function handler(req, res) {
       if (!text) return 0;
       let total = 0;
       // Match patterns like "45min", "45 min", "45 minutes", "1h 30min", "1.5h", "1h", "1 hour"
-      const hourMatch = text.match(/(\d+(?:\.\d+)?)\s*h(?:our)?s?(?:\s*(\d+)\s*min(?:ute)?s?)?/i);
+      // Require a real hour-unit token (h/hr/hrs/hour/hours) followed by a word boundary —
+      // otherwise "2 heart rate" or "2 hard efforts" gets misread as "2 hours".
+      const hourMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:hrs|hr|hours|hour|h)\b(?:\s*(\d+)\s*min(?:ute)?s?)?/i);
       if (hourMatch) {
         total += parseFloat(hourMatch[1]) * 60;
         if (hourMatch[2]) total += parseInt(hourMatch[2]);
@@ -1202,9 +1207,14 @@ export default async function handler(req, res) {
         if (minMatches.length === 1) {
           return parseInt(minMatches[0][1]);
         }
-        // Multiple — look for a clear "Xmin continuous/steady/easy" pattern first
-        const singleEffortMatch = text.match(/(\d+)\s*min(?:ute)?s?\s+(?:continuous|steady|easy|hard|at|of|run|ride|swim|jog|walk|spin)/i);
-        if (singleEffortMatch) return parseInt(singleEffortMatch[1]);
+        // Multiple — look for a clear "Xmin continuous/steady/easy" pattern first.
+        // Take the LARGEST such qualifying match, not just the first one in the text —
+        // otherwise a short rest interval (e.g. "2min easy jog recovery") can outrank
+        // the actual main set duration (e.g. "25 min intervals") if it appears later.
+        const singleEffortMatches = [...text.matchAll(/(\d+)\s*min(?:ute)?s?\s+(?:continuous|steady|easy|hard|at|of|run|ride|swim|jog|walk|spin|intervals?|reps?|repeats?|tempo|threshold|set)/gi)];
+        if (singleEffortMatches.length > 0) {
+          return Math.max(...singleEffortMatches.map(m => parseInt(m[1])));
+        }
         // Otherwise return the largest value mentioned
         return Math.max(...minMatches.map(m => parseInt(m[1])));
       }
