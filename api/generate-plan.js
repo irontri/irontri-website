@@ -244,6 +244,7 @@ SESSION QUALITY RULES (apply to every session):
 - SWIM DISTANCE-DURATION MATH RULE — CRITICAL: For every swim session, the distance stated in each of warmup/mainset/cooldown MUST be mathematically achievable within that segment's own labelled minutes, using the pace also stated in that segment. Calculate it as: minutes = (metres / 100) * (paceTarget seconds per 100m) / 60. Do NOT just pick a minute label and a distance independently and assume they match — compute one from the other. CONCRETE EXAMPLE OF THE VIOLATION TO AVOID: writing "30 minutes: 3000m of steady swimming at 2:02-2:12/100m" is WRONG because 3000m at ~2:07/100m actually takes ~62 minutes, not 30 — this is a real error that has shipped to users. The CORRECT approach for a 30-minute segment at 2:02-2:12/100m (avg ~2:07/100m = 127 sec/100m) is: 30*60/127*100 ≈ 1417m, rounded to a clean pool number like 1400m or 1450m. Always do this calculation before writing the mainset text: (1) decide the segment's minutes, (2) decide the pace from paceTarget/CSS, (3) compute metres = minutes*60/pace_sec_per_100m*100, (4) round to the nearest 25m or 50m, (5) only then write the distance into the text. Never state a metres figure that wasn't derived this way. This applies to warmup, mainset AND cooldown independently — each has its own minutes and must have distance derived from those minutes, not copied from a template or invented to "sound right." This math check also applies to ANY total-time figure mentioned anywhere in the text, including parenthetical asides like "(43 minutes total)" — such figures must be checked against actual reps × pace + rest, not just the leading segment label; a wrong parenthetical total is the same class of error as a wrong leading label.
 - SWIM WARMUP/COOLDOWN SIMPLICITY RULE — CRITICAL: Warmup and cooldown must each be ONE simple, continuous effort at a single pace (e.g. "300m easy swim at 2:15/100m"). Do NOT stack multiple distinct sub-sets into a warmup or cooldown (e.g. easy swim + build-pace reps + CSS-pace reps all in one warmup) — this is over-complicated for a warmup/cooldown and is a real problem that has shipped to users. At most ONE optional short add-on is allowed (e.g. "300m easy + 4x25m build to open up the legs"), never three or more distinct components with three different paces. Reserve multi-rep interval structure (multiple sets, varying paces, ladders) for the MAIN SET only — that is where structured complexity belongs, not warmup or cooldown.
 - THRESHOLD PACE RULE — CRITICAL: NEVER state a specific pace number as the athlete's "threshold pace" anywhere in warmup, mainset, cooldown or coachNote unless a value explicitly labelled "threshold pace" or "lactate threshold pace" appears in the STRAVA FITNESS DATA block. The run avg pace from Strava is an average of all recent runs — it is NOT the threshold pace and must NEVER be quoted as one. If no explicit threshold pace is available, refer to it generically as "your threshold pace" or "a pace you can hold for around 60 minutes" — never invent or infer a specific number.
+- ORDINAL CLAIMS RULE — CRITICAL: NEVER describe a session as the athlete's "first swim", "first run", "first bike", "first time" doing something, or any other ordinal/novelty claim ("your first...", "since this is new to you...") in purpose or coachNote — UNLESS it is week 1 AND this is genuinely the very first occurrence of that session type across the whole plan. You cannot reliably verify occurrence history, so this claim is almost always wrong once it appears anywhere after week 1. Default to describing sessions generically (e.g. "this swim session", "today's run") with no claim about it being new or a first occurrence.
 - weeklyNarrative: 2 sentences on the week's purpose
 - day field: day name e.g. "Monday" not a number
 - type field: MUST be EXACTLY one of: "Swim", "Bike", "Run", "Brick", "Strength", "Rest" - NO other values allowed. Never use "Recovery", "Threshold", "Endurance", "Vo2max" or any other custom type.
@@ -502,6 +503,25 @@ JSON structure for weeks:
             if (d.purpose) d.purpose = d.purpose.replace(/\b(first |second |morning |afternoon )?(double session day[:\s\u2014-]*|double session[:\s\u2014-]*)/gi, '').replace(/^\s*[,;:\u2014-]+\s*/, '').trim();
             if (d.coachNote) d.coachNote = d.coachNote.replace(/\b(morning swim before (your )?(afternoon|evening) [a-z]+\.?|two sessions (in a day|today)[.!]?|training twice in a day[.!]?)/gi, '').replace(/^\s*[,;:\u2014-]+\s*/, '').trim();
           }
+        });
+      });
+      // Backstop: strip false "your first swim/run/..." claims — the model has repeatedly
+      // written this on sessions that are nowhere near the athlete's actual first occurrence
+      // of that type, since it can't verify occurrence history reliably. Only week 1 may
+      // plausibly keep such a claim; strip it everywhere else deterministically.
+      const _stripOrdinalClaims = (text) => {
+        if (!text) return text;
+        let out = text;
+        out = out.replace(/\b([A-Z][a-z]*\s+)?(this is |since this is |as this is |because this is )?your first\s+(swim|run|bike|ride|session|brick|strength|workout)\b[^.!]*[.!]?\s*/gi, '');
+        out = out.replace(/\b([A-Z][a-z]*\s+)?(this is |since this is |as this is |because this is )?your first time\s+(swimming|running|biking|riding|on the bike|in the (pool|water))\b[^.!]*[.!]?\s*/gi, '');
+        return out.trim();
+      };
+      (pd.weeks || []).forEach(wk => {
+        if (wk.weekNumber === 1) return; // week 1 may legitimately be a genuine first occurrence
+        (wk.days || []).forEach(d => {
+          if (d.type === 'Rest' || d.type === 'Race') return;
+          if (d.purpose) d.purpose = _stripOrdinalClaims(d.purpose);
+          if (d.coachNote) d.coachNote = _stripOrdinalClaims(d.coachNote);
         });
       });
       // GUARANTEE strength in Base/Build weeks when the athlete opted in.
