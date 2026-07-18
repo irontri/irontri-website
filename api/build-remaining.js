@@ -923,7 +923,20 @@ export default async function handler(req, res) {
             day.cooldown = '5 min cool down';
             day.coachNote = 'Original session converted to '+replacement+' — restricted equipment not available on site this week.';
           }
-          if (day.duration > maxMins) day.duration = maxMins;
+          if (day.duration > maxMins) {
+            // Don't just clamp the number — the text still describes the original, longer
+            // session, which is exactly the "coach says 100min, card says 30min" bug.
+            // Rewrite warmup/mainset/cooldown to match the capped duration so the two stay honest.
+            const cappedMins = maxMins;
+            const cdMins = Math.min(5, Math.max(Math.round(cappedMins * 0.15), 0));
+            const mainMins = Math.max(cappedMins - (cdMins * 2), 5);
+            const activityWord = day.type === 'Run' ? 'jog' : day.type === 'Bike' ? 'spin' : day.type === 'Swim' ? 'easy swimming' : 'movement';
+            day.duration = cappedMins;
+            day.warmup = `${cdMins} min easy ${activityWord} to start.`;
+            day.mainset = `${mainMins} min at an easy-to-moderate aerobic effort — condensed to fit your on-site time window.`;
+            day.cooldown = `${cdMins} min easy cool down.`;
+            day.coachNote = 'Shortened to fit your on-site time this work week — still effective, just condensed. ' + (day.coachNote || '');
+          }
         });
       });
     }
@@ -1188,7 +1201,7 @@ export default async function handler(req, res) {
     fixConsecutiveRestDays(allWeeks);
 
     // Fix session durations — extract actual minutes from text and override duration field
-    function extractMins(text) {
+    function extractMins(text, sumAll) {
       if (!text) return 0;
       let total = 0;
       // Match patterns like "45min", "45 min", "45 minutes", "1h 30min", "1.5h", "1h", "1 hour"
@@ -1199,6 +1212,15 @@ export default async function handler(req, res) {
         total += parseFloat(hourMatch[1]) * 60;
         if (hourMatch[2]) total += parseInt(hourMatch[2]);
         return Math.round(total);
+      }
+      if (sumAll) {
+        // Warmup/cooldown are often two sequential timed sub-steps, e.g.
+        // "5min easy walk... then 5min of full-body stretching" — both need to count.
+        // Sum every standalone minute mention, but skip interval-rep figures like "4x5min"
+        // (those describe one rep's duration, not a distinct block).
+        const stepMatches = [...text.matchAll(/(?:^|[^x×\d])(\d+)\s*min(?:ute)?s?/gi)];
+        if (stepMatches.length > 0) return stepMatches.reduce((sum, m) => sum + parseInt(m[1]), 0);
+        return 0;
       }
       // Match standalone minute patterns — sum ALL minute mentions in the text
       const minMatches = [...text.matchAll(/(\d+)\s*min(?:ute)?s?/gi)];
@@ -1222,24 +1244,43 @@ export default async function handler(req, res) {
       return 0;
     }
 
+    // Bump the number inside a "Xmin <effort word>" phrase to a corrected value, preserving
+    // the rest of the sentence. Falls back to appending a continuation clause if no clean
+    // number pattern is found to edit.
+    function expandMainset(text, oldMins, newMins) {
+      if (!text) return `${newMins} min at an easy aerobic effort — steady, conversational pace.`;
+      const qualifyingRe = /(\d+)(\s*min(?:ute)?s?\s+(?:continuous|steady|easy|hard|at|of|run|ride|swim|jog|walk|spin|intervals?|reps?|repeats?|tempo|threshold|set))/i;
+      if (qualifyingRe.test(text)) return text.replace(qualifyingRe, (m, num, rest) => `${newMins}${rest}`);
+      const leadingRe = /^(\d+)(\s*min)/i;
+      if (leadingRe.test(text)) return text.replace(leadingRe, (m, num, rest) => `${newMins}${rest}`);
+      return `${text} Continue for an additional ${Math.max(newMins - oldMins, 1)} min at the same steady effort to complete the full session.`;
+    }
+
     function fixSessionDurations(weeks) {
       weeks.forEach(wk => {
         if (!wk.days) return;
         wk.days.forEach(d => {
           if (d.type === 'Rest' || d.type === 'Race' || !d.duration) return;
 
-          const warmupMins = extractMins(d.warmup || '');
-          const mainsetMins = extractMins(d.mainset || '');
-          const cooldownMins = extractMins(d.cooldown || '');
+          const warmupMins = extractMins(d.warmup || '', true);
+          const mainsetMins = extractMins(d.mainset || '', false);
+          const cooldownMins = extractMins(d.cooldown || '', true);
           const textTotal = warmupMins + mainsetMins + cooldownMins;
 
           if (textTotal < 5) return; // Can't parse text, leave alone
 
           const currentDuration = parseFloat(d.duration) || 0;
-          const diff = Math.abs(currentDuration - textTotal);
+          const diff = currentDuration - textTotal;
 
           // Only fix if there's a meaningful discrepancy (>5 min off)
           if (diff > 5) {
+            // Description undershoots the card's stated duration — the duration is the
+            // deliberately prescribed session length, so expand the mainset text to fill
+            // it rather than shrinking the card time to match a short description.
+            d.mainset = expandMainset(d.mainset || '', mainsetMins, mainsetMins + diff);
+          } else if (diff < -5) {
+            // Description implies MORE time than the card shows — trust the longer,
+            // more specific description and raise the card duration to match.
             d.duration = textTotal;
           }
         });
