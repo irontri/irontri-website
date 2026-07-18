@@ -430,7 +430,7 @@ JSON structure for weeks:
         }
       }
       // Recalculate duration from actual warmup/mainset/cooldown text
-      const _extractMins = (text) => {
+      const _extractMins = (text, sumAll) => {
         if (!text) return 0;
         // Match "1h 30min" or "1.5h" hour patterns first
         const hourMatch = text.match(/(\d+(?:\.\d+)?)\s*h(?:our)?s?(?:\s*(\d+)\s*min(?:ute)?s?)?/i);
@@ -439,7 +439,17 @@ JSON structure for weeks:
           if (hourMatch[2]) t += parseInt(hourMatch[2]);
           return Math.round(t);
         }
-        // Look for a clear continuous effort: "45min continuous/steady/easy/at/of/run/ride/swim"
+        if (sumAll) {
+          // Warmup/cooldown are often two sequential timed sub-steps, e.g.
+          // "5min easy walk... then 5min of full-body stretching" — both need to count,
+          // not just the first one. Sum every standalone minute mention, but skip
+          // interval-rep figures like "4x5min" (those describe one rep, not a distinct block).
+          const stepMatches = [...text.matchAll(/(?:^|[^x×\d])(\d+)\s*min(?:ute)?s?/gi)];
+          if (stepMatches.length > 0) return stepMatches.reduce((sum, m) => sum + parseInt(m[1]), 0);
+          return 0;
+        }
+        // Mainset: a single continuous-effort figure is usually the real block duration —
+        // summing here risks double-counting interval reps, so keep the narrower match.
         const singleEffortMatch = text.match(/(\d+)\s*min(?:ute)?s?\s+(?:continuous|steady|easy|hard|at|of|run|ride|swim|jog|walk|spin)/i);
         if (singleEffortMatch) return parseInt(singleEffortMatch[1]);
         // Leading minute value is usually the block duration: "35min ..."
@@ -450,12 +460,37 @@ JSON structure for weeks:
         if (allMins.length > 0) return Math.max(...allMins);
         return 0;
       };
+      // Bump the number inside a "Xmin <effort word>" phrase to a corrected value, preserving
+      // the rest of the sentence. Falls back to appending a continuation clause if no clean
+      // number pattern is found to edit.
+      const _expandMainset = (text, oldMins, newMins) => {
+        if (!text) return `${newMins} min at an easy aerobic effort — steady, conversational pace.`;
+        const qualifyingRe = /(\d+)(\s*min(?:ute)?s?\s+(?:continuous|steady|easy|hard|at|of|run|ride|swim|jog|walk|spin))/i;
+        if (qualifyingRe.test(text)) return text.replace(qualifyingRe, (m, num, rest) => `${newMins}${rest}`);
+        const leadingRe = /^(\d+)(\s*min)/i;
+        if (leadingRe.test(text)) return text.replace(leadingRe, (m, num, rest) => `${newMins}${rest}`);
+        return `${text} Continue for an additional ${Math.max(newMins - oldMins, 1)} min at the same steady effort to complete the full session.`;
+      };
       (pd.weeks || []).forEach(wk => {
         (wk.days || []).forEach(d => {
           if (d.type === 'Rest' || d.type === 'Race') return;
-          const parsed = _extractMins(d.warmup) + _extractMins(d.mainset) + _extractMins(d.cooldown);
-          // Only override if parsed total is meaningful and differs from Trixy's value by >5min
-          if (parsed > 5 && Math.abs(parsed - (parseFloat(d.duration) || 0)) > 5) d.duration = parsed;
+          const statedDuration = parseFloat(d.duration) || 0;
+          if (statedDuration <= 5) return;
+          const mainsetMins = _extractMins(d.mainset, false);
+          const parsed = _extractMins(d.warmup, true) + mainsetMins + _extractMins(d.cooldown, true);
+          if (parsed <= 5) return;
+          const diff = statedDuration - parsed;
+          if (diff > 5) {
+            // Description undershoots the card's stated duration. The duration is the
+            // deliberately prescribed session length (progression targets, long-run
+            // minimums, etc.) — expand the mainset text to fill it rather than shrinking
+            // the card time to match a short description.
+            d.mainset = _expandMainset(d.mainset, mainsetMins, mainsetMins + diff);
+          } else if (diff < -5) {
+            // Description implies MORE time than the card shows — trust the longer,
+            // more specific description and raise the card duration to match.
+            d.duration = parsed;
+          }
         });
       });
       // Clean up: strip double session language from sessions that ended up standalone
