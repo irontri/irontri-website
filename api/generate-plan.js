@@ -189,6 +189,111 @@ function sanitizeInput(str) {
     .trim();
 }
 
+// ── RUN PACE + HEART RATE ZONES ──────────────────────────────────────────────
+// plan.html calculates the athlete's run pace and heart-rate zones (the same maths its
+// session cards use) and sends them as `targets` alongside the prompt. Before this the
+// model was only told the athlete's avg and threshold run pace and invented its own
+// "Zone 2" by slowing the avg pace down, so the text disagreed with the Pace Target box.
+// build-remaining.js does the same job for weeks 5+ (see fixRunPaceAndHrConsistency there).
+/*__GEN_ZONES_START__*/
+// `targets` is client input that ends up in a prompt, so only strictly formatted values pass.
+function parseZoneTargets(raw, isImperial) {
+  if (!raw || typeof raw !== 'object') return null;
+  const pick = (obj, re) => {
+    if (!obj || typeof obj !== 'object') return null;
+    const out = {};
+    for (let z = 1; z <= 5; z++) {
+      const v = obj[z];
+      if (typeof v !== 'string' || !re.test(v)) return null;
+      out[z] = v;
+    }
+    return out;
+  };
+  let run = pick(raw.run, /^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/);
+  const hr = pick(raw.hr, /^\d{2,3}-\d{2,3}$/);
+  // A per-mile table on a metric plan (or the reverse) would be worse than no table
+  if (run && (raw.unit === ' min/mile') !== !!isImperial) run = null;
+  return (run || hr) ? { run, hr, unit: isImperial ? ' min/mile' : '/km' } : null;
+}
+
+function zoneRulesForPrompt(t) {
+  if (!t) return '';
+  let out = '';
+  if (t.run) out += `\n- RUN PACE RULE — CRITICAL: This athlete's run pace zones have been CALCULATED IN CODE from their verified threshold pace. They are HARD values — do not work out, adjust or round them yourself. Zone 1 (very easy; ALL run warm-ups and cool-downs; effort 1-3) = ${t.run[1]}${t.unit}. Zone 2 (ALL easy runs, long runs and aerobic runs; effort 4-5) = ${t.run[2]}${t.unit}. Zone 3 (tempo; effort 6-7) = ${t.run[3]}${t.unit}. Zone 4 (threshold; effort 8) = ${t.run[4]}${t.unit}. Zone 5 (VO2max / track reps; effort 9-10) = ${t.run[5]}${t.unit}. For EVERY Run session: paceTarget MUST be exactly the range above for that session's effort level, and every pace written in warmup, mainset, cooldown and coachNote MUST be one of the ranges above, copied exactly. NEVER create an "easy" or "Zone 2" run pace by adding time to the athlete's average pace — the average pace is NOT a zone, and a Zone 2 pace slower than the Zone 1 range above is wrong by definition. These ranges SUPERSEDE every other run pace in the prompt, including the REALISTIC PACE TARGETS BY LEVEL table.`;
+  if (t.hr) out += `\n- HEART RATE ZONE RULE — CRITICAL: This athlete's heart rate zones have been CALCULATED IN CODE: Z1 ${t.hr[1]}bpm, Z2 ${t.hr[2]}bpm, Z3 ${t.hr[3]}bpm, Z4 ${t.hr[4]}bpm, Z5 ${t.hr[5]}bpm. Use these exact ranges for every heartRateZone field and for every bpm figure written anywhere in warmup, mainset, cooldown or coachNote. Never write any other bpm range.`;
+  return out;
+}
+
+// Deterministic backstop: on easy (Zone 1-2) sessions, force every run pace range and bpm
+// range in the text, and the run paceTarget field, to the calculated values. Hard sessions
+// legitimately carry several numbers (rep pace, recovery pace) so only the prompt rule
+// governs those. A range labelled with its own zone ("Z1 6:30-7:00/km") gets that zone's range.
+function applyZoneTargets(weeks, t, isImperial) {
+  if (!t || !Array.isArray(weeks)) return 0;
+  const zoneOf = (effort) => { const r = parseInt(effort) || 5; return r <= 3 ? 1 : r <= 5 ? 2 : r <= 7 ? 3 : r === 8 ? 4 : 5; };
+  const paceRe = isImperial
+    ? /(\d{1,2}:\d{2})\s*(?:(?:min)?\s*\/\s*mi(?:le)?)?\s*(?:-|–|to)\s*(\d{1,2}:\d{2})(?=\s*(?:min)?\s*\/\s*mi(?:le)?\b)/gi
+    : /(\d{1,2}:\d{2})\s*(?:(?:min)?\s*\/\s*km)?\s*(?:-|–|to)\s*(\d{1,2}:\d{2})(?=\s*(?:min)?\s*\/\s*km)/gi;
+  const labelBefore = (str, off) => {
+    const m = str.slice(Math.max(0, off - 16), off).match(/(?:\bz|\bzone\s*)([1-5])\b[\s(:=·,-]*(?:at\s+|pace\s+)?$/i);
+    return m ? parseInt(m[1]) : null;
+  };
+  const secs = (p) => { const a = p.split(':'); return parseInt(a[0]) * 60 + parseInt(a[1]); };
+  const fixPace = (text, target) => {
+    if (!text || !target) return text;
+    return String(text).replace(paceRe, (m0, a, b, off, str) => {
+      const z = labelBefore(str, off);
+      const want = (z && t.run[z]) || target;
+      const w = want.split('-');
+      if (Math.abs(secs(a) - secs(w[0])) <= 5 && Math.abs(secs(b) - secs(w[1])) <= 5) return m0;
+      return want;
+    });
+  };
+  const fixBpm = (text, target) => {
+    if (!text || !target) return text;
+    return String(text).replace(/\b(\d{2,3})\s*(?:-|–|to)\s*(\d{2,3})(?=\s*bpm\b)/gi, (m0, a, b, off, str) => {
+      a = parseInt(a); b = parseInt(b);
+      if (a < 60 || b > 230 || a >= b) return m0;
+      const z = labelBefore(str, off);
+      const want = (z && t.hr[z]) || target;
+      return (a + '-' + b) === want ? m0 : want;
+    });
+  };
+  let changed = 0;
+  weeks.forEach(wk => {
+    (wk.days || []).forEach(d => {
+      if (!d || d.type === 'Rest' || d.type === 'Race' || d.type === 'Strength') return;
+      const zone = zoneOf(d.effort);
+      if (zone > 2) return;
+      const before = [d.warmup, d.mainset, d.cooldown, d.coachNote, d.paceTarget, d.heartRateZone].join('\u0001');
+      if (t.run && d.type === 'Run') {
+        const main = t.run[zone], easy = t.run[1];
+        d.mainset = fixPace(d.mainset, main);
+        d.coachNote = fixPace(d.coachNote, main);
+        d.warmup = fixPace(d.warmup, easy);
+        d.cooldown = fixPace(d.cooldown, easy);
+        const pt = String(d.paceTarget || '').trim();
+        if (!pt || /^n\/a$/i.test(pt) || /^(?:easy\s*)?(?:zone|z)\s*[12](?:\s*easy)?$/i.test(pt)) d.paceTarget = main + t.unit;
+        else if (/\d:\d{2}/.test(pt)) d.paceTarget = fixPace(pt, main);
+      }
+      if (t.hr) {
+        const main = t.hr[zone], easy = t.hr[1];
+        d.mainset = fixBpm(d.mainset, main);
+        d.coachNote = fixBpm(d.coachNote, main);
+        d.warmup = fixBpm(d.warmup, easy);
+        d.cooldown = fixBpm(d.cooldown, easy);
+        if (d.heartRateZone) d.heartRateZone = fixBpm(d.heartRateZone, main);
+      }
+      if (before !== [d.warmup, d.mainset, d.cooldown, d.coachNote, d.paceTarget, d.heartRateZone].join('\u0001')) {
+        changed++;
+        console.log(`Pace/HR consistency fix: week ${wk.weekNumber}, ${d.day} ${d.type} "${d.name || ''}"`);
+      }
+    });
+  });
+  return changed;
+}
+/*__GEN_ZONES_END__*/
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', 'https://irontriapp.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -206,6 +311,10 @@ export default async function handler(req, res) {
 
   // Detect skip-base flag (athlete already has an aerobic base — e.g. recent similar race)
   const skipBase = !!(prompt && prompt.includes('SKIP BASE PHASE'));
+
+  // Code-calculated run pace / heart-rate zones from plan.html (null for older clients or
+  // athletes with no pace / HR data, in which case nothing below changes)
+  const zoneTargets = parseZoneTargets(req.body && req.body.targets, isImperial);
 
   const systemPrompt = `You are an elite triathlon coach generating structured training plans.
 
@@ -236,7 +345,7 @@ SESSION QUALITY RULES (apply to every session):
 - heartRateZone: When HR zone BPM data is provided (either from "ATHLETE MAX HEART RATE" or "STRAVA FITNESS DATA"), use actual BPM ranges (e.g. "130-145 bpm") not generic labels like "Zone 2". If "ATHLETE MAX HEART RATE" is in the prompt, always use the pre-calculated BPM ranges provided there — these take priority over everything else. When no HR data available, use zone labels.
 - CRITICAL: If the prompt contains "STRAVA FITNESS DATA" with actual watts and BPM values - USE THOSE EXACT VALUES throughout the entire plan. Do not substitute percentages or zone labels for actual numbers.
 - SWIM PACE RULE — CRITICAL: If the prompt contains "STRAVA FITNESS DATA" with a swim avg pace (e.g. "1:52/100m"), use that EXACT pace as the athlete's CSS. Every swim session's warmup, mainset and cooldown text MUST use paces derived from it. Easy/Zone 2 swim = CSS + 15-25 sec/100m. NEVER use generic placeholder paces like 3:46/100m or 4:00/100m when actual swim data is available.
-- DURATION RULE — CRITICAL: For every session, the warmup + mainset + cooldown text descriptions must represent times that add up to exactly the session's duration field in minutes. If duration is 55min, warmup + mainset + cooldown must total 55 minutes. Never write components that add up to more or less than the duration.
+- DURATION RULE — CRITICAL: For every session, the warmup + mainset + cooldown text descriptions must represent times that add up to exactly the session's duration field in minutes. If duration is 55min, warmup + mainset + cooldown must total 55 minutes. Never write components that add up to more or less than the duration. Reminders such as "take nutrition every 25-30min" are welcome but are NOT session time — do not count them towards the total, and make sure the real blocks still add up to the duration on their own.
 - STRAVA FITNESS CALIBRATION: When STRAVA FITNESS DATA is present in the prompt, the athlete has demonstrated real fitness. Do NOT be conservative — bias session intensity and volume toward the UPPER end of each range. If a session calls for 45-60min, default to 55-60min. If pace target is a range, use the faster end. If FTP is provided, programme intervals at the higher watts. The athlete's data proves their capability — trust it and challenge them accordingly. Conservative planning with fit athletes leads to under-training and boredom.
 - coachNote: explain WHY this session exists this week. Keep it motivating and specific — reference the phase, the athlete's goal or the session's place in the bigger picture.
 - COACHNOTE PACE RULES — CRITICAL: When a coachNote suggests a modified pace for fatigue, tiredness or difficulty, that pace MUST always be SLOWER (a HIGHER number in min/km or min/mile) than the session's paceTarget range. NEVER suggest a faster pace as a fallback. For example: if paceTarget is 7:56-8:11/km, a tired-pace suggestion must be 8:30/km or higher — NEVER 6:55/km. For bike power, a tired-effort fallback must be LOWER watts than the target. For swim, a tired-pace fallback must be SLOWER (higher sec/100m) than the target pace. Always use the word "slower" or "easier" not a specific number unless you are certain it is slower than the target range.
@@ -385,7 +494,7 @@ JSON structure for weeks:
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
         max_tokens: 32000,
-        system: systemPrompt,
+        system: systemPrompt + zoneRulesForPrompt(zoneTargets),
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -433,8 +542,16 @@ JSON structure for weeks:
       // Recalculate duration from actual warmup/mainset/cooldown text
       const _extractMins = (text, sumAll) => {
         if (!text) return 0;
-        // Match "1h 30min" or "1.5h" hour patterns first
-        const hourMatch = text.match(/(\d+(?:\.\d+)?)\s*h(?:our)?s?(?:\s*(\d+)\s*min(?:ute)?s?)?/i);
+        // Drop reminder intervals before parsing — "practice nutrition every 25-30min" or
+        // "sip each 15 min" describe how often to do something, not a block of session time.
+        text = String(text).replace(/\b(?:every|each|per)\s+(?:~|approx\.?\s*|about\s+|around\s+)?(?:\d+\s*(?:-|–|to)\s*)?\d+(?:\.\d+)?\s*(?:min(?:ute)?s?|hrs|hr|hours|hour|h)\b/gi, ' ');
+        // Match "1h 30min" or "1.5h" hour patterns first.
+        // Require a real hour-unit token (h/hr/hrs/hour/hours) followed by a word boundary.
+        // The old pattern accepted any digit followed by a word starting with "h", so
+        // "10 hip circles" read as 10 hours, "4 hill strides" as 4 hours and "2 hard efforts"
+        // as 2 hours — and the session's card duration was then RAISED to match (600min+).
+        // build-remaining.js already had this fix; this file did not.
+        const hourMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:hrs|hr|hours|hour|h)\b(?:\s*(?:and\s+)?(\d+)\s*min(?:ute)?s?)?/i);
         if (hourMatch) {
           let t = parseFloat(hourMatch[1]) * 60;
           if (hourMatch[2]) t += parseInt(hourMatch[2]);
@@ -466,6 +583,16 @@ JSON structure for weeks:
       // number pattern is found to edit.
       const _expandMainset = (text, oldMins, newMins) => {
         if (!text) return `${newMins} min at an easy aerobic effort — steady, conversational pace.`;
+        newMins = Math.round(newMins);
+        // Hour-format main sets ("1hr 30min continuous", "2h steady ride"). _extractMins reads
+        // these as one block, so rewrite the whole block as minutes (the page shows 120min as
+        // "2hr"). Without this, "1hr 30min continuous" matched the minutes-only pattern below
+        // and came back as "1hr 120min continuous".
+        const hourRe = /(\d+(?:\.\d+)?)\s*(?:hrs|hr|hours|hour|h)\b(?:\s*(?:and\s+)?(\d+)\s*min(?:ute)?s?)?/i;
+        const hourHit = text.match(hourRe);
+        if (hourHit && !/\b(?:every|each|per)\s+$/i.test(text.slice(0, hourHit.index))) {
+          return text.slice(0, hourHit.index) + newMins + 'min' + text.slice(hourHit.index + hourHit[0].length);
+        }
         const qualifyingRe = /(\d+)(\s*min(?:ute)?s?\s+(?:continuous|steady|easy|hard|at|of|run|ride|swim|jog|walk|spin))/i;
         if (qualifyingRe.test(text)) return text.replace(qualifyingRe, (m, num, rest) => `${newMins}${rest}`);
         const leadingRe = /^(\d+)(\s*min)/i;
@@ -477,6 +604,11 @@ JSON structure for weeks:
           if (d.type === 'Rest' || d.type === 'Race') return;
           const statedDuration = parseFloat(d.duration) || 0;
           if (statedDuration <= 5) return;
+          // Interval main sets ("8x3min at ...", "6x800m with 2min jog") are left alone.
+          // _extractMins reads only ONE number out of them, so the session always looked far
+          // too short and _expandMainset then inflated that number: "8x3min" became "8x40min"
+          // and a "2min jog recovery" became a "25min jog recovery".
+          if (/\d\s*[x×]\s*\d/i.test(d.mainset || '')) return;
           const mainsetMins = _extractMins(d.mainset, false);
           const parsed = _extractMins(d.warmup, true) + mainsetMins + _extractMins(d.cooldown, true);
           if (parsed <= 5) return;
@@ -494,6 +626,8 @@ JSON structure for weeks:
           }
         });
       });
+      // Make run paces and bpm ranges in easy sessions match the code-calculated zones
+      try { applyZoneTargets(pd.weeks, zoneTargets, isImperial); } catch (e) { console.warn('applyZoneTargets failed:', e.message); }
       // Clean up: strip double session language from sessions that ended up standalone
       (pd.weeks || []).forEach(wk => {
         (wk.days || []).forEach(d => {
