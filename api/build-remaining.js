@@ -355,11 +355,131 @@ export default async function handler(req, res) {
     const swimPaceRule = _swimPaceStr ? `SWIM PACE RULE — CRITICAL: This athlete's actual swim pace (CSS) is ${_swimPaceStr}/100m. This is a HARD, VERIFIED value from Strava/manual entry — do not deviate from it under any circumstances. Every swim session's warmup, mainset and cooldown text MUST use paces derived from this exact number. Easy/Zone 2 pace = ${_swimPaceStr} to ${_swimPaceStr.replace(/^(\d+):(\d+)$/, (_, m, s) => { const secs = parseInt(m)*60+parseInt(s)+20; return Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0'); })}/100m. NEVER use generic placeholder paces like 3:46/100m, 4:00/100m, 1:50-2:10/100m or any other example pace — always calculate from the athlete's actual ${_swimPaceStr}/100m CSS. Zone 2 swim = CSS + 15-25 sec/100m. SANITY CHECK: a Zone 2 aerobic swim pace must always be SLOWER (a higher min:sec number) than CSS — if you generate a swim pace target faster than ${_swimPaceStr}/100m for any non-sprint, non-VO2max session, that is an error and must be corrected before output.` : `SWIM PACE RULE — CRITICAL: No verified swim pace (CSS) is available for this athlete. Use the experience-level fallback paces already defined elsewhere in this prompt (e.g. Beginner/Intermediate/Advanced swimmer ranges). NEVER invent a swim pace faster than 1:40/100m for an age-group athlete under any circumstances — that is a sprint-elite pace and is almost certainly an error.`;
     const swimSimplicityRule = `SWIM WARMUP/COOLDOWN SIMPLICITY RULE — CRITICAL: Warmup and cooldown must each be ONE simple, continuous effort at a single pace (e.g. "300m easy swim at 2:15/100m"). Do NOT stack multiple distinct sub-sets into a warmup or cooldown (e.g. easy swim + build-pace reps + CSS-pace reps all in one warmup) — this is over-complicated for a warmup/cooldown and is a real problem that has shipped to users. At most ONE optional short add-on is allowed (e.g. "300m easy + 4x25m build to open up the legs"), never three or more distinct components with three different paces. Reserve multi-rep interval structure (multiple sets, varying paces, ladders) for the MAIN SET only — that is where structured complexity belongs, not warmup or cooldown. This also applies to ANY total-time figure mentioned anywhere in swim session text, including parenthetical asides like "(43 minutes total)" — such figures must be checked against actual reps x pace + rest, not just the leading segment label.`;
 
-    const durationRule = `DURATION RULE — CRITICAL: For every session, the warmup + mainset + cooldown text descriptions must represent times that add up to exactly the session's duration field in minutes. If duration is 55min, your warmup + mainset + cooldown must total 55 minutes. Never write warmup/mainset/cooldown that add up to more or less than the duration.`;
+    // RUN PACE + HEART RATE ZONES — calculated here in code, with the same maths plan.html
+    // uses for the Pace Target and Heart Rate Zone boxes, then handed to the model as fixed
+    // numbers. Before this the prompt only gave the model the athlete's avg and threshold
+    // run pace, so it invented its own "Zone 2" by slowing the avg pace down (e.g. writing
+    // 6:00-6:30/km for an athlete whose card shows 5:13-5:28/km). basePrompt is also frozen
+    // at plan creation, so its run and HR numbers go stale as the athlete gets fitter.
+    /*__ZONE_HELPERS_START__*/
+    const _isImperial = planData.units === 'imperial' || /UNITS:\s*IMPERIAL/i.test(basePrompt);
+    const _zoneFromEffort = (effort) => { const r = parseInt(effort) || 5; return r <= 3 ? 1 : r <= 5 ? 2 : r <= 7 ? 3 : r === 8 ? 4 : 5; };
+    const _fmtPaceSecs = (s) => { s = Math.round(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+    const _parseJson = (v) => { try { return typeof v === 'string' ? JSON.parse(v) : (v || null); } catch (e) { return null; } };
+    const _savedFitness = _parseJson(planData.stravaFitness);
+    // Same order plan.html reads fitness in: live Strava if connected, else the copy saved with the plan
+    const _zoneFitness = (liveFitness && liveFitness.connected ? liveFitness : null) || _parseJson(stravaFitness) || _savedFitness || liveFitness;
+    const _runThresholdSecs = (() => {
+      const r = _zoneFitness && _zoneFitness.run;
+      const fromFitness = r ? (r.thresholdPaceSecs || (r.thresholdPaceMin ? r.thresholdPaceMin * 60 + (r.thresholdPaceSec || 0) : null) || r.avgPaceSecs || null) : null;
+      if (fromFitness) return fromFitness;
+      // No Strava run data — fall back to the threshold pace typed in at the quiz / profile page
+      const manual = String(planData.runThreshold || '').match(/(\d+):(\d+)/);
+      if (!manual) return null;
+      const secs = parseInt(manual[1]) * 60 + parseInt(manual[2]);
+      return /mi/i.test(String(planData.runThreshold)) ? secs / 1.60934 : secs;
+    })();
+    const _RUN_ZONE_OFFSETS = { 1: [75, 90], 2: [45, 60], 3: [15, 30], 4: [0, 10], 5: [-10, 0] };
+    const _runUnit = _isImperial ? ' min/mile' : '/km';
+    const _runZoneRange = (zone) => {
+      if (!_runThresholdSecs) return null;
+      const o = _RUN_ZONE_OFFSETS[zone] || _RUN_ZONE_OFFSETS[2];
+      const k = _isImperial ? 1.60934 : 1;
+      return _fmtPaceSecs((_runThresholdSecs + o[0]) * k) + '-' + _fmtPaceSecs((_runThresholdSecs + o[1]) * k);
+    };
+    const _hrZoneRange = (zone) => {
+      const maxHR = planData.maxHR ? parseInt(planData.maxHR) : null;
+      if (maxHR && maxHR >= 140) {
+        const lo = { 1: 0.50, 2: 0.60, 3: 0.70, 4: 0.80, 5: 0.90 }, hi = { 1: 0.60, 2: 0.70, 3: 0.80, 4: 0.90, 5: 1 };
+        return Math.round(maxHR * lo[zone]) + '-' + Math.round(maxHR * hi[zone]);
+      }
+      const zones = (_savedFitness && _savedFitness.hrZones) || (liveFitness && liveFitness.hrZones) || null;
+      const z = zones ? zones['zone' + zone] : null;
+      return z ? z.min + '-' + z.max : null;
+    };
+
+    // Swap a pace range ("6:00-6:30/km") or bpm range ("110-128bpm") for the athlete's real one.
+    // A range labelled with its own zone ("Z1 6:30-7:00/km") gets that zone's range.
+    const _paceRangeRe = _isImperial
+      ? /(\d{1,2}:\d{2})\s*(?:(?:min)?\s*\/\s*mi(?:le)?)?\s*(?:-|–|to)\s*(\d{1,2}:\d{2})(?=\s*(?:min)?\s*\/\s*mi(?:le)?\b)/gi
+      : /(\d{1,2}:\d{2})\s*(?:(?:min)?\s*\/\s*km)?\s*(?:-|–|to)\s*(\d{1,2}:\d{2})(?=\s*(?:min)?\s*\/\s*km)/gi;
+    const _zoneLabelBefore = (str, off) => {
+      const m = str.slice(Math.max(0, off - 16), off).match(/(?:\bz|\bzone\s*)([1-5])\b[\s(:=·,-]*(?:at\s+|pace\s+)?$/i);
+      return m ? parseInt(m[1]) : null;
+    };
+    const _replaceRunPaceRanges = (text, target) => {
+      if (!text || !target) return text;
+      const secs = (p) => { const a = p.split(':'); return parseInt(a[0]) * 60 + parseInt(a[1]); };
+      return String(text).replace(_paceRangeRe, (m0, a, b, off, str) => {
+        const z = _zoneLabelBefore(str, off);
+        const want = (z && _runZoneRange(z)) || target;
+        const w = want.split('-');
+        if (Math.abs(secs(a) - secs(w[0])) <= 5 && Math.abs(secs(b) - secs(w[1])) <= 5) return m0;
+        return want;
+      });
+    };
+    const _replaceBpmRanges = (text, target) => {
+      if (!text || !target) return text;
+      return String(text).replace(/\b(\d{2,3})\s*(?:-|–|to)\s*(\d{2,3})(?=\s*bpm\b)/gi, (m0, a, b, off, str) => {
+        a = parseInt(a); b = parseInt(b);
+        if (a < 60 || b > 230 || a >= b) return m0;
+        const z = _zoneLabelBefore(str, off);
+        const want = (z && _hrZoneRange(z)) || target;
+        return (a + '-' + b) === want ? m0 : want;
+      });
+    };
+
+    // Deterministic backstop, same job as fixSwimDistanceDurationMismatch does for swim:
+    // on easy (Zone 1-2) sessions, force every run pace range and bpm range in the text, and
+    // the run paceTarget field, to the code-calculated values. Hard sessions legitimately
+    // carry several numbers (rep pace, recovery pace) so only the prompt rule governs those.
+    function fixRunPaceAndHrConsistency(weeks) {
+      let changed = 0;
+      (weeks || []).forEach(wk => {
+        (wk.days || []).forEach(d => {
+          if (!d || d.type === 'Rest' || d.type === 'Race' || d.type === 'Strength') return;
+          const zone = _zoneFromEffort(d.effort);
+          if (zone > 2) return;
+          const before = [d.warmup, d.mainset, d.cooldown, d.coachNote, d.paceTarget, d.heartRateZone].join('\u0001');
+          const runMain = d.type === 'Run' ? _runZoneRange(zone) : null;
+          if (runMain) {
+            const runEasy = _runZoneRange(1);
+            d.mainset = _replaceRunPaceRanges(d.mainset, runMain);
+            d.coachNote = _replaceRunPaceRanges(d.coachNote, runMain);
+            d.warmup = _replaceRunPaceRanges(d.warmup, runEasy);
+            d.cooldown = _replaceRunPaceRanges(d.cooldown, runEasy);
+            const pt = String(d.paceTarget || '').trim();
+            if (!pt || /^n\/a$/i.test(pt) || /^(?:easy\s*)?(?:zone|z)\s*[12](?:\s*easy)?$/i.test(pt)) d.paceTarget = runMain + _runUnit;
+            else if (/\d:\d{2}/.test(pt)) d.paceTarget = _replaceRunPaceRanges(pt, runMain);
+          }
+          const hrMain = _hrZoneRange(zone);
+          if (hrMain) {
+            const hrEasy = _hrZoneRange(1) || hrMain;
+            d.mainset = _replaceBpmRanges(d.mainset, hrMain);
+            d.coachNote = _replaceBpmRanges(d.coachNote, hrMain);
+            d.warmup = _replaceBpmRanges(d.warmup, hrEasy);
+            d.cooldown = _replaceBpmRanges(d.cooldown, hrEasy);
+            if (d.heartRateZone) d.heartRateZone = _replaceBpmRanges(d.heartRateZone, hrMain);
+          }
+          if (before !== [d.warmup, d.mainset, d.cooldown, d.coachNote, d.paceTarget, d.heartRateZone].join('\u0001')) {
+            changed++;
+            console.log(`Pace/HR consistency fix: week ${wk.weekNumber}, ${d.day} ${d.type} "${d.name || ''}"`);
+          }
+        });
+      });
+      return changed;
+    }
+    /*__ZONE_HELPERS_END__*/
+
+    const runPaceRule = _runThresholdSecs ? `RUN PACE RULE — CRITICAL: This athlete's run pace zones have been CALCULATED IN CODE from their verified threshold pace. They are HARD values — do not work out, adjust or round them yourself. Zone 1 (very easy; ALL run warm-ups and cool-downs; effort 1-3) = ${_runZoneRange(1)}${_runUnit}. Zone 2 (ALL easy runs, long runs and aerobic runs; effort 4-5) = ${_runZoneRange(2)}${_runUnit}. Zone 3 (tempo; effort 6-7) = ${_runZoneRange(3)}${_runUnit}. Zone 4 (threshold; effort 8) = ${_runZoneRange(4)}${_runUnit}. Zone 5 (VO2max / track reps; effort 9-10) = ${_runZoneRange(5)}${_runUnit}. For EVERY Run session: paceTarget MUST be exactly the range above for that session's effort level, and every pace written in warmup, mainset, cooldown and coachNote MUST be one of the ranges above, copied exactly. NEVER create an "easy" or "Zone 2" run pace by adding time to the athlete's average pace — the average pace is NOT a zone, and a Zone 2 pace slower than the Zone 1 range above is wrong by definition. These ranges SUPERSEDE every run pace anywhere in the base prompt, which may be out of date.` : '';
+
+    const hrZoneRule = _hrZoneRange(2) ? `HEART RATE ZONE RULE — CRITICAL: This athlete's heart rate zones have been CALCULATED IN CODE: Z1 ${_hrZoneRange(1)}bpm, Z2 ${_hrZoneRange(2)}bpm, Z3 ${_hrZoneRange(3)}bpm, Z4 ${_hrZoneRange(4)}bpm, Z5 ${_hrZoneRange(5)}bpm. Use these exact ranges for every heartRateZone field and for every bpm figure written anywhere in warmup, mainset, cooldown or coachNote. They SUPERSEDE any HR zones in the base prompt, which may be out of date. Never write any other bpm range.` : '';
+
+    const durationRule = `DURATION RULE — CRITICAL: For every session, the warmup + mainset + cooldown text descriptions must represent times that add up to exactly the session's duration field in minutes. If duration is 55min, your warmup + mainset + cooldown must total 55 minutes. Never write warmup/mainset/cooldown that add up to more or less than the duration. Reminders such as "take nutrition every 25-30min" are welcome but are NOT session time — do not count them towards the total, and make sure the real blocks still add up to the duration on their own.`;
 
     const paceNoteRule = `COACHNOTE PACE RULES — CRITICAL: When a coachNote suggests a modified pace for fatigue, tiredness or difficulty, that pace MUST always be SLOWER (a HIGHER number in min/km or min/mile) than the session's paceTarget range. NEVER suggest a faster pace as a fallback. Example: if paceTarget is 7:56-8:11/km, a tired-pace suggestion must be 8:30/km or higher — NEVER 6:55/km. For bike power, a tired-effort fallback must be LOWER watts. For swim, slower means a HIGHER sec/100m value. When in doubt, use the word "slower" or "easier" rather than a specific pace number. SESSION PACE CONSISTENCY RULE — CRITICAL: Any specific pace, watt or bpm number mentioned ANYWHERE in warmup, mainset, cooldown or coachNote MUST exactly match the session's own paceTarget field. Never state a second, different number in the session text — this applies equally to warmup and mainset, not just coachNote. If you reference the pace in prose, restate the exact paceTarget value, or use a generic phrase like "your race pace" or "your threshold pace" with NO number attached, rather than risk a mismatched figure. CONCRETE EXAMPLE OF THE VIOLATION TO AVOID: if paceTarget is "5:07-5:22/km", the mainset text must also say 5:07-5:22/km — it must NEVER say a different range like "5:50-6:10/km" for the same session, even if that different number sounds like a reasonable Zone 2 pace in isolation. This applies to EVERY run session type — easy runs, long runs and aerobic runs, not only track or brick sessions. Before writing the mainset text, first decide the paceTarget value, then reuse that exact same number when describing the pace in warmup/mainset/cooldown — do not calculate or write a second number independently. THE SAME RULE APPLIES TO WATTS FOR BIKE SESSIONS: if paceTarget is "124-166w", the warmup, main set and cool down text must all use ranges that fall within or restate 124-166w — do NOT write a separate watt range like "115-155w" for the main set or "100-130w" for warmup/cooldown. Decide the paceTarget watt range first, then build warmup/mainset/cooldown watt numbers as sub-ranges of that same paceTarget range (e.g. warmup building up to the low end, main set within the full range, cooldown at the low end) — never invent watt numbers outside the paceTarget range. THE SAME RULE APPLIES TO SWIM PACE: if paceTarget is "3:05/100m", the warmup, main set and cool down text must all use paces that fall within or restate 3:05/100m (e.g. main set at 3:05/100m, warmup/cooldown slightly slower is fine only if it stays a small, deliberate offset for easing in/out) — do NOT write a completely separate swim pace like "3:44/100m" or "3:34/100m" for the same session that isn't derived from paceTarget or CSS at all. Swim Zone 2 pace is always CSS + 15-25 sec/100m — if paceTarget reflects that formula, every pace mentioned in the session text must be consistent with it, not an independently invented number. THRESHOLD PACE RULE — CRITICAL: NEVER state a specific pace number as the athlete's "threshold pace" anywhere in warmup, mainset, cooldown or coachNote unless a value explicitly labelled "threshold pace" or "lactate threshold pace" appears in the STRAVA FITNESS DATA block. The run avg pace from Strava is an average of all recent runs — it is NOT the threshold pace and must NEVER be quoted as one. If no explicit threshold pace is available, refer to it generically as "your threshold pace" or "a pace you can hold for around 60 minutes" — never invent or infer a specific number. ORDINAL CLAIMS RULE — CRITICAL: NEVER describe a session as the athlete's "first swim", "first run", "first bike", "first time" doing something, or any other ordinal/novelty claim ("your first...", "since this is new to you...") in purpose or coachNote — you are generating a batch of weeks partway through an existing plan and this is virtually never actually the athlete's first occurrence of that session type. Default to describing sessions generically (e.g. "this swim session", "today's run") with no claim about it being new or a first occurrence.`;
 
-    const structureInstructions = `${intensityRule} ${durationRule} ${paceNoteRule} ${trainingDaysRule} ${weaknessRule} ${swimPaceRule} ${swimSimplicityRule} STRAVA FITNESS CALIBRATION: If the base prompt contains "STRAVA FITNESS DATA" with actual watts, BPM or pace values, the athlete has demonstrated real fitness — bias session intensity and volume toward the UPPER end of each range. Default to longer durations, faster paces and higher watts within the prescribed ranges. Do NOT be conservative with fit athletes. MAX HEART RATE ZONES: If the base prompt contains "ATHLETE MAX HEART RATE", use the exact BPM zone ranges provided there for ALL heartRateZone fields throughout every session — never use generic zone labels like "Zone 2" when actual BPM values are available. These athlete-specific zones take priority over everything else. Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. ${_skipBase ? `PHASE LABELS (Base phase SKIPPED for this athlete): Build=weeks 1-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. NEVER use \"Base\" as a phase label anywhere in this plan.` : `PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}.`} Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${doubleSessionRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${bRaceTaperRule} ${raceDayRule}`;
+    const structureInstructions = `${intensityRule} ${durationRule} ${paceNoteRule} ${trainingDaysRule} ${weaknessRule} ${runPaceRule} ${hrZoneRule} ${swimPaceRule} ${swimSimplicityRule} STRAVA FITNESS CALIBRATION: If the base prompt contains "STRAVA FITNESS DATA" with actual watts, BPM or pace values, the athlete has demonstrated real fitness — bias session intensity and volume toward the UPPER end of each range. Default to longer durations, faster paces and higher watts within the prescribed ranges. Do NOT be conservative with fit athletes. MAX HEART RATE ZONES: If the base prompt contains "ATHLETE MAX HEART RATE", use the exact BPM zone ranges provided there for ALL heartRateZone fields throughout every session — never use generic zone labels like "Zone 2" when actual BPM values are available. These athlete-specific zones take priority over everything else. Generate ONLY weeks ${startWk} to ${endWk} (weekNumber starting at ${startWk}). Return JSON: {"weeks":[...]} — array of ${endWk - startWk + 1} weeks only. No intro. ${_skipBase ? `PHASE LABELS (Base phase SKIPPED for this athlete): Build=weeks 1-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}. NEVER use \"Base\" as a phase label anywhere in this plan.` : `PHASE LABELS: Base=weeks 1-${_baseEnd}, Build=weeks ${_baseEnd+1}-${_buildEnd}, Peak=weeks ${_buildEnd+1}-${_peakEnd}, Taper=weeks ${_peakEnd+1}-${_taperEnd}, Race Week=week ${totalNeeded}.`} Week ${startWk} should be phase "${_phaseForBatch}". Each week MUST use this exact structure: {"weekNumber":${startWk},"phase":"${_phaseForBatch}","focus":"string","weeklyNarrative":"string","days":[{"day":"Monday","type":"Swim","name":"string","duration":45,"effort":5,"zone":2,"purpose":"string","warmup":"string","mainset":"string","cooldown":"string","coachNote":"string","paceTarget":"string","heartRateZone":"Zone 2"}]}. The days array MUST use the field names: day, type, name, duration, effort, zone, purpose, warmup, mainset, cooldown, coachNote, paceTarget, heartRateZone. type MUST be one of: Swim, Bike, Run, Brick, Strength, Rest, Race. Never use workouts, details, intensity, discipline or any other field names. ${lateBrickRule} ${trackRule} ${strengthRule} ${doubleSessionRule} ${bikeVolumeRule} ${restDayRule} ${taperRule} ${bRaceTaperRule} ${raceDayRule}`;
 
     const prompt = basePrompt + fifoBlock + structureInstructions;
 
@@ -1203,6 +1323,10 @@ export default async function handler(req, res) {
     // Fix session durations — extract actual minutes from text and override duration field
     function extractMins(text, sumAll) {
       if (!text) return 0;
+      // Drop reminder intervals before parsing — "practice nutrition every 25-30min" or
+      // "sip each 15 min" describe how often to do something, not a block of session time.
+      // Left in, "Run 40min. Gel every 45min" was being read as a 45 minute main set.
+      text = String(text).replace(/\b(?:every|each|per)\s+(?:~|approx\.?\s*|about\s+|around\s+)?(?:\d+\s*(?:-|–|to)\s*)?\d+(?:\.\d+)?\s*(?:min(?:ute)?s?|hrs|hr|hours|hour|h)\b/gi, ' ');
       let total = 0;
       // Match patterns like "45min", "45 min", "45 minutes", "1h 30min", "1.5h", "1h", "1 hour"
       // Require a real hour-unit token (h/hr/hrs/hour/hours) followed by a word boundary —
@@ -1249,6 +1373,16 @@ export default async function handler(req, res) {
     // number pattern is found to edit.
     function expandMainset(text, oldMins, newMins) {
       if (!text) return `${newMins} min at an easy aerobic effort — steady, conversational pace.`;
+      newMins = Math.round(newMins);
+      // Hour-format main sets ("1hr 30min continuous", "2h steady ride"). extractMins reads
+      // these as one block, so rewrite the whole block as minutes (the page shows 120min as
+      // "2hr"). Without this, "1hr 30min continuous" matched the minutes-only pattern below
+      // and came back as "1hr 120min continuous" — a 3 hour main set on a 2h20 session.
+      const hourRe = /(\d+(?:\.\d+)?)\s*(?:hrs|hr|hours|hour|h)\b(?:\s*(?:and\s+)?(\d+)\s*min(?:ute)?s?)?/i;
+      const hourHit = text.match(hourRe);
+      if (hourHit && !/\b(?:every|each|per)\s+$/i.test(text.slice(0, hourHit.index))) {
+        return text.slice(0, hourHit.index) + newMins + 'min' + text.slice(hourHit.index + hourHit[0].length);
+      }
       const qualifyingRe = /(\d+)(\s*min(?:ute)?s?\s+(?:continuous|steady|easy|hard|at|of|run|ride|swim|jog|walk|spin|intervals?|reps?|repeats?|tempo|threshold|set))/i;
       if (qualifyingRe.test(text)) return text.replace(qualifyingRe, (m, num, rest) => `${newMins}${rest}`);
       const leadingRe = /^(\d+)(\s*min)/i;
@@ -1261,6 +1395,13 @@ export default async function handler(req, res) {
         if (!wk.days) return;
         wk.days.forEach(d => {
           if (d.type === 'Rest' || d.type === 'Race' || !d.duration) return;
+
+          // Interval main sets ("8x3min at ...", "6x800m with 2min jog") are left alone.
+          // extractMins reads only ONE number out of them (3 for "8x3min", 2 for the jog
+          // recovery), so the session always looked far too short and expandMainset then
+          // "fixed" it by inflating that number: "8x3min" became "8x40min" and a "2min jog
+          // recovery" became a "25min jog recovery".
+          if (/\d\s*[x×]\s*\d/i.test(d.mainset || '')) return;
 
           const warmupMins = extractMins(d.warmup || '', true);
           const mainsetMins = extractMins(d.mainset || '', false);
@@ -1456,6 +1597,10 @@ export default async function handler(req, res) {
         if (d.coachNote) d.coachNote = stripOrdinalClaims(d.coachNote);
       });
     });
+
+    // Last: make run paces and bpm ranges in easy sessions match the code-calculated zones.
+    // Runs on allWeeks so weeks 1-4 from generate-plan.js are brought into line as well.
+    try { fixRunPaceAndHrConsistency(allWeeks); } catch (e) { console.warn('fixRunPaceAndHrConsistency failed:', e.message); }
 
     const updated = { ...planData, weeks: allWeeks };
     // Preserve stravaFitness from request or existing planData
