@@ -393,7 +393,8 @@ export default async function handler(req, res) {
         const lo = { 1: 0.50, 2: 0.60, 3: 0.70, 4: 0.80, 5: 0.90 }, hi = { 1: 0.60, 2: 0.70, 3: 0.80, 4: 0.90, 5: 1 };
         return Math.round(maxHR * lo[zone]) + '-' + Math.round(maxHR * hi[zone]);
       }
-      const zones = (_savedFitness && _savedFitness.hrZones) || (liveFitness && liveFitness.hrZones) || null;
+      // Same order as plan.html and the app: own max HR, then live Strava zones, then the saved copy
+      const zones = (liveFitness && liveFitness.connected && liveFitness.hrZones) || (_savedFitness && _savedFitness.hrZones) || (liveFitness && liveFitness.hrZones) || null;
       const z = zones ? zones['zone' + zone] : null;
       return z ? z.min + '-' + z.max : null;
     };
