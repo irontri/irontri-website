@@ -1352,6 +1352,247 @@ function fmtDur(mins) {
   return m > 0 ? h + 'h ' + m + 'm' : h + 'h';
 }
 
+// ── SESSION TARGETS + TEXT CONSISTENCY ───────────────────────────────────────
+// One place that works out a session's zone, run pace range and heart-rate range.
+// The Pace Target box, the Heart Rate Zone box, the session-rewrite prompt and the
+// text backstop below all call these, so the numbers on a card cannot drift apart.
+/*__SESSION_HELPERS_START__*/
+function zoneFromEffort(effort) {
+  const rpe = parseInt(effort) || 5;
+  return rpe <= 3 ? 1 : rpe <= 5 ? 2 : rpe <= 7 ? 3 : rpe === 8 ? 4 : 5;
+}
+
+function fmtPaceSecs(s) {
+  s = Math.round(s);
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+// Seconds per km added to threshold pace for each zone.
+const RUN_ZONE_OFFSETS = { 1: [75, 90], 2: [45, 60], 3: [15, 30], 4: [0, 10], 5: [-10, 0] };
+
+function runThresholdSecs(sf) {
+  if (!sf || !sf.run) return null;
+  return sf.run.thresholdPaceSecs
+    || (sf.run.thresholdPaceMin ? sf.run.thresholdPaceMin * 60 + (sf.run.thresholdPaceSec || 0) : null)
+    || sf.run.avgPaceSecs
+    || null;
+}
+
+// e.g. "5:13-5:28" (per km). perMile=true converts for imperial prompts.
+function runZonePaceRange(sf, zone, perMile) {
+  const t = runThresholdSecs(sf);
+  if (!t) return null;
+  const o = RUN_ZONE_OFFSETS[zone] || RUN_ZONE_OFFSETS[2];
+  const k = perMile ? 1.60934 : 1;
+  return fmtPaceSecs((t + o[0]) * k) + '-' + fmtPaceSecs((t + o[1]) * k);
+}
+
+// One line for the plan prompt so the model is handed the zones instead of deriving them.
+function runZonePromptLine(sf, imperial) {
+  if (!runThresholdSecs(sf)) return '';
+  const u = imperial ? ' min/mile' : '/km';
+  const z = n => runZonePaceRange(sf, n, imperial) + u;
+  return '- Run pace zones (calculated from threshold pace. Use these EXACT ranges. NEVER work out an easy pace yourself by adding time to the avg pace): '
+    + 'Zone 1 very easy, warm-up and cool-down = ' + z(1)
+    + ', Zone 2 easy, long and aerobic runs = ' + z(2)
+    + ', Zone 3 tempo = ' + z(3)
+    + ', Zone 4 threshold = ' + z(4)
+    + ', Zone 5 = ' + z(5) + '\n';
+}
+
+// Fitness the Pace Target box reads: live Strava first, then the copy saved with the plan.
+function planFitness() {
+  try {
+    return window.currentStravaFitness
+      || (planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null));
+  } catch (e) { return null; }
+}
+
+// e.g. "120-140". Same order of preference the Heart Rate Zone box has always used:
+// the athlete's own max HR, then the Strava zones saved with the plan.
+function hrZoneBpmRange(zone) {
+  try {
+    const maxHR = planData?.maxHR ? parseInt(planData.maxHR) : null;
+    if (maxHR && maxHR >= 140) {
+      const lo = { 1: 0.50, 2: 0.60, 3: 0.70, 4: 0.80, 5: 0.90 };
+      const hi = { 1: 0.60, 2: 0.70, 3: 0.80, 4: 0.90, 5: 1 };
+      return Math.round(maxHR * lo[zone]) + '-' + Math.round(maxHR * hi[zone]);
+    }
+    const sf = planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null);
+    const z = sf?.hrZones ? sf.hrZones['zone' + zone] : null;
+    if (z) return z.min + '-' + z.max;
+  } catch (e) {}
+  return null;
+}
+
+// Reads the session time out of a warm-up / main set / cool-down description.
+// Counts real blocks ("10min easy jog", "1hr 30min continuous", "6x5min"), and does NOT count:
+//  - reminders:    "nutrition every 25-30min", "sip each 15 min"
+//  - sub-portions: "120min steady ... last 20min at race pace"
+// Recoveries between reps are multiplied out ("6x5min with 2min easy" = 30 + 5x2).
+function parseTimeBlocks(text) {
+  const out = { total: 0, tokens: [] };
+  if (!text) return out;
+  const s = String(text);
+  const re = /(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)\s*(min(?:ute)?s?|hrs|hr|hours|hour|h)\b|(\d+(?:\.\d+)?)\s*(?:hrs|hr|hours|hour|h)\b(?:\s*(?:and\s+)?(\d+)\s*min(?:ute)?s?\b)?|(?:(\d+)\s*(?:-|–|to)\s*)?(\d+)\s*min(?:ute)?s?\b/gi;
+  let m, lastRep = null, additive = false;
+  while ((m = re.exec(s))) {
+    const before = s.slice(Math.max(0, m.index - 28), m.index);
+    const after = s.slice(re.lastIndex, re.lastIndex + 32);
+    const tok = { start: m.index, end: re.lastIndex, kind: 'plain', mins: 0, counted: true };
+    if (m[1] !== undefined) {
+      const each = parseFloat(m[2]) * (/^h/i.test(m[3]) ? 60 : 1);
+      tok.kind = 'rep'; tok.reps = parseInt(m[1]); tok.mins = tok.reps * each;
+    } else if (m[4] !== undefined) {
+      tok.kind = 'hours'; tok.mins = parseFloat(m[4]) * 60 + (m[5] ? parseInt(m[5]) : 0);
+    } else {
+      const hi = parseInt(m[7]);
+      const lo = m[6] !== undefined ? parseInt(m[6]) : null;
+      if (lo !== null && lo < hi) { tok.kind = 'range'; tok.mins = (lo + hi) / 2; }
+      else {
+        tok.mins = hi;
+        // "Zone 2 to 20min" style false range: keep only the minutes part as the token
+        if (lo !== null) tok.start = m.index + m[0].lastIndexOf(m[7]);
+      }
+    }
+    const hadCounted = out.tokens.some(t => t.counted);
+    if (/\b(?:every|each|per)\s+(?:~|approx\.?\s*|about\s+|around\s+)?$/i.test(before)) {
+      tok.kind = 'cue'; tok.counted = false;
+    } else if (/\b(?:first|opening)\s+(?:the\s+)?$/i.test(before) && !hadCounted) {
+      additive = true; // "first 60min ..., final 30min ..." is a sequence, both count
+    } else if (/\b(?:first|opening|last|final|after|within|closing)\s+(?:the\s+)?$/i.test(before) && hadCounted && !additive) {
+      tok.kind = 'sub'; tok.counted = false;
+    } else if (tok.kind === 'rep' && hadCounted && /\b(?:as|broken into|split into|done as)\s+$/i.test(before)) {
+      tok.kind = 'sub'; tok.counted = false; // "40min tempo as 4x10min"
+    } else if (tok.kind !== 'rep' && lastRep
+      && m.index - lastRep.end < 70
+      && !/[.;]\s|\bthen\b/i.test(s.slice(lastRep.end, m.index))
+      && /\b(?:recover\w*|rest|float|between|jog|walk|easy|off)\b/i.test(after)) {
+      tok.kind = 'recovery'; tok.mins = tok.mins * Math.max(lastRep.reps - 1, 1);
+    }
+    if (m[1] !== undefined) lastRep = tok;
+    if (tok.counted) out.total += tok.mins;
+    out.tokens.push(tok);
+  }
+  out.total = Math.round(out.total);
+  return out;
+}
+
+function sessionTextMins(text) { return parseTimeBlocks(text).total; }
+
+// Rewrite a pace range like "6:00-6:30/km" to the athlete's real range. A range labelled
+// with its own zone ("Z1 6:30-7:00/km") gets that zone's range; anything else gets `target`.
+function replaceRunPaceRanges(text, target, zoneRange) {
+  if (!text || !target) return text;
+  const secs = p => { const a = p.split(':'); return parseInt(a[0]) * 60 + parseInt(a[1]); };
+  return String(text).replace(/(\d{1,2}:\d{2})\s*(?:(?:min)?\s*\/\s*km)?\s*(?:-|–|to)\s*(\d{1,2}:\d{2})(?=\s*(?:min)?\s*\/\s*km)/gi, (m0, a, b, off, str) => {
+    const label = str.slice(Math.max(0, off - 16), off).match(/(?:\bz|\bzone\s*)([1-5])\b[\s(:=·,-]*(?:at\s+|pace\s+)?$/i);
+    const want = (label && zoneRange && zoneRange(parseInt(label[1]))) || target;
+    const w = want.split('-');
+    if (Math.abs(secs(a) - secs(w[0])) <= 5 && Math.abs(secs(b) - secs(w[1])) <= 5) return m0;
+    return want;
+  });
+}
+
+// Same idea for "110-128bpm".
+function replaceBpmRanges(text, target, zoneRange) {
+  if (!text || !target) return text;
+  return String(text).replace(/\b(\d{2,3})\s*(?:-|–|to)\s*(\d{2,3})(?=\s*bpm\b)/gi, (m0, a, b, off, str) => {
+    a = parseInt(a); b = parseInt(b);
+    if (a < 60 || b > 230 || a >= b) return m0;
+    const label = str.slice(Math.max(0, off - 16), off).match(/(?:\bz|\bzone\s*)([1-5])\b[\s(:=·,-]*$/i);
+    const want = (label && zoneRange && zoneRange(parseInt(label[1]))) || target;
+    return (a + '-' + b) === want ? m0 : want;
+  });
+}
+
+// Deterministic backstop. Whatever wrote the session text (either plan generator, the
+// 24-hour rewrite, the too-easy/too-hard adaptation), make it agree with the card:
+//  1. warm-up + main set + cool-down add up to the session duration
+//  2. on easy (Zone 1-2) sessions, run paces and bpm ranges match the two target boxes
+// Returns true if it changed anything. Safe to call repeatedly.
+function reconcileSession(d) {
+  if (!d || !d.type || d.type === 'Rest' || d.type === 'Race' || d.type === 'Strength') return false;
+  const snapshot = [d.warmup, d.mainset, d.cooldown, d.coachNote, d.paceTarget, d.heartRateZone].join('\u0001');
+
+  // 1. Time. Only when the main set is one continuous block, so there is exactly one
+  // number to correct. Interval sets are left to the rewrite prompt.
+  const dur = parseFloat(d.duration) || 0;
+  if ((d.type === 'Run' || d.type === 'Bike') && dur > 0 && d.mainset) {
+    const wu = sessionTextMins(d.warmup), cd = sessionTextMins(d.cooldown);
+    const ms = parseTimeBlocks(d.mainset);
+    const counted = ms.tokens.filter(t => t.counted);
+    // "90min continuous at ..." qualifies. "6x800m with 2min jog" does not: the only minutes
+    // in it are a recovery, and stretching that to fill the session would be nonsense.
+    const simple = counted.length === 1 && (counted[0].kind === 'plain' || counted[0].kind === 'hours')
+      && counted[0].start <= 15
+      && !ms.tokens.some(t => t.kind === 'rep' || t.kind === 'recovery')
+      && !/\d\s*[x×]\s*\d/i.test(d.mainset);
+    const edgesKnown = (!d.warmup || wu > 0) && (!d.cooldown || cd > 0);
+    if (simple && edgesKnown) {
+      const diff = dur - (wu + ms.total + cd);
+      const fixed = Math.round(counted[0].mins + diff);
+      if (Math.abs(diff) > 5 && fixed >= 10) {
+        const t = counted[0];
+        const spaced = /\d\s+(?:min|h)/i.test(d.mainset.slice(t.start, t.end));
+        d.mainset = d.mainset.slice(0, t.start) + fixed + (spaced ? ' min' : 'min') + d.mainset.slice(t.end);
+      }
+    }
+  }
+
+  // 2. Pace and heart rate, easy sessions only. Hard sessions legitimately carry several
+  // different numbers (rep pace, recovery pace) so they are not rewritten here.
+  const zone = zoneFromEffort(d.effort);
+  if (zone <= 2) {
+    const easyZone = 1;
+    const imperial = (typeof planData !== 'undefined' && planData?.units === 'imperial') || (typeof currentUnits !== 'undefined' && currentUnits === 'imperial');
+    const sf = planFitness();
+    if (d.type === 'Run' && !imperial && sf?.run?.avgPace && runThresholdSecs(sf)) {
+      const byZone = z => runZonePaceRange(sf, z);
+      const main = byZone(zone), easy = byZone(easyZone);
+      d.mainset = replaceRunPaceRanges(d.mainset, main, byZone);
+      d.coachNote = replaceRunPaceRanges(d.coachNote, main, byZone);
+      d.warmup = replaceRunPaceRanges(d.warmup, easy, byZone);
+      d.cooldown = replaceRunPaceRanges(d.cooldown, easy, byZone);
+      if (d.paceTarget) d.paceTarget = replaceRunPaceRanges(d.paceTarget, main, byZone);
+    }
+    const hrMain = hrZoneBpmRange(zone);
+    if (hrMain) {
+      const hrEasy = hrZoneBpmRange(easyZone) || hrMain;
+      d.mainset = replaceBpmRanges(d.mainset, hrMain, hrZoneBpmRange);
+      d.coachNote = replaceBpmRanges(d.coachNote, hrMain, hrZoneBpmRange);
+      d.warmup = replaceBpmRanges(d.warmup, hrEasy, hrZoneBpmRange);
+      d.cooldown = replaceBpmRanges(d.cooldown, hrEasy, hrZoneBpmRange);
+      if (d.heartRateZone) d.heartRateZone = replaceBpmRanges(d.heartRateZone, hrMain, hrZoneBpmRange);
+    }
+  }
+  return snapshot !== [d.warmup, d.mainset, d.cooldown, d.coachNote, d.paceTarget, d.heartRateZone].join('\u0001');
+}
+/*__SESSION_HELPERS_END__*/
+
+// Save one week back to Supabase a moment after the backstop changed it, so the app and
+// Trixy read the same corrected text. Only that week is written, never the whole plan.
+const _weekSaveTimers = {};
+function queueWeekSave(weekIdx) {
+  clearTimeout(_weekSaveTimers[weekIdx]);
+  _weekSaveTimers[weekIdx] = setTimeout(() => {
+    (async () => {
+      try {
+        const planId = new URLSearchParams(location.search).get('load') || window.currentPlanId;
+        if (!planId || !sb2 || !planData?.weeks?.[weekIdx]) return;
+        const { data: { session: authSession } } = await sb2.auth.getSession();
+        if (!authSession) return;
+        const { data: existing } = await sb2.from('plans').select('plan_data').eq('id', planId).single();
+        if (!existing) return;
+        const pd = JSON.parse(existing.plan_data);
+        if (!pd.weeks || !pd.weeks[weekIdx]) return;
+        pd.weeks[weekIdx] = planData.weeks[weekIdx];
+        await sb2.from('plans').update({ plan_data: JSON.stringify(pd) }).eq('id', planId);
+      } catch (e) { console.log('queueWeekSave error:', e); }
+    })();
+  }, 1500);
+}
+
 function correctPhases(weeks, targetWeeks, skipBase) {
   if (!weeks || weeks.length === 0) return;
   const total = weeks.length;
@@ -1591,6 +1832,13 @@ function selectDay(i){
   const slotSessions = slot ? [...slot.sessions].sort((a,b) => { const order = {Swim:0,Bike:1,Run:2,Brick:3,Strength:4,Rest:5}; return (order[a.type]??6)-(order[b.type]??6); }) : null;
   const d = slotSessions ? slotSessions[0] : (w.days[i] || { type: 'Rest', name: 'Rest', duration: 0, effort: 0, zone: 1, purpose: 'Rest day', warmup: '', mainset: '', cooldown: '', coachNote: '' });
   const hasDouble = slotSessions && slotSessions.length > 1;
+  // Make the stored text agree with this card's duration, pace and heart-rate boxes before
+  // it is shown — whichever generator or rewrite last touched it.
+  try {
+    let _reconciled = false;
+    (slotSessions || [d]).forEach(s => { if (reconcileSession(s)) _reconciled = true; });
+    if (_reconciled) queueWeekSave(curWeek);
+  } catch(e) { console.log('reconcileSession error:', e); }
   const t=resolveType(d.type, d.name, d.warmup, d.mainset);
   const sd=document.getElementById('sd');
 
@@ -1710,19 +1958,9 @@ function selectDay(i){
                 }
                 if (dActive.type === 'Run') {
                   if (sf?.run?.avgPace) {
-                    const fmtPace = s => Math.floor(s/60) + ':' + String(Math.round(s%60)).padStart(2,'0');
-                    const runSecs = sf.run.thresholdPaceSecs || (sf.run.thresholdPaceMin ? sf.run.thresholdPaceMin * 60 + (sf.run.thresholdPaceSec || 0) : null) || sf.run.avgPaceSecs;
-                    const zNum2 = derivedZone; // use RPE-derived zone, not a naive digit-scrape of the BPM range string
-                    if (runSecs) {
-                      const paceRanges = {
-                        1: fmtPace(runSecs+75) + '-' + fmtPace(runSecs+90),
-                        2: fmtPace(runSecs+45) + '-' + fmtPace(runSecs+60),
-                        3: fmtPace(runSecs+15) + '-' + fmtPace(runSecs+30),
-                        4: fmtPace(runSecs) + '-' + fmtPace(runSecs+10),
-                        5: fmtPace(runSecs-10) + '-' + fmtPace(runSecs)
-                      };
-                      return (paceRanges[zNum2] || paceRanges[2]) + ' /km';
-                    }
+                    // Shared with the session text backstop and rewrite prompt — see runZonePaceRange()
+                    const _runRange = runZonePaceRange(sf, derivedZone);
+                    if (_runRange) return _runRange + ' /km';
                     return sf.run.avgPace + ' /km';
                   }
                   const runMatch = dActive.paceTarget.match(/(\d+:\d+)\s*(?:\/\s*km)?/i);
@@ -1741,18 +1979,9 @@ function selectDay(i){
               const zonePcts = { 1: '<60%', 2: '60-70%', 3: '70-80%', 4: '80-90%', 5: '90-100%' };
               const zLabel = zoneLabels[derivedZone];
               try {
-                // Prefer maxHR from plan data if available
-                const maxHR = planData?.maxHR ? parseInt(planData.maxHR) : null;
-                if (maxHR && maxHR >= 140) {
-                  const zoneMins = { 1: Math.round(maxHR*0.50), 2: Math.round(maxHR*0.60), 3: Math.round(maxHR*0.70), 4: Math.round(maxHR*0.80), 5: Math.round(maxHR*0.90) };
-                  const zoneMaxs = { 1: Math.round(maxHR*0.60), 2: Math.round(maxHR*0.70), 3: Math.round(maxHR*0.80), 4: Math.round(maxHR*0.90), 5: maxHR };
-                  return zLabel + ' · ' + zoneMins[derivedZone] + '-' + zoneMaxs[derivedZone] + ' bpm';
-                }
-                const sf = planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null);
-                if (sf?.hrZones) {
-                  const zone = sf.hrZones['zone' + derivedZone];
-                  if (zone) return zLabel + ' · ' + zone.min + '-' + zone.max + ' bpm';
-                }
+                // Shared with the session text backstop and rewrite prompt — see hrZoneBpmRange()
+                const _hrRange = hrZoneBpmRange(derivedZone);
+                if (_hrRange) return zLabel + ' · ' + _hrRange + ' bpm';
               } catch(e) {}
               return zLabel + ' · ' + zonePcts[derivedZone] + '% max HR';
             })()}</div>
@@ -1906,6 +2135,7 @@ async function buildPlan(){
   const prompt = "Race: "+A.race+". Athlete: "+A.name+", exp: "+A.exp+", fitness: "+A.fitness+", weakness: "+A.weak+", "+A.hours+"hrs/week, days: "+A.days.join("/")+", pool: "+A.pool+", injury: "+(A.injury||"none")+", strength training: "+(A.strength?"YES — include 1 strength session per week (core stability, glutes, single-leg exercises, 30-45 mins). Label as type Strength.":"No strength sessions — swim, bike and run only")+", age: "+A.age+", goal race time (for motivation and narrative context ONLY — do NOT use this to set training pace targets, use Strava fitness data for all paces): "+(A.goaltimeText||"finish — no time target")+(A.css?", swim CSS: "+A.css:"")+(A.runThreshold?", run threshold: "+A.runThreshold:"")+(A.ftp?", bike FTP: "+A.ftp+"w":"")+(A.maxHR?", ATHLETE MAX HEART RATE: "+A.maxHR+"bpm — use this to calculate exact HR zones: Z1 "+Math.round(A.maxHR*0.50)+"-"+Math.round(A.maxHR*0.60)+"bpm, Z2 "+Math.round(A.maxHR*0.60)+"-"+Math.round(A.maxHR*0.70)+"bpm (aerobic base — use these EXACT BPM values for all Zone 2 sessions), Z3 "+Math.round(A.maxHR*0.70)+"-"+Math.round(A.maxHR*0.80)+"bpm (tempo), Z4 "+Math.round(A.maxHR*0.80)+"-"+Math.round(A.maxHR*0.90)+"bpm (threshold), Z5 "+Math.round(A.maxHR*0.90)+"-"+A.maxHR+"bpm (VO2max). OVERRIDE any Strava-derived HR zones with these values — they are calculated from the athlete's actual max HR.":"")+(A.units==="imperial"?", UNITS: IMPERIAL — use miles, yards, min/mile, min/100yd, mph for ALL distances and paces throughout the ENTIRE plan. NEVER use km, km/h, /km or /100m anywhere in any session. Every single pace target, distance and speed must be in imperial.":"")+
   (A.stravaFitness ? "\n\nSTRAVA FITNESS DATA — CRITICAL: Use these EXACT numbers in every session. Do NOT use % FTP or zone labels when actual watts/BPM are provided:\n" +
     (A.stravaFitness.run ? "- Run: avg pace "+(A.units==="imperial" ? (()=>{const p=A.stravaFitness.run.avgPace;const [m,s]=p.split(':').map(Number);const totalSec=m*60+s;const mpm=totalSec*1.60934;const mm=Math.floor(mpm/60);const ss=Math.round(mpm%60);return mm+':'+(ss<10?'0':'')+ss})()+" min/mile" : A.stravaFitness.run.avgPace+"/km")+", threshold pace "+(A.units==="imperial" ? (()=>{const p=A.stravaFitness.run.thresholdPace;const [m,s]=p.split(':').map(Number);const totalSec=m*60+s;const mpm=totalSec*1.60934;const mm=Math.floor(mpm/60);const ss=Math.round(mpm%60);return mm+':'+(ss<10?'0':'')+ss})()+" min/mile" : A.stravaFitness.run.thresholdPace+"/km")+", max HR "+A.stravaFitness.run.maxHR+"bpm, weekly volume "+(A.units==="imperial" ? Math.round(A.stravaFitness.run.weeklyDistanceKm*0.621)+"mi" : A.stravaFitness.run.weeklyDistanceKm+"km")+"\n" : "") +
+    runZonePromptLine(A.stravaFitness, A.units==="imperial") +
     (A.stravaFitness.bike ? "- Bike: avg speed "+(A.units==="imperial" ? Math.round(A.stravaFitness.bike.avgSpeedKmh*0.621)+"mph" : A.stravaFitness.bike.avgSpeedKmh+"km/h")+(A.stravaFitness.bike.ftpEstimate?", FTP = "+A.stravaFitness.bike.ftpEstimate+"w (use actual watts in sessions, e.g. Zone 2 = "+(Math.round(A.stravaFitness.bike.ftpEstimate*0.56))+"-"+(Math.round(A.stravaFitness.bike.ftpEstimate*0.75))+"w, Threshold = "+(Math.round(A.stravaFitness.bike.ftpEstimate*0.91))+"-"+(Math.round(A.stravaFitness.bike.ftpEstimate*1.05))+"w)":"")+", weekly volume "+(A.units==="imperial" ? Math.round(A.stravaFitness.bike.weeklyDistanceKm*0.621)+"mi" : A.stravaFitness.bike.weeklyDistanceKm+"km")+"\n" : "") +
     (A.stravaFitness.swim ? "- Swim: avg pace "+A.stravaFitness.swim.avgPacePer100m+(A.units==="imperial" ? "/100yd" : "/100m")+", weekly volume "+(A.units==="imperial" ? Math.round(A.stravaFitness.swim.weeklyDistanceKm*1093.61)+"yd" : A.stravaFitness.swim.weeklyDistanceKm+"km")+"\n" : "") +
     (A.stravaFitness.hrZones ? "- HR Zones (use actual BPM in all sessions): Z1 "+A.stravaFitness.hrZones.zone1.min+"-"+A.stravaFitness.hrZones.zone1.max+"bpm, Z2 "+A.stravaFitness.hrZones.zone2.min+"-"+A.stravaFitness.hrZones.zone2.max+"bpm (aerobic base), Z3 "+A.stravaFitness.hrZones.zone3.min+"-"+A.stravaFitness.hrZones.zone3.max+"bpm (tempo), Z4 "+A.stravaFitness.hrZones.zone4.min+"-"+A.stravaFitness.hrZones.zone4.max+"bpm (threshold), Z5 "+A.stravaFitness.hrZones.zone5.min+"-"+A.stravaFitness.hrZones.zone5.max+"bpm (VO2max)\n" : "") +
@@ -2199,18 +2429,31 @@ async function regenerateSessionDescriptions(session, weekIdx, dayIdx) {
     const swimEasy = swimSecs ? `${fmtPace(swimSecs + 25)}-${fmtPace(swimSecs + 35)}/100m` : null;
 
     // Calculate run zones
-    const runZ2 = runSecs ? `${fmtPace(runSecs + 45)}-${fmtPace(runSecs + 60)}/km` : null;
-    const runZ3 = runSecs ? `${fmtPace(runSecs + 15)}-${fmtPace(runSecs + 30)}/km` : null;
+    const runZ1 = runSecs ? `${runZonePaceRange(sf, 1)}/km` : null;
+    const runZ2 = runSecs ? `${runZonePaceRange(sf, 2)}/km` : null;
+    const runZ3 = runSecs ? `${runZonePaceRange(sf, 3)}/km` : null;
+
+    // The numbers this session's card shows — the rewritten text must use exactly these
+    const _zone = zoneFromEffort(session.effort);
+    const _cardPace = (session.type === 'Run' && runSecs) ? `${runZonePaceRange(sf, _zone)}/km` : null;
+    const _cardHr = hrZoneBpmRange(_zone);
+    const _cardHrEasy = hrZoneBpmRange(1);
+    const cardTargets = [
+      _cardPace ? `- This is a Zone ${_zone} run. Main set pace MUST be ${_cardPace}.${_zone >= 2 ? ` Warm-up and cool-down pace MUST be ${runZ1}.` : ''} Do not write any other run pace.` : '',
+      _cardHr ? `- Heart rate for the main set: ${_cardHr} bpm (Zone ${_zone}).${_zone >= 2 && _cardHrEasy ? ` Warm-up and cool-down: ${_cardHrEasy} bpm.` : ''} Do not write any other bpm range.` : ''
+    ].filter(Boolean).join('\n');
 
     const fitnessContext = [
       swimPacePer100m ? `Swim CSS (threshold pace): ${swimPacePer100m}/100m. Easy/Zone 1 = ${swimEasy}. Zone 2 aerobic = ${swimZ2}. Zone 3 tempo = ${swimZ3}. NEVER use CSS pace for easy sessions — always add the correct offset.` : '',
       ftp ? `Bike FTP: ${ftp}w. Zone 2 = ${Math.round(ftp*0.56)}-${Math.round(ftp*0.75)}w. Zone 3 = ${Math.round(ftp*0.76)}-${Math.round(ftp*0.90)}w. Threshold = ${Math.round(ftp*0.91)}-${Math.round(ftp*1.05)}w.` : '',
-      runPace ? `Run threshold pace: ${runPace}/km. Zone 2 easy = ${runZ2}. Zone 3 tempo = ${runZ3}.` : ''
+      runPace ? `Run threshold pace: ${runPace}/km. Zone 1 very easy = ${runZ1}. Zone 2 easy = ${runZ2}. Zone 3 tempo = ${runZ3}.` : ''
     ].filter(Boolean).join(' ');
 
-const _warmupMins = Math.round(session.duration * 0.15);
-    const _mainsetMins = Math.round(session.duration * 0.70);
-    const _cooldownMins = session.duration - _warmupMins - _mainsetMins;
+    // Warm-up and cool-down are capped at 15 min each — a 2h20 long run should not get a
+    // 21 min warm-up — and the main set takes everything left so the three always sum exactly.
+    const _warmupMins = Math.min(Math.round(session.duration * 0.15), 15);
+    const _cooldownMins = Math.min(Math.round(session.duration * 0.15), 15);
+    const _mainsetMins = session.duration - _warmupMins - _cooldownMins;
 
     const prompt = `You are an expert triathlon coach writing personalised training sessions. Rewrite the warmup, mainset and cooldown using the athlete's EXACT fitness data below. Use specific paces, not generic zone labels. Sound like a professional coach — specific, motivating, precise.
 
@@ -2228,20 +2471,24 @@ DURATION BREAKDOWN — YOU MUST FOLLOW THIS EXACTLY:
 - Main set: ${_mainsetMins} minutes  
 - Cooldown: ${_cooldownMins} minutes
 - Total: ${session.duration} minutes
+- State each component's time in minutes. Reminders such as "take nutrition every 25-30min" are welcome but are NOT session time — the main set's own minutes must still be ${_mainsetMins}.
 
 ATHLETE FITNESS — USE THESE EXACT PACES:
 ${fitnessContext}
-
+${cardTargets ? `
+THIS SESSION'S CARD TARGETS — the athlete sees these numbers above your text, so your text must match them:
+${cardTargets}
+` : ''}
 PACE CONSISTENCY — CRITICAL: Only use pace, watt or bpm numbers that appear explicitly in the ATHLETE FITNESS block above. NEVER invent or state a different specific number as the athlete's "threshold pace" — if you reference threshold pace in prose, restate the exact figure given above with no deviation, or use a generic phrase like "your threshold pace" with no number attached. Every specific number in warmup, mainset and cooldown must be traceable to the ATHLETE FITNESS data — do not introduce a new figure.
 
 Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No preamble, no markdown. Each component must clearly describe activities that fill its allocated time.`;
 
     // Helper to extract total minutes from text
+    // Uses the shared block parser. The old version added up every "Nmin" it could find, so
+    // "nutrition every 25-30min" counted as 30 minutes of running: it passed descriptions that
+    // were 30 minutes short and threw away correct ones that included a fuelling reminder.
     function _extractMins(text) {
-      let total = 0;
-      for (const m of (text.matchAll(/(\d+)\s*h(?:r|our)?s?\b/gi) || [])) total += parseInt(m[1]) * 60;
-      for (const m of (text.matchAll(/(\d+)\s*min(?:ute)?s?\b/gi) || [])) total += parseInt(m[1]);
-      return total;
+      return sessionTextMins(text);
     }
 
     async function _callTrixy(promptText) {
@@ -2280,6 +2527,9 @@ Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No pr
     if (parsed.mainset) session.mainset = parsed.mainset;
     if (parsed.cooldown) session.cooldown = parsed.cooldown;
     session.pacesRefreshedAt = Date.now();
+    // The rewrite does not touch coachNote, so scrub any stale pace / bpm numbers out of it
+    // (and anything the model still got wrong) before saving.
+    try { reconcileSession(session); } catch(e) {}
 
     // Save back to Supabase — only update the specific week to avoid overwriting other changes
     const planId = new URLSearchParams(location.search).get('load') || window.currentPlanId;
@@ -3639,6 +3889,7 @@ async function adaptFutureSessions(sportType, rating, fromWeek, fromDay) {
           Object.assign(day, adapted);
           day.type = sportType;
           day.adapted = true;
+          try { reconcileSession(day); } catch(e) {}
           replaced++;
         }
       }
