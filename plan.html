@@ -1355,8 +1355,10 @@ function fmtDur(mins) {
 // ── SESSION TARGETS + TEXT CONSISTENCY ───────────────────────────────────────
 // One place that works out a session's zone, run pace range and heart-rate range.
 // The Pace Target box, the Heart Rate Zone box, the session-rewrite prompt and the
-// text backstop below all call these, so the numbers on a card cannot drift apart.
-/*__SESSION_HELPERS_START__*/
+// text backstop all call these, so the numbers on a card cannot drift apart.
+// The block between the CORE markers is identical in plan.html and the app's PlanScreen.js —
+// change one, change the other.
+/*__SESSION_CORE_START__*/
 function zoneFromEffort(effort) {
   const rpe = parseInt(effort) || 5;
   return rpe <= 3 ? 1 : rpe <= 5 ? 2 : rpe <= 7 ? 3 : rpe === 8 ? 4 : 5;
@@ -1385,44 +1387,6 @@ function runZonePaceRange(sf, zone, perMile) {
   const o = RUN_ZONE_OFFSETS[zone] || RUN_ZONE_OFFSETS[2];
   const k = perMile ? 1.60934 : 1;
   return fmtPaceSecs((t + o[0]) * k) + '-' + fmtPaceSecs((t + o[1]) * k);
-}
-
-// One line for the plan prompt so the model is handed the zones instead of deriving them.
-function runZonePromptLine(sf, imperial) {
-  if (!runThresholdSecs(sf)) return '';
-  const u = imperial ? ' min/mile' : '/km';
-  const z = n => runZonePaceRange(sf, n, imperial) + u;
-  return '- Run pace zones (calculated from threshold pace. Use these EXACT ranges. NEVER work out an easy pace yourself by adding time to the avg pace): '
-    + 'Zone 1 very easy, warm-up and cool-down = ' + z(1)
-    + ', Zone 2 easy, long and aerobic runs = ' + z(2)
-    + ', Zone 3 tempo = ' + z(3)
-    + ', Zone 4 threshold = ' + z(4)
-    + ', Zone 5 = ' + z(5) + '\n';
-}
-
-// Fitness the Pace Target box reads: live Strava first, then the copy saved with the plan.
-function planFitness() {
-  try {
-    return window.currentStravaFitness
-      || (planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null));
-  } catch (e) { return null; }
-}
-
-// e.g. "120-140". Same order of preference the Heart Rate Zone box has always used:
-// the athlete's own max HR, then the Strava zones saved with the plan.
-function hrZoneBpmRange(zone) {
-  try {
-    const maxHR = planData?.maxHR ? parseInt(planData.maxHR) : null;
-    if (maxHR && maxHR >= 140) {
-      const lo = { 1: 0.50, 2: 0.60, 3: 0.70, 4: 0.80, 5: 0.90 };
-      const hi = { 1: 0.60, 2: 0.70, 3: 0.80, 4: 0.90, 5: 1 };
-      return Math.round(maxHR * lo[zone]) + '-' + Math.round(maxHR * hi[zone]);
-    }
-    const sf = planData?.stravaFitness ? JSON.parse(planData.stravaFitness) : (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null);
-    const z = sf?.hrZones ? sf.hrZones['zone' + zone] : null;
-    if (z) return z.min + '-' + z.max;
-  } catch (e) {}
-  return null;
 }
 
 // Reads the session time out of a warm-up / main set / cool-down description.
@@ -1506,14 +1470,32 @@ function replaceBpmRanges(text, target, zoneRange) {
   });
 }
 
+// Heart-rate range for a zone, e.g. "120-140". One order of preference everywhere (web, app,
+// plan builder): the athlete's own max HR if they entered one, then live Strava zones, then
+// the Strava zones saved with the plan. Returns null when there is nothing to go on.
+function hrZoneBpmRangeFrom(maxHRRaw, liveSf, savedSf, zone) {
+  const maxHR = maxHRRaw ? parseInt(maxHRRaw) : null;
+  if (maxHR && maxHR >= 140) {
+    const lo = { 1: 0.50, 2: 0.60, 3: 0.70, 4: 0.80, 5: 0.90 };
+    const hi = { 1: 0.60, 2: 0.70, 3: 0.80, 4: 0.90, 5: 1 };
+    return Math.round(maxHR * lo[zone]) + '-' + Math.round(maxHR * hi[zone]);
+  }
+  const zones = (liveSf && liveSf.hrZones) || (savedSf && savedSf.hrZones) || null;
+  const z = zones ? zones['zone' + zone] : null;
+  return z && z.min && z.max ? z.min + '-' + z.max : null;
+}
+
 // Deterministic backstop. Whatever wrote the session text (either plan generator, the
 // 24-hour rewrite, the too-easy/too-hard adaptation), make it agree with the card:
 //  1. warm-up + main set + cool-down add up to the session duration
 //  2. on easy (Zone 1-2) sessions, run paces and bpm ranges match the two target boxes
+// ctx.runRange(zone) / ctx.hrRange(zone) return the numbers the boxes show, or null.
 // Returns true if it changed anything. Safe to call repeatedly.
-function reconcileSession(d) {
+function reconcileSessionWith(d, ctx) {
   if (!d || !d.type || d.type === 'Rest' || d.type === 'Race' || d.type === 'Strength') return false;
-  const snapshot = [d.warmup, d.mainset, d.cooldown, d.coachNote, d.paceTarget, d.heartRateZone].join('\u0001');
+  ctx = ctx || {};
+  const fields = () => [d.warmup, d.mainset, d.cooldown, d.coachNote, d.paceTarget, d.heartRateZone].join('\u0001');
+  const snapshot = fields();
 
   // 1. Time. Only when the main set is one continuous block, so there is exactly one
   // number to correct. Interval sets are left to the rewrite prompt.
@@ -1544,31 +1526,125 @@ function reconcileSession(d) {
   // different numbers (rep pace, recovery pace) so they are not rewritten here.
   const zone = zoneFromEffort(d.effort);
   if (zone <= 2) {
-    const easyZone = 1;
-    const imperial = (typeof planData !== 'undefined' && planData?.units === 'imperial') || (typeof currentUnits !== 'undefined' && currentUnits === 'imperial');
-    const sf = planFitness();
-    if (d.type === 'Run' && !imperial && sf?.run?.avgPace && runThresholdSecs(sf)) {
-      const byZone = z => runZonePaceRange(sf, z);
-      const main = byZone(zone), easy = byZone(easyZone);
-      d.mainset = replaceRunPaceRanges(d.mainset, main, byZone);
-      d.coachNote = replaceRunPaceRanges(d.coachNote, main, byZone);
-      d.warmup = replaceRunPaceRanges(d.warmup, easy, byZone);
-      d.cooldown = replaceRunPaceRanges(d.cooldown, easy, byZone);
-      if (d.paceTarget) d.paceTarget = replaceRunPaceRanges(d.paceTarget, main, byZone);
+    const runMain = (d.type === 'Run' && ctx.runRange) ? ctx.runRange(zone) : null;
+    if (runMain) {
+      const runEasy = ctx.runRange(1) || runMain;
+      d.mainset = replaceRunPaceRanges(d.mainset, runMain, ctx.runRange);
+      d.coachNote = replaceRunPaceRanges(d.coachNote, runMain, ctx.runRange);
+      d.warmup = replaceRunPaceRanges(d.warmup, runEasy, ctx.runRange);
+      d.cooldown = replaceRunPaceRanges(d.cooldown, runEasy, ctx.runRange);
+      if (d.paceTarget) d.paceTarget = replaceRunPaceRanges(d.paceTarget, runMain, ctx.runRange);
     }
-    const hrMain = hrZoneBpmRange(zone);
+    const hrMain = ctx.hrRange ? ctx.hrRange(zone) : null;
     if (hrMain) {
-      const hrEasy = hrZoneBpmRange(easyZone) || hrMain;
-      d.mainset = replaceBpmRanges(d.mainset, hrMain, hrZoneBpmRange);
-      d.coachNote = replaceBpmRanges(d.coachNote, hrMain, hrZoneBpmRange);
-      d.warmup = replaceBpmRanges(d.warmup, hrEasy, hrZoneBpmRange);
-      d.cooldown = replaceBpmRanges(d.cooldown, hrEasy, hrZoneBpmRange);
-      if (d.heartRateZone) d.heartRateZone = replaceBpmRanges(d.heartRateZone, hrMain, hrZoneBpmRange);
+      const hrEasy = ctx.hrRange(1) || hrMain;
+      d.mainset = replaceBpmRanges(d.mainset, hrMain, ctx.hrRange);
+      d.coachNote = replaceBpmRanges(d.coachNote, hrMain, ctx.hrRange);
+      d.warmup = replaceBpmRanges(d.warmup, hrEasy, ctx.hrRange);
+      d.cooldown = replaceBpmRanges(d.cooldown, hrEasy, ctx.hrRange);
+      if (d.heartRateZone) d.heartRateZone = replaceBpmRanges(d.heartRateZone, hrMain, ctx.hrRange);
     }
   }
-  return snapshot !== [d.warmup, d.mainset, d.cooldown, d.coachNote, d.paceTarget, d.heartRateZone].join('\u0001');
+  return snapshot !== fields();
 }
-/*__SESSION_HELPERS_END__*/
+
+// How the 24-hour rewrite splits a session: warm-up and cool-down are 15% each but capped at
+// 15 min (a 2h20 long run should not get a 21 min warm-up); the main set takes the rest, so
+// the three always sum exactly to the session duration.
+function rewriteSplit(duration) {
+  const dur = Math.round(parseFloat(duration) || 0);
+  const warmup = Math.min(Math.round(dur * 0.15), 15);
+  const cooldown = Math.min(Math.round(dur * 0.15), 15);
+  return { warmup, mainset: dur - warmup - cooldown, cooldown };
+}
+
+// The "card targets" block for the 24-hour rewrite prompt: the exact numbers the athlete
+// sees in the Pace Target and Heart Rate Zone boxes above the text being written.
+function rewriteCardTargets(session, ctx) {
+  ctx = ctx || {};
+  const zone = zoneFromEffort(session.effort);
+  const pace = (session.type === 'Run' && ctx.runRange) ? ctx.runRange(zone) : null;
+  const paceEasy = pace ? ctx.runRange(1) : null;
+  const hr = ctx.hrRange ? ctx.hrRange(zone) : null;
+  const hrEasy = hr ? ctx.hrRange(1) : null;
+  return [
+    pace ? `- This is a Zone ${zone} run. Main set pace MUST be ${pace}/km.${zone >= 2 && paceEasy ? ` Warm-up and cool-down pace MUST be ${paceEasy}/km.` : ''} Do not write any other run pace.` : '',
+    hr ? `- Heart rate for the main set: ${hr} bpm (Zone ${zone}).${zone >= 2 && hrEasy ? ` Warm-up and cool-down: ${hrEasy} bpm.` : ''} Do not write any other bpm range.` : ''
+  ].filter(Boolean).join('\n');
+}
+// Threshold pace the athlete typed in ("4:28/km" or "7:10/mile"), as seconds per km.
+function manualThresholdSecs(str) {
+  const m = String(str || '').match(/(\d{1,2}):(\d{1,2})/);
+  if (!m) return null;
+  const secs = parseInt(m[1]) * 60 + parseInt(m[2]);
+  if (!(secs >= 150 && secs <= 900)) return null; // 2:30 to 15:00 — anything else is a typo
+  return /mi/i.test(String(str)) ? secs / 1.60934 : secs;
+}
+
+// Where run zones come from when a plan is created: Strava's threshold if there is run data
+// (the same thing the Pace Target box uses), otherwise the threshold the athlete typed in.
+function _zoneSource(sf, manualThreshold) {
+  if (runThresholdSecs(sf)) return sf;
+  const manual = manualThresholdSecs(manualThreshold);
+  return manual ? { run: { thresholdPaceSecs: manual } } : null;
+}
+
+// One line for the plan prompt so the model is handed the run zones instead of deriving them.
+function runZonePromptLine(sf, imperial, manualThreshold) {
+  const src = _zoneSource(sf, manualThreshold);
+  if (!src) return '';
+  const u = imperial ? ' min/mile' : '/km';
+  const z = n => runZonePaceRange(src, n, imperial) + u;
+  return '- Run pace zones (calculated from threshold pace. Use these EXACT ranges. NEVER work out an easy pace yourself by adding time to the avg pace): '
+    + 'Zone 1 very easy, warm-up and cool-down = ' + z(1)
+    + ', Zone 2 easy, long and aerobic runs = ' + z(2)
+    + ', Zone 3 tempo = ' + z(3)
+    + ', Zone 4 threshold = ' + z(4)
+    + ', Zone 5 = ' + z(5) + '\n';
+}
+
+// Sent to /api/generate-plan alongside the prompt so the server can hold the model's output
+// to the same numbers the session cards will show, instead of trusting it.
+function planTargetsPayload(sf, maxHR, imperial, manualThreshold) {
+  const out = { unit: imperial ? ' min/mile' : '/km' };
+  const src = _zoneSource(sf, manualThreshold);
+  if (src) { out.run = {}; for (let z = 1; z <= 5; z++) out.run[z] = runZonePaceRange(src, z, imperial); }
+  if (hrZoneBpmRangeFrom(maxHR, sf, null, 2)) { out.hr = {}; for (let z = 1; z <= 5; z++) out.hr[z] = hrZoneBpmRangeFrom(maxHR, sf, null, z); }
+  return (out.run || out.hr) ? out : null;
+}
+/*__SESSION_CORE_END__*/
+
+// ---- web wiring for the core above ----
+function _parseMaybeJson(v) { try { return typeof v === 'string' ? JSON.parse(v) : (v || null); } catch (e) { return null; } }
+
+// Fitness the Pace Target box reads: live Strava first, then the copy saved with the plan.
+function planFitness() {
+  try {
+    return window.currentStravaFitness
+      || _parseMaybeJson(planData?.stravaFitness)
+      || (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null);
+  } catch (e) { return null; }
+}
+
+// What the Heart Rate Zone box shows for a zone, or null if only the generic % label applies.
+function hrZoneBpmRange(zone) {
+  try {
+    const saved = _parseMaybeJson(planData?.stravaFitness) || (typeof stravaFitnessData !== 'undefined' ? stravaFitnessData : null);
+    return hrZoneBpmRangeFrom(planData?.maxHR, window.currentStravaFitness || null, saved, zone);
+  } catch (e) { return null; }
+}
+
+// The numbers the two target boxes show, in the shape the core functions take.
+function sessionTargetCtx() {
+  const sf = planFitness();
+  const imperial = planData?.units === 'imperial' || (typeof currentUnits !== 'undefined' && currentUnits === 'imperial');
+  // The run box only uses zone maths when Strava run data is present, and always shows /km,
+  // so imperial plans are left alone here.
+  const runOk = !imperial && sf?.run?.avgPace && runThresholdSecs(sf);
+  return { runRange: runOk ? (z => runZonePaceRange(sf, z)) : null, hrRange: hrZoneBpmRange };
+}
+
+function reconcileSession(d) { return reconcileSessionWith(d, sessionTargetCtx()); }
 
 // Save one week back to Supabase a moment after the backstop changed it, so the app and
 // Trixy read the same corrected text. Only that week is written, never the whole plan.
@@ -2146,9 +2222,12 @@ async function buildPlan(){
         const prompt1 = prompt + '\n\nGenerate ONLY weeks 1 and 2. Return JSON with keys: intro, weeks (array of 2 weeks only).';
     const prompt2 = prompt + '\n\nGenerate ONLY weeks 3 and 4 (Build and Peak phases). Return JSON with keys: weeks (array of 2 weeks only, weekNumber starting at 3). No intro needed.';
 
+    // Same numbers the session cards will show — the server checks the model's output against them
+    let _planTargets = null;
+    try { _planTargets = planTargetsPayload(A.stravaFitness || null, A.maxHR, A.units==="imperial", A.runThreshold); } catch(e) {}
     const [r1, r2] = await Promise.all([
-      fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt1})}),
-      fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt2})})
+      fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt1,targets:_planTargets})}),
+      fetch('/api/generate-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt2,targets:_planTargets})})
     ]);
 
     const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
@@ -2373,7 +2452,9 @@ async function loadNextWeeks() {
   const nextWeekStart = currentWeekCount + 1;
   const prompt = `You are an expert triathlon coach. Generate the NEXT 4 weeks of a training plan continuing from week ${currentWeekCount}.\n\nAthlete:\nName: ${A.name}, Race: ${A.race}, Goal time (motivation/narrative only — do NOT set pace targets from this, use Strava data for all paces): ${A.goaltimeText||'No specific time target'}, Experience: ${A.exp}, Fitness: ${A.fitness}\nHours/week: ${A.hours}, Training days: ${A.days.join(', ')}, Weakest: ${A.weak}\n\nContinue with progressive overload. Week ${nextWeekStart} = build, Week ${nextWeekStart+1} = peak, Week ${nextWeekStart+2} = peak race specific, Week ${nextWeekStart+3} = taper.\n\nReturn ONLY JSON: {"weeks":[{"week":${nextWeekStart},"phase":"Build","focus":"string","totalTime":0,"sessions":0,"days":[{"day":"Monday","type":"Rest","name":"Rest","duration":0,"effort":0,"zone":0,"focus":"Rest","warmup":"","mainset":"","cooldown":"","coachNote":""}]}]}\n\nRules: Each week has exactly 7 days Monday-Sunday. Training days (${A.days.join(', ')}) get sessions, others are Rest. Return ONLY the JSON.`;
   try {
-    const r = await fetch('/api/generate-plan', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+    let _nextTargets = null;
+    try { _nextTargets = planTargetsPayload(planFitness(), planData?.maxHR, planData?.units==="imperial", planData?.runThreshold); } catch(e) {}
+    const r = await fetch('/api/generate-plan', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,targets:_nextTargets})});
     const d = await r.json();
     let txt = d.plan || '';
     txt = txt.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
@@ -2434,14 +2515,7 @@ async function regenerateSessionDescriptions(session, weekIdx, dayIdx) {
     const runZ3 = runSecs ? `${runZonePaceRange(sf, 3)}/km` : null;
 
     // The numbers this session's card shows — the rewritten text must use exactly these
-    const _zone = zoneFromEffort(session.effort);
-    const _cardPace = (session.type === 'Run' && runSecs) ? `${runZonePaceRange(sf, _zone)}/km` : null;
-    const _cardHr = hrZoneBpmRange(_zone);
-    const _cardHrEasy = hrZoneBpmRange(1);
-    const cardTargets = [
-      _cardPace ? `- This is a Zone ${_zone} run. Main set pace MUST be ${_cardPace}.${_zone >= 2 ? ` Warm-up and cool-down pace MUST be ${runZ1}.` : ''} Do not write any other run pace.` : '',
-      _cardHr ? `- Heart rate for the main set: ${_cardHr} bpm (Zone ${_zone}).${_zone >= 2 && _cardHrEasy ? ` Warm-up and cool-down: ${_cardHrEasy} bpm.` : ''} Do not write any other bpm range.` : ''
-    ].filter(Boolean).join('\n');
+    const cardTargets = rewriteCardTargets(session, sessionTargetCtx());
 
     const fitnessContext = [
       swimPacePer100m ? `Swim CSS (threshold pace): ${swimPacePer100m}/100m. Easy/Zone 1 = ${swimEasy}. Zone 2 aerobic = ${swimZ2}. Zone 3 tempo = ${swimZ3}. NEVER use CSS pace for easy sessions — always add the correct offset.` : '',
@@ -2449,11 +2523,10 @@ async function regenerateSessionDescriptions(session, weekIdx, dayIdx) {
       runPace ? `Run threshold pace: ${runPace}/km. Zone 1 very easy = ${runZ1}. Zone 2 easy = ${runZ2}. Zone 3 tempo = ${runZ3}.` : ''
     ].filter(Boolean).join(' ');
 
-    // Warm-up and cool-down are capped at 15 min each — a 2h20 long run should not get a
-    // 21 min warm-up — and the main set takes everything left so the three always sum exactly.
-    const _warmupMins = Math.min(Math.round(session.duration * 0.15), 15);
-    const _cooldownMins = Math.min(Math.round(session.duration * 0.15), 15);
-    const _mainsetMins = session.duration - _warmupMins - _cooldownMins;
+    const _split = rewriteSplit(session.duration); // 15% / rest / 15%, ends capped at 15 min
+    const _warmupMins = _split.warmup;
+    const _mainsetMins = _split.mainset;
+    const _cooldownMins = _split.cooldown;
 
     const prompt = `You are an expert triathlon coach writing personalised training sessions. Rewrite the warmup, mainset and cooldown using the athlete's EXACT fitness data below. Use specific paces, not generic zone labels. Sound like a professional coach — specific, motivating, precise.
 
