@@ -497,8 +497,12 @@ export default async function handler(req, res) {
             'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-5',
-            max_tokens: 16000,
+            model: 'claude-sonnet-5-5',
+            // Sonnet 5.5 counts ~30% more tokens for the same text than 4.5, so the cap is raised to match.
+            max_tokens: 24000,
+            // Sonnet 5.5 thinks by default and thinking counts toward max_tokens.
+            // Turn up-front thinking off so the whole budget goes to the plan JSON, as it did on 4.5.
+            thinking: { type: 'between_tools' },
             messages: [{ role: 'user', content: prompt }]
           })
         });
@@ -514,6 +518,9 @@ export default async function handler(req, res) {
         const aiData = await aiRes.json();
         const aiText = (aiData.content || []).map(c => c.text || '').join('');
         const tokenCount = aiData.usage?.output_tokens || 0;
+        if (aiData.stop_reason === 'max_tokens') {
+          console.error(`WARNING: build-remaining response truncated on attempt ${attempt} (${tokenCount} tokens) - JSON will be incomplete. Increase max_tokens.`);
+        }
 
         if (tokenCount < 1000) {
           console.warn(`Short response on attempt ${attempt}: ${tokenCount} tokens`);
