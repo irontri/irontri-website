@@ -4417,7 +4417,7 @@ COMMUNICATION RULES:
   .then(function(r){return r.json();})
   .then(function(data){
     t.remove();trixyAddMsg('coach',data.reply||'Give me a sec and try again!');
-    trixyHistory.push({role:'assistant',content:data.plan||''});
+    trixyHistory.push({role:'assistant',content:data.reply||''});
     if(trixyHistory.length>20)trixyHistory=trixyHistory.slice(-16);
     if(btn)btn.disabled=false;
   }).catch(function(){t.remove();trixyAddMsg('coach','Something went wrong, try again!');if(btn)btn.disabled=false;});
