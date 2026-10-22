@@ -1923,14 +1923,11 @@ function selectDay(i){
   });
 
   // Silently regenerate session descriptions with current fitness if needed
-  if (window.currentStravaFitness && d.type !== 'Rest' && d.type !== 'Race') {
-    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
-    const lastRefreshed = d.pacesRefreshedAt || 0;
-    if (lastRefreshed < oneDayAgo) {
-      const DAY_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-      const dayIdx = DAY_ORDER.indexOf(d.day);
-      setTimeout(() => regenerateSessionDescriptions(d, curWeek, dayIdx >= 0 ? dayIdx : i), 300);
-    }
+  if (window.currentStravaFitness && d.type !== 'Rest' && d.type !== 'Race' && sessionNeedsRefresh(d)) {
+    const DAY_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const dayIdx = DAY_ORDER.indexOf(d.day);
+    const _wk = curWeek;
+    setTimeout(() => regenerateSessionDescriptions(d, _wk, dayIdx >= 0 ? dayIdx : i), 300);
   }
 
   // Set the coloured left border on the session card
@@ -2481,7 +2478,75 @@ async function loadNextWeeks() {
   }
 }
 
-async function regenerateSessionDescriptions(session, weekIdx, dayIdx) {
+// ── Session text refresh ─────────────────────────────────────────────────────
+// A session's text is stale when it was written against different fitness numbers than the
+// athlete has now (or was never refreshed). Keyed on the numbers, not a clock: when Strava
+// moves threshold pace / FTP / CSS every session updates on the next load, and when nothing
+// has changed we don't spend an API call rewriting identical text every 24 hours.
+function fitnessKey(sf) {
+  if (!sf) return '';
+  const run = runThresholdSecs(sf);
+  return [run ? Math.round(run) : '', sf.bike?.ftpEstimate || '', sf.swim?.avgPaceSecs ? Math.round(sf.swim.avgPaceSecs) : '', planData?.maxHR || ''].join('|');
+}
+const _refreshInFlight = new WeakSet();
+function sessionNeedsRefresh(d) {
+  if (!d || d.type === 'Rest' || d.type === 'Race' || d.type === 'Strength') return false;
+  if (_refreshInFlight.has(d)) return false;
+  const key = fitnessKey(window.currentStravaFitness);
+  if (!key.replace(/\|/g, '')) return false;
+  // Failed attempts back off for an hour so a bad response isn't retried on every tap
+  if (d._refreshFailedAt && Date.now() - d._refreshFailedAt < 60 * 60 * 1000) return false;
+  return !d.pacesRefreshedAt || d.pacesFitnessKey !== key;
+}
+
+// Refresh this week and next in the background as soon as fitness loads, instead of
+// waiting for the athlete to tap each day. Three at a time; today's sessions first.
+async function refreshUpcomingSessions() {
+  if (!planData?.weeks || !window.currentStravaFitness?.connected) return;
+  let wk = curWeek;
+  if (A.startDate) {
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    const diff = Math.round((t - new Date(A.startDate + 'T00:00:00')) / 86400000);
+    if (diff >= 0) wk = Math.min(Math.floor(diff / 7), planData.weeks.length - 1);
+  }
+  const DAY_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const todayIdx = (new Date().getDay() + 6) % 7;
+  const jobs = [];
+  [wk, wk + 1].forEach(w => {
+    const week = planData.weeks[w];
+    if (!week?.days) return;
+    week.days.forEach((d, i) => {
+      const di = DAY_ORDER.indexOf(d.day);
+      const dayIdx = di >= 0 ? di : i;
+      if (w === wk && dayIdx < todayIdx) return; // past days in this week don't matter
+      if (sessionNeedsRefresh(d)) jobs.push({ d, w, dayIdx, order: (w - wk) * 7 + dayIdx });
+    });
+  });
+  jobs.sort((a, b) => a.order - b.order);
+  const run = async () => { while (jobs.length) { const j = jobs.shift(); await regenerateSessionDescriptions(j.d, j.w, j.dayIdx, { batch: true }); } };
+  await Promise.all([run(), run(), run()]);
+  await flushRefreshedWeeks();
+}
+
+// Weeks changed by the background refresh, saved in one write at the end.
+const _refreshedWeeks = new Set();
+async function flushRefreshedWeeks() {
+  if (!_refreshedWeeks.size) return;
+  const weeks = [..._refreshedWeeks]; _refreshedWeeks.clear();
+  try {
+    const planId = new URLSearchParams(location.search).get('load') || window.currentPlanId;
+    if (!planId || !sb2) return;
+    const { data: { session: authSession } } = await sb2.auth.getSession();
+    if (!authSession) return;
+    const { data: existing } = await sb2.from('plans').select('plan_data').eq('id', planId).single();
+    if (!existing) return;
+    const pd = JSON.parse(existing.plan_data);
+    weeks.forEach(w => { if (pd.weeks && pd.weeks[w]) pd.weeks[w] = planData.weeks[w]; });
+    await sb2.from('plans').update({ plan_data: JSON.stringify(pd) }).eq('id', planId);
+  } catch (e) { console.log('flushRefreshedWeeks error:', e); }
+}
+
+async function regenerateSessionDescriptions(session, weekIdx, dayIdx, opts) {
   try {
     if (!session || session.type === 'Rest' || session.type === 'Race') return;
     // NOTE: no longer bail out just because pacesRefreshedAt has any value — the caller
@@ -2490,9 +2555,11 @@ async function regenerateSessionDescriptions(session, weekIdx, dayIdx) {
     // truthy timestamp, not just a recent one, so it permanently disabled refresh after
     // the very first successful run for a session's entire lifetime. Removed.
     if (!window.currentStravaFitness?.connected) return;
+    if (_refreshInFlight.has(session)) { session = null; return; } // another call owns it
 
-    // Check session is not already completed
-    if (completions.has(`${curWeek}-${dayIdx}`) || completions.has(`${curWeek}-${dayIdx}-0`)) return;
+    // Check session is not already completed (the week this session is in, not the one on screen)
+    if (completions.has(`${weekIdx}-${dayIdx}`) || completions.has(`${weekIdx}-${dayIdx}-0`)) return;
+    _refreshInFlight.add(session);
 
     const sf = window.currentStravaFitness;
     const swimPacePer100m = sf.swim?.avgPacePer100m || null;
@@ -2533,11 +2600,15 @@ async function regenerateSessionDescriptions(session, weekIdx, dayIdx) {
 SESSION:
 Type: ${session.type}
 Name: ${session.name}
+Purpose: ${session.purpose || ''}
 Total duration: ${session.duration} minutes
 Effort: RPE ${session.effort}/10
 Current warmup: ${session.warmup}
 Current mainset: ${session.mainset}
 Current cooldown: ${session.cooldown}
+Current coach note: ${session.coachNote || ''}
+
+The session NAME, PURPOSE and EFFORT are authoritative. If the current main set does not match them (for example the name says "1600m Repeats" but the main set is a continuous run), write a main set that matches the name and effort. Keep the coach note's advice, but every pace / watt / bpm number in it must follow the same rules as the main set.
 
 DURATION BREAKDOWN — YOU MUST FOLLOW THIS EXACTLY:
 - Warmup: ${_warmupMins} minutes
@@ -2554,7 +2625,7 @@ ${cardTargets}
 ` : ''}
 PACE CONSISTENCY — CRITICAL: Only use pace, watt or bpm numbers that appear explicitly in the ATHLETE FITNESS block above. NEVER invent or state a different specific number as the athlete's "threshold pace" — if you reference threshold pace in prose, restate the exact figure given above with no deviation, or use a generic phrase like "your threshold pace" with no number attached. Every specific number in warmup, mainset and cooldown must be traceable to the ATHLETE FITNESS data — do not introduce a new figure.
 
-Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No preamble, no markdown. Each component must clearly describe activities that fill its allocated time.`;
+Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"...","coachNote":"..."}. No preamble, no markdown. Each component must clearly describe activities that fill its allocated time. An interval main set may be written in distances (e.g. "4x1600m") as long as the reps and recoveries realistically fill about ${_mainsetMins} minutes.`;
 
     // Helper to extract total minutes from text
     // Uses the shared block parser. The old version added up every "Nmin" it could find, so
@@ -2568,7 +2639,7 @@ Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No pr
       const r = await fetch('/api/trixy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ systemPrompt: 'You are a triathlon coach. Return ONLY valid JSON with keys: warmup, mainset, cooldown. No preamble, no markdown, no backticks.', message: promptText, history: [], max_tokens: 800 })
+        body: JSON.stringify({ systemPrompt: 'You are a triathlon coach. Return ONLY valid JSON with keys: warmup, mainset, cooldown, coachNote. No preamble, no markdown, no backticks.', message: promptText, history: [], max_tokens: 1000 })
       });
       if (!r.ok) return null;
       const d = await r.json();
@@ -2576,33 +2647,47 @@ Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No pr
       return JSON.parse(clean);
     }
 
-    let parsed = await _callTrixy(prompt);
-    if (!parsed) return;
+    // Does a response's time add up? Distance-based sets ("4x1600m", "10x100m") have no minutes
+    // in them to count — the old check read those as ~0 min, rejected every track session and
+    // most swims, burned a retry, and kept the stale text. For those, only the ends are checked.
+    const _isDistanceSet = t => /\d+\s*[x×]\s*\d+(?:\.\d+)?\s*(?:m|km|k|y|yd|yds)\b/i.test(t || '') || /\b\d{3,4}\s*m\b/i.test(t || '') && !/\d+\s*min/i.test(t || '');
+    const _timeOk = r => {
+      if (!r || !r.mainset) return false;
+      const ends = _extractMins(r.warmup || '') + _extractMins(r.cooldown || '');
+      if (_isDistanceSet(r.mainset)) return Math.abs(ends - (_warmupMins + _cooldownMins)) <= 10;
+      return Math.abs(ends + _extractMins(r.mainset) - session.duration) <= 10;
+    };
 
-    // Validate durations add up — retry once if off by more than 10 mins
-    const _totalParsed = _extractMins(parsed.warmup||'') + _extractMins(parsed.mainset||'') + _extractMins(parsed.cooldown||'');
-    if (Math.abs(_totalParsed - session.duration) > 10) {
-      console.log('[regen] duration mismatch:', _totalParsed, 'vs', session.duration, '— retrying');
-      const retried = await _callTrixy(prompt + `\n\nYOUR PREVIOUS RESPONSE HAD WRONG TOTAL DURATION (${_totalParsed}min instead of ${session.duration}min). Warmup MUST be exactly ${_warmupMins}min, mainset MUST be exactly ${_mainsetMins}min, cooldown MUST be exactly ${_cooldownMins}min.`);
-      if (retried) {
-        const _retryTotal = _extractMins(retried.warmup||'') + _extractMins(retried.mainset||'') + _extractMins(retried.cooldown||'');
-        if (Math.abs(_retryTotal - session.duration) <= 10) {
-          parsed = retried;
-        } else {
-          console.log('[regen] retry also failed, keeping original');
-          session.pacesRefreshedAt = Date.now();
-          return;
-        }
+    let parsed = null;
+    try { parsed = await _callTrixy(prompt); } catch (e) { parsed = null; }
+    if (!_timeOk(parsed)) {
+      console.log('[regen] response rejected — retrying once');
+      let retried = null;
+      try { retried = await _callTrixy(prompt + `\n\nYOUR PREVIOUS RESPONSE HAD THE WRONG DURATION. Warmup MUST be exactly ${_warmupMins}min, mainset MUST fill ${_mainsetMins}min, cooldown MUST be exactly ${_cooldownMins}min.`); } catch (e) {}
+      if (!_timeOk(retried)) {
+        console.log('[regen] retry also failed, keeping original');
+        session._refreshFailedAt = Date.now();
+        return;
       }
+      parsed = retried;
     }
 
     if (parsed.warmup) session.warmup = parsed.warmup;
     if (parsed.mainset) session.mainset = parsed.mainset;
     if (parsed.cooldown) session.cooldown = parsed.cooldown;
+    if (parsed.coachNote) session.coachNote = parsed.coachNote;
     session.pacesRefreshedAt = Date.now();
-    // The rewrite does not touch coachNote, so scrub any stale pace / bpm numbers out of it
-    // (and anything the model still got wrong) before saving.
+    session.pacesFitnessKey = fitnessKey(sf);
+    delete session._refreshFailedAt;
+    // Deterministic backstop for anything the model still got wrong.
     try { reconcileSession(session); } catch(e) {}
+
+    // Background batch: one save at the end for all refreshed weeks, and one re-render.
+    if (opts && opts.batch) {
+      _refreshedWeeks.add(weekIdx);
+      if (weekIdx === curWeek) renderWeek();
+      return;
+    }
 
     // Save back to Supabase — only update the specific week to avoid overwriting other changes
     const planId = new URLSearchParams(location.search).get('load') || window.currentPlanId;
@@ -2622,9 +2707,12 @@ Return ONLY valid JSON: {"warmup":"...","mainset":"...","cooldown":"..."}. No pr
     }
 
     // Re-render just the session detail without triggering another regeneration
-    renderWeek();
+    if (weekIdx === curWeek) renderWeek();
   } catch(e) {
     console.log('regenerateSessionDescriptions error:', e);
+    if (session) session._refreshFailedAt = Date.now();
+  } finally {
+    if (session) _refreshInFlight.delete(session);
   }
 }
 
@@ -2640,6 +2728,7 @@ async function loadCurrentFitness() {
       sf.fetchedAt = Date.now();
       window.currentStravaFitness = sf;
       renderWeek();
+      refreshUpcomingSessions();
     }
   } catch(e) {}
 }
