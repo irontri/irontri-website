@@ -548,6 +548,43 @@ export default async function handler(req, res) {
     }
 
 
+
+    // ── Long-session selection for the volume correctors ──────────────────────
+    // The correctors below used to grab whichever session of a sport had the biggest
+    // duration and overwrite its duration + warmup/mainset/cooldown, leaving name, effort,
+    // zone, purpose, paceTarget and coachNote alone. When the model's longest run that week
+    // was a track/interval session, the card came out as "Track Session — 1600m Repeats ·
+    // RPE 8 · Z4" with a 2hr Zone 2 main set and a coach note about reps that no longer exist.
+    // Now: never touch a quality session, prefer the one already meant to be long, and when we
+    // do rewrite a session we rewrite ALL of its fields so it is one coherent long session.
+    const _QUALITY_RE = /track|interval|repeat|reps?\b|tempo|threshold|fartlek|hill|speed|vo2|strides|race[- ]pace|\d+\s*[x×]\s*\d+/i;
+    const isQualitySession = (d) => {
+      if (!d) return false;
+      if ((parseInt(d.effort) || 0) >= 7) return true;
+      return _QUALITY_RE.test(`${d.name || ''} ${d.mainset || ''}`);
+    };
+    const pickLongSession = (sessions) => {
+      const easy = sessions.filter(d => !isQualitySession(d));
+      if (easy.length === 0) return null; // nothing safe to convert — leave the week alone
+      const named = easy.filter(d => /\blong\b/i.test(d.name || ''));
+      const pool = named.length ? named : easy;
+      return pool.reduce((a, b) => (parseFloat(a.duration) || 0) >= (parseFloat(b.duration) || 0) ? a : b);
+    };
+    const setLongAerobic = (d, sport, mins, parts) => {
+      const label = { Run: 'Long Aerobic Run', Bike: 'Long Aerobic Ride', Swim: 'Long Aerobic Swim' }[sport];
+      d.duration = mins;
+      d.name = label;
+      d.effort = 4;
+      d.zone = 2;
+      d.purpose = `Build aerobic endurance with a steady Zone 2 ${sport === 'Run' ? 'long run' : sport === 'Bike' ? 'long ride' : 'endurance swim'}.`;
+      d.warmup = parts.warmup;
+      d.mainset = parts.mainset;
+      d.cooldown = parts.cooldown;
+      d.paceTarget = 'Zone 2 — easy, conversational';
+      d.heartRateZone = 'Zone 2';
+      d.coachNote = parts.coachNote;
+    };
+
     // Post-process: correct bike and run volume for each new week (skip race week)
     newWeeks.forEach((wk) => {
       if (wk.phase === 'Race Week') return; // Never override race week volumes
@@ -610,40 +647,46 @@ export default async function handler(req, res) {
       // Apply bike correction
       const bikeSessions = (wk.days || []).filter(d => d.type === 'Bike' || d.type === 'Brick');
       if (bikeSessions.length > 0) {
-        const longestBike = bikeSessions.reduce((a, b) =>
-          (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
-        );
-        longestBike.duration = targetBikeMins;
-        const _bikeMain = Math.max(targetBikeMins - 30, 10);
-        longestBike.warmup = '15 min easy spin, building gradually.';
-        longestBike.mainset = `${_bikeMain} min steady aerobic riding at Zone 2 — consistent cadence, controlled effort.`;
-        longestBike.cooldown = '15 min easy spin.';
+        const longestBike = pickLongSession(bikeSessions.filter(d => d.type === 'Bike'));
+        if (longestBike) {
+          const _bikeMain = Math.max(targetBikeMins - 30, 10);
+          setLongAerobic(longestBike, 'Bike', targetBikeMins, {
+            warmup: '15 min easy spin, building gradually.',
+            mainset: `${_bikeMain} min steady aerobic riding at Zone 2 — consistent cadence, controlled effort.`,
+            cooldown: '15 min easy spin.',
+            coachNote: 'This is your weekly long ride. Keep it genuinely easy — fuel early and often, and practise your race nutrition.'
+          });
+        }
       }
 
       // Apply run correction
       const runSessions = (wk.days || []).filter(d => d.type === 'Run');
       if (runSessions.length > 0) {
-        const longestRun = runSessions.reduce((a, b) =>
-          (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
-        );
-        longestRun.duration = targetRunMins;
-        const _runMain = Math.max(targetRunMins - 20, 10);
-        longestRun.warmup = '10 min easy jog with dynamic stretching.';
-        longestRun.mainset = `${_runMain} min continuous aerobic run at Zone 2 — steady effort, focus on form and cadence.`;
-        longestRun.cooldown = '10 min easy jog and stretch.';
+        const longestRun = pickLongSession(runSessions);
+        if (longestRun) {
+          const _runMain = Math.max(targetRunMins - 20, 10);
+          setLongAerobic(longestRun, 'Run', targetRunMins, {
+            warmup: '10 min easy jog with dynamic stretching.',
+            mainset: `${_runMain} min continuous aerobic run at Zone 2 — steady effort, focus on form and cadence.`,
+            cooldown: '10 min easy jog and stretch.',
+            coachNote: 'This is your weekly long run — the cornerstone of run fitness. Keep it conversational; if you feel any niggle, cut it short. Consistency beats one heroic run.'
+          });
+        }
       }
 
       // Apply swim correction
       const swimSessions = (wk.days || []).filter(d => d.type === 'Swim');
       if (swimSessions.length > 0) {
-        const longestSwim = swimSessions.reduce((a, b) =>
-          (parseFloat(a.duration) || 0) > (parseFloat(b.duration) || 0) ? a : b
-        );
-        longestSwim.duration = targetSwimMins;
-        const _swimMain = Math.max(targetSwimMins - 15, 10);
-        longestSwim.warmup = '300m easy — focus on long, relaxed strokes.';
-        longestSwim.mainset = `${_swimMain} min continuous aerobic swim at Zone 2. Focus on technique and consistent stroke rate.`;
-        longestSwim.cooldown = '150m easy backstroke.';
+        const longestSwim = pickLongSession(swimSessions);
+        if (longestSwim) {
+          const _swimMain = Math.max(targetSwimMins - 15, 10);
+          setLongAerobic(longestSwim, 'Swim', targetSwimMins, {
+            warmup: '300m easy — focus on long, relaxed strokes.',
+            mainset: `${_swimMain} min continuous aerobic swim at Zone 2. Focus on technique and consistent stroke rate.`,
+            cooldown: '150m easy backstroke.',
+            coachNote: 'Steady endurance swim. Hold good form the whole way — if technique falls apart, ease off rather than thrash.'
+          });
+        }
       }
       // Enforce professional double session programming — scaled by experience level
       if ((isFull || isHalf) && wk.phase !== 'Race Week' && wk.phase !== 'Taper') {
@@ -1303,9 +1346,8 @@ export default async function handler(req, res) {
         if (runSessions.length === 0) return;
 
         // Find the longest run
-        const longestRun = runSessions.reduce((a, b) =>
-          (parseFloat(a.duration)||0) > (parseFloat(b.duration)||0) ? a : b
-        );
+        const longestRun = pickLongSession(runSessions);
+        if (!longestRun) return;
 
         // Minimum long run durations by phase and distance
         const minRunMins = isFull
@@ -1313,13 +1355,13 @@ export default async function handler(req, res) {
           : (phase === 'base' ? 40 : phase === 'build' ? 60 : 75);
 
         if ((parseFloat(longestRun.duration)||0) < minRunMins) {
-          longestRun.duration = minRunMins;
-          longestRun.name = longestRun.name || 'Long Aerobic Run';
           const _runMain2 = Math.max(minRunMins - 20, 10);
-          longestRun.warmup = '10 min easy jog with dynamic stretching.';
-          longestRun.mainset = `${_runMain2} min continuous aerobic run at Zone 2 — steady effort, focus on form and cadence.`;
-          longestRun.cooldown = '10 min easy jog and stretch.';
-          longestRun.coachNote = (longestRun.coachNote || '') + ' This is your weekly long run — the cornerstone of run fitness. Build endurance and mental toughness at Zone 2 effort.';
+          setLongAerobic(longestRun, 'Run', minRunMins, {
+            warmup: '10 min easy jog with dynamic stretching.',
+            mainset: `${_runMain2} min continuous aerobic run at Zone 2 — steady effort, focus on form and cadence.`,
+            cooldown: '10 min easy jog and stretch.',
+            coachNote: 'This is your weekly long run — the cornerstone of run fitness. Build endurance and mental toughness at Zone 2 effort.'
+          });
         }
       });
     }
